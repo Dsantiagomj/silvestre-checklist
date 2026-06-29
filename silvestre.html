@@ -595,17 +595,24 @@ header{
   .main-layout{ grid-template-columns:1fr; }
 }
 
-/* GRID DE PASOS · "tarjetas de logro" ---------------------------------------*/
-.grid-section{
+/* SECCIÓN DE VISTAS · contenedor + selector + vistas ------------------------*/
+.view-section{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:var(--radius-lg);
   padding:14px;
 }
+.view-header{
+  display:flex; align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  padding:0 4px;
+  flex-wrap:wrap;
+}
 .section-title{
   display:flex; align-items:center; gap:8px;
-  margin:0 0 12px;
-  padding:0 4px;
+  margin:0;
   font-family:var(--font-display);
   font-size:11px; font-weight:700;
   letter-spacing:2px; text-transform:uppercase;
@@ -617,6 +624,55 @@ header{
   background:var(--amber);
   border-radius:2px;
 }
+.view-switcher{
+  display:inline-flex;
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:3px;
+  gap:2px;
+}
+.vbtn{
+  font-family:var(--font-display);
+  font-size:11.5px; font-weight:600;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--txt-mute);
+  padding:6px 12px;
+  border-radius:4px;
+  transition:all .15s ease;
+  display:inline-flex; align-items:center; gap:6px;
+  white-space:nowrap;
+}
+.vbtn:hover:not(.active):not(:disabled){
+  color:var(--txt-soft);
+  background:rgba(143,176,214,.06);
+}
+.vbtn.active{
+  background:var(--panel-2);
+  color:var(--txt);
+  box-shadow:inset 0 0 0 1px var(--line-2);
+}
+.vbtn:disabled{ cursor:default; opacity:.6; }
+.vbadge{
+  font-size:9px;
+  background:var(--amber);
+  color:#0b1220;
+  padding:1px 5px;
+  border-radius:3px;
+  letter-spacing:.5px;
+  font-weight:700;
+  line-height:1;
+}
+[data-theme="light"] .vbadge{ color:#fff; }
+@media (max-width:640px){
+  .view-header{ flex-direction:column; align-items:flex-start; gap:8px; }
+  .view-switcher{ width:100%; justify-content:space-between; overflow-x:auto; }
+  .vbtn{ padding:6px 8px; font-size:11px; flex:1; justify-content:center; }
+  .vbadge{ display:none; }
+}
+
+/* VISTA LINEAL · grid 10×10 (idéntico al anterior) --------------------------*/
 .grid{
   display:grid;
   grid-template-columns:repeat(10, 1fr);
@@ -710,6 +766,188 @@ header{
   40% { transform:scale(1.22); box-shadow:0 0 24px var(--gold); }
   100%{ transform:scale(1); }
 }
+
+/* VISTA POR ZONA · bloques por zona con su mini-grid -----------------------*/
+.zones-list{
+  display:flex; flex-direction:column;
+  gap:14px;
+}
+.zone-block{
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.zone-block-head{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px;
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--zone-color, var(--gold)) 18%, var(--panel)) 0%,
+    var(--panel) 100%);
+  border-bottom:1px solid var(--line);
+}
+.zone-block-head .zdot{
+  width:10px; height:10px; border-radius:50%;
+  background:var(--zone-color, var(--gold));
+  flex-shrink:0;
+  box-shadow:0 0 6px color-mix(in srgb, var(--zone-color, var(--gold)) 60%, transparent);
+}
+.zone-block-head .zname{
+  font-family:var(--font-display);
+  font-size:13px; font-weight:700;
+  letter-spacing:.5px;
+  color:var(--txt);
+  flex:1;
+  text-transform:uppercase;
+}
+.zone-block-head .zstats{
+  font-size:11.5px;
+  color:var(--txt-soft);
+  font-variant-numeric:tabular-nums;
+  font-family:var(--font-display);
+  letter-spacing:.5px;
+}
+.zone-block-head .zstats b{ color:var(--txt); font-weight:700; }
+.zone-block-head .zbar{
+  width:80px; height:4px;
+  background:var(--inset);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--line);
+}
+.zone-block-head .zbar-fill{
+  height:100%;
+  background:var(--zone-color, var(--gold));
+  transition:width .6s cubic-bezier(.22,1,.36,1);
+}
+.zone-block-grid{
+  display:grid;
+  grid-template-columns:repeat(10, 1fr);
+  gap:5px;
+  padding:12px;
+}
+@media (max-width:640px){
+  .zone-block-grid{ grid-template-columns:repeat(5, 1fr); gap:6px; }
+  .zone-block-head .zbar{ display:none; }
+}
+
+/* VISTA TIMELINE · vertical compacta ----------------------------------------*/
+.timeline{
+  position:relative;
+  padding:8px 4px 4px;
+}
+.timeline::before{
+  content:"";
+  position:absolute;
+  top:14px; bottom:14px;
+  left:22px;
+  width:2px;
+  background:linear-gradient(180deg, var(--line) 0%, var(--line-2) 50%, var(--line) 100%);
+}
+.tnode{
+  position:relative;
+  display:flex; align-items:center;
+  gap:14px;
+  padding:7px 6px 7px 0;
+  cursor:pointer;
+  border-radius:var(--radius-sm);
+  transition:background .12s ease;
+  width:100%;
+  text-align:left;
+  font-family:var(--font-body);
+  color:var(--txt-soft);
+}
+.tnode:hover{ background:rgba(143,176,214,.06); color:var(--txt); }
+.tnode .tdot{
+  width:30px; height:30px;
+  border-radius:50%;
+  border:2px solid var(--zone-color, var(--line-2));
+  background:var(--panel);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:11px;
+  color:var(--txt);
+  z-index:2;
+  flex-shrink:0;
+  transition:all .15s ease;
+  font-variant-numeric:tabular-nums;
+}
+.tnode:hover .tdot{ transform:scale(1.08); }
+.tnode.done .tdot{
+  background:var(--success);
+  border-color:var(--success);
+  color:#fff;
+}
+.tnode.done .tdot::after{
+  content:"✓"; font-size:14px;
+}
+.tnode.done .tdot .tnum{ display:none; }
+.tnode.selected .tdot{
+  border-color:var(--amber);
+  box-shadow:0 0 0 3px rgba(143,176,214,.25);
+  transform:scale(1.1);
+}
+.tnode.selected{
+  background:rgba(143,176,214,.08);
+  color:var(--txt);
+}
+.tnode-info{
+  display:flex; flex-direction:column;
+  gap:2px;
+  min-width:0; flex:1;
+}
+.tnode-zone{
+  font-size:10.5px;
+  font-family:var(--font-display);
+  font-weight:600;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--zone-color, var(--txt-mute));
+  display:flex; align-items:center; gap:5px;
+}
+.tnode-preview{
+  font-size:13px;
+  line-height:1.4;
+  color:inherit;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+.tnode.dimmed{ opacity:.25; pointer-events:none; }
+
+/* VISTA POR DOFUS · placeholder "próximamente" ------------------------------*/
+.coming-soon{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--txt-soft);
+}
+.coming-soon .cs-ico{
+  font-size:56px;
+  color:var(--amber);
+  opacity:.4;
+  margin-bottom:14px;
+  font-family:var(--font-display);
+  font-weight:300;
+}
+.coming-soon h3{
+  font-family:var(--font-display);
+  font-size:18px; font-weight:700;
+  letter-spacing:1.5px;
+  margin:0 0 8px;
+  color:var(--txt);
+  text-transform:uppercase;
+}
+.coming-soon p{
+  margin:0 auto;
+  max-width:480px;
+  font-size:13.5px;
+  line-height:1.6;
+  color:var(--txt-soft);
+}
+.coming-soon p b{ color:var(--txt); }
 
 /* PANEL DETALLE · estilo "panel derecho Aventura/Guía" -----------------------*/
 .detail-panel{
@@ -1097,10 +1335,20 @@ footer small{ color:var(--line-warm); }
 
   <!-- LAYOUT PRINCIPAL -->
   <div class="main-layout">
-    <!-- GRID -->
-    <section class="grid-section" aria-label="Tablero de pasos">
-      <h2 class="section-title">Tablero · 100 pasos</h2>
-      <div class="grid" id="grid" role="grid"></div>
+    <!-- CONTENEDOR DE VISTAS -->
+    <section class="view-section" aria-label="Tablero de pasos">
+      <div class="view-header">
+        <h2 class="section-title" id="viewTitle">Tablero · 100 pasos</h2>
+        <div class="view-switcher" role="tablist" aria-label="Cambiar vista">
+          <button class="vbtn active" data-view="linear" role="tab" aria-selected="true">Lineal</button>
+          <button class="vbtn" data-view="zone" role="tab" aria-selected="false">Por zona</button>
+          <button class="vbtn" data-view="timeline" role="tab" aria-selected="false">Timeline</button>
+          <button class="vbtn" data-view="dofus" role="tab" aria-selected="false">
+            Por Dofus <span class="vbadge">Pronto</span>
+          </button>
+        </div>
+      </div>
+      <div id="viewContainer" class="view-container"></div>
     </section>
 
     <!-- PANEL DETALLE (desktop) -->
@@ -1283,12 +1531,14 @@ const LS = {
   theme: "silvestre:theme",
   notaDismissed: "silvestre:notaDismissed",
   prereqsOpen: "silvestre:prereqsOpen",
+  view: "silvestre:view",
 };
 
 const state = {
   done: JSON.parse(localStorage.getItem(LS.done) || "{}"),
   prereqs: JSON.parse(localStorage.getItem(LS.prereqs) || "{}"),
   theme: localStorage.getItem(LS.theme) || "dark",
+  view: localStorage.getItem(LS.view) || "linear",
   selectedStep: null,
   filters: {
     zones: new Set(),
@@ -1468,10 +1718,12 @@ function toggleFilter(kind, value, el) {
 }
 
 function applyFilters() {
-  $$(".cell").forEach(cell => {
-    const n = Number(cell.dataset.n);
+  // Aplica dim a celdas del grid lineal y zona, y a nodos timeline
+  $$(".cell, .tnode").forEach(el => {
+    const n = Number(el.dataset.n);
+    if (!n) return;
     const s = STEPS[n - 1];
-    cell.classList.toggle("dimmed", !stepMatches(s));
+    el.classList.toggle("dimmed", !stepMatches(s));
   });
   $("#clearBtn").classList.toggle("hidden", !hasActiveFilters());
 }
@@ -1488,42 +1740,166 @@ function clearFilters() {
 }
 
 // ============================================================================
-// RENDER: GRID
+// RENDER: VISTAS (linear, zone, timeline, dofus)
 // ============================================================================
-function renderGrid() {
-  const g = $("#grid");
-  g.innerHTML = "";
+
+// Helper para crear una celda del grid (compartido entre lineal y por-zona)
+function makeCell(s) {
+  const cell = document.createElement("button");
+  cell.className = "cell" + (isDone(s.n) ? " done" : "");
+  cell.dataset.n = s.n;
+  cell.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
+  cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
+  cell.innerHTML = `<span class="num">${s.n}</span>`;
+  cell.addEventListener("click", () => selectStep(s.n));
+  return cell;
+}
+
+function renderLinearView(container) {
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  grid.id = "grid";
+  grid.setAttribute("role", "grid");
+  STEPS.forEach(s => grid.appendChild(makeCell(s)));
+  container.appendChild(grid);
+}
+
+function renderZoneView(container) {
+  // Agrupar pasos por zona, orden por primera aparición
+  const groups = new Map(); // zone -> [steps]
   STEPS.forEach(s => {
-    const cell = document.createElement("button");
-    cell.className = "cell" + (isDone(s.n) ? " done" : "");
-    cell.dataset.n = s.n;
-    cell.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
-    cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
-    cell.innerHTML = `<span class="num">${s.n}</span>`;
-    cell.addEventListener("click", () => selectStep(s.n));
-    g.appendChild(cell);
+    if (!groups.has(s.zone)) groups.set(s.zone, []);
+    groups.get(s.zone).push(s);
   });
+  const list = document.createElement("div");
+  list.className = "zones-list";
+  groups.forEach((steps, zone) => {
+    const done = steps.filter(s => isDone(s.n)).length;
+    const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
+    const block = document.createElement("div");
+    block.className = "zone-block";
+    block.style.setProperty("--zone-color", ZONE_COLOR[zone]);
+    block.innerHTML = `
+      <div class="zone-block-head">
+        <span class="zdot" aria-hidden="true"></span>
+        <span class="zname">${escapeHtml(zone)}</span>
+        <div class="zbar" aria-hidden="true"><div class="zbar-fill" style="width:${pct}%"></div></div>
+        <span class="zstats"><b>${done}</b>/${steps.length} · ${pct}%</span>
+      </div>
+      <div class="zone-block-grid"></div>
+    `;
+    const grid = block.querySelector(".zone-block-grid");
+    steps.forEach(s => grid.appendChild(makeCell(s)));
+    list.appendChild(block);
+  });
+  container.appendChild(list);
+}
+
+function renderTimelineView(container) {
+  const tl = document.createElement("div");
+  tl.className = "timeline";
+  STEPS.forEach(s => {
+    const node = document.createElement("button");
+    node.className = "tnode" + (isDone(s.n) ? " done" : "");
+    node.dataset.n = s.n;
+    node.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
+    node.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
+    // Preview: primera línea del texto (hasta el primer salto o 110 chars)
+    const firstLine = s.text.split("\n")[0];
+    const preview = firstLine.length > 140 ? firstLine.slice(0, 137) + "…" : firstLine;
+    node.innerHTML = `
+      <div class="tdot"><span class="tnum">${s.n}</span></div>
+      <div class="tnode-info">
+        <span class="tnode-zone">${escapeHtml(s.zone)} · Paso ${s.n}</span>
+        <span class="tnode-preview">${escapeHtml(preview)}</span>
+      </div>
+    `;
+    node.addEventListener("click", () => selectStep(s.n));
+    tl.appendChild(node);
+  });
+  container.appendChild(tl);
+}
+
+function renderDofusView(container) {
+  container.innerHTML = `
+    <div class="coming-soon">
+      <div class="cs-ico" aria-hidden="true">◇</div>
+      <h3>Próximamente</h3>
+      <p>Esta vista agrupará los pasos por el <b>Dofus</b> que estás obteniendo en cada momento (Esmeralda, Turquesa, Púrpura, Marfil, Ébano, Silvestre). Requiere mapear cada paso a su Dofus correspondiente — trabajo en curso.</p>
+    </div>
+  `;
+}
+
+// Router de vistas
+const VIEWS = {
+  linear:   { label: "Lineal",    title: "Tablero · 100 pasos",   render: renderLinearView,   hasFilters: true },
+  zone:     { label: "Por zona",  title: "Pasos agrupados por zona", render: renderZoneView,  hasFilters: true },
+  timeline: { label: "Timeline",  title: "Línea de tiempo · 1 → 100", render: renderTimelineView, hasFilters: true },
+  dofus:    { label: "Por Dofus", title: "Pasos por Dofus asociado",  render: renderDofusView, hasFilters: false },
+};
+
+function renderView() {
+  const v = VIEWS[state.view] || VIEWS.linear;
+  const container = $("#viewContainer");
+  container.innerHTML = "";
+  v.render(container);
+  $("#viewTitle").textContent = v.title;
+  // Sync switcher
+  $$(".vbtn").forEach(b => {
+    const active = b.dataset.view === state.view;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-selected", String(active));
+  });
+  // Reaplicar filtros y selección sobre los nuevos elementos
+  applyFilters();
+  updateSelectedCell();
+}
+
+function setView(v) {
+  if (!VIEWS[v]) return;
+  state.view = v;
+  localStorage.setItem(LS.view, v);
+  renderView();
 }
 
 function updateCell(n) {
-  const cell = document.querySelector(`.cell[data-n="${n}"]`);
-  if (!cell) return;
-  const wasDone = cell.classList.contains("done");
+  // Actualiza CUALQUIER representación del paso en la vista actual (celda o nodo)
+  const els = document.querySelectorAll(`[data-n="${n}"]`);
+  if (!els.length) return;
   const nowDone = isDone(n);
-  cell.classList.toggle("done", nowDone);
-  if (!wasDone && nowDone) {
-    cell.classList.add("just-completed");
-    setTimeout(() => cell.classList.remove("just-completed"), 600);
-  }
   const s = STEPS[n - 1];
-  cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${nowDone ? " — completado" : ""}`);
+  els.forEach(el => {
+    const wasDone = el.classList.contains("done");
+    el.classList.toggle("done", nowDone);
+    if (!wasDone && nowDone && el.classList.contains("cell")) {
+      el.classList.add("just-completed");
+      setTimeout(() => el.classList.remove("just-completed"), 600);
+    }
+    el.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${nowDone ? " — completado" : ""}`);
+  });
+  // Si estamos en vista por zona, actualizar el header de la zona afectada
+  if (state.view === "zone") updateZoneHeader(s.zone);
+}
+
+function updateZoneHeader(zone) {
+  const block = document.querySelector(`.zone-block[style*="${ZONE_COLOR[zone].replace(/[()]/g, "\\$&")}"]`)
+              || [...document.querySelectorAll(".zone-block")].find(b => b.querySelector(".zname")?.textContent === zone);
+  if (!block) return;
+  const steps = STEPS.filter(s => s.zone === zone);
+  const done = steps.filter(s => isDone(s.n)).length;
+  const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
+  const stats = block.querySelector(".zstats");
+  const fill = block.querySelector(".zbar-fill");
+  if (stats) stats.innerHTML = `<b>${done}</b>/${steps.length} · ${pct}%`;
+  if (fill) fill.style.width = pct + "%";
 }
 
 function updateSelectedCell() {
-  $$(".cell.selected").forEach(c => c.classList.remove("selected"));
+  $$(".cell.selected, .tnode.selected").forEach(c => c.classList.remove("selected"));
   if (state.selectedStep != null) {
-    const c = document.querySelector(`.cell[data-n="${state.selectedStep}"]`);
-    if (c) c.classList.add("selected");
+    document.querySelectorAll(`[data-n="${state.selectedStep}"]`).forEach(el => {
+      el.classList.add("selected");
+    });
   }
 }
 
@@ -1692,9 +2068,9 @@ function goToNextPending() {
   const n = nextPending();
   if (n == null) return;
   selectStep(n);
-  // Scroll al grid en desktop, al sheet ya está abierto en mobile
+  // Scroll al elemento del paso en la vista actual (celda o nodo)
   if (!isMobile()) {
-    document.querySelector(`.cell[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.querySelector(`[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 }
 
@@ -1790,10 +2166,14 @@ function init() {
   applyTheme(state.theme);
   if (localStorage.getItem(LS.notaDismissed) === "1") $("#nota").classList.add("hidden");
   renderChips();
-  renderGrid();
+  renderView();
   renderPrereqs();
   renderHero();
   renderDetail();
+  // Wire view switcher
+  $$(".vbtn").forEach(b => {
+    b.addEventListener("click", () => setView(b.dataset.view));
+  });
   // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
   const savedOpen = localStorage.getItem(LS.prereqsOpen);
   if (savedOpen === "1" || (savedOpen === null && prereqsPending() > 0)) {
