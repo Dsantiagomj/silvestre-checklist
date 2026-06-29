@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dofus Silvestre · Checklist</title>
+<meta name="description" content="Checklist del Dofus Silvestre — guía de Sandglass con sistema de progreso ponderado por esfuerzo.">
+<style>
+/* ============================================================================
+   TEMA Y VARIABLES
+   ============================================================================ */
+:root{
+  --bg:#0a0e1a; --bg2:#131829; --card:#161c30; --card2:#1c2640;
+  --txt:#e8e8e8; --txt-dim:#9aa6c0; --txt-faint:#6b7896;
+  --line:#26304d; --line2:#1a2138;
+  --turq:#00d4d4; --turq2:#00a4a4;
+  --gold:#f4c430; --gold2:#d4a017;
+  --green:#3fbf6f; --blue:#3f8fdf; --yellow:#e6b13a; --orange:#e07a2f; --purple:#a05cd6; --red:#e05c5c; --pink:#e070b5; --teal:#3fbfbf;
+  --shadow:0 6px 24px rgba(0,0,0,.45);
+  --shadow-lg:0 12px 36px rgba(0,0,0,.55);
+  --glow-turq:0 0 18px color-mix(in srgb, var(--turq) 50%, transparent);
+  --glow-gold:0 0 18px color-mix(in srgb, var(--gold) 50%, transparent);
+  --radius:14px;
+  --radius-sm:10px;
+  --fontstack:'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --maxw:1280px;
+  --header-h:60px;
+  --sticky-bar-h:48px;
+}
+[data-theme="light"]{
+  --bg:#f5ecd9; --bg2:#faf5e6; --card:#fffaf0; --card2:#f3e9d2;
+  --txt:#1a1a1a; --txt-dim:#6b5d44; --txt-faint:#9a8d70;
+  --line:#e0d3b4; --line2:#ede1c2;
+  --turq:#0a8a8a; --turq2:#0a6f6f;
+  --gold:#b8860b; --gold2:#9c7009;
+  --green:#2f9d57; --blue:#2f6fbf; --yellow:#bf8f15; --orange:#c2641f; --purple:#7e44b0; --red:#b0392f; --pink:#b04d8a; --teal:#2f9494;
+  --shadow:0 6px 20px rgba(120,90,30,.18);
+  --shadow-lg:0 10px 32px rgba(120,90,30,.25);
+  --glow-turq:0 0 16px color-mix(in srgb, var(--turq) 40%, transparent);
+  --glow-gold:0 0 16px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* ============================================================================
+   RESET Y BASE
+   ============================================================================ */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+body{
+  margin:0; font-family:var(--fontstack); background:var(--bg); color:var(--txt);
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+  transition:background .4s ease, color .4s ease;
+  min-height:100vh;
+}
+button{font-family:inherit; color:inherit; cursor:pointer}
+input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--turq); outline-offset:2px; border-radius:6px}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px}
+@media (max-width:600px){ .wrap{padding:0 12px} }
+
+/* ============================================================================
+   HEADER + STICKY COMPACT BAR
+   ============================================================================ */
+header{
+  position:sticky; top:0; z-index:60; backdrop-filter:blur(12px);
+  background:color-mix(in srgb, var(--bg) 86%, transparent);
+  border-bottom:1px solid var(--line);
+  transition:background .4s ease, border-color .4s ease;
+}
+.hbar{display:flex; align-items:center; gap:10px; padding:10px 16px; max-width:var(--maxw); margin:0 auto; min-height:var(--header-h)}
+.logo{font-weight:800; letter-spacing:2.5px; font-size:16px; display:flex; align-items:center; gap:10px; user-select:none}
+.logo .dot{
+  width:14px; height:14px; border-radius:50%;
+  background:linear-gradient(135deg, var(--turq), var(--gold));
+  box-shadow:0 0 14px var(--turq); flex-shrink:0;
+}
+.logo b{
+  background:linear-gradient(90deg, var(--turq), var(--gold));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.spacer{flex:1}
+.hbtn{
+  background:var(--card); color:var(--txt); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:8px 12px; font-size:13.5px;
+  transition:all .2s ease; display:inline-flex; align-items:center; gap:6px;
+  white-space:nowrap;
+}
+.hbtn:hover{border-color:var(--turq); box-shadow:var(--glow-turq); transform:translateY(-1px)}
+.hbtn.danger:hover{border-color:var(--red); box-shadow:0 0 14px color-mix(in srgb,var(--red) 45%,transparent)}
+@media (max-width:600px){
+  .hbtn{padding:7px 10px; font-size:12.5px}
+  .hbtn .lbl{display:none}
+  .logo{font-size:14px; letter-spacing:2px}
+}
+
+/* Sticky compact bar (aparece al hacer scroll) */
+.sticky-bar{
+  position:sticky; top:var(--header-h); z-index:55;
+  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  padding:10px 16px;
+  display:flex; align-items:center; gap:12px;
+  max-width:var(--maxw); margin:0 auto;
+  min-height:var(--sticky-bar-h);
+  opacity:0; transform:translateY(-100%); pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+}
+.sticky-bar.visible{opacity:1; transform:translateY(0); pointer-events:auto}
+.sticky-bar .pct{font-weight:800; font-size:18px; color:var(--gold); min-width:50px}
+.sticky-bar .bar-mini{
+  flex:1; height:8px; background:color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius:999px; overflow:hidden; border:1px solid var(--line);
+}
+.sticky-bar .bar-mini-fill{
+  height:100%; background:linear-gradient(90deg, var(--turq), var(--gold));
+  width:0%; transition:width .7s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 0 8px color-mix(in srgb, var(--turq) 50%, transparent);
+}
+.sticky-bar .stat{font-size:13px; color:var(--txt-dim); white-space:nowrap}
+.sticky-bar .stat b{color:var(--txt)}
+@media (max-width:700px){
+  .sticky-bar .stat.hide-sm{display:none}
+}
+
+/* ============================================================================
+   HERO
+   ============================================================================ */
+.hero{
+  background:linear-gradient(160deg, var(--card), var(--card2));
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:28px 24px;
+  margin:20px 0;
+  box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+}
+.hero::before{
+  content:""; position:absolute; inset:-1px;
+  background:radial-gradient(circle at top right, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 50%);
+  pointer-events:none;
+}
+.hero-title{
+  font-size:13px; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--txt-dim);
+  margin:0 0 4px;
+}
+.hero-pct{
+  font-size:clamp(56px, 12vw, 96px); font-weight:800; line-height:1;
+  margin:8px 0 18px; letter-spacing:1px;
+  background:linear-gradient(90deg, var(--turq), var(--gold));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  position:relative;
+  font-variant-numeric:tabular-nums;
+}
+.bar-outer{
+  background:color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius:999px; height:24px; overflow:hidden; position:relative;
+  border:1px solid var(--line);
+}
+.bar-fill{
+  height:100%; border-radius:999px;
+  background:linear-gradient(90deg, var(--turq), var(--gold));
+  width:0%;
+  transition:width .8s cubic-bezier(.22,1,.36,1);
+  box-shadow:var(--glow-turq);
+  position:relative;
+}
+.bar-fill::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb, white 25%, transparent), transparent);
+  background-size:200% 100%;
+  animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.hero-stats{
+  display:flex; flex-wrap:wrap; gap:8px 22px;
+  margin-top:14px; font-size:14px; color:var(--txt-dim);
+  font-variant-numeric:tabular-nums;
+}
+.hero-stats b{color:var(--txt); font-weight:700}
+.hero-stats .sep{color:var(--txt-faint)}
+.hero-warn{
+  display:inline-flex; align-items:center; gap:6px;
+  background:color-mix(in srgb, var(--orange) 18%, var(--card));
+  border:1px solid color-mix(in srgb, var(--orange) 50%, var(--line));
+  color:var(--txt);
+  padding:6px 12px; border-radius:999px; font-size:13px;
+  margin-bottom:14px;
+  cursor:pointer; transition:all .2s ease;
+}
+.hero-warn:hover{transform:translateY(-1px); box-shadow:0 0 14px color-mix(in srgb,var(--orange) 40%,transparent)}
+.hero-warn.hidden{display:none}
+
+@media (max-width:600px){
+  .hero{padding:20px 16px; margin:12px 0}
+}
+
+/* ============================================================================
+   NOTA ACLARATORIA
+   ============================================================================ */
+.nota{
+  background:color-mix(in srgb, var(--blue) 12%, var(--card));
+  border:1px solid color-mix(in srgb, var(--blue) 40%, var(--line));
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+  font-size:13.5px; color:var(--txt);
+  display:flex; gap:10px; align-items:flex-start;
+  margin-bottom:16px;
+}
+.nota .ic{font-size:18px; line-height:1.2; flex-shrink:0}
+.nota .close{
+  margin-left:auto; background:transparent; border:none; color:var(--txt-dim);
+  font-size:18px; cursor:pointer; padding:0 4px; line-height:1;
+}
+.nota .close:hover{color:var(--txt)}
+.nota.hidden{display:none}
+
+/* ============================================================================
+   PRERREQUISITOS (acordeón)
+   ============================================================================ */
+.prereqs{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); overflow:hidden;
+  margin-bottom:16px;
+}
+.prereqs-head{
+  padding:14px 16px; display:flex; align-items:center; gap:10px;
+  cursor:pointer; user-select:none;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--purple) 8%, var(--card)), var(--card));
+  border:none; width:100%; text-align:left;
+  transition:background .2s ease;
+}
+.prereqs-head:hover{background:color-mix(in srgb, var(--purple) 14%, var(--card))}
+.prereqs-head .chev{
+  font-size:14px; color:var(--txt-dim);
+  transition:transform .25s ease; display:inline-block;
+}
+.prereqs.open .prereqs-head .chev{transform:rotate(90deg)}
+.prereqs-head h2{
+  margin:0; font-size:15px; font-weight:700;
+  letter-spacing:.5px; flex:1;
+}
+.prereqs-head .count{
+  color:var(--txt-dim); font-size:13.5px; font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+.prereqs-head .count.pending{color:var(--orange); font-weight:700}
+.prereqs-body{
+  max-height:0; overflow:hidden;
+  transition:max-height .35s ease;
+}
+.prereqs.open .prereqs-body{max-height:2400px}
+.prereqs-content{padding:14px 16px 18px}
+.prereqs-intro{
+  font-size:13.5px; color:var(--txt-dim); margin:0 0 16px;
+  line-height:1.6;
+}
+.prereqs-group{margin-bottom:14px}
+.prereqs-group:last-child{margin-bottom:0}
+.prereqs-group h3{
+  font-size:12px; text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--turq); margin:0 0 8px; font-weight:700;
+}
+.prereq-item{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:8px 10px; border-radius:8px;
+  cursor:pointer; transition:background .15s ease;
+  user-select:none;
+}
+.prereq-item:hover{background:color-mix(in srgb, var(--turq) 8%, transparent)}
+.prereq-item .chk{
+  width:18px; height:18px; border:2px solid var(--line);
+  border-radius:5px; flex-shrink:0; margin-top:2px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s ease;
+  background:var(--bg2);
+}
+.prereq-item.done .chk{
+  background:linear-gradient(135deg, var(--green), color-mix(in srgb, var(--green) 60%, black));
+  border-color:var(--green);
+}
+.prereq-item.done .chk::after{
+  content:"✓"; color:white; font-weight:800; font-size:13px;
+}
+.prereq-item.done .txt{
+  opacity:.55; text-decoration:line-through;
+  text-decoration-color:color-mix(in srgb, var(--green) 70%, transparent);
+}
+.prereq-item .txt{font-size:13.5px; line-height:1.5; color:var(--txt)}
+
+/* ============================================================================
+   FILTROS
+   ============================================================================ */
+.filters{
+  display:flex; flex-direction:column; gap:10px;
+  margin-bottom:16px;
+}
+.filter-row{
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+}
+.filter-row .lbl{
+  font-size:12px; text-transform:uppercase; letter-spacing:1.5px;
+  color:var(--txt-dim); font-weight:700; margin-right:4px;
+}
+.chip{
+  background:var(--card); border:1.5px solid var(--line);
+  border-radius:999px; padding:6px 12px; font-size:12.5px;
+  display:inline-flex; align-items:center; gap:6px;
+  cursor:pointer; transition:all .2s ease; user-select:none;
+  white-space:nowrap;
+}
+.chip:hover{transform:translateY(-1px)}
+.chip.active{
+  background:color-mix(in srgb, var(--turq) 20%, var(--card));
+  border-color:var(--turq); color:var(--txt);
+  box-shadow:var(--glow-turq);
+}
+.chip[data-type="zone"].active{
+  background:color-mix(in srgb, var(--zone-color, var(--turq)) 25%, var(--card));
+  border-color:var(--zone-color, var(--turq));
+  box-shadow:0 0 14px color-mix(in srgb, var(--zone-color, var(--turq)) 45%, transparent);
+}
+.chip .dot{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--zone-color, var(--turq)); flex-shrink:0;
+}
+.chip .ico{font-size:14px; line-height:1}
+.chips-scroll{
+  display:flex; gap:8px; overflow-x:auto;
+  padding-bottom:4px; flex-wrap:wrap;
+  scrollbar-width:thin;
+}
+@media (max-width:700px){
+  .chips-scroll{flex-wrap:nowrap; padding-bottom:8px}
+}
+.search{
+  flex:1; min-width:200px;
+  background:var(--card); border:1.5px solid var(--line);
+  border-radius:var(--radius-sm); padding:8px 12px;
+  color:var(--txt); font-size:13.5px;
+  transition:all .2s ease;
+}
+.search:focus{outline:none; border-color:var(--turq); box-shadow:var(--glow-turq)}
+.toggle{
+  display:inline-flex; align-items:center; gap:8px;
+  cursor:pointer; font-size:13px; color:var(--txt); user-select:none;
+  padding:6px 10px; border-radius:8px;
+  transition:background .15s ease;
+}
+.toggle:hover{background:color-mix(in srgb, var(--turq) 8%, transparent)}
+.toggle input{position:absolute; opacity:0; pointer-events:none}
+.toggle .sw{
+  width:34px; height:20px; background:var(--line); border-radius:999px;
+  position:relative; transition:background .2s ease;
+}
+.toggle .sw::after{
+  content:""; position:absolute; top:2px; left:2px;
+  width:16px; height:16px; border-radius:50%; background:var(--txt-dim);
+  transition:all .2s ease;
+}
+.toggle input:checked + .sw{background:color-mix(in srgb, var(--turq) 70%, var(--line))}
+.toggle input:checked + .sw::after{left:16px; background:var(--turq)}
+.clear-btn{
+  background:transparent; border:1px solid var(--line);
+  border-radius:8px; padding:5px 10px; font-size:12px;
+  color:var(--txt-dim); transition:all .2s ease;
+}
+.clear-btn:hover{border-color:var(--red); color:var(--red)}
+.clear-btn.hidden{display:none}
+
+/* ============================================================================
+   LAYOUT PRINCIPAL (Grid + Detalle)
+   ============================================================================ */
+.main-layout{
+  display:grid;
+  grid-template-columns:1fr 1.1fr;
+  gap:20px;
+  margin-bottom:24px;
+  align-items:start;
+}
+@media (max-width:1100px){
+  .main-layout{grid-template-columns:1fr 1fr}
+}
+@media (max-width:900px){
+  .main-layout{grid-template-columns:1fr}
+}
+
+/* ============================================================================
+   GRID DE PASOS
+   ============================================================================ */
+.grid-section{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); padding:16px;
+  box-shadow:var(--shadow);
+}
+.grid-section h2{
+  margin:0 0 12px; font-size:13px; text-transform:uppercase;
+  letter-spacing:1.5px; color:var(--txt-dim); font-weight:700;
+  display:flex; align-items:center; gap:8px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(10, 1fr);
+  gap:6px;
+}
+@media (max-width:600px){
+  .grid{grid-template-columns:repeat(5, 1fr); gap:8px}
+}
+.cell{
+  aspect-ratio:1/1;
+  background:var(--bg2);
+  border:2px solid var(--zone-color, var(--line));
+  border-radius:10px;
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:all .35s cubic-bezier(.22,1,.36,1);
+  padding:0; font-family:inherit; color:inherit;
+  overflow:hidden;
+}
+.cell .num{
+  font-size:clamp(13px, 2.2vw, 18px);
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.5px;
+  z-index:2;
+  line-height:1;
+}
+.cell .tier-ico{
+  position:absolute; bottom:3px; right:4px;
+  font-size:10px; opacity:.85; line-height:1;
+  z-index:2;
+}
+.cell:hover{
+  transform:scale(1.08);
+  box-shadow:0 0 14px color-mix(in srgb, var(--turq) 60%, transparent);
+  z-index:3;
+}
+.cell.done{
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  border-color:var(--gold);
+  box-shadow:0 0 12px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.cell.done .num{color:#1a1a1a}
+.cell.done .tier-ico{opacity:.7}
+.cell.selected{
+  border-width:3px;
+  border-color:var(--turq) !important;
+  box-shadow:0 0 18px var(--turq);
+  transform:scale(1.05);
+  z-index:4;
+}
+.cell.selected.done{
+  border-color:var(--turq) !important;
+}
+.cell.dimmed{opacity:.18; pointer-events:none; transform:scale(.95)}
+.cell:active{transform:scale(.96)}
+.cell.just-completed{
+  animation:pulse-gold .6s ease-out;
+}
+@keyframes pulse-gold{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.25); box-shadow:0 0 30px var(--gold)}
+  100%{transform:scale(1)}
+}
+
+/* ============================================================================
+   PANEL DE DETALLE
+   ============================================================================ */
+.detail-panel{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); padding:24px;
+  box-shadow:var(--shadow);
+  position:sticky; top:calc(var(--header-h) + var(--sticky-bar-h) + 12px);
+  max-height:calc(100vh - var(--header-h) - var(--sticky-bar-h) - 24px);
+  overflow-y:auto;
+}
+.detail-empty{
+  text-align:center; padding:32px 16px; color:var(--txt-dim);
+}
+.detail-empty .map-ico{
+  font-size:56px; margin-bottom:12px; opacity:.6;
+}
+.detail-empty p{margin:0 0 16px; font-size:14.5px}
+
+.detail-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px; margin-bottom:14px;
+}
+.detail-num{
+  font-size:42px; font-weight:800; line-height:1;
+  background:linear-gradient(135deg, var(--turq), var(--gold));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  letter-spacing:-1px;
+}
+.detail-close{
+  background:transparent; border:1px solid var(--line);
+  border-radius:8px; width:32px; height:32px;
+  font-size:16px; color:var(--txt-dim);
+  transition:all .2s ease; flex-shrink:0;
+}
+.detail-close:hover{border-color:var(--red); color:var(--red)}
+.detail-badges{
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;
+}
+.badge{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:999px;
+  font-size:12px; font-weight:600;
+  background:var(--bg2); border:1px solid var(--line);
+}
+.badge.zone{
+  background:color-mix(in srgb, var(--zone-color, var(--turq)) 18%, var(--card));
+  border-color:color-mix(in srgb, var(--zone-color, var(--turq)) 50%, var(--line));
+  color:var(--txt);
+}
+.badge.zone .dot{
+  width:7px; height:7px; border-radius:50%;
+  background:var(--zone-color, var(--turq));
+}
+.badge.tier{background:var(--bg2)}
+.badge.tier.t-trivial{border-color:color-mix(in srgb, var(--green) 60%, var(--line)); color:var(--green)}
+.badge.tier.t-corto{border-color:color-mix(in srgb, var(--blue) 60%, var(--line)); color:var(--blue)}
+.badge.tier.t-medio{border-color:color-mix(in srgb, var(--yellow) 60%, var(--line)); color:var(--yellow)}
+.badge.tier.t-largo{border-color:color-mix(in srgb, var(--orange) 60%, var(--line)); color:var(--orange)}
+.badge.tier.t-epico{
+  border-color:color-mix(in srgb, var(--purple) 60%, var(--line)); color:var(--purple);
+  background:color-mix(in srgb, var(--purple) 15%, var(--bg2));
+}
+.detail-weight{
+  font-size:12.5px; color:var(--txt-dim);
+  margin-bottom:14px;
+}
+.detail-weight b{color:var(--gold); font-weight:700}
+.detail-text{
+  background:var(--bg2); border-left:3px solid var(--turq);
+  border-radius:8px; padding:14px 16px;
+  font-size:14.5px; line-height:1.65;
+  white-space:pre-wrap; word-wrap:break-word;
+  margin-bottom:18px;
+  color:var(--txt);
+}
+.detail-cta{
+  display:flex; flex-direction:column; gap:10px;
+}
+.btn-primary{
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  color:#1a1a1a; border:none; font-weight:700;
+  padding:14px 20px; border-radius:var(--radius-sm);
+  font-size:15px; letter-spacing:.5px;
+  transition:all .25s ease;
+  box-shadow:0 4px 14px color-mix(in srgb, var(--gold) 40%, transparent);
+}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 6px 20px color-mix(in srgb, var(--gold) 60%, transparent)}
+.btn-primary.is-done{
+  background:linear-gradient(135deg, var(--bg2), var(--card));
+  color:var(--txt-dim); border:1px solid var(--line);
+  box-shadow:none;
+}
+.btn-primary.is-done:hover{border-color:var(--red); color:var(--red)}
+.detail-nav{
+  display:flex; gap:8px;
+}
+.btn-nav{
+  flex:1; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:10px 12px;
+  font-size:13px; color:var(--txt);
+  transition:all .2s ease;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.btn-nav:hover:not(:disabled){border-color:var(--turq); transform:translateY(-1px)}
+.btn-nav:disabled{opacity:.4; cursor:not-allowed}
+.btn-secondary{
+  background:transparent; border:1px dashed var(--turq); color:var(--turq);
+  border-radius:var(--radius-sm); padding:10px 14px;
+  font-size:13px; font-weight:600;
+  transition:all .2s ease;
+}
+.btn-secondary:hover{background:color-mix(in srgb, var(--turq) 12%, transparent)}
+
+/* ============================================================================
+   BOTTOM SHEET (mobile only)
+   ============================================================================ */
+.sheet-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:99;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s ease;
+}
+.sheet-overlay.open{opacity:1; pointer-events:auto}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0;
+  background:var(--card); border-top:1px solid var(--line);
+  border-radius:20px 20px 0 0;
+  z-index:100; max-height:85vh;
+  transform:translateY(100%);
+  transition:transform .3s ease;
+  box-shadow:0 -10px 40px rgba(0,0,0,.5);
+  display:flex; flex-direction:column;
+}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{
+  display:flex; justify-content:center;
+  padding:10px 0 4px; cursor:grab;
+  touch-action:none;
+}
+.sheet-handle .bar{
+  width:42px; height:4px; border-radius:999px;
+  background:var(--line);
+}
+.sheet-handle:active{cursor:grabbing}
+.sheet-content{
+  overflow-y:auto; padding:8px 18px 28px;
+  -webkit-overflow-scrolling:touch;
+}
+@media (min-width:901px){
+  .sheet,.sheet-overlay{display:none}
+}
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+footer{
+  border-top:1px solid var(--line);
+  padding:20px 16px 28px;
+  text-align:center; font-size:12.5px;
+  color:var(--txt-dim);
+  margin-top:24px;
+}
+footer b{color:var(--txt)}
+
+/* ============================================================================
+   UTIL
+   ============================================================================ */
+.hidden{display:none !important}
+.sr-only{
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* Scrollbar */
+*::-webkit-scrollbar{width:10px; height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--line); border-radius:5px}
+*::-webkit-scrollbar-thumb:hover{background:var(--turq)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hbar">
+    <div class="logo"><span class="dot" aria-hidden="true"></span><b>DOFUS SILVESTRE</b></div>
+    <div class="spacer"></div>
+    <button class="hbtn" id="themeBtn" aria-label="Cambiar tema">
+      <span id="themeIcon">☀️</span><span class="lbl" id="themeLbl">Modo claro</span>
+    </button>
+    <button class="hbtn danger" id="resetBtn" aria-label="Reiniciar progreso">
+      ↺<span class="lbl">Reiniciar</span>
+    </button>
+  </div>
+  <!-- Sticky compact bar (aparece al hacer scroll) -->
+  <div class="sticky-bar" id="stickyBar">
+    <div class="pct" id="sbPct">0%</div>
+    <div class="bar-mini"><div class="bar-mini-fill" id="sbFill"></div></div>
+    <div class="stat hide-sm"><b id="sbDone">0</b>/100 pasos</div>
+    <div class="stat hide-sm"><b id="sbPts">0</b>/960 pts</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" aria-label="Progreso global">
+    <p class="hero-title">Progreso del Dofus Silvestre</p>
+    <button class="hero-warn hidden" id="heroWarn" aria-label="Ver prerrequisitos pendientes">
+      ⚠️ <span id="heroWarnTxt">0 prerrequisitos pendientes</span>
+    </button>
+    <div class="hero-pct" id="heroPct">0%</div>
+    <div class="bar-outer"><div class="bar-fill" id="heroFill"></div></div>
+    <div class="hero-stats">
+      <span><b id="statDone">0</b>/100 pasos completados</span>
+      <span class="sep">·</span>
+      <span><b id="statPts">0</b>/960 puntos ponderados</span>
+      <span class="sep">·</span>
+      <span>Siguiente pendiente: <b id="statNext">—</b></span>
+    </div>
+  </section>
+
+  <!-- NOTA ACLARATORIA -->
+  <div class="nota" id="nota">
+    <span class="ic">💡</span>
+    <div>
+      <b>Aclaración:</b> La instrucción "Hasta tener que pasar X jefe de mazmorra" significa dejar pausada esa misión y no vencer al jefe en ese punto, ya que seguramente hay otra misión que pide pasar dicha mazmorra.
+    </div>
+    <button class="close" id="notaClose" aria-label="Cerrar nota">×</button>
+  </div>
+
+  <!-- PRERREQUISITOS -->
+  <div class="prereqs" id="prereqs">
+    <button class="prereqs-head" id="prereqsHead" aria-expanded="false" aria-controls="prereqsBody">
+      <span class="chev">▶</span>
+      <h2>Prerrequisitos</h2>
+      <span class="count" id="prereqsCount">0/18 completados</span>
+    </button>
+    <div class="prereqs-body" id="prereqsBody">
+      <div class="prereqs-content">
+        <p class="prereqs-intro" id="prereqsIntro"></p>
+        <div class="prereqs-group">
+          <h3>Logros previos requeridos</h3>
+          <div id="prereqsLogros"></div>
+        </div>
+        <div class="prereqs-group">
+          <h3>Niveles de oficios</h3>
+          <div id="prereqsOficios"></div>
+        </div>
+        <div class="prereqs-group">
+          <h3>Hechizos necesarios</h3>
+          <div id="prereqsHechizos"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <section class="filters" aria-label="Filtros">
+    <div class="filter-row">
+      <span class="lbl">Zonas:</span>
+      <div class="chips-scroll" id="zoneChips"></div>
+    </div>
+    <div class="filter-row">
+      <span class="lbl">Esfuerzo:</span>
+      <div class="chips-scroll" id="tierChips"></div>
+    </div>
+    <div class="filter-row">
+      <input type="search" class="search" id="searchInput" placeholder="🔎 Buscar por número o texto del paso…" aria-label="Buscar paso">
+      <label class="toggle">
+        <input type="checkbox" id="pendingToggle">
+        <span class="sw"></span>
+        Solo pendientes
+      </label>
+      <button class="clear-btn hidden" id="clearBtn">Limpiar filtros</button>
+    </div>
+  </section>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <div class="main-layout">
+    <!-- GRID -->
+    <section class="grid-section" aria-label="Tablero de pasos">
+      <h2>🗺️ Tablero · 100 pasos</h2>
+      <div class="grid" id="grid" role="grid"></div>
+    </section>
+
+    <!-- PANEL DETALLE (desktop) -->
+    <aside class="detail-panel" id="detailPanel" aria-label="Detalle del paso">
+      <div class="detail-empty" id="detailEmpty">
+        <div class="map-ico">🗺️</div>
+        <p>Selecciona un paso del tablero para ver el detalle completo</p>
+        <button class="btn-secondary" id="goNextEmpty">📍 Ir al siguiente pendiente</button>
+      </div>
+      <div id="detailContent" class="hidden"></div>
+    </aside>
+  </div>
+
+  <footer>
+    Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br>
+    Dofus es una marca de <b>Ankama</b>. Herramienta no oficial hecha por y para la comunidad.<br>
+    <small style="color:var(--txt-faint)">El progreso se guarda en tu navegador. Si cambias de dispositivo o borras la caché, se pierde.</small>
+  </footer>
+</div>
+
+<!-- BOTTOM SHEET (mobile) -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Detalle del paso">
+  <div class="sheet-handle" id="sheetHandle"><div class="bar"></div></div>
+  <div class="sheet-content" id="sheetContent"></div>
+</div>
+
+<script>
+// ============================================================================
+// DATASET — 100 pasos verbatim por Sandglass
+const STEPS = [
+  { n: 1, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Pero ¿Dónde están los dofus?\" (Completo) (Este paso incluye también el logro \"En marcha hacia la aventura\" y el logro \"Un ciudadano modelo\")" },
+  { n: 2, zone: "Astrub", effort: "largo", text: "Astrub: Logro \"La gran biblioteca.\" (Completo)" },
+  { n: 3, zone: "Astrub", effort: "corto", text: "Astrub: Logro \"Escapadas y emboscadas\" misión 3: Leñadores en peligro. Logro \"El hábitat urbano\", misión 3: ¡Cuidado con la bestia!" },
+  { n: 4, zone: "Krosmoz", effort: "trivial", text: "Krosmoz: Misión: \"Barnabé en el espacio\"." },
+  { n: 5, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Misterios del krosmoz\" misión 2: Las primeras impresiones son engañosas, misión 5: ¿Dónde se ha ido la 7ª compañía? (hasta que puedas entrar a la mazmorra Laboratorio de Brumen Tinctorias)" },
+  { n: 6, zone: "Justicieros", effort: "trivial", text: "Justicieros: Logro \"Aquí huele a supervillano muerto\" misión 1: Proteger y servir." },
+  { n: 7, zone: "Torres de la Hermandad", effort: "medio", text: "Torres de la hermandad: Logro \"El atardecer de los muertos\", misión 1: La cólera de los dioses, misión 2 (opcional pero útil): Arma letal. (Hasta tener que dropear sacrificios de armatudinados, quemaalmas, ghuls y malditos)" },
+  { n: 8, zone: "Cania", effort: "trivial", text: "Cania: Logro \"Caniablanca\", misión 3: Paf para la tribu." },
+  { n: 9, zone: "Sidimote", effort: "trivial", text: "Sidimote: Logro \"Las leguas muertas\", hasta la misión 2: Hacerse el muerto." },
+  { n: 10, zone: "Sidimote", effort: "medio", text: "Sidimote: Logro \"Entre lubos anda el juego\", misión 7: La bestia interior, misión 8: Encender la mecha. (Hasta tener que pasar Maxilubo)" },
+  { n: 11, zone: "Cania", effort: "corto", text: "Cania: Logro \"La viajera imprudente\", hasta llegar a la misión 3: La risueña miaumiena. (Hasta tener que pasar Kanigrula)" },
+  { n: 12, zone: "Dimensiones Divinas", effort: "corto", text: "Dimensiones divinas: Logro \"El alegre retirado\" misión 4: Espionaje industrial. (Este inciso incluye todos los requisitos necesarios para llegar a esta misión) Se obtiene el requisito para utilizar el ankla de Anutropía." },
+  { n: 13, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"La hermandad de los olvidados\" Hasta llegar a la misión 6: El daño de Búril. (Hasta la parte de ir a ver a Volkaragnar)" },
+  { n: 14, zone: "Sufokia", effort: "trivial", text: "Sufokia: Logro \"¡Plof!\", misión 1: A la pesca de información." },
+  { n: 15, zone: "Sufokia", effort: "medio", text: "Sufokia: Logro \"El mar por legado\", hasta la misión 4: Su nombre es ninguno. (Hasta después de pasar Capitán Meno y avanzar con la misión. IMPORTANTE: no pelear con el Selatrop fuera la mazmorra)" },
+  { n: 16, zone: "Animatopía", effort: "largo", text: "Animatopía: Logro \"Cazadores cazados\" (Completo) (Se pueden encadenar las misiones: Sin denominación de origen, El vals de los manuales, Nuestros amigos los animalitos y Shyriiwook para dropear al mismo tiempo)" },
+  { n: 17, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Verde esmeralda\" hasta llegar a la misión 7: Draconantopía. (hasta tener que pasar Maxilubo)\nSe pasa Maxilubo y se terminan las misiones de los incisos 10 y 17." },
+  { n: 18, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Verde esmeralda\". (Completo)\nSe recomienda el alineamiento Bontariano ya que gracias al aura de Djaul solo se requieren matar 50 monstruos en total en la misión del Dofus Silvestre, a diferencia de ser Neutral o Brakmariano que requiere matar 100 y 125 monstruos en total respectivamente de forma inevitable." },
+  { n: 19, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Púrpura profundo\", hasta la misión 4: A la leche caliente, batir de repente. (Hasta tener que pasar la mazmorra del Blop multicolor real)" },
+  { n: 20, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 19. (Hasta tener que pasar la mazmorra de los Blops)\nSe pasa Blop multicolor real y se terminan las misiones de los incisos 19 y 20." },
+  { n: 21, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Púrpura profundo\". (Completo) Se debe hacer en algún punto de este inciso la misión: Cómo perder la pluma. Se obtiene el requisito para utilizar el ankla de Sramville. Se pasa Jalamut real, requisito (1/2) para obtener el acceso a Cuna del alma." },
+  { n: 22, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 29. (Hasta tener que pasar la mazmorra Laboratorio de Brumen Tinctorias)\nSe pasa Nelwynn y se terminan las misiones de los incisos 4 y 22." },
+  { n: 23, zone: "Isla de Frigost", effort: "largo", text: "Isla de Frigost: Logro \"Frío al cubo\" (Completo)." },
+  { n: 24, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro: \"Jugar a los médicos\", misión 1: Los monólogos de la vacuna." },
+  { n: 25, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", hasta la misión 3: Los cazadores. (Hasta tener que pasar Morzagüino real)" },
+  { n: 26, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"La cantera de hielo\", hasta la misión 3: El recadero. (Hasta tener que luchar contra güinos y monstruos de la zona Bosque de los pinos perdidos)" },
+  { n: 27, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Problemas y soluciones\" misión 2 (opcional pero útil): Star ski y dutch\" (Hasta tener que luchar contra monstruos de la zona Bosque de los pinos perdidos), misión 4: La marcha de la emperatriz. (Hasta tener que luchar contra güinos)" },
+  { n: 28, zone: "Isla de Frigost", effort: "medio", text: "Isla de Frigost: Logro \"Pesca fresca fresquísima\", misión 1: Pesca en aguas congeladas. (Hasta tener que luchar contra güinos y posteriormente pasar Morzagúino real) (Se pueden dropear algunas grasas de güino en las primeras 4 salas de la mazmorra del Morsagüino Real)\nSe hacen las peleas correspondientes y se pasa Morsagüino real terminando las misiones de los incisos 25, 26, 27 y 28. Se obtiene el acceso a Cuna del alma. Se obtienen los skies.\nEn este punto se debe tomar la misión de la Isla de Frigost: Logro \"La cantera de hielo\", misión 4: Luces y sombras. No es necesario hacerla, solo tenerla tomada." },
+  { n: 29, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigsot: Misión: La pesca de Mel, Misión: Mel odiosa, Misión: Mel, o «dramática». (Se pueden abandonar las peleas, no es necesario ganar)" },
+  { n: 30, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro \"Pesca fresca fresquísima\", misión 2: ¡Qué fresco es mi pischis!" },
+  { n: 31, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", misión 4: Prefiere morir en el mar." },
+  { n: 32, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 1: Dragones y chapuzonas. (Se pasa dragocerdo y se deja pendiente roble blando)" },
+  { n: 33, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Ocre de ámbar\", hasta la misión 4: Muchos cuerboks en la cabeza. (Hasta tener que pasar Lasoberaña)" },
+  { n: 34, zone: "Reino de Amakna", effort: "medio", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", hasta la misión 2: Arak-hais, ¿dónde vais? (Hasta tener que pasar Lasoberaña) (Se pueden matar las araknas de las primeras 4 salas para validar una parte de la misión)\nSe pasa Lasoberaña y se terminan las misiones de los incisos 33 y 34." },
+  { n: 35, zone: "Reino de Amakna", effort: "corto", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 3: Munster descubre el misterio. (Hasta tener que pasar Abráknido ancestral)" },
+  { n: 36, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 33. (Hasta tener que pasar Abráknido ancentral)\nSe pasa Abráknido ancestral y se terminan las misiones de los incisos 35 y 36." },
+  { n: 37, zone: "Reino de Amakna", effort: "medio", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 4: El arte de la labia palítica. (Hasta tener que pasar Roble blando)\nSe pasa Roble blando y se terminan las misiones de los incisos 32 y 37." },
+  { n: 38, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 2: \"Extinción de los fuegos\", misión 3: Esto parece el sur, misión 4: La bruja mala del este. (Hasta tener que matar 7 monstruos de cada uno de la zona Cuna del alma. En algún momento de la misión 3 se puede lanzar la misión La sombra del reino, necesaria para el logro \"Cuatro de seis\", por lo que puede realizarse en cualquier punto hasta antes del inciso 78)\nSe pasa la Mazmorra de Roca negra completa para poder ir a la zona de Lágrimas de Uronigrido, se vuelve a Cuna del alma a pasar de nuevo la mazmorra de Roca negra hasta la sala 5 (Sin matar al jefe), se sale de la mazmorra y se termina de matar los monstruos faltantes para actualizar la misión." },
+  { n: 39, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 7: La bendición de viti. (Se pasa tynril y Morsagüino con sus respectivos ídolos, dejando pendiente Funoroshi)" },
+  { n: 40, zone: "Isla de Frigost", effort: "corto", text: "Isla de frigost: Logro \"Los supervivientes de Frigost\", misión 5: Calefacción a bajo coste, misión 6: En busca de Javi Vito. (Atención de no pasar Obsidiantre, solo es necesario hasta sala 4)" },
+  { n: 41, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Negro ébano\", misión 1: La espada de la roca. (Se hace la mazmorra de Fraktal y se obtiene el requisito para utilizar el ankla de Xelorium)\nAntes de hacer el Logro \"Selocalipsis: Resonancia\", se recomienda hacer la mazmorra de Piojoporojo y obtener el requisito para utilizar el ankla de Zurcalia, el cual también servirá para las misiones del inciso 93. (No es obligatorio hacer la mazmorra, basta con tener acceso a la dimensión de Zurcalia)" },
+  { n: 42, zone: "Selocalipsis", effort: "largo", text: "Selocalipsis: Logro \"Selocalipsis: Resonancia\". (Completo)" },
+  { n: 43, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"De qué madera estoy hecho\", misión 2: Díselo con flores, misión 3: Inmunda putrefacción (hasta tener que matar monstruos de la zona de Plantala), misión 1: El sauce del paseante (hasta tener que matar monstruos de la zona de Plantala)\nSe matan los monstruos necesarios, se termina la misión 3 del inciso 43 y se actualiza la misión 1 del inciso 43 hasta tener que pasar Kodámade." },
+  { n: 44, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Ocre de ámbar\", misión 5: Bien plantados. (Hasta tener que pasar Kodámade)" },
+  { n: 45, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 2: En la encrucijada de los mundos, misión 3: Más leña al fuego. (Hasta tener que pasar Kodámade)\nSe pasa Kodámade y se terminan las misiones de los incisos 43, 44 y 45" },
+  { n: 46, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 4: En nombre del arte. (Hasta tener que pasar Tanukui san)" },
+  { n: 47, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 55. (Hasta tener que entrar en la mazmorra de Tanukui san)\nSe pasa Tanukui san y se terminan las misiones de los incisos 46 y 47." },
+  { n: 48, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 5: El muelle de los niños perdidos, misión 6: El festival del farol. (Hasta tener que pasar Funoroshi)\nSe pasa Funoroshi con el respectivo ídolo y se terminan las misiones de los incisos 39 y 48." },
+  { n: 49, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\". (Completo)" },
+  { n: 50, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 5: Altar del norte, misión 8: La bendición de Thomahon. (Se pasa Roca negra, Obsidiantre y Kimbo con sus respectivos ídolos, quedando pendiente Sfinter cell) Roca negra y obsidiantre ya están en sala 5 y 4 respectivamente si se hizo bien todo lo anterior. Se desbloquea el acceso a la grieta bú." },
+  { n: 51, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 65. (Hasta tener que pasar Sfinter cell)\nSe pasa Sfinter cell con el respectivo ídolo y se terminan las misiones del inciso 50 y 51." },
+  { n: 52, zone: "Isla de Frigost", effort: "medio", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", misión 7: Quién saca beneficio del jalamut, misión 8: Almacén de avituallamiento. (Hasta completar la misión: El slip está que arde. Requiere pasar Tengu gélifux en algún punto entre las misiones, por lo que se desbloquea el paso al Pueblo sepultado, al Bosque petrificado y la puerta de los Taponanos)" },
+  { n: 53, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"El guardián del inmaculado\" hasta la misión 3: Réquiem por un yokai. (Hasta tener que pasar Kumijo) Se recomienda realizar las primeras 4 salas antes de pasar al siguiente inciso." },
+  { n: 54, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Ocre ámbar\" misión 6: No hay humo sin fuego (Se debe también completar la misión del Bosque maléfico: Logro \"Caminata mortal\" misión 2: Detenla si puedes), misión 7: Cuando se caldean las ánimas. (Hasta tener que pasar Kumijo. Retomar sala 5 como se indicó en el inciso anterior para no perder combates de la alteración de la Encantarela)\nSe pasa Kumijo, se termina la misión del inciso 54 y se actualiza la misión del inciso 53." },
+  { n: 55, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Ocre ámbar\". (Completo) (Aprovechar la alteración de la encantarela)" },
+  { n: 56, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"El guardián del inmaculado\". (Completo)" },
+  { n: 57, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"A tumbas abiertas\", misión 1: Tan lejos, tan cercanas, misión 5: Gobstinación groblin." },
+  { n: 58, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 6: El salvaje salvaje oeste, misión 9: La bendición de Foluk. (Se pasa Perfósil con el respectivo ídolo, dejando pendiente Kanigrula y Cil)" },
+  { n: 59, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 70. (Hasta tener que pasar Kanigrula)\nSe pasa Kanígrula con el respectivo ídolo, se terminan las misiones de los incisos 11 y 59, y se actualiza la misión del inciso 58." },
+  { n: 60, zone: "Reino de Amakna", effort: "corto", text: "Reino de amakna: Logro \"El árbol que esconde el bosque\" misión 5: El último de nosotros. (Hasta tener que pasar Cil)" },
+  { n: 61, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 85. (Hasta tener que pasar Cil)\nSe pasa Cil con el respectivo ídolo, se terminan las misiones de los incisos 58, 60 y 61. Se desbloquea el paso a la zona Colmillos de cristal." },
+  { n: 62, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Azul turquesa\". (Completo)" },
+  { n: 63, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\" hasta la misión 3: Misión solución. (Hasta tener que dropear los corazones de Tejaiss)\nSe pasa Tejossus y se dropean los corazones de Tejaiss faltantes. Se desbloquea el acceso al Monte tórrido y se actualiza la misión del inciso 63. Se puede llegar a la sala 3 de la mazmorra de Golosotrón para obtener la miel necesaria para terminar la misión." },
+  { n: 64, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\", misión 1: De la mano. (Hasta poder entrar en la taberna)" },
+  { n: 65, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"Esto son dos dragones que entran a un bar…\", misión 1: Tinta espectacular, (Hasta tener que dropear en la zona de papel), misión 6: La epopeya del monje peregrino." },
+  { n: 66, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\", misión 2: Dos alientos, una inspiración. (Hasta tener que pasar la mazmorra Recuerdo de Imagiro)\nSe pasa Recuerdo de Imagiro, se dropean las gotas de tinta, y se terminan las misiones de los incisos 65 y 66." },
+  { n: 67, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\". (Completo)" },
+  { n: 68, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Selocalipsis: Resiliencia\", misión 15: Cuando el despertar no es más que un sueño, misión 16: La última muralla, (Hasta tener que dropear en la zona de tinta y papel), misión 17: Mediante este juramento se escribe el mundo, misión 18: Una profecía bastante extraña." },
+  { n: 69, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"El niño veía la nieve caer\". (Completo)" },
+  { n: 70, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"Un clan variopinto\". (Completo)" },
+  { n: 71, zone: "Archipiélago de Valonia", effort: "corto", text: "Archipiélago de Valonia: Logro \"Floritura final\", hasta la misión 3: Para que la llama tiemble. (Se puede dropear la Hoz de la misión 1 en la mazmorra de Belladona)" },
+  { n: 72, zone: "Reino de Amakna", effort: "corto", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 6: Maleza y vileza. (Se aprovecha el elixir de los barquerontes para el siguiente inciso)" },
+  { n: 73, zone: "Archipiélago de Valonia", effort: "medio", text: "Archipiélago de Valonia: Logro \"Asesor Patrimonial\", hasta la misión 3: Una última voluntad. (Hasta tener que dropear en la zona de tinta y papel. Requiere la alteración del elixir de los barquerontes)\nSe dropea en la zona de tinta y papel, se termina la misión del inciso 68 y se actualiza la misión del inciso 73 hasta tener que pasar Ilyzaelle." },
+  { n: 74, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Futuro abierto\" hasta la misión 2: Las cuatro voluntades. (Específicamente hasta tener que hacer las misiones de las dimensiones de Selocalipsis)" },
+  { n: 75, zone: "Selocalipsis", effort: "epico", text: "Selocalipsis: Logro \"La guerra interminable\", Logro \"Prisioneros del mar\", Logro \"Juicio final\" (Completos), Logro \"Vivir así es morir de corrupción\". (Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 76) con el ídolo del dios Sadida)\nEn los logros \"Prisioneros del mar\", misión 1; \"Juicio final\", misión 2; \"Vivir así es morir de corrupción\", misión 3; se puede encadenar la parte de matar monstruos de la zona con las primeras 4 salas de las mazmorras de Servidumbre, Miseria y Corrupción respectivamente." },
+  { n: 76, zone: "Alineamiento", effort: "medio", text: "Alineamiento: Hasta la misión de orden 4. (Hasta tener que pasar Ugah) (Si se escoge la orden Espíritu de la salvación, en la misión de orden 3 se tendrá que pasar Roble blando, por tanto, en el inciso 75 se puede pasar Roble blando con el ídolo del dios Sadida para validar ambas misiones)" },
+  { n: 77, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"El fin de la eternidad\" (Completo)" },
+  { n: 78, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro: \"Cuatro de seis\", misión 2: Alma máster. (Hasta tener que pasar Ugah)\nSe pasa Roble blando y Ugah con el ídolo del dios Sadida, y se terminan las misiones de los incisos 75, 76 y 78. Se terminan las misiones de la dimensión de corrupción." },
+  { n: 79, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro: \"Cuatro de seis\". (Completo) Se pasa Golosotrón y se obtiene acceso a Frigost 3. Recordatorio de que en la sala 3 de Golosotrón se obtiene un recurso necesario para terminar la misión del inciso 63." },
+  { n: 80, zone: "Alineamiento", effort: "corto", text: "Alineamiento Bontariano: Misión 97. (Hasta tener que pasar Mizz Frizz) (Se pueden dropear los metales malditos de una de las misiones del inciso 81: Los enemigos de mis enemigos son mis enemigos, haciendo las primeras 4 salas de Mizz Frizz)" },
+  { n: 81, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Allá bajo la montaña\", misión: Birk, hija de Bork. (Hasta justo después de pasar Dazahk Martegel y obtener la misión: La biblia de los rencores)" },
+  { n: 82, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\", misión 4: Frio… Caliente… ¡que te quemas! (Hasta después de haber pasado Nileza y tener que pasar Mizz Frizz, Sylargh y Klim)\nSe pasa Mizz Frizz, se termina la misión del inciso 80 y se actualiza la misión del inciso 82. Se dropea el sacrificio de armatudinados para el hechizo de Necronix." },
+  { n: 83, zone: "Alineamiento", effort: "corto", text: "Alineamiento Bontariano: Misión 99. (Hasta tener que pasar Ilyzaelle)" },
+  { n: 84, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Misión: La guardia muere, pero no se rinde. (Hasta tener que matar 10 monstruos de cada uno de la zona del Cuartel del día sin fin)" },
+  { n: 85, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Futuro abierto\", misión 4: La guerra de cania no se llevará a cabo, misión 3: El juicio de la muerte. (Hasta tener que pasar Ilyzaelle)\nSe pasa Ilyzaelle y se matan los monstruos de la zona del Cuartel del día sin fin faltantes, se terminan las misiones del inciso 73, 83, 84 y 85. Se dropea el sacrificio de quemaalmas para el hechizo de Necronix." },
+  { n: 86, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"Floritura final\". (Completo)" },
+  { n: 87, zone: "Alineamiento", effort: "medio", text: "Alineamiento: Misión de orden 5." },
+  { n: 88, zone: "Atolón de los Poseídos", effort: "largo", text: "Atolón de los poseídos: Logro \"Devastados\". (Completo)" },
+  { n: 89, zone: "Pesadilla de los Devastadores", effort: "corto", text: "Pesadilla de los devastadores: Logro \"Como un demonio\", misión 1: El peso de su mirada." },
+  { n: 90, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Negro ébano\", misión 2: El forjador de leyenda, misión 3: Hasta el final del sueño. (Hasta tener que hacer aparecer los 12 sueños de cocobur)" },
+  { n: 91, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Futuro abierto\", misión 5: Toma de conciencia. (Hasta tener que dropear en sueños)\nSe dropea en sueños y se hacen las salas necesarias para completar las misiones de los incisos 89, 90 y 91." },
+  { n: 92, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Selocalipsis: Reminiscencia\", hasta la misión 4: Los tótems de Maimame. (Hasta tener que dropear los 6 tótems)" },
+  { n: 93, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Blanco marfil\". (Completo)\nA medida que se realiza el logro \"Blanco marfil\", se actualizan algunas misiones:\nMisión 1: El dragón blanco. (Se pasa Miauvisor y se dropea el tótem de sorpresa)\nMisión 2: Examen de paso. (Se pasa Protozorror y se dropea el tótem de asco)\nMisión 4: Golpe en Anutropía. (Se pasa Rey Nidas y se dropea el tótem de alegría)\nMisión 5: Nordalia. (Se pasa Tal Kasha, se dropea el tótem de cólera y el sacrificio de malditos para el hechizo de Necronix)\nMisión 7: Una voz de cristal. (Se evita hacer las mazmorras de Nileza y Capitán Meno gracias a las misiones de los incisos 83 y 15 respectivamente)\nMisión 8: Muerto en vida. (Se pasa Anerice, se dropea el tótem de miedo y el sacrificio de ghuls para el hechizo de Necronix)\nMisión 10: Es hora de morir. (Se pasa Sylargh, se dropea el tótem de tristeza, se termina la misión del inciso 92 y se actualiza la misión del inciso 82)\nCon los cuatro sacrificios dropeados, se termina la misión opcional del inciso 7 y se obtiene el hechizo Necronix." },
+  { n: 94, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Negro ébano\". (Completo)\nA medida que se realiza el logro \"Negro ébano\", se actualizan algunas misiones:\nMisión 7: El dragón negro. (Se pasa Klim y se termina la misión del inciso 83)" },
+  { n: 95, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\", misión 5: Una friolera de revelaciones. (Hasta tener que pasar Conde Kontatrás)" },
+  { n: 96, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Seis de seis\", hasta la misión 13: Armarse contra el destino. (Hasta tener que pasar Conde Kontatrás)\nSe pasa Conde Kontatrás, se termina la misión del inciso 95 y 96.\nSe obtiene la bendición de Jiva al terminar la misión 95, una alteración que dura 50 combates, además de otorgar 6% de resistencias y 12 de resistencias fijas, bastante útil en las misiones de los incisos 97, 98 y 99, así que se recomienda aprovecharla bien." },
+  { n: 97, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Seis de seis\". (Completo) Recordatorio de escoger el aura de Djaul en caso de ser Bonta para facilitar la misión del inciso 100.\nEn el inciso 99 te dan un cofre capaz de teletransportarte directamente al mapa de la pelea contra los cuatro jinetes, el mapa es el mismo tanto para la pelea del inciso 98 como el 99. La pelea es relativamente sencilla con el equipamiento, conocimiento de las mecánicas y placement adecuado, pero en caso de presentar dificultad, se recomienda avanzar la misión del inciso 99 hasta la obtención del cofre para poder llegar al mapa con sólo un doble click y completar la del inciso 98. En caso de completar la del inciso 99 primero, el cofre no se podrá utilizar más." },
+  { n: 98, zone: "Selocalipsis", effort: "largo", text: "Selocalipsis: Logro \"Selocalipsis: Reminiscenia\". (Completo)" },
+  { n: 99, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"El secreto de los dofus: Prólogo\" (Completo) (Requiere la alteración de la encantarela en la misión 3. Se puede aprovechar esta alteración para el sigilo de Hécate en el inciso 100)" },
+  { n: 100, zone: "Reino de Amakna", effort: "medio", text: "Reino de amakna: Logro \"El árbol que esconde el bosque\", misión: ¿Quién nos protege del protector? (Se debe hacer la misión Flovoración en algún punto de esta)" },
+];
+// ============================================================================
+
+// PREREQUISITOS
+const PREREQS_INTRO = "Esta guía está hecha por Sandglass, una de las mejores aportaciones jamás hechas para la comunidad hispana de Dofus. Antes de comenzar con las misiones, se recomienda que el personaje sea al menos nivel 150 por temas de requerimientos de nivel en algunas misiones.";
+
+const PREREQS_LOGROS = [
+  { id: "l1", text: "Ganadería · General: Logro \"Primeriza\"." },
+  { id: "l2", text: "Ganadería · Dragopavos: Logro \"Cazamonturas\"." },
+  { id: "l3", text: "General: Logro \"Con bases sólidas\". (Completo)" },
+  { id: "l4", text: "Isla de Otomaï: Logro \"El gran Guarrok\". (Completo)" },
+  { id: "l5", text: "Isla de Otomaï: Logro \"Turbera maldita\", misión 1: El guardián del puente de la muerte, misión 4: El caballero negro y rosa." },
+  { id: "l6", text: "Montaña de los koalaks: misión \"El cementerio primitivo\"." },
+  { id: "l7", text: "Archipiélago wabbit: misión \"Intrusión en el territorio wabbit\"." },
+  { id: "l8", text: "Isla de Moon: Logro \"Pan Koko Mío\", misión 1: Ida sin vuelta." },
+  { id: "l9", text: "Isla de Frigost: Logro \"Frío al cubo\", misión 1: La tierra banquisa." },
+];
+
+const PREREQS_OFICIOS = [
+  { id: "o1", text: "Fabricante y Escultor nivel 10" },
+  { id: "o2", text: "Ganadero nivel 20" },
+  { id: "o3", text: "Manitas nivel 30" },
+  { id: "o4", text: "Minero y Alquimista nivel 40" },
+  { id: "o5", text: "Campesino nivel 100" },
+  { id: "o6", text: "Un oficio de recolección nivel 200 (campesino, alquimista, leñador, pescador, etc.)" },
+];
+
+const PREREQS_HECHIZOS = [
+  { id: "h1", text: "Captura de almas (obligatorio)" },
+  { id: "h2", text: "Llamilla (obligatorio)" },
+  { id: "h3", text: "Zanahowia Sabwosa (no obligatorio, útil para el paso 64)" },
+];
+
+const TIER_POINTS = { trivial: 1, corto: 3, medio: 8, largo: 20, epico: 50 };
+const TIER_META = {
+  trivial: { label: "Trivial", icon: "🌱", cls: "t-trivial" },
+  corto:   { label: "Corto",   icon: "🕐", cls: "t-corto" },
+  medio:   { label: "Medio",   icon: "⚔️", cls: "t-medio" },
+  largo:   { label: "Largo",   icon: "🛡️", cls: "t-largo" },
+  epico:   { label: "Épico",   icon: "👑", cls: "t-epico" },
+};
+
+// ============================================================================
+// STATE
+// ============================================================================
+const LS = {
+  done: "silvestre:done",
+  prereqs: "silvestre:prereqs",
+  theme: "silvestre:theme",
+  notaDismissed: "silvestre:notaDismissed",
+  prereqsOpen: "silvestre:prereqsOpen",
+};
+
+const state = {
+  done: JSON.parse(localStorage.getItem(LS.done) || "{}"),
+  prereqs: JSON.parse(localStorage.getItem(LS.prereqs) || "{}"),
+  theme: localStorage.getItem(LS.theme) || "dark",
+  selectedStep: null,
+  filters: {
+    zones: new Set(),
+    tiers: new Set(),
+    pending: false,
+    search: "",
+  },
+};
+
+const ALL_PREREQS = [...PREREQS_LOGROS, ...PREREQS_OFICIOS, ...PREREQS_HECHIZOS];
+const TOTAL_PTS = STEPS.reduce((a, s) => a + TIER_POINTS[s.effort], 0);
+const ZONES = [...new Set(STEPS.map(s => s.zone))];
+
+// Color por zona (HSL distribuido)
+const ZONE_COLOR = {};
+ZONES.forEach((z, i) => {
+  const hue = Math.round((i / ZONES.length) * 360);
+  ZONE_COLOR[z] = `hsl(${hue}, 60%, 58%)`;
+});
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+const save = () => {
+  localStorage.setItem(LS.done, JSON.stringify(state.done));
+  localStorage.setItem(LS.prereqs, JSON.stringify(state.prereqs));
+};
+
+const isDone = n => !!state.done[n];
+const doneCount = () => STEPS.filter(s => isDone(s.n)).length;
+const donePts = () => STEPS.reduce((a, s) => a + (isDone(s.n) ? TIER_POINTS[s.effort] : 0), 0);
+const prereqsDone = () => ALL_PREREQS.filter(p => state.prereqs[p.id]).length;
+const prereqsPending = () => ALL_PREREQS.length - prereqsDone();
+
+const nextPending = () => {
+  const s = STEPS.find(s => !isDone(s.n));
+  return s ? s.n : null;
+};
+
+const stepMatches = s => {
+  const { zones, tiers, pending, search } = state.filters;
+  if (zones.size && !zones.has(s.zone)) return false;
+  if (tiers.size && !tiers.has(s.effort)) return false;
+  if (pending && isDone(s.n)) return false;
+  if (search) {
+    const q = search.toLowerCase();
+    if (!s.text.toLowerCase().includes(q) && !String(s.n).includes(q)) return false;
+  }
+  return true;
+};
+
+const hasActiveFilters = () => {
+  const f = state.filters;
+  return f.zones.size > 0 || f.tiers.size > 0 || f.pending || f.search.length > 0;
+};
+
+const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+
+// ============================================================================
+// RENDER: THEME
+// ============================================================================
+function applyTheme(t) {
+  state.theme = t;
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeIcon").textContent = t === "light" ? "🌙" : "☀️";
+  $("#themeLbl").textContent = t === "light" ? "Modo oscuro" : "Modo claro";
+  localStorage.setItem(LS.theme, t);
+}
+
+// ============================================================================
+// RENDER: HERO + STICKY BAR
+// ============================================================================
+function renderHero() {
+  const done = doneCount();
+  const pts = donePts();
+  const pct = TOTAL_PTS ? Math.round((pts / TOTAL_PTS) * 1000) / 10 : 0;
+  const next = nextPending();
+  $("#heroPct").textContent = pct + "%";
+  $("#heroFill").style.width = pct + "%";
+  $("#statDone").textContent = done;
+  $("#statPts").textContent = pts;
+  $("#statNext").textContent = next ? "Paso " + next : "—";
+  // Sticky bar
+  $("#sbPct").textContent = pct + "%";
+  $("#sbFill").style.width = pct + "%";
+  $("#sbDone").textContent = done;
+  $("#sbPts").textContent = pts;
+  // Warn de prereqs
+  const pendingPrereqs = prereqsPending();
+  const warn = $("#heroWarn");
+  if (pendingPrereqs > 0) {
+    warn.classList.remove("hidden");
+    $("#heroWarnTxt").textContent = `${pendingPrereqs} prerrequisito${pendingPrereqs === 1 ? "" : "s"} pendiente${pendingPrereqs === 1 ? "" : "s"}`;
+  } else {
+    warn.classList.add("hidden");
+  }
+}
+
+// ============================================================================
+// RENDER: PRERREQUISITOS
+// ============================================================================
+function renderPrereq(p) {
+  const done = !!state.prereqs[p.id];
+  const el = document.createElement("div");
+  el.className = "prereq-item" + (done ? " done" : "");
+  el.dataset.id = p.id;
+  el.innerHTML = `<span class="chk"></span><span class="txt">${escapeHtml(p.text)}</span>`;
+  el.addEventListener("click", () => togglePrereq(p.id));
+  return el;
+}
+
+function renderPrereqs() {
+  $("#prereqsIntro").textContent = PREREQS_INTRO;
+  const groups = [
+    { id: "prereqsLogros", items: PREREQS_LOGROS },
+    { id: "prereqsOficios", items: PREREQS_OFICIOS },
+    { id: "prereqsHechizos", items: PREREQS_HECHIZOS },
+  ];
+  groups.forEach(g => {
+    const c = $("#" + g.id);
+    c.innerHTML = "";
+    g.items.forEach(p => c.appendChild(renderPrereq(p)));
+  });
+  updatePrereqCount();
+}
+
+function updatePrereqCount() {
+  const done = prereqsDone();
+  const total = ALL_PREREQS.length;
+  const el = $("#prereqsCount");
+  el.textContent = `${done}/${total} completados`;
+  el.classList.toggle("pending", done < total);
+}
+
+function togglePrereq(id) {
+  if (state.prereqs[id]) delete state.prereqs[id];
+  else state.prereqs[id] = true;
+  save();
+  // re-render single
+  const item = document.querySelector(`.prereq-item[data-id="${id}"]`);
+  if (item) item.classList.toggle("done", !!state.prereqs[id]);
+  updatePrereqCount();
+  renderHero(); // actualizar warn
+}
+
+// ============================================================================
+// RENDER: FILTROS
+// ============================================================================
+function renderChips() {
+  // Zonas
+  const zc = $("#zoneChips");
+  zc.innerHTML = "";
+  ZONES.forEach(z => {
+    const c = document.createElement("button");
+    c.className = "chip";
+    c.dataset.type = "zone";
+    c.dataset.value = z;
+    c.style.setProperty("--zone-color", ZONE_COLOR[z]);
+    c.innerHTML = `<span class="dot"></span>${escapeHtml(z)}`;
+    c.addEventListener("click", () => toggleFilter("zones", z, c));
+    zc.appendChild(c);
+  });
+  // Tiers
+  const tc = $("#tierChips");
+  tc.innerHTML = "";
+  Object.entries(TIER_META).forEach(([k, m]) => {
+    const c = document.createElement("button");
+    c.className = "chip";
+    c.dataset.type = "tier";
+    c.dataset.value = k;
+    c.innerHTML = `<span class="ico">${m.icon}</span>${m.label} <span style="color:var(--txt-dim); font-size:11px;">(${TIER_POINTS[k]}pts)</span>`;
+    c.addEventListener("click", () => toggleFilter("tiers", k, c));
+    tc.appendChild(c);
+  });
+}
+
+function toggleFilter(kind, value, el) {
+  const set = state.filters[kind];
+  if (set.has(value)) set.delete(value);
+  else set.add(value);
+  el.classList.toggle("active", set.has(value));
+  applyFilters();
+}
+
+function applyFilters() {
+  $$(".cell").forEach(cell => {
+    const n = Number(cell.dataset.n);
+    const s = STEPS[n - 1];
+    cell.classList.toggle("dimmed", !stepMatches(s));
+  });
+  $("#clearBtn").classList.toggle("hidden", !hasActiveFilters());
+}
+
+function clearFilters() {
+  state.filters.zones.clear();
+  state.filters.tiers.clear();
+  state.filters.pending = false;
+  state.filters.search = "";
+  $$(".chip").forEach(c => c.classList.remove("active"));
+  $("#pendingToggle").checked = false;
+  $("#searchInput").value = "";
+  applyFilters();
+}
+
+// ============================================================================
+// RENDER: GRID
+// ============================================================================
+function renderGrid() {
+  const g = $("#grid");
+  g.innerHTML = "";
+  STEPS.forEach(s => {
+    const cell = document.createElement("button");
+    cell.className = "cell" + (isDone(s.n) ? " done" : "");
+    cell.dataset.n = s.n;
+    cell.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
+    cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone} — ${TIER_META[s.effort].label}${isDone(s.n) ? " — completado" : ""}`);
+    cell.innerHTML = `<span class="num">${s.n}</span><span class="tier-ico" aria-hidden="true">${TIER_META[s.effort].icon}</span>`;
+    cell.addEventListener("click", () => selectStep(s.n));
+    g.appendChild(cell);
+  });
+}
+
+function updateCell(n) {
+  const cell = document.querySelector(`.cell[data-n="${n}"]`);
+  if (!cell) return;
+  const wasDone = cell.classList.contains("done");
+  const nowDone = isDone(n);
+  cell.classList.toggle("done", nowDone);
+  if (!wasDone && nowDone) {
+    cell.classList.add("just-completed");
+    setTimeout(() => cell.classList.remove("just-completed"), 600);
+  }
+  const s = STEPS[n - 1];
+  cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone} — ${TIER_META[s.effort].label}${nowDone ? " — completado" : ""}`);
+}
+
+function updateSelectedCell() {
+  $$(".cell.selected").forEach(c => c.classList.remove("selected"));
+  if (state.selectedStep != null) {
+    const c = document.querySelector(`.cell[data-n="${state.selectedStep}"]`);
+    if (c) c.classList.add("selected");
+  }
+}
+
+// ============================================================================
+// RENDER: DETAIL PANEL
+// ============================================================================
+function buildDetailHtml(n) {
+  const s = STEPS[n - 1];
+  const m = TIER_META[s.effort];
+  const pts = TIER_POINTS[s.effort];
+  const pctWeight = ((pts / TOTAL_PTS) * 100).toFixed(2);
+  const done = isDone(n);
+  const prev = n > 1 ? n - 1 : null;
+  const next = n < STEPS.length ? n + 1 : null;
+  return `
+    <div class="detail-head">
+      <div>
+        <div class="detail-num">Paso ${s.n}</div>
+      </div>
+      <button class="detail-close" id="detailCloseBtn" aria-label="Cerrar detalle">×</button>
+    </div>
+    <div class="detail-badges">
+      <span class="badge zone" style="--zone-color:${ZONE_COLOR[s.zone]}"><span class="dot"></span>${escapeHtml(s.zone)}</span>
+      <span class="badge tier ${m.cls}">${m.icon} ${m.label}</span>
+    </div>
+    <div class="detail-weight">
+      Vale <b>${pts}</b> / ${TOTAL_PTS} puntos (${pctWeight}% del total)
+    </div>
+    <div class="detail-text">${escapeHtml(s.text)}</div>
+    <div class="detail-cta">
+      <button class="btn-primary ${done ? "is-done" : ""}" id="toggleBtn">
+        ${done ? "↺ Desmarcar paso" : "✓ Marcar como completo"}
+      </button>
+      <div class="detail-nav">
+        <button class="btn-nav" id="prevBtn" ${prev ? "" : "disabled"}>← Paso ${prev || ""}</button>
+        <button class="btn-nav" id="nextBtn" ${next ? "" : "disabled"}>Paso ${next || ""} →</button>
+      </div>
+      <button class="btn-secondary" id="goNextBtn">📍 Ir al siguiente pendiente</button>
+    </div>
+  `;
+}
+
+function attachDetailEvents(container, n) {
+  container.querySelector("#toggleBtn")?.addEventListener("click", () => toggleStep(n));
+  container.querySelector("#prevBtn")?.addEventListener("click", () => selectStep(n - 1));
+  container.querySelector("#nextBtn")?.addEventListener("click", () => selectStep(n + 1));
+  container.querySelector("#goNextBtn")?.addEventListener("click", goToNextPending);
+  container.querySelector("#detailCloseBtn")?.addEventListener("click", () => {
+    if (isMobile()) closeSheet();
+    else clearSelection();
+  });
+}
+
+function renderDetail() {
+  const n = state.selectedStep;
+  const empty = $("#detailEmpty");
+  const content = $("#detailContent");
+  if (n == null) {
+    empty.classList.remove("hidden");
+    content.classList.add("hidden");
+    const next = nextPending();
+    const btn = $("#goNextEmpty");
+    if (next) {
+      btn.textContent = `📍 Siguiente: Paso ${next}`;
+      btn.disabled = false;
+    } else {
+      btn.textContent = "🎉 ¡Todo completado!";
+      btn.disabled = true;
+    }
+    return;
+  }
+  empty.classList.add("hidden");
+  content.classList.remove("hidden");
+  content.innerHTML = buildDetailHtml(n);
+  attachDetailEvents(content, n);
+}
+
+// ============================================================================
+// BOTTOM SHEET (mobile)
+// ============================================================================
+const sheet = $("#sheet");
+const sheetOverlay = $("#sheetOverlay");
+const sheetContent = $("#sheetContent");
+
+function openSheet(n) {
+  sheetContent.innerHTML = buildDetailHtml(n);
+  attachDetailEvents(sheetContent, n);
+  sheet.classList.add("open");
+  sheetOverlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSheet() {
+  sheet.classList.remove("open");
+  sheetOverlay.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+sheetOverlay.addEventListener("click", closeSheet);
+
+// Drag-to-close
+(function setupSheetDrag() {
+  const handle = $("#sheetHandle");
+  let startY = 0;
+  let currentY = 0;
+  let dragging = false;
+  handle.addEventListener("pointerdown", e => {
+    dragging = true;
+    startY = e.clientY;
+    handle.setPointerCapture(e.pointerId);
+    sheet.style.transition = "none";
+  });
+  handle.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    currentY = Math.max(0, e.clientY - startY);
+    sheet.style.transform = `translateY(${currentY}px)`;
+  });
+  handle.addEventListener("pointerup", e => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = "";
+    if (currentY > 100) closeSheet();
+    else sheet.style.transform = "";
+    currentY = 0;
+  });
+  handle.addEventListener("pointercancel", () => {
+    dragging = false;
+    sheet.style.transition = "";
+    sheet.style.transform = "";
+  });
+})();
+
+// ============================================================================
+// ACTIONS
+// ============================================================================
+function selectStep(n) {
+  if (n < 1 || n > STEPS.length) return;
+  state.selectedStep = n;
+  updateSelectedCell();
+  if (isMobile()) {
+    openSheet(n);
+  } else {
+    renderDetail();
+  }
+}
+
+function clearSelection() {
+  state.selectedStep = null;
+  updateSelectedCell();
+  renderDetail();
+}
+
+function toggleStep(n) {
+  if (state.done[n]) delete state.done[n];
+  else state.done[n] = true;
+  save();
+  updateCell(n);
+  renderHero();
+  if (state.selectedStep === n) {
+    renderDetail();
+    if (isMobile()) {
+      // Actualizar contenido del sheet sin cerrarlo
+      sheetContent.innerHTML = buildDetailHtml(n);
+      attachDetailEvents(sheetContent, n);
+    }
+  }
+}
+
+function goToNextPending() {
+  const n = nextPending();
+  if (n == null) return;
+  selectStep(n);
+  // Scroll al grid en desktop, al sheet ya está abierto en mobile
+  if (!isMobile()) {
+    document.querySelector(`.cell[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
+function resetProgress() {
+  const opt = confirm(
+    "¿Reiniciar el progreso?\n\n" +
+    "Aceptar = borrar TODO (pasos + prerrequisitos)\n" +
+    "Cancelar = no hacer nada"
+  );
+  if (!opt) return;
+  state.done = {};
+  state.prereqs = {};
+  state.selectedStep = null;
+  save();
+  $$(".cell").forEach(c => c.classList.remove("done", "selected"));
+  $$(".prereq-item").forEach(el => el.classList.remove("done"));
+  updatePrereqCount();
+  renderHero();
+  renderDetail();
+}
+
+// ============================================================================
+// UTIL
+// ============================================================================
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ============================================================================
+// EVENTS
+// ============================================================================
+$("#themeBtn").addEventListener("click", () => applyTheme(state.theme === "dark" ? "light" : "dark"));
+$("#resetBtn").addEventListener("click", resetProgress);
+$("#notaClose").addEventListener("click", () => {
+  $("#nota").classList.add("hidden");
+  localStorage.setItem(LS.notaDismissed, "1");
+});
+$("#goNextEmpty").addEventListener("click", goToNextPending);
+$("#heroWarn").addEventListener("click", () => {
+  $("#prereqs").classList.add("open");
+  $("#prereqsHead").setAttribute("aria-expanded", "true");
+  $("#prereqs").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+$("#prereqsHead").addEventListener("click", () => {
+  const p = $("#prereqs");
+  const open = p.classList.toggle("open");
+  $("#prereqsHead").setAttribute("aria-expanded", String(open));
+  localStorage.setItem(LS.prereqsOpen, open ? "1" : "0");
+});
+$("#searchInput").addEventListener("input", e => {
+  state.filters.search = e.target.value.trim();
+  applyFilters();
+});
+$("#pendingToggle").addEventListener("change", e => {
+  state.filters.pending = e.target.checked;
+  applyFilters();
+});
+$("#clearBtn").addEventListener("click", clearFilters);
+
+// Sticky bar visibility on scroll
+const hero = $(".hero");
+const stickyBar = $("#stickyBar");
+const observer = new IntersectionObserver(([entry]) => {
+  stickyBar.classList.toggle("visible", !entry.isIntersecting);
+}, { rootMargin: "-60px 0px 0px 0px", threshold: 0 });
+observer.observe(hero);
+
+// Keyboard nav
+document.addEventListener("keydown", e => {
+  if (state.selectedStep == null) return;
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if (e.key === "ArrowLeft" && state.selectedStep > 1) selectStep(state.selectedStep - 1);
+  if (e.key === "ArrowRight" && state.selectedStep < STEPS.length) selectStep(state.selectedStep + 1);
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    toggleStep(state.selectedStep);
+  }
+  if (e.key === "Escape") {
+    if (isMobile()) closeSheet();
+    else clearSelection();
+  }
+});
+
+// ============================================================================
+// INIT
+// ============================================================================
+function init() {
+  applyTheme(state.theme);
+  if (localStorage.getItem(LS.notaDismissed) === "1") $("#nota").classList.add("hidden");
+  renderChips();
+  renderGrid();
+  renderPrereqs();
+  renderHero();
+  renderDetail();
+  // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
+  const savedOpen = localStorage.getItem(LS.prereqsOpen);
+  if (savedOpen === "1" || (savedOpen === null && prereqsPending() > 0)) {
+    $("#prereqs").classList.add("open");
+    $("#prereqsHead").setAttribute("aria-expanded", "true");
+  }
+}
+
+init();
+</script>
+</body>
+</html>
