@@ -7,669 +7,1022 @@
 <meta name="description" content="Checklist del Dofus Silvestre — guía de Sandglass con sistema de progreso ponderado por esfuerzo.">
 <style>
 /* ============================================================================
-   TEMA Y VARIABLES
+   DOFUS SILVESTRE · ESTÉTICA "VENTANA DE JUEGO"
+   Inspirada en el panel Aventura/Guía oficial de Dofus.
+   Paleta: negro profundo + terracota + ámbar/dorado + verde logro.
    ============================================================================ */
+
+/* GOOGLE FONTS ---------------------------------------------------------------*/
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@400;500;600;700;800&family=Fira+Sans:wght@400;500;600;700&display=swap');
+
+/* TOKENS DE DISEÑO ----------------------------------------------------------*/
 :root{
-  --bg:#0a0e1a; --bg2:#131829; --card:#161c30; --card2:#1c2640;
-  --txt:#e8e8e8; --txt-dim:#9aa6c0; --txt-faint:#6b7896;
-  --line:#26304d; --line2:#1a2138;
-  --turq:#00d4d4; --turq2:#00a4a4;
-  --gold:#f4c430; --gold2:#d4a017;
-  --green:#3fbf6f; --blue:#3f8fdf; --yellow:#e6b13a; --orange:#e07a2f; --purple:#a05cd6; --red:#e05c5c; --pink:#e070b5; --teal:#3fbfbf;
-  --shadow:0 6px 24px rgba(0,0,0,.45);
-  --shadow-lg:0 12px 36px rgba(0,0,0,.55);
-  --glow-turq:0 0 18px color-mix(in srgb, var(--turq) 50%, transparent);
-  --glow-gold:0 0 18px color-mix(in srgb, var(--gold) 50%, transparent);
-  --radius:14px;
-  --radius-sm:10px;
-  --fontstack:'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  --maxw:1280px;
-  --header-h:60px;
-  --sticky-bar-h:48px;
-}
-[data-theme="light"]{
-  --bg:#f5ecd9; --bg2:#faf5e6; --card:#fffaf0; --card2:#f3e9d2;
-  --txt:#1a1a1a; --txt-dim:#6b5d44; --txt-faint:#9a8d70;
-  --line:#e0d3b4; --line2:#ede1c2;
-  --turq:#0a8a8a; --turq2:#0a6f6f;
-  --gold:#b8860b; --gold2:#9c7009;
-  --green:#2f9d57; --blue:#2f6fbf; --yellow:#bf8f15; --orange:#c2641f; --purple:#7e44b0; --red:#b0392f; --pink:#b04d8a; --teal:#2f9494;
-  --shadow:0 6px 20px rgba(120,90,30,.18);
-  --shadow-lg:0 10px 32px rgba(120,90,30,.25);
-  --glow-turq:0 0 16px color-mix(in srgb, var(--turq) 40%, transparent);
-  --glow-gold:0 0 16px color-mix(in srgb, var(--gold) 45%, transparent);
+  /* Fondos (DARK) — azul nocturno profundo */
+  --bg:        #0b1220;       /* azul nocturno profundo */
+  --bg-2:      #111a2c;       /* segundo plano */
+  --panel:     #16203a;       /* card / panel */
+  --panel-2:   #1d2a48;       /* panel hover */
+  --inset:     #0a1020;       /* "hundido" */
+
+  /* Texto */
+  --txt:       #e6ecf4;       /* blanco frío */
+  --txt-soft:  #a5b4c8;
+  --txt-mute:  #6b7a92;
+
+  /* Líneas y bordes */
+  --line:      #25324a;
+  --line-2:    #354562;
+  --line-warm: #4a5d80;
+
+  /* Color signature: header azul oscuro + acento plata + dorado opaco */
+  --terracotta:   #1a2b4d;    /* (legacy name) ahora azul header oscuro */
+  --terracotta-2: #11203c;
+  --amber:        #8fb0d6;    /* azul-plata para activos/seleccionados */
+  --amber-2:      #5a7ea8;
+  --gold:         #c8d4e0;    /* plata cálida para títulos/highlights */
+  --gold-2:       #8fa3bd;
+
+  /* Estados */
+  --success:   #4caf50;        /* verde checkmark — único color "vivo" */
+  --success-2: #357f37;
+  --danger:    #d04060;
+
+  /* Zonas (HSL warm, no neón) */
+  --zone-color: var(--gold);   /* fallback, se sobreescribe inline */
+
+  /* Métricas */
+  --radius:    8px;
+  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --header-h:  56px;
+  --sticky-h:  44px;
+  --maxw:      1320px;
+
+  /* Tipografía */
+  --font-display: 'Fira Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-body:    'Fira Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* ============================================================================
-   RESET Y BASE
-   ============================================================================ */
-*{box-sizing:border-box}
+/* LIGHT MODE — azul muy claro / niebla */
+[data-theme="light"]{
+  --bg:        #eef2f8;
+  --bg-2:      #f4f6fb;
+  --panel:     #ffffff;
+  --panel-2:   #f0f4fa;
+  --inset:     #e2e8f0;
+
+  --txt:       #0f1729;
+  --txt-soft:  #455370;
+  --txt-mute:  #6b7a92;
+
+  --line:      #d2dae6;
+  --line-2:    #bcc6d8;
+  --line-warm: #8fa3bd;
+
+  --terracotta:   #1a2b4d;
+  --terracotta-2: #0f1c38;
+  --amber:        #3a5a82;
+  --amber-2:      #2a4365;
+  --gold:         #4a5d80;
+  --gold-2:       #2a3d60;
+
+  --success:   #2a6a2c;
+  --success-2: #1f5021;
+  --danger:    #b03050;
+}
+
+/* RESET ----------------------------------------------------------------------*/
+*,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
 body{
-  margin:0; font-family:var(--fontstack); background:var(--bg); color:var(--txt);
-  line-height:1.5; -webkit-font-smoothing:antialiased;
-  transition:background .4s ease, color .4s ease;
+  margin:0;
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--txt);
+  font-size:14.5px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
   min-height:100vh;
+  transition:background .25s ease, color .25s ease;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(143,176,214,.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(26,43,77,.06) 0%, transparent 50%);
 }
-button{font-family:inherit; color:inherit; cursor:pointer}
-input,select,textarea{font-family:inherit}
-:focus-visible{outline:2px solid var(--turq); outline-offset:2px; border-radius:6px}
-.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px}
-@media (max-width:600px){ .wrap{padding:0 12px} }
+button{font-family:inherit; color:inherit; cursor:pointer; background:none; border:0; padding:0}
+input,select,textarea{font-family:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--amber); outline-offset:2px; border-radius:4px}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 18px}
+@media (max-width:640px){ .wrap{padding:0 12px} }
 
-/* ============================================================================
-   HEADER + STICKY COMPACT BAR
-   ============================================================================ */
+/* HEADER · "ventana de juego" -----------------------------------------------*/
 header{
-  position:sticky; top:0; z-index:60; backdrop-filter:blur(12px);
-  background:color-mix(in srgb, var(--bg) 86%, transparent);
+  position:sticky; top:0; z-index:60;
+  background:var(--bg);
   border-bottom:1px solid var(--line);
-  transition:background .4s ease, border-color .4s ease;
 }
-.hbar{display:flex; align-items:center; gap:10px; padding:10px 16px; max-width:var(--maxw); margin:0 auto; min-height:var(--header-h)}
-.logo{font-weight:800; letter-spacing:2.5px; font-size:16px; display:flex; align-items:center; gap:10px; user-select:none}
-.logo .dot{
-  width:14px; height:14px; border-radius:50%;
-  background:linear-gradient(135deg, var(--turq), var(--gold));
-  box-shadow:0 0 14px var(--turq); flex-shrink:0;
+/* Banda terracota superior tipo barra de título Dofus */
+.title-bar{
+  background:linear-gradient(180deg, var(--terracotta) 0%, var(--terracotta-2) 100%);
+  border-bottom:1px solid #2a0808;
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.05), 0 1px 0 rgba(0,0,0,.4);
+  height:var(--header-h);
+  display:flex; align-items:center;
+  position:relative;
+  overflow:hidden;
 }
-.logo b{
-  background:linear-gradient(90deg, var(--turq), var(--gold));
-  -webkit-background-clip:text; background-clip:text; color:transparent;
+.title-bar::before, .title-bar::after{
+  content:"";
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:80px; height:24px;
+  background:
+    linear-gradient(90deg, transparent, rgba(143,176,214,.15) 50%, transparent),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 1px, transparent 1px 4px);
+  opacity:.5; pointer-events:none;
+}
+.title-bar::before{ left:0; }
+.title-bar::after{ right:0; transform:translateY(-50%) scaleX(-1); }
+.title-bar-inner{
+  max-width:var(--maxw); margin:0 auto;
+  padding:0 18px;
+  width:100%;
+  display:flex; align-items:center; gap:12px;
+  position:relative; z-index:2;
+}
+.brand{
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:2px;
+  color:#e6ecf4;
+  text-shadow:0 1px 0 rgba(0,0,0,.5), 0 0 12px rgba(143,176,214,.15);
+  text-transform:uppercase;
+  display:flex; align-items:center; gap:10px;
+  user-select:none;
+}
+.brand-icon{
+  width:22px; height:22px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, var(--gold) 0%, var(--amber-2) 50%, #5a3a10 100%);
+  box-shadow:inset 0 0 4px rgba(0,0,0,.4), 0 0 8px rgba(143,176,214,.4);
+  flex-shrink:0;
 }
 .spacer{flex:1}
-.hbtn{
-  background:var(--card); color:var(--txt); border:1px solid var(--line);
-  border-radius:var(--radius-sm); padding:8px 12px; font-size:13.5px;
-  transition:all .2s ease; display:inline-flex; align-items:center; gap:6px;
+.icon-btn{
+  background:rgba(0,0,0,.25);
+  color:#e6ecf4;
+  border:1px solid rgba(143,176,214,.2);
+  border-radius:var(--radius-sm);
+  padding:6px 12px;
+  font-size:12.5px;
+  font-weight:600;
+  font-family:var(--font-display);
+  letter-spacing:.5px;
+  transition:all .15s ease;
+  display:inline-flex; align-items:center; gap:6px;
   white-space:nowrap;
 }
-.hbtn:hover{border-color:var(--turq); box-shadow:var(--glow-turq); transform:translateY(-1px)}
-.hbtn.danger:hover{border-color:var(--red); box-shadow:0 0 14px color-mix(in srgb,var(--red) 45%,transparent)}
+.icon-btn:hover{
+  background:rgba(143,176,214,.15);
+  border-color:rgba(143,176,214,.5);
+  color:#fff;
+}
+.icon-btn.danger:hover{
+  background:rgba(208,64,96,.25);
+  border-color:var(--danger);
+}
 @media (max-width:600px){
-  .hbtn{padding:7px 10px; font-size:12.5px}
-  .hbtn .lbl{display:none}
-  .logo{font-size:14px; letter-spacing:2px}
+  .icon-btn .lbl{display:none}
+  .brand{font-size:15px; letter-spacing:1.5px}
+  :root{ --header-h:48px; }
 }
 
-/* Sticky compact bar (aparece al hacer scroll) */
+/* STICKY COMPACT BAR --------------------------------------------------------*/
 .sticky-bar{
   position:sticky; top:var(--header-h); z-index:55;
-  background:color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter:blur(10px);
+  background:linear-gradient(180deg, var(--bg) 0%, rgba(10,10,10,.95) 100%);
   border-bottom:1px solid var(--line);
-  padding:10px 16px;
-  display:flex; align-items:center; gap:12px;
+  min-height:var(--sticky-h);
+  display:flex; align-items:center; gap:14px;
+  padding:8px 18px;
   max-width:var(--maxw); margin:0 auto;
-  min-height:var(--sticky-bar-h);
   opacity:0; transform:translateY(-100%); pointer-events:none;
-  transition:opacity .25s ease, transform .25s ease;
+  transition:opacity .2s ease, transform .2s ease;
+  backdrop-filter:blur(8px);
 }
 .sticky-bar.visible{opacity:1; transform:translateY(0); pointer-events:auto}
-.sticky-bar .pct{font-weight:800; font-size:18px; color:var(--gold); min-width:50px}
+.sticky-bar .pct{
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:18px;
+  color:var(--gold);
+  min-width:50px;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.5px;
+}
 .sticky-bar .bar-mini{
-  flex:1; height:8px; background:color-mix(in srgb, var(--line) 80%, transparent);
-  border-radius:999px; overflow:hidden; border:1px solid var(--line);
+  flex:1; height:6px;
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:999px; overflow:hidden;
 }
 .sticky-bar .bar-mini-fill{
-  height:100%; background:linear-gradient(90deg, var(--turq), var(--gold));
-  width:0%; transition:width .7s cubic-bezier(.22,1,.36,1);
-  box-shadow:0 0 8px color-mix(in srgb, var(--turq) 50%, transparent);
+  height:100%;
+  background:linear-gradient(90deg, var(--amber-2), var(--gold));
+  width:0%;
+  transition:width .6s cubic-bezier(.22,1,.36,1);
 }
-.sticky-bar .stat{font-size:13px; color:var(--txt-dim); white-space:nowrap}
-.sticky-bar .stat b{color:var(--txt)}
-@media (max-width:700px){
-  .sticky-bar .stat.hide-sm{display:none}
+.sticky-bar .stat{
+  font-size:12.5px; color:var(--txt-soft);
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
 }
+.sticky-bar .stat b{color:var(--txt); font-weight:600}
+@media (max-width:700px){ .sticky-bar .stat.hide-sm{display:none} }
 
-/* ============================================================================
-   HERO
-   ============================================================================ */
+/* HERO · panel oscuro tipo "info de Dofus" -----------------------------------*/
 .hero{
-  background:linear-gradient(160deg, var(--card), var(--card2));
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:28px 24px;
-  margin:20px 0;
-  box-shadow:var(--shadow);
-  position:relative; overflow:hidden;
+  position:relative;
+  background:linear-gradient(180deg, var(--panel) 0%, var(--bg-2) 100%);
+  border:1px solid var(--line-2);
+  border-radius:var(--radius-lg);
+  padding:28px 26px;
+  margin:18px 0;
+  box-shadow:
+    inset 0 1px 0 rgba(143,176,214,.05),
+    0 4px 24px rgba(0,0,0,.4);
+  overflow:hidden;
 }
 .hero::before{
-  content:""; position:absolute; inset:-1px;
-  background:radial-gradient(circle at top right, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 50%);
-  pointer-events:none;
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  opacity:.4;
 }
-.hero-title{
-  font-size:13px; font-weight:700; letter-spacing:2px;
-  text-transform:uppercase; color:var(--txt-dim);
-  margin:0 0 4px;
+.hero-eyebrow{
+  font-family:var(--font-display);
+  font-size:11px; font-weight:700;
+  letter-spacing:3px; text-transform:uppercase;
+  color:var(--txt-mute);
+  margin:0 0 8px;
 }
 .hero-pct{
-  font-size:clamp(56px, 12vw, 96px); font-weight:800; line-height:1;
-  margin:8px 0 18px; letter-spacing:1px;
-  background:linear-gradient(90deg, var(--turq), var(--gold));
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-  position:relative;
+  font-family:var(--font-display);
+  font-size:clamp(56px, 10vw, 88px);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-1px;
+  color:var(--gold);
+  text-shadow:0 2px 0 rgba(0,0,0,.4);
   font-variant-numeric:tabular-nums;
+  margin:4px 0 18px;
+  display:flex; align-items:baseline; gap:6px;
+}
+.hero-pct .pct-sym{
+  font-size:.5em; color:var(--amber-2); margin-left:2px;
 }
 .bar-outer{
-  background:color-mix(in srgb, var(--line) 80%, transparent);
-  border-radius:999px; height:24px; overflow:hidden; position:relative;
+  height:14px;
+  background:var(--inset);
   border:1px solid var(--line);
+  border-radius:999px;
+  overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.5);
 }
 .bar-fill{
-  height:100%; border-radius:999px;
-  background:linear-gradient(90deg, var(--turq), var(--gold));
+  height:100%;
   width:0%;
+  background:linear-gradient(90deg, var(--amber-2) 0%, var(--gold) 60%, #e6ecf4 100%);
   transition:width .8s cubic-bezier(.22,1,.36,1);
-  box-shadow:var(--glow-turq);
-  position:relative;
-}
-.bar-fill::after{
-  content:""; position:absolute; inset:0;
-  background:linear-gradient(90deg, transparent, color-mix(in srgb, white 25%, transparent), transparent);
-  background-size:200% 100%;
-  animation:shimmer 3s linear infinite;
-}
-@keyframes shimmer{
-  0%{background-position:200% 0}
-  100%{background-position:-200% 0}
+  box-shadow:0 0 8px rgba(143,176,214,.4), inset 0 1px 0 rgba(255,255,255,.2);
+  border-radius:999px;
 }
 .hero-stats{
-  display:flex; flex-wrap:wrap; gap:8px 22px;
-  margin-top:14px; font-size:14px; color:var(--txt-dim);
+  display:flex; flex-wrap:wrap; gap:6px 22px;
+  margin-top:14px;
+  font-size:13.5px;
+  color:var(--txt-soft);
   font-variant-numeric:tabular-nums;
 }
-.hero-stats b{color:var(--txt); font-weight:700}
-.hero-stats .sep{color:var(--txt-faint)}
+.hero-stats b{color:var(--txt); font-weight:600}
+.hero-stats .sep{color:var(--line-2)}
 .hero-warn{
-  display:inline-flex; align-items:center; gap:6px;
-  background:color-mix(in srgb, var(--orange) 18%, var(--card));
-  border:1px solid color-mix(in srgb, var(--orange) 50%, var(--line));
-  color:var(--txt);
-  padding:6px 12px; border-radius:999px; font-size:13px;
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(208,64,96,.15);
+  border:1px solid rgba(208,64,96,.5);
+  color:#ffb8c8;
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:12.5px;
+  font-weight:600;
+  font-family:var(--font-display);
+  letter-spacing:.5px;
   margin-bottom:14px;
-  cursor:pointer; transition:all .2s ease;
+  cursor:pointer;
+  transition:all .2s ease;
 }
-.hero-warn:hover{transform:translateY(-1px); box-shadow:0 0 14px color-mix(in srgb,var(--orange) 40%,transparent)}
-.hero-warn.hidden{display:none}
-
-@media (max-width:600px){
-  .hero{padding:20px 16px; margin:12px 0}
+[data-theme="light"] .hero-warn{ color:#8a2040; }
+.hero-warn:hover{ background:rgba(208,64,96,.25); transform:translateY(-1px); }
+.hero-warn.hidden{ display:none; }
+@media (max-width:640px){
+  .hero{padding:20px 18px; margin:12px 0}
 }
 
-/* ============================================================================
-   NOTA ACLARATORIA
-   ============================================================================ */
+/* NOTA ----------------------------------------------------------------------*/
+/* Nota aclaratoria · estilo "log del juego" — sin caja, sin emoji */
 .nota{
-  background:color-mix(in srgb, var(--blue) 12%, var(--card));
-  border:1px solid color-mix(in srgb, var(--blue) 40%, var(--line));
-  border-radius:var(--radius-sm);
-  padding:12px 14px;
-  font-size:13.5px; color:var(--txt);
   display:flex; gap:10px; align-items:flex-start;
-  margin-bottom:16px;
+  padding:6px 4px 14px;
+  margin-bottom:6px;
+  font-size:13px;
+  line-height:1.6;
+  color:var(--txt-soft);
+  font-style:italic;
+  border-bottom:1px solid var(--line);
 }
-.nota .ic{font-size:18px; line-height:1.2; flex-shrink:0}
+.nota .ic{
+  font-style:normal;
+  color:var(--gold);
+  font-family:var(--font-display);
+  font-weight:600;
+  letter-spacing:1px;
+  flex-shrink:0;
+  user-select:none;
+  /* el "ic" ahora es un prefijo tipográfico, no un emoji */
+}
+.nota b{ color:var(--txt); font-weight:600; font-style:normal; }
 .nota .close{
-  margin-left:auto; background:transparent; border:none; color:var(--txt-dim);
-  font-size:18px; cursor:pointer; padding:0 4px; line-height:1;
+  margin-left:auto;
+  color:var(--txt-mute);
+  font-size:16px;
+  width:22px; height:22px;
+  border-radius:4px;
+  flex-shrink:0;
+  font-style:normal;
+  line-height:1;
+  transition:color .15s ease;
 }
-.nota .close:hover{color:var(--txt)}
-.nota.hidden{display:none}
+.nota .close:hover{ color:var(--txt); }
+.nota.hidden{ display:none; }
 
-/* ============================================================================
-   PRERREQUISITOS (acordeón)
-   ============================================================================ */
+/* PRERREQUISITOS · acordeón "Requisitos" tipo Dofus -------------------------*/
 .prereqs{
-  background:var(--card); border:1px solid var(--line);
-  border-radius:var(--radius); overflow:hidden;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
   margin-bottom:16px;
+  overflow:hidden;
 }
 .prereqs-head{
-  padding:14px 16px; display:flex; align-items:center; gap:10px;
-  cursor:pointer; user-select:none;
-  background:linear-gradient(90deg, color-mix(in srgb, var(--purple) 8%, var(--card)), var(--card));
-  border:none; width:100%; text-align:left;
-  transition:background .2s ease;
+  width:100%;
+  display:flex; align-items:center; gap:10px;
+  padding:14px 18px;
+  background:linear-gradient(180deg, var(--panel-2), var(--panel));
+  border-bottom:1px solid transparent;
+  cursor:pointer;
+  user-select:none;
+  transition:background .15s ease;
+  text-align:left;
 }
-.prereqs-head:hover{background:color-mix(in srgb, var(--purple) 14%, var(--card))}
+.prereqs.open .prereqs-head{ border-bottom-color:var(--line); }
+.prereqs-head:hover{ background:var(--panel-2); }
 .prereqs-head .chev{
-  font-size:14px; color:var(--txt-dim);
-  transition:transform .25s ease; display:inline-block;
+  font-size:11px; color:var(--txt-mute);
+  transition:transform .2s ease;
+  display:inline-block; width:14px;
 }
-.prereqs.open .prereqs-head .chev{transform:rotate(90deg)}
+.prereqs.open .prereqs-head .chev{ transform:rotate(90deg); }
 .prereqs-head h2{
-  margin:0; font-size:15px; font-weight:700;
-  letter-spacing:.5px; flex:1;
+  margin:0;
+  font-family:var(--font-display);
+  font-size:14px; font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--txt);
+  flex:1;
 }
 .prereqs-head .count{
-  color:var(--txt-dim); font-size:13.5px; font-weight:500;
+  font-size:12px;
+  color:var(--txt-mute);
   font-variant-numeric:tabular-nums;
+  font-weight:500;
 }
-.prereqs-head .count.pending{color:var(--orange); font-weight:700}
+.prereqs-head .count.pending{ color:var(--amber); font-weight:700; }
 .prereqs-body{
   max-height:0; overflow:hidden;
-  transition:max-height .35s ease;
+  transition:max-height .3s ease;
 }
-.prereqs.open .prereqs-body{max-height:2400px}
-.prereqs-content{padding:14px 16px 18px}
+.prereqs.open .prereqs-body{ max-height:2600px; }
+.prereqs-content{ padding:16px 18px 18px; }
 .prereqs-intro{
-  font-size:13.5px; color:var(--txt-dim); margin:0 0 16px;
-  line-height:1.6;
+  margin:0 0 16px;
+  font-size:13px; line-height:1.6;
+  color:var(--txt-soft);
 }
-.prereqs-group{margin-bottom:14px}
-.prereqs-group:last-child{margin-bottom:0}
+.prereqs-group{ margin-bottom:14px; }
+.prereqs-group:last-child{ margin-bottom:0; }
 .prereqs-group h3{
-  font-size:12px; text-transform:uppercase; letter-spacing:1.5px;
-  color:var(--turq); margin:0 0 8px; font-weight:700;
+  margin:0 0 6px;
+  font-family:var(--font-display);
+  font-size:11px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--amber);
 }
 .prereq-item{
   display:flex; align-items:flex-start; gap:10px;
-  padding:8px 10px; border-radius:8px;
-  cursor:pointer; transition:background .15s ease;
+  padding:8px 10px;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  transition:background .12s ease;
   user-select:none;
 }
-.prereq-item:hover{background:color-mix(in srgb, var(--turq) 8%, transparent)}
+.prereq-item:hover{ background:rgba(143,176,214,.06); }
 .prereq-item .chk{
-  width:18px; height:18px; border:2px solid var(--line);
-  border-radius:5px; flex-shrink:0; margin-top:2px;
+  width:18px; height:18px;
+  border:1.5px solid var(--line-2);
+  border-radius:4px;
+  background:var(--inset);
+  flex-shrink:0; margin-top:1px;
   display:flex; align-items:center; justify-content:center;
-  transition:all .2s ease;
-  background:var(--bg2);
+  transition:all .15s ease;
 }
 .prereq-item.done .chk{
-  background:linear-gradient(135deg, var(--green), color-mix(in srgb, var(--green) 60%, black));
-  border-color:var(--green);
+  background:var(--success);
+  border-color:var(--success);
 }
 .prereq-item.done .chk::after{
-  content:"✓"; color:white; font-weight:800; font-size:13px;
+  content:"✓"; color:#fff; font-weight:800; font-size:12px; line-height:1;
 }
 .prereq-item.done .txt{
-  opacity:.55; text-decoration:line-through;
-  text-decoration-color:color-mix(in srgb, var(--green) 70%, transparent);
+  opacity:.55;
+  text-decoration:line-through;
+  text-decoration-color:rgba(76,175,80,.6);
 }
-.prereq-item .txt{font-size:13.5px; line-height:1.5; color:var(--txt)}
+.prereq-item .txt{
+  font-size:13px; line-height:1.5;
+  color:var(--txt);
+}
 
-/* ============================================================================
-   FILTROS
-   ============================================================================ */
+/* FILTROS -------------------------------------------------------------------*/
 .filters{
-  display:flex; flex-direction:column; gap:10px;
-  margin-bottom:16px;
+  display:flex; flex-direction:column; gap:8px;
+  margin-bottom:14px;
 }
 .filter-row{
-  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:8px;
 }
 .filter-row .lbl{
-  font-size:12px; text-transform:uppercase; letter-spacing:1.5px;
-  color:var(--txt-dim); font-weight:700; margin-right:4px;
+  font-family:var(--font-display);
+  font-size:11px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--txt-mute);
+  margin-right:2px;
 }
 .chip{
-  background:var(--card); border:1.5px solid var(--line);
-  border-radius:999px; padding:6px 12px; font-size:12.5px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:5px 11px;
+  font-size:12px; font-weight:500;
+  color:var(--txt-soft);
   display:inline-flex; align-items:center; gap:6px;
-  cursor:pointer; transition:all .2s ease; user-select:none;
+  cursor:pointer;
+  transition:all .15s ease;
+  user-select:none;
   white-space:nowrap;
+  font-family:var(--font-body);
 }
-.chip:hover{transform:translateY(-1px)}
+.chip:hover{
+  color:var(--txt);
+  border-color:var(--line-2);
+}
 .chip.active{
-  background:color-mix(in srgb, var(--turq) 20%, var(--card));
-  border-color:var(--turq); color:var(--txt);
-  box-shadow:var(--glow-turq);
+  background:rgba(143,176,214,.12);
+  border-color:var(--amber);
+  color:var(--txt);
 }
 .chip[data-type="zone"].active{
-  background:color-mix(in srgb, var(--zone-color, var(--turq)) 25%, var(--card));
-  border-color:var(--zone-color, var(--turq));
-  box-shadow:0 0 14px color-mix(in srgb, var(--zone-color, var(--turq)) 45%, transparent);
+  background:color-mix(in srgb, var(--zone-color, var(--amber)) 22%, var(--panel));
+  border-color:var(--zone-color, var(--amber));
 }
 .chip .dot{
   width:8px; height:8px; border-radius:50%;
-  background:var(--zone-color, var(--turq)); flex-shrink:0;
+  background:var(--zone-color, var(--gold));
+  flex-shrink:0;
 }
-.chip .ico{font-size:14px; line-height:1}
+.chip .ico{ font-size:13px; line-height:1; }
 .chips-scroll{
-  display:flex; gap:8px; overflow-x:auto;
-  padding-bottom:4px; flex-wrap:wrap;
+  display:flex; gap:6px;
+  flex-wrap:wrap;
   scrollbar-width:thin;
 }
 @media (max-width:700px){
-  .chips-scroll{flex-wrap:nowrap; padding-bottom:8px}
+  .chips-scroll{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
 }
 .search{
-  flex:1; min-width:200px;
-  background:var(--card); border:1.5px solid var(--line);
-  border-radius:var(--radius-sm); padding:8px 12px;
-  color:var(--txt); font-size:13.5px;
-  transition:all .2s ease;
+  flex:1; min-width:180px;
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:7px 12px;
+  color:var(--txt);
+  font-size:13px;
+  transition:all .15s ease;
 }
-.search:focus{outline:none; border-color:var(--turq); box-shadow:var(--glow-turq)}
+.search::placeholder{color:var(--txt-mute)}
+.search:focus{
+  outline:none;
+  border-color:var(--amber);
+  background:var(--bg-2);
+}
 .toggle{
   display:inline-flex; align-items:center; gap:8px;
-  cursor:pointer; font-size:13px; color:var(--txt); user-select:none;
-  padding:6px 10px; border-radius:8px;
-  transition:background .15s ease;
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--txt-soft);
+  padding:5px 10px;
+  border-radius:var(--radius-sm);
+  user-select:none;
+  transition:background .12s ease;
 }
-.toggle:hover{background:color-mix(in srgb, var(--turq) 8%, transparent)}
+.toggle:hover{ background:rgba(143,176,214,.06); color:var(--txt); }
 .toggle input{position:absolute; opacity:0; pointer-events:none}
 .toggle .sw{
-  width:34px; height:20px; background:var(--line); border-radius:999px;
-  position:relative; transition:background .2s ease;
+  width:30px; height:16px;
+  background:var(--line-2);
+  border-radius:999px;
+  position:relative;
+  transition:background .2s ease;
 }
 .toggle .sw::after{
   content:""; position:absolute; top:2px; left:2px;
-  width:16px; height:16px; border-radius:50%; background:var(--txt-dim);
+  width:12px; height:12px; border-radius:50%;
+  background:var(--txt-mute);
   transition:all .2s ease;
 }
-.toggle input:checked + .sw{background:color-mix(in srgb, var(--turq) 70%, var(--line))}
-.toggle input:checked + .sw::after{left:16px; background:var(--turq)}
+.toggle input:checked + .sw{ background:rgba(143,176,214,.5); }
+.toggle input:checked + .sw::after{ left:16px; background:var(--gold); }
 .clear-btn{
-  background:transparent; border:1px solid var(--line);
-  border-radius:8px; padding:5px 10px; font-size:12px;
-  color:var(--txt-dim); transition:all .2s ease;
+  background:transparent;
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:5px 10px;
+  font-size:11.5px; font-weight:600;
+  color:var(--txt-mute);
+  letter-spacing:.5px;
+  transition:all .15s ease;
 }
-.clear-btn:hover{border-color:var(--red); color:var(--red)}
-.clear-btn.hidden{display:none}
+.clear-btn:hover{ border-color:var(--danger); color:var(--danger); }
+.clear-btn.hidden{ display:none; }
 
-/* ============================================================================
-   LAYOUT PRINCIPAL (Grid + Detalle)
-   ============================================================================ */
+/* LAYOUT --------------------------------------------------------------------*/
 .main-layout{
   display:grid;
-  grid-template-columns:1fr 1.1fr;
-  gap:20px;
+  grid-template-columns:1fr 1.05fr;
+  gap:18px;
   margin-bottom:24px;
   align-items:start;
 }
 @media (max-width:1100px){
-  .main-layout{grid-template-columns:1fr 1fr}
+  .main-layout{ grid-template-columns:1fr 1fr; }
 }
 @media (max-width:900px){
-  .main-layout{grid-template-columns:1fr}
+  .main-layout{ grid-template-columns:1fr; }
 }
 
-/* ============================================================================
-   GRID DE PASOS
-   ============================================================================ */
+/* GRID DE PASOS · "tarjetas de logro" ---------------------------------------*/
 .grid-section{
-  background:var(--card); border:1px solid var(--line);
-  border-radius:var(--radius); padding:16px;
-  box-shadow:var(--shadow);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  padding:14px;
 }
-.grid-section h2{
-  margin:0 0 12px; font-size:13px; text-transform:uppercase;
-  letter-spacing:1.5px; color:var(--txt-dim); font-weight:700;
+.section-title{
   display:flex; align-items:center; gap:8px;
+  margin:0 0 12px;
+  padding:0 4px;
+  font-family:var(--font-display);
+  font-size:11px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--txt-mute);
+}
+.section-title::before{
+  content:""; display:inline-block;
+  width:3px; height:14px;
+  background:var(--amber);
+  border-radius:2px;
 }
 .grid{
   display:grid;
   grid-template-columns:repeat(10, 1fr);
-  gap:6px;
+  gap:5px;
 }
-@media (max-width:600px){
-  .grid{grid-template-columns:repeat(5, 1fr); gap:8px}
+@media (max-width:640px){
+  .grid{ grid-template-columns:repeat(5, 1fr); gap:6px; }
 }
+
+/* Una celda tipo "card del Dofus" — fondo color zona apagado + número arriba */
 .cell{
   aspect-ratio:1/1;
-  background:var(--bg2);
-  border:2px solid var(--zone-color, var(--line));
-  border-radius:10px;
   position:relative;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--zone-color, var(--gold)) 18%, var(--inset)) 0%,
+      color-mix(in srgb, var(--zone-color, var(--gold)) 8%, var(--inset)) 100%);
+  border:1px solid color-mix(in srgb, var(--zone-color, var(--gold)) 35%, var(--line));
+  border-radius:var(--radius);
   cursor:pointer;
-  transition:all .35s cubic-bezier(.22,1,.36,1);
-  padding:0; font-family:inherit; color:inherit;
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
   overflow:hidden;
+  font-family:var(--font-display);
+  color:var(--txt);
+}
+.cell::before{
+  /* Brillo sutil arriba, tipo cristal del juego */
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:35%;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+  pointer-events:none;
 }
 .cell .num{
-  font-size:clamp(13px, 2.2vw, 18px);
+  font-size:clamp(13px, 2.1vw, 18px);
   font-weight:800;
-  font-variant-numeric:tabular-nums;
   letter-spacing:-.5px;
+  font-variant-numeric:tabular-nums;
   z-index:2;
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
   line-height:1;
 }
-.cell .tier-ico{
-  position:absolute; bottom:3px; right:4px;
-  font-size:10px; opacity:.85; line-height:1;
-  z-index:2;
-}
 .cell:hover{
-  transform:scale(1.08);
-  box-shadow:0 0 14px color-mix(in srgb, var(--turq) 60%, transparent);
+  transform:translateY(-2px) scale(1.04);
+  border-color:var(--zone-color, var(--gold));
+  box-shadow:0 4px 14px rgba(0,0,0,.4),
+             0 0 0 1px color-mix(in srgb, var(--zone-color, var(--gold)) 50%, transparent);
   z-index:3;
 }
+/* Completado: fondo dorado + check verde esquina */
 .cell.done{
-  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  background:linear-gradient(180deg,
+    rgba(143,176,214,.28) 0%,
+    rgba(143,176,214,.18) 100%);
   border-color:var(--gold);
-  box-shadow:0 0 12px color-mix(in srgb, var(--gold) 45%, transparent);
 }
-.cell.done .num{color:#1a1a1a}
-.cell.done .tier-ico{opacity:.7}
+.cell.done .num{
+  color:#ffffff;
+  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 8px rgba(143,176,214,.4);
+}
+.cell.done::after{
+  content:"✓";
+  position:absolute;
+  top:3px; right:3px;
+  width:14px; height:14px;
+  background:var(--success);
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+/* Seleccionado: outline naranja-ámbar brillante (como en el juego) */
 .cell.selected{
-  border-width:3px;
-  border-color:var(--turq) !important;
-  box-shadow:0 0 18px var(--turq);
+  border:2px solid var(--amber) !important;
+  box-shadow:
+    0 0 0 2px rgba(143,176,214,.25),
+    0 0 16px rgba(143,176,214,.5),
+    0 4px 14px rgba(0,0,0,.5);
   transform:scale(1.05);
   z-index:4;
 }
-.cell.selected.done{
-  border-color:var(--turq) !important;
-}
-.cell.dimmed{opacity:.18; pointer-events:none; transform:scale(.95)}
-.cell:active{transform:scale(.96)}
-.cell.just-completed{
-  animation:pulse-gold .6s ease-out;
-}
-@keyframes pulse-gold{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.25); box-shadow:0 0 30px var(--gold)}
-  100%{transform:scale(1)}
+.cell.dimmed{ opacity:.15; pointer-events:none; transform:scale(.95); }
+.cell:active{ transform:scale(.96); }
+.cell.just-completed{ animation:cell-pop .55s ease-out; }
+@keyframes cell-pop{
+  0%  { transform:scale(1); }
+  40% { transform:scale(1.22); box-shadow:0 0 24px var(--gold); }
+  100%{ transform:scale(1); }
 }
 
-/* ============================================================================
-   PANEL DE DETALLE
-   ============================================================================ */
+/* PANEL DETALLE · estilo "panel derecho Aventura/Guía" -----------------------*/
 .detail-panel{
-  background:var(--card); border:1px solid var(--line);
-  border-radius:var(--radius); padding:24px;
-  box-shadow:var(--shadow);
-  position:sticky; top:calc(var(--header-h) + var(--sticky-bar-h) + 12px);
-  max-height:calc(100vh - var(--header-h) - var(--sticky-bar-h) - 24px);
-  overflow-y:auto;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  position:sticky;
+  top:calc(var(--header-h) + var(--sticky-h) + 14px);
+  max-height:calc(100vh - var(--header-h) - var(--sticky-h) - 28px);
+  overflow:hidden;
+  display:flex; flex-direction:column;
 }
 .detail-empty{
-  text-align:center; padding:32px 16px; color:var(--txt-dim);
+  text-align:center;
+  padding:48px 24px;
+  color:var(--txt-soft);
 }
 .detail-empty .map-ico{
-  font-size:56px; margin-bottom:12px; opacity:.6;
+  font-size:48px;
+  margin-bottom:14px;
+  opacity:.5;
+  color:var(--amber);
 }
-.detail-empty p{margin:0 0 16px; font-size:14.5px}
-
+.detail-empty p{
+  margin:0 0 18px;
+  font-size:14px;
+  line-height:1.55;
+}
+#detailContent{
+  display:flex; flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+/* Header terracota del detalle, tipo el bloque rojo de "Dofus silvestre" */
 .detail-head{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  gap:12px; margin-bottom:14px;
+  background:linear-gradient(180deg, var(--terracotta) 0%, var(--terracotta-2) 100%);
+  padding:14px 18px;
+  display:flex; align-items:flex-start; gap:14px;
+  position:relative;
+  border-bottom:1px solid #2a0808;
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.04);
+}
+.detail-head::before{
+  content:""; position:absolute; left:0; right:0; top:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(143,176,214,.4), transparent);
+}
+.detail-num-wrap{ flex:1; min-width:0; }
+.detail-num-eyebrow{
+  font-family:var(--font-display);
+  font-size:10px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  color:rgba(245,232,200,.7);
+  margin:0 0 2px;
 }
 .detail-num{
-  font-size:42px; font-weight:800; line-height:1;
-  background:linear-gradient(135deg, var(--turq), var(--gold));
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-  letter-spacing:-1px;
+  font-family:var(--font-display);
+  font-size:26px; font-weight:800;
+  color:#e6ecf4;
+  letter-spacing:.5px;
+  text-shadow:0 1px 0 rgba(0,0,0,.4);
+  margin:0;
+  line-height:1.15;
 }
 .detail-close{
-  background:transparent; border:1px solid var(--line);
-  border-radius:8px; width:32px; height:32px;
-  font-size:16px; color:var(--txt-dim);
-  transition:all .2s ease; flex-shrink:0;
+  width:28px; height:28px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(143,176,214,.3);
+  border-radius:var(--radius-sm);
+  color:#e6ecf4;
+  font-size:18px; line-height:1;
+  flex-shrink:0;
+  transition:all .15s ease;
 }
-.detail-close:hover{border-color:var(--red); color:var(--red)}
+.detail-close:hover{
+  background:rgba(208,64,96,.4);
+  border-color:var(--danger);
+}
+.detail-body{
+  flex:1; overflow-y:auto;
+  padding:16px 18px 18px;
+}
 .detail-badges{
-  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;
+  display:flex; flex-wrap:wrap; gap:6px;
+  margin-bottom:10px;
 }
 .badge{
   display:inline-flex; align-items:center; gap:5px;
-  padding:4px 10px; border-radius:999px;
-  font-size:12px; font-weight:600;
-  background:var(--bg2); border:1px solid var(--line);
+  padding:3px 9px;
+  border-radius:var(--radius-sm);
+  font-size:11.5px; font-weight:600;
+  background:var(--inset);
+  border:1px solid var(--line);
+  color:var(--txt-soft);
+  font-family:var(--font-display);
+  letter-spacing:.3px;
 }
 .badge.zone{
-  background:color-mix(in srgb, var(--zone-color, var(--turq)) 18%, var(--card));
-  border-color:color-mix(in srgb, var(--zone-color, var(--turq)) 50%, var(--line));
+  background:color-mix(in srgb, var(--zone-color, var(--gold)) 14%, var(--inset));
+  border-color:color-mix(in srgb, var(--zone-color, var(--gold)) 45%, var(--line));
   color:var(--txt);
 }
 .badge.zone .dot{
   width:7px; height:7px; border-radius:50%;
-  background:var(--zone-color, var(--turq));
+  background:var(--zone-color, var(--gold));
 }
-.badge.tier{background:var(--bg2)}
-.badge.tier.t-trivial{border-color:color-mix(in srgb, var(--green) 60%, var(--line)); color:var(--green)}
-.badge.tier.t-corto{border-color:color-mix(in srgb, var(--blue) 60%, var(--line)); color:var(--blue)}
-.badge.tier.t-medio{border-color:color-mix(in srgb, var(--yellow) 60%, var(--line)); color:var(--yellow)}
-.badge.tier.t-largo{border-color:color-mix(in srgb, var(--orange) 60%, var(--line)); color:var(--orange)}
-.badge.tier.t-epico{
-  border-color:color-mix(in srgb, var(--purple) 60%, var(--line)); color:var(--purple);
-  background:color-mix(in srgb, var(--purple) 15%, var(--bg2));
-}
-.detail-weight{
-  font-size:12.5px; color:var(--txt-dim);
-  margin-bottom:14px;
-}
-.detail-weight b{color:var(--gold); font-weight:700}
+/* Texto verbatim · "card de misión" con franja ámbar lateral */
 .detail-text{
-  background:var(--bg2); border-left:3px solid var(--turq);
-  border-radius:8px; padding:14px 16px;
-  font-size:14.5px; line-height:1.65;
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  font-size:14px;
+  line-height:1.7;
   white-space:pre-wrap; word-wrap:break-word;
   margin-bottom:18px;
   color:var(--txt);
+  font-family:var(--font-body);
+  position:relative;
 }
-.detail-cta{
-  display:flex; flex-direction:column; gap:10px;
+.detail-text::before{
+  content:"";
+  position:absolute;
+  top:0; left:0; bottom:0;
+  width:3px;
+  background:var(--amber);
+  border-radius:var(--radius) 0 0 var(--radius);
 }
+
+/* CTAs ---------------------------------------------------------------------*/
+.detail-cta{ display:flex; flex-direction:column; gap:10px; }
+
 .btn-primary{
-  background:linear-gradient(135deg, var(--gold), var(--gold2));
-  color:#1a1a1a; border:none; font-weight:700;
-  padding:14px 20px; border-radius:var(--radius-sm);
-  font-size:15px; letter-spacing:.5px;
-  transition:all .25s ease;
-  box-shadow:0 4px 14px color-mix(in srgb, var(--gold) 40%, transparent);
+  background:linear-gradient(180deg, var(--gold) 0%, var(--gold-2) 100%);
+  color:#0b1220;
+  font-family:var(--font-display);
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  font-size:13px;
+  padding:12px 18px;
+  border-radius:var(--radius);
+  border:1px solid var(--amber-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.3),
+    inset 0 -1px 0 rgba(0,0,0,.1),
+    0 2px 6px rgba(0,0,0,.4);
+  transition:all .15s ease;
+  text-shadow:0 1px 0 rgba(255,255,255,.2);
 }
-.btn-primary:hover{transform:translateY(-2px); box-shadow:0 6px 20px color-mix(in srgb, var(--gold) 60%, transparent)}
+.btn-primary:hover{
+  background:linear-gradient(180deg, #a5b8d0, var(--gold));
+  transform:translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.3),
+    0 4px 12px rgba(143,176,214,.3);
+}
+.btn-primary:active{ transform:translateY(0); }
+/* Desmarcar = look "ghost" */
 .btn-primary.is-done{
-  background:linear-gradient(135deg, var(--bg2), var(--card));
-  color:var(--txt-dim); border:1px solid var(--line);
+  background:transparent;
+  color:var(--txt-soft);
+  border:1px solid var(--line-2);
   box-shadow:none;
+  text-shadow:none;
 }
-.btn-primary.is-done:hover{border-color:var(--red); color:var(--red)}
-.detail-nav{
-  display:flex; gap:8px;
+.btn-primary.is-done:hover{
+  border-color:var(--danger);
+  color:var(--danger);
+  background:rgba(208,64,96,.08);
+  transform:none;
 }
+
+.detail-nav{ display:flex; gap:8px; }
 .btn-nav{
-  flex:1; background:var(--card); border:1px solid var(--line);
-  border-radius:var(--radius-sm); padding:10px 12px;
-  font-size:13px; color:var(--txt);
-  transition:all .2s ease;
+  flex:1;
+  background:var(--inset);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:9px 12px;
+  font-size:12px; font-weight:600;
+  color:var(--txt-soft);
+  font-family:var(--font-display);
+  letter-spacing:.5px;
+  transition:all .15s ease;
   display:flex; align-items:center; justify-content:center; gap:6px;
 }
-.btn-nav:hover:not(:disabled){border-color:var(--turq); transform:translateY(-1px)}
-.btn-nav:disabled{opacity:.4; cursor:not-allowed}
-.btn-secondary{
-  background:transparent; border:1px dashed var(--turq); color:var(--turq);
-  border-radius:var(--radius-sm); padding:10px 14px;
-  font-size:13px; font-weight:600;
-  transition:all .2s ease;
+.btn-nav:hover:not(:disabled){
+  border-color:var(--amber);
+  color:var(--txt);
+  background:rgba(143,176,214,.08);
 }
-.btn-secondary:hover{background:color-mix(in srgb, var(--turq) 12%, transparent)}
+.btn-nav:disabled{ opacity:.35; cursor:not-allowed; }
 
-/* ============================================================================
-   BOTTOM SHEET (mobile only)
-   ============================================================================ */
+.btn-secondary{
+  background:transparent;
+  border:1px dashed var(--amber);
+  color:var(--amber);
+  border-radius:var(--radius);
+  padding:9px 14px;
+  font-size:12px; font-weight:600;
+  font-family:var(--font-display);
+  letter-spacing:1px; text-transform:uppercase;
+  transition:all .15s ease;
+}
+.btn-secondary:hover{
+  background:rgba(143,176,214,.1);
+  border-style:solid;
+}
+
+/* BOTTOM SHEET --------------------------------------------------------------*/
 .sheet-overlay{
   position:fixed; inset:0;
-  background:rgba(0,0,0,.55);
+  background:rgba(0,0,0,.65);
   z-index:99;
   opacity:0; pointer-events:none;
-  transition:opacity .3s ease;
+  transition:opacity .25s ease;
+  backdrop-filter:blur(2px);
 }
-.sheet-overlay.open{opacity:1; pointer-events:auto}
+.sheet-overlay.open{ opacity:1; pointer-events:auto; }
 .sheet{
   position:fixed; left:0; right:0; bottom:0;
-  background:var(--card); border-top:1px solid var(--line);
-  border-radius:20px 20px 0 0;
-  z-index:100; max-height:85vh;
+  background:var(--panel);
+  border-top:1px solid var(--line-2);
+  border-radius:16px 16px 0 0;
+  z-index:100;
+  max-height:88vh;
   transform:translateY(100%);
-  transition:transform .3s ease;
-  box-shadow:0 -10px 40px rgba(0,0,0,.5);
+  transition:transform .28s ease;
+  box-shadow:0 -12px 36px rgba(0,0,0,.6);
   display:flex; flex-direction:column;
+  overflow:hidden;
 }
-.sheet.open{transform:translateY(0)}
+.sheet.open{ transform:translateY(0); }
 .sheet-handle{
   display:flex; justify-content:center;
-  padding:10px 0 4px; cursor:grab;
+  padding:8px 0 4px;
+  cursor:grab;
   touch-action:none;
+  flex-shrink:0;
 }
 .sheet-handle .bar{
-  width:42px; height:4px; border-radius:999px;
-  background:var(--line);
+  width:40px; height:4px;
+  border-radius:999px;
+  background:var(--line-2);
 }
-.sheet-handle:active{cursor:grabbing}
+.sheet-handle:active{ cursor:grabbing; }
 .sheet-content{
-  overflow-y:auto; padding:8px 18px 28px;
+  overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  flex:1;
 }
+.sheet .detail-head{ border-radius:0; }
 @media (min-width:901px){
-  .sheet,.sheet-overlay{display:none}
+  .sheet, .sheet-overlay{ display:none; }
 }
 
-/* ============================================================================
-   FOOTER
-   ============================================================================ */
+/* FOOTER --------------------------------------------------------------------*/
 footer{
   border-top:1px solid var(--line);
-  padding:20px 16px 28px;
-  text-align:center; font-size:12.5px;
-  color:var(--txt-dim);
   margin-top:24px;
+  padding:22px 16px 28px;
+  text-align:center;
+  font-size:12px;
+  color:var(--txt-mute);
+  line-height:1.7;
 }
-footer b{color:var(--txt)}
+footer b{color:var(--txt-soft)}
+footer small{ color:var(--line-warm); }
 
-/* ============================================================================
-   UTIL
-   ============================================================================ */
-.hidden{display:none !important}
+/* UTIL ----------------------------------------------------------------------*/
+.hidden{ display:none !important; }
 .sr-only{
   position:absolute; width:1px; height:1px;
   padding:0; margin:-1px; overflow:hidden;
   clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
 
-/* Scrollbar */
+/* Scrollbars cálidos --------------------------------------------------------*/
 *::-webkit-scrollbar{width:10px; height:10px}
-*::-webkit-scrollbar-track{background:transparent}
-*::-webkit-scrollbar-thumb{background:var(--line); border-radius:5px}
-*::-webkit-scrollbar-thumb:hover{background:var(--turq)}
+*::-webkit-scrollbar-track{ background:var(--inset); }
+*::-webkit-scrollbar-thumb{
+  background:var(--line-2);
+  border-radius:5px;
+  border:2px solid var(--inset);
+}
+*::-webkit-scrollbar-thumb:hover{ background:var(--amber-2); }
 </style>
+
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- HEADER · estilo ventana de juego Dofus -->
 <header>
-  <div class="hbar">
-    <div class="logo"><span class="dot" aria-hidden="true"></span><b>DOFUS SILVESTRE</b></div>
-    <div class="spacer"></div>
-    <button class="hbtn" id="themeBtn" aria-label="Cambiar tema">
-      <span id="themeIcon">☀️</span><span class="lbl" id="themeLbl">Modo claro</span>
-    </button>
-    <button class="hbtn danger" id="resetBtn" aria-label="Reiniciar progreso">
-      ↺<span class="lbl">Reiniciar</span>
-    </button>
+  <div class="title-bar">
+    <div class="title-bar-inner">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true"></span>
+        Dofus Silvestre
+      </div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema">
+        <span id="themeIcon">☀️</span><span class="lbl" id="themeLbl">Tema claro</span>
+      </button>
+      <button class="icon-btn danger" id="resetBtn" aria-label="Reiniciar progreso">
+        ↺<span class="lbl">Reiniciar</span>
+      </button>
+    </div>
   </div>
   <!-- Sticky compact bar (aparece al hacer scroll) -->
   <div class="sticky-bar" id="stickyBar">
     <div class="pct" id="sbPct">0%</div>
     <div class="bar-mini"><div class="bar-mini-fill" id="sbFill"></div></div>
     <div class="stat hide-sm"><b id="sbDone">0</b>/100 pasos</div>
-    <div class="stat hide-sm"><b id="sbPts">0</b>/960 pts</div>
   </div>
 </header>
 
@@ -677,26 +1030,24 @@ footer b{color:var(--txt)}
 
   <!-- HERO -->
   <section class="hero" aria-label="Progreso global">
-    <p class="hero-title">Progreso del Dofus Silvestre</p>
+    <p class="hero-eyebrow">Progreso del Dofus Silvestre</p>
     <button class="hero-warn hidden" id="heroWarn" aria-label="Ver prerrequisitos pendientes">
-      ⚠️ <span id="heroWarnTxt">0 prerrequisitos pendientes</span>
+      ⚠ <span id="heroWarnTxt">0 prerrequisitos pendientes</span>
     </button>
-    <div class="hero-pct" id="heroPct">0%</div>
+    <div class="hero-pct" id="heroPct">0<span class="pct-sym">%</span></div>
     <div class="bar-outer"><div class="bar-fill" id="heroFill"></div></div>
     <div class="hero-stats">
       <span><b id="statDone">0</b>/100 pasos completados</span>
       <span class="sep">·</span>
-      <span><b id="statPts">0</b>/960 puntos ponderados</span>
-      <span class="sep">·</span>
-      <span>Siguiente pendiente: <b id="statNext">—</b></span>
+      <span>Siguiente: <b id="statNext">—</b></span>
     </div>
   </section>
 
-  <!-- NOTA ACLARATORIA -->
+  <!-- NOTA ACLARATORIA · estilo "log del juego" -->
   <div class="nota" id="nota">
-    <span class="ic">💡</span>
+    <span class="ic" aria-hidden="true">›</span>
     <div>
-      <b>Aclaración:</b> La instrucción "Hasta tener que pasar X jefe de mazmorra" significa dejar pausada esa misión y no vencer al jefe en ese punto, ya que seguramente hay otra misión que pide pasar dicha mazmorra.
+      <b>Aclaración —</b> La instrucción "Hasta tener que pasar X jefe de mazmorra" significa dejar pausada esa misión y no vencer al jefe en ese punto, ya que seguramente hay otra misión que pide pasar dicha mazmorra.
     </div>
     <button class="close" id="notaClose" aria-label="Cerrar nota">×</button>
   </div>
@@ -734,10 +1085,6 @@ footer b{color:var(--txt)}
       <div class="chips-scroll" id="zoneChips"></div>
     </div>
     <div class="filter-row">
-      <span class="lbl">Esfuerzo:</span>
-      <div class="chips-scroll" id="tierChips"></div>
-    </div>
-    <div class="filter-row">
       <input type="search" class="search" id="searchInput" placeholder="🔎 Buscar por número o texto del paso…" aria-label="Buscar paso">
       <label class="toggle">
         <input type="checkbox" id="pendingToggle">
@@ -752,16 +1099,16 @@ footer b{color:var(--txt)}
   <div class="main-layout">
     <!-- GRID -->
     <section class="grid-section" aria-label="Tablero de pasos">
-      <h2>🗺️ Tablero · 100 pasos</h2>
+      <h2 class="section-title">Tablero · 100 pasos</h2>
       <div class="grid" id="grid" role="grid"></div>
     </section>
 
     <!-- PANEL DETALLE (desktop) -->
     <aside class="detail-panel" id="detailPanel" aria-label="Detalle del paso">
       <div class="detail-empty" id="detailEmpty">
-        <div class="map-ico">🗺️</div>
-        <p>Selecciona un paso del tablero para ver el detalle completo</p>
-        <button class="btn-secondary" id="goNextEmpty">📍 Ir al siguiente pendiente</button>
+        <div class="map-ico">◈</div>
+        <p>Selecciona un paso del tablero<br>para ver el detalle completo</p>
+        <button class="btn-secondary" id="goNextEmpty">Ir al siguiente pendiente</button>
       </div>
       <div id="detailContent" class="hidden"></div>
     </aside>
@@ -770,7 +1117,7 @@ footer b{color:var(--txt)}
   <footer>
     Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br>
     Dofus es una marca de <b>Ankama</b>. Herramienta no oficial hecha por y para la comunidad.<br>
-    <small style="color:var(--txt-faint)">El progreso se guarda en tu navegador. Si cambias de dispositivo o borras la caché, se pierde.</small>
+    <small>El progreso se guarda en tu navegador. Si cambias de dispositivo o borras la caché, se pierde.</small>
   </footer>
 </div>
 
@@ -1025,13 +1372,14 @@ function renderHero() {
   $("#heroPct").textContent = pct + "%";
   $("#heroFill").style.width = pct + "%";
   $("#statDone").textContent = done;
-  $("#statPts").textContent = pts;
   $("#statNext").textContent = next ? "Paso " + next : "—";
   // Sticky bar
   $("#sbPct").textContent = pct + "%";
   $("#sbFill").style.width = pct + "%";
   $("#sbDone").textContent = done;
-  $("#sbPts").textContent = pts;
+  // Puntos ponderados ocultos del UI (sistema interno sigue calculando pct)
+  // Exponer en window para debug/dev:
+  window.__silvestreStats = { done, pts, pct, total: TOTAL_PTS };
   // Warn de prereqs
   const pendingPrereqs = prereqsPending();
   const warn = $("#heroWarn");
@@ -1107,18 +1455,8 @@ function renderChips() {
     c.addEventListener("click", () => toggleFilter("zones", z, c));
     zc.appendChild(c);
   });
-  // Tiers
-  const tc = $("#tierChips");
-  tc.innerHTML = "";
-  Object.entries(TIER_META).forEach(([k, m]) => {
-    const c = document.createElement("button");
-    c.className = "chip";
-    c.dataset.type = "tier";
-    c.dataset.value = k;
-    c.innerHTML = `<span class="ico">${m.icon}</span>${m.label} <span style="color:var(--txt-dim); font-size:11px;">(${TIER_POINTS[k]}pts)</span>`;
-    c.addEventListener("click", () => toggleFilter("tiers", k, c));
-    tc.appendChild(c);
-  });
+  // Tiers eliminados del UI — el sistema interno de pesos sigue activo
+  // pero no se exponen badges/chips de esfuerzo al usuario
 }
 
 function toggleFilter(kind, value, el) {
@@ -1160,8 +1498,8 @@ function renderGrid() {
     cell.className = "cell" + (isDone(s.n) ? " done" : "");
     cell.dataset.n = s.n;
     cell.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
-    cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone} — ${TIER_META[s.effort].label}${isDone(s.n) ? " — completado" : ""}`);
-    cell.innerHTML = `<span class="num">${s.n}</span><span class="tier-ico" aria-hidden="true">${TIER_META[s.effort].icon}</span>`;
+    cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
+    cell.innerHTML = `<span class="num">${s.n}</span>`;
     cell.addEventListener("click", () => selectStep(s.n));
     g.appendChild(cell);
   });
@@ -1178,7 +1516,7 @@ function updateCell(n) {
     setTimeout(() => cell.classList.remove("just-completed"), 600);
   }
   const s = STEPS[n - 1];
-  cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone} — ${TIER_META[s.effort].label}${nowDone ? " — completado" : ""}`);
+  cell.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${nowDone ? " — completado" : ""}`);
 }
 
 function updateSelectedCell() {
@@ -1194,36 +1532,32 @@ function updateSelectedCell() {
 // ============================================================================
 function buildDetailHtml(n) {
   const s = STEPS[n - 1];
-  const m = TIER_META[s.effort];
-  const pts = TIER_POINTS[s.effort];
-  const pctWeight = ((pts / TOTAL_PTS) * 100).toFixed(2);
   const done = isDone(n);
   const prev = n > 1 ? n - 1 : null;
   const next = n < STEPS.length ? n + 1 : null;
   return `
     <div class="detail-head">
-      <div>
-        <div class="detail-num">Paso ${s.n}</div>
+      <div class="detail-num-wrap">
+        <p class="detail-num-eyebrow">${done ? "✓ Completado" : "Etapa"} ${s.n}/100</p>
+        <h2 class="detail-num">Paso ${s.n}</h2>
       </div>
       <button class="detail-close" id="detailCloseBtn" aria-label="Cerrar detalle">×</button>
     </div>
-    <div class="detail-badges">
-      <span class="badge zone" style="--zone-color:${ZONE_COLOR[s.zone]}"><span class="dot"></span>${escapeHtml(s.zone)}</span>
-      <span class="badge tier ${m.cls}">${m.icon} ${m.label}</span>
-    </div>
-    <div class="detail-weight">
-      Vale <b>${pts}</b> / ${TOTAL_PTS} puntos (${pctWeight}% del total)
-    </div>
-    <div class="detail-text">${escapeHtml(s.text)}</div>
-    <div class="detail-cta">
-      <button class="btn-primary ${done ? "is-done" : ""}" id="toggleBtn">
-        ${done ? "↺ Desmarcar paso" : "✓ Marcar como completo"}
-      </button>
-      <div class="detail-nav">
-        <button class="btn-nav" id="prevBtn" ${prev ? "" : "disabled"}>← Paso ${prev || ""}</button>
-        <button class="btn-nav" id="nextBtn" ${next ? "" : "disabled"}>Paso ${next || ""} →</button>
+    <div class="detail-body">
+      <div class="detail-badges">
+        <span class="badge zone" style="--zone-color:${ZONE_COLOR[s.zone]}"><span class="dot"></span>${escapeHtml(s.zone)}</span>
       </div>
-      <button class="btn-secondary" id="goNextBtn">📍 Ir al siguiente pendiente</button>
+      <div class="detail-text">${escapeHtml(s.text)}</div>
+      <div class="detail-cta">
+        <button class="btn-primary ${done ? "is-done" : ""}" id="toggleBtn">
+          ${done ? "Desmarcar paso" : "Marcar como completado"}
+        </button>
+        <div class="detail-nav">
+          <button class="btn-nav" id="prevBtn" ${prev ? "" : "disabled"}>← Paso ${prev || ""}</button>
+          <button class="btn-nav" id="nextBtn" ${next ? "" : "disabled"}>Paso ${next || ""} →</button>
+        </div>
+        <button class="btn-secondary" id="goNextBtn">Ir al siguiente pendiente</button>
+      </div>
     </div>
   `;
 }
