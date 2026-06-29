@@ -329,30 +329,41 @@ header{
 }
 
 /* NOTA ----------------------------------------------------------------------*/
+/* Nota aclaratoria · estilo "log del juego" — sin caja, sin emoji */
 .nota{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-left:3px solid var(--amber);
-  border-radius:var(--radius);
-  padding:12px 16px;
-  font-size:13px;
-  line-height:1.55;
-  color:var(--txt-soft);
   display:flex; gap:10px; align-items:flex-start;
-  margin-bottom:14px;
+  padding:6px 4px 14px;
+  margin-bottom:6px;
+  font-size:13px;
+  line-height:1.6;
+  color:var(--txt-soft);
+  font-style:italic;
+  border-bottom:1px solid var(--line);
 }
-.nota .ic{font-size:16px; line-height:1.2; flex-shrink:0; color:var(--amber)}
-.nota b{color:var(--txt); font-weight:600}
+.nota .ic{
+  font-style:normal;
+  color:var(--gold);
+  font-family:var(--font-display);
+  font-weight:600;
+  letter-spacing:1px;
+  flex-shrink:0;
+  user-select:none;
+  /* el "ic" ahora es un prefijo tipográfico, no un emoji */
+}
+.nota b{ color:var(--txt); font-weight:600; font-style:normal; }
 .nota .close{
   margin-left:auto;
   color:var(--txt-mute);
-  font-size:18px;
-  width:24px; height:24px;
+  font-size:16px;
+  width:22px; height:22px;
   border-radius:4px;
   flex-shrink:0;
+  font-style:normal;
+  line-height:1;
+  transition:color .15s ease;
 }
-.nota .close:hover{color:var(--txt); background:rgba(255,255,255,.05)}
-.nota.hidden{display:none}
+.nota .close:hover{ color:var(--txt); }
+.nota.hidden{ display:none; }
 
 /* PRERREQUISITOS · acordeón "Requisitos" tipo Dofus -------------------------*/
 .prereqs{
@@ -1032,11 +1043,11 @@ footer small{ color:var(--line-warm); }
     </div>
   </section>
 
-  <!-- NOTA ACLARATORIA -->
+  <!-- NOTA ACLARATORIA · estilo "log del juego" -->
   <div class="nota" id="nota">
-    <span class="ic">💡</span>
+    <span class="ic" aria-hidden="true">›</span>
     <div>
-      <b>Aclaración:</b> La instrucción "Hasta tener que pasar X jefe de mazmorra" significa dejar pausada esa misión y no vencer al jefe en ese punto, ya que seguramente hay otra misión que pide pasar dicha mazmorra.
+      <b>Aclaración —</b> La instrucción "Hasta tener que pasar X jefe de mazmorra" significa dejar pausada esa misión y no vencer al jefe en ese punto, ya que seguramente hay otra misión que pide pasar dicha mazmorra.
     </div>
     <button class="close" id="notaClose" aria-label="Cerrar nota">×</button>
   </div>
