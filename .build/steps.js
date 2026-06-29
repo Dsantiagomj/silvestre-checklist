@@ -4,13 +4,6 @@
 // effort: trivial(1) | corto(3) | medio(8) | largo(20) | epico(50)
 // ============================================================================
 const TIER_POINTS = { trivial: 1, corto: 3, medio: 8, largo: 20, epico: 50 };
-const TIER_TIME = {
-  trivial: "10-30 min",
-  corto: "1-2 h",
-  medio: "3-5 h",
-  largo: "8-15 h",
-  epico: "20-40+ h",
-};
 const TIER_META = {
   trivial: { label: "Trivial", icon: "🌱", cls: "t-trivial" },
   corto:   { label: "Corto",   icon: "🕐", cls: "t-corto" },
