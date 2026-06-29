@@ -767,55 +767,8 @@ header{
   100%{ transform:scale(1); }
 }
 
-/* MINI-MAPA (vista lineal) · barra horizontal de 100 puntitos --------------*/
-.minimap{
-  margin:0 0 14px;
-  padding:10px 12px 12px;
-  background:var(--inset);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-}
-.minimap-label{
-  font-family:var(--font-display);
-  font-size:10px; font-weight:700;
-  letter-spacing:1.5px; text-transform:uppercase;
-  color:var(--txt-mute);
-  margin-bottom:8px;
-}
-.minimap-track{
-  display:grid;
-  grid-template-columns:repeat(100, 1fr);
-  gap:2px;
-  height:18px;
-}
-@media (max-width:900px){
-  .minimap-track{ grid-template-columns:repeat(50, 1fr); grid-auto-rows:8px; height:auto; }
-}
-.mm-dot{
-  background:var(--zone-color, var(--line-2));
-  opacity:.32;
-  border-radius:2px;
-  cursor:pointer;
-  transition:all .15s ease;
-  padding:0;
-  border:0;
-  min-height:8px;
-}
-.mm-dot:hover{ opacity:1; transform:scaleY(1.4); }
-.mm-dot.done{
-  background:var(--success);
-  opacity:.95;
-}
-.mm-dot.selected{
-  opacity:1;
-  outline:1.5px solid var(--amber);
-  outline-offset:1px;
-  z-index:2;
-}
-.mm-dot.dimmed{ opacity:.08; pointer-events:none; }
-
 /* VISTA LINEAL · timeline vertical (la vista default) ----------------------*/
-/* (Estilos timeline más abajo, compartidos) */
+/* Estilos del timeline más abajo, compartidos con la vista por zona */
 
 /* VISTA POR ZONA · TOC sidebar + acordeón con timeline interno -------------*/
 .zone-view{
@@ -1906,15 +1859,8 @@ function toggleFilter(kind, value, el) {
 }
 
 function applyFilters() {
-  // Aplica dim a nodos timeline y puntitos del mini-mapa
   $$(".tnode, .cell").forEach(el => {
     const n = Number(el.dataset.n);
-    if (!n) return;
-    const s = STEPS[n - 1];
-    el.classList.toggle("dimmed", !stepMatches(s));
-  });
-  $$(".mm-dot").forEach(el => {
-    const n = Number(el.dataset.mmN);
     if (!n) return;
     const s = STEPS[n - 1];
     el.classList.toggle("dimmed", !stepMatches(s));
@@ -1996,37 +1942,8 @@ function makeTimelineNode(s) {
   return node;
 }
 
-// Crear el mini-mapa de 100 puntitos para vista lineal
-function makeMiniMap() {
-  const mm = document.createElement("div");
-  mm.className = "minimap";
-  mm.setAttribute("aria-label", "Mini-mapa de progreso · 100 pasos");
-  const label = document.createElement("div");
-  label.className = "minimap-label";
-  label.textContent = "Vistazo rápido";
-  mm.appendChild(label);
-  const track = document.createElement("div");
-  track.className = "minimap-track";
-  STEPS.forEach(s => {
-    const dot = document.createElement("button");
-    dot.className = "mm-dot" + (isDone(s.n) ? " done" : "");
-    dot.dataset.mmN = s.n;
-    dot.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
-    dot.setAttribute("aria-label", `Paso ${s.n}${isDone(s.n) ? " — completado" : ""}`);
-    dot.title = `Paso ${s.n} · ${s.zone}`;
-    dot.addEventListener("click", () => {
-      selectStep(s.n);
-      document.querySelector(`.tnode[data-n="${s.n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    track.appendChild(dot);
-  });
-  mm.appendChild(track);
-  return mm;
-}
-
-// VISTA LINEAL — ahora con formato timeline + mini-mapa arriba
+// VISTA LINEAL — timeline vertical (sin mini-mapa, eliminado por inutilidad visual)
 function renderLinearView(container) {
-  container.appendChild(makeMiniMap());
   const tl = document.createElement("div");
   tl.className = "timeline";
   STEPS.forEach(s => tl.appendChild(makeTimelineNode(s)));
@@ -2197,17 +2114,12 @@ function setView(v) {
 }
 
 function updateCell(n) {
-  // Actualiza CUALQUIER representación del paso (nodo timeline, dot del mini-mapa)
+  // Actualiza la representación del paso (nodo timeline)
   const nowDone = isDone(n);
   const s = STEPS[n - 1];
-  // Nodos timeline (también celdas .cell por si quedaran)
   document.querySelectorAll(`[data-n="${n}"]`).forEach(el => {
     el.classList.toggle("done", nowDone);
     el.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${nowDone ? " — completado" : ""}`);
-  });
-  // Puntitos del mini-mapa
-  document.querySelectorAll(`[data-mm-n="${n}"]`).forEach(el => {
-    el.classList.toggle("done", nowDone);
   });
   // Si estamos en vista por zona, actualizar header y TOC
   if (state.view === "zone") {
@@ -2242,9 +2154,9 @@ function updateZoneTocCount(zone) {
 }
 
 function updateSelectedCell() {
-  $$(".cell.selected, .tnode.selected, .mm-dot.selected").forEach(c => c.classList.remove("selected"));
+  $$(".cell.selected, .tnode.selected").forEach(c => c.classList.remove("selected"));
   if (state.selectedStep != null) {
-    document.querySelectorAll(`[data-n="${state.selectedStep}"], [data-mm-n="${state.selectedStep}"]`).forEach(el => {
+    document.querySelectorAll(`[data-n="${state.selectedStep}"]`).forEach(el => {
       el.classList.add("selected");
     });
   }
