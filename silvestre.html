@@ -767,71 +767,289 @@ header{
   100%{ transform:scale(1); }
 }
 
-/* VISTA POR ZONA · bloques por zona con su mini-grid -----------------------*/
-.zones-list{
-  display:flex; flex-direction:column;
-  gap:14px;
-}
-.zone-block{
+/* MINI-MAPA (vista lineal) · barra horizontal de 100 puntitos --------------*/
+.minimap{
+  margin:0 0 14px;
+  padding:10px 12px 12px;
   background:var(--inset);
   border:1px solid var(--line);
   border-radius:var(--radius);
-  overflow:hidden;
 }
-.zone-block-head{
-  display:flex; align-items:center; gap:10px;
-  padding:10px 14px;
-  background:linear-gradient(90deg,
-    color-mix(in srgb, var(--zone-color, var(--gold)) 18%, var(--panel)) 0%,
-    var(--panel) 100%);
-  border-bottom:1px solid var(--line);
-}
-.zone-block-head .zdot{
-  width:10px; height:10px; border-radius:50%;
-  background:var(--zone-color, var(--gold));
-  flex-shrink:0;
-  box-shadow:0 0 6px color-mix(in srgb, var(--zone-color, var(--gold)) 60%, transparent);
-}
-.zone-block-head .zname{
+.minimap-label{
   font-family:var(--font-display);
-  font-size:13px; font-weight:700;
-  letter-spacing:.5px;
-  color:var(--txt);
-  flex:1;
-  text-transform:uppercase;
+  font-size:10px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--txt-mute);
+  margin-bottom:8px;
 }
-.zone-block-head .zstats{
-  font-size:11.5px;
-  color:var(--txt-soft);
-  font-variant-numeric:tabular-nums;
-  font-family:var(--font-display);
-  letter-spacing:.5px;
-}
-.zone-block-head .zstats b{ color:var(--txt); font-weight:700; }
-.zone-block-head .zbar{
-  width:80px; height:4px;
-  background:var(--inset);
-  border-radius:999px;
-  overflow:hidden;
-  border:1px solid var(--line);
-}
-.zone-block-head .zbar-fill{
-  height:100%;
-  background:var(--zone-color, var(--gold));
-  transition:width .6s cubic-bezier(.22,1,.36,1);
-}
-.zone-block-grid{
+.minimap-track{
   display:grid;
-  grid-template-columns:repeat(10, 1fr);
-  gap:5px;
-  padding:12px;
+  grid-template-columns:repeat(100, 1fr);
+  gap:2px;
+  height:18px;
 }
-@media (max-width:640px){
-  .zone-block-grid{ grid-template-columns:repeat(5, 1fr); gap:6px; }
-  .zone-block-head .zbar{ display:none; }
+@media (max-width:900px){
+  .minimap-track{ grid-template-columns:repeat(50, 1fr); grid-auto-rows:8px; height:auto; }
+}
+.mm-dot{
+  background:var(--zone-color, var(--line-2));
+  opacity:.32;
+  border-radius:2px;
+  cursor:pointer;
+  transition:all .15s ease;
+  padding:0;
+  border:0;
+  min-height:8px;
+}
+.mm-dot:hover{ opacity:1; transform:scaleY(1.4); }
+.mm-dot.done{
+  background:var(--success);
+  opacity:.95;
+}
+.mm-dot.selected{
+  opacity:1;
+  outline:1.5px solid var(--amber);
+  outline-offset:1px;
+  z-index:2;
+}
+.mm-dot.dimmed{ opacity:.08; pointer-events:none; }
+
+/* VISTA LINEAL · timeline vertical (la vista default) ----------------------*/
+/* (Estilos timeline más abajo, compartidos) */
+
+/* VISTA POR ZONA · TOC sidebar + acordeón con timeline interno -------------*/
+.zone-view{
+  display:grid;
+  grid-template-columns:200px 1fr;
+  gap:14px;
+  align-items:start;
+}
+@media (max-width:900px){
+  .zone-view{ grid-template-columns:1fr; gap:10px; }
 }
 
-/* VISTA TIMELINE · vertical compacta ----------------------------------------*/
+/* TOC sidebar */
+.zone-toc{
+  position:sticky;
+  top:calc(var(--header-h) + var(--sticky-h) + 14px);
+  max-height:calc(100vh - var(--header-h) - var(--sticky-h) - 28px);
+  overflow-y:auto;
+  padding:6px 4px 6px 0;
+}
+@media (max-width:900px){
+  .zone-toc{
+    position:static;
+    max-height:none;
+    background:var(--inset);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px;
+    overflow:visible;
+  }
+}
+.ztoc-list{
+  list-style:none; padding:0; margin:0;
+  display:flex; flex-direction:column;
+  gap:2px;
+}
+@media (max-width:900px){
+  .ztoc-list{
+    flex-direction:row;
+    overflow-x:auto;
+    gap:6px;
+    scrollbar-width:thin;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+.ztoc-item{ margin:0; }
+.ztoc-btn{
+  display:flex; align-items:center; gap:8px;
+  width:100%;
+  padding:7px 8px;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:var(--radius-sm);
+  font-family:var(--font-body);
+  color:var(--txt-soft);
+  font-size:12.5px;
+  cursor:pointer;
+  text-align:left;
+  transition:all .12s ease;
+  border-left:3px solid transparent;
+}
+.ztoc-btn:hover{
+  color:var(--txt);
+  background:rgba(143,176,214,.06);
+  border-left-color:var(--zone-color, var(--line-2));
+}
+.ztoc-btn.active{
+  color:var(--txt);
+  background:var(--panel);
+  border-color:var(--line);
+  border-left-color:var(--zone-color, var(--amber));
+}
+.ztoc-btn.all-done .ztoc-sigla{
+  background:var(--success);
+  color:#fff;
+}
+.ztoc-sigla{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:10px;
+  letter-spacing:.5px;
+  background:color-mix(in srgb, var(--zone-color, var(--line-2)) 30%, var(--inset));
+  color:var(--txt);
+  width:24px; height:24px;
+  border-radius:5px;
+  display:inline-flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  border:1px solid color-mix(in srgb, var(--zone-color, var(--line-2)) 60%, var(--line));
+}
+.ztoc-name{
+  flex:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.ztoc-count{
+  font-size:11px;
+  color:var(--txt-mute);
+  font-variant-numeric:tabular-nums;
+  flex-shrink:0;
+}
+@media (max-width:900px){
+  .ztoc-btn{ width:auto; white-space:nowrap; flex-shrink:0; }
+  .ztoc-name{ display:none; }
+}
+
+/* Lista de bloques por zona (acordeón) */
+.zones-list{
+  display:flex; flex-direction:column;
+  gap:10px;
+  min-width:0;
+}
+.zone-block{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  scroll-margin-top:calc(var(--header-h) + var(--sticky-h) + 14px);
+}
+.zone-block-head{
+  width:100%;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px;
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--zone-color, var(--gold)) 14%, var(--panel)) 0%,
+    var(--panel) 70%);
+  border:0;
+  border-bottom:1px solid transparent;
+  text-align:left;
+  cursor:pointer;
+  font-family:var(--font-body);
+  color:var(--txt);
+  transition:background .15s ease, border-color .15s ease;
+}
+.zone-block.open .zone-block-head{
+  border-bottom-color:var(--line);
+  position:sticky;
+  top:calc(var(--header-h) + var(--sticky-h));
+  z-index:5;
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--zone-color, var(--gold)) 20%, var(--panel)) 0%,
+    var(--panel) 80%);
+  backdrop-filter:blur(8px);
+}
+.zone-block-head:hover{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--zone-color, var(--gold)) 22%, var(--panel)) 0%,
+    var(--panel) 70%);
+}
+.zsigla{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:14px;
+  letter-spacing:.5px;
+  background:color-mix(in srgb, var(--zone-color, var(--gold)) 35%, var(--inset));
+  color:var(--txt);
+  width:38px; height:38px;
+  border-radius:7px;
+  display:inline-flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  border:1px solid color-mix(in srgb, var(--zone-color, var(--gold)) 70%, var(--line));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.zhead-text{
+  flex:1; min-width:0;
+  display:flex; flex-direction:column;
+  gap:1px;
+}
+.zname{
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  color:var(--txt);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.zsub{
+  font-size:11px;
+  color:var(--txt-mute);
+  letter-spacing:.5px;
+}
+.zhead-stats{
+  display:flex; flex-direction:column;
+  align-items:flex-end;
+  gap:1px;
+  flex-shrink:0;
+}
+.zpct{
+  font-family:var(--font-display);
+  font-size:22px;
+  font-weight:800;
+  color:var(--gold);
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.zpct-sym{ font-size:.55em; color:var(--txt-mute); margin-left:1px; }
+.zcount{
+  font-size:11px;
+  color:var(--txt-soft);
+  font-variant-numeric:tabular-nums;
+}
+.zcount b{ color:var(--txt); font-weight:700; }
+.zchev{
+  color:var(--txt-mute);
+  font-size:14px;
+  transition:transform .25s ease;
+  flex-shrink:0;
+}
+.zone-block.open .zchev{ transform:rotate(180deg); }
+.zone-block-body{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease;
+}
+.zone-block.open .zone-block-body{
+  max-height:none;
+}
+.timeline-in-zone{
+  padding:8px 14px 14px;
+}
+.timeline-in-zone::before{
+  left:36px;
+}
+@media (max-width:640px){
+  .zhead-stats{ gap:0; }
+  .zpct{ font-size:18px; }
+  .zsigla{ width:34px; height:34px; font-size:12px; }
+  .timeline-in-zone::before{ left:30px; }
+}
+
+/* TIMELINE · vertical (compartida entre vista lineal y vista zona) ---------*/
 .timeline{
   position:relative;
   padding:8px 4px 4px;
@@ -851,11 +1069,13 @@ header{
   padding:7px 6px 7px 0;
   cursor:pointer;
   border-radius:var(--radius-sm);
-  transition:background .12s ease;
+  transition:background .12s ease, color .12s ease;
   width:100%;
   text-align:left;
   font-family:var(--font-body);
   color:var(--txt-soft);
+  background:transparent;
+  border:0;
 }
 .tnode:hover{ background:rgba(143,176,214,.06); color:var(--txt); }
 .tnode .tdot{
@@ -917,37 +1137,6 @@ header{
   -webkit-box-orient:vertical;
 }
 .tnode.dimmed{ opacity:.25; pointer-events:none; }
-
-/* VISTA POR DOFUS · placeholder "próximamente" ------------------------------*/
-.coming-soon{
-  text-align:center;
-  padding:60px 20px;
-  color:var(--txt-soft);
-}
-.coming-soon .cs-ico{
-  font-size:56px;
-  color:var(--amber);
-  opacity:.4;
-  margin-bottom:14px;
-  font-family:var(--font-display);
-  font-weight:300;
-}
-.coming-soon h3{
-  font-family:var(--font-display);
-  font-size:18px; font-weight:700;
-  letter-spacing:1.5px;
-  margin:0 0 8px;
-  color:var(--txt);
-  text-transform:uppercase;
-}
-.coming-soon p{
-  margin:0 auto;
-  max-width:480px;
-  font-size:13.5px;
-  line-height:1.6;
-  color:var(--txt-soft);
-}
-.coming-soon p b{ color:var(--txt); }
 
 /* PANEL DETALLE · estilo "panel derecho Aventura/Guía" -----------------------*/
 .detail-panel{
@@ -1342,10 +1531,6 @@ footer small{ color:var(--line-warm); }
         <div class="view-switcher" role="tablist" aria-label="Cambiar vista">
           <button class="vbtn active" data-view="linear" role="tab" aria-selected="true">Lineal</button>
           <button class="vbtn" data-view="zone" role="tab" aria-selected="false">Por zona</button>
-          <button class="vbtn" data-view="timeline" role="tab" aria-selected="false">Timeline</button>
-          <button class="vbtn" data-view="dofus" role="tab" aria-selected="false">
-            Por Dofus <span class="vbadge">Pronto</span>
-          </button>
         </div>
       </div>
       <div id="viewContainer" class="view-container"></div>
@@ -1538,7 +1723,10 @@ const state = {
   done: JSON.parse(localStorage.getItem(LS.done) || "{}"),
   prereqs: JSON.parse(localStorage.getItem(LS.prereqs) || "{}"),
   theme: localStorage.getItem(LS.theme) || "dark",
-  view: localStorage.getItem(LS.view) || "linear",
+  view: (() => {
+    const v = localStorage.getItem(LS.view);
+    return (v === "linear" || v === "zone") ? v : "linear";
+  })(),
   selectedStep: null,
   filters: {
     zones: new Set(),
@@ -1718,9 +1906,15 @@ function toggleFilter(kind, value, el) {
 }
 
 function applyFilters() {
-  // Aplica dim a celdas del grid lineal y zona, y a nodos timeline
-  $$(".cell, .tnode").forEach(el => {
+  // Aplica dim a nodos timeline y puntitos del mini-mapa
+  $$(".tnode, .cell").forEach(el => {
     const n = Number(el.dataset.n);
+    if (!n) return;
+    const s = STEPS[n - 1];
+    el.classList.toggle("dimmed", !stepMatches(s));
+  });
+  $$(".mm-dot").forEach(el => {
+    const n = Number(el.dataset.mmN);
     if (!n) return;
     const s = STEPS[n - 1];
     el.classList.toggle("dimmed", !stepMatches(s));
@@ -1755,87 +1949,227 @@ function makeCell(s) {
   return cell;
 }
 
-function renderLinearView(container) {
-  const grid = document.createElement("div");
-  grid.className = "grid";
-  grid.id = "grid";
-  grid.setAttribute("role", "grid");
-  STEPS.forEach(s => grid.appendChild(makeCell(s)));
-  container.appendChild(grid);
+// Helper: insignia heráldica (sigla) por zona — placeholder hasta tener sprites
+function zoneSigla(zone) {
+  // Reglas: si tiene 2+ palabras usar inicial de las dos primeras
+  // Si es 1 palabra usar las dos primeras letras significativas
+  const map = {
+    "Misiones de Mundo": "MM",
+    "Astrub": "AS",
+    "Krosmoz": "KR",
+    "Justicieros": "JU",
+    "Torres de la Hermandad": "TH",
+    "Cania": "CA",
+    "Sidimote": "SI",
+    "Dimensiones Divinas": "DD",
+    "Sufokia": "SU",
+    "Animatopía": "AN",
+    "Alineamiento": "AL",
+    "Isla de Frigost": "FR",
+    "Reino de Amakna": "AM",
+    "Selocalipsis": "SE",
+    "Isla de Pandala": "PA",
+    "Archipiélago de Valonia": "VA",
+    "Atolón de los Poseídos": "PO",
+    "Pesadilla de los Devastadores": "PD",
+  };
+  return map[zone] || zone.slice(0, 2).toUpperCase();
 }
 
+// Crear un nodo timeline (compartido entre lineal y zona)
+function makeTimelineNode(s) {
+  const node = document.createElement("button");
+  node.className = "tnode" + (isDone(s.n) ? " done" : "");
+  node.dataset.n = s.n;
+  node.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
+  node.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
+  const firstLine = s.text.split("\n")[0];
+  const preview = firstLine.length > 140 ? firstLine.slice(0, 137) + "…" : firstLine;
+  node.innerHTML = `
+    <div class="tdot"><span class="tnum">${s.n}</span></div>
+    <div class="tnode-info">
+      <span class="tnode-zone">${escapeHtml(s.zone)} · Paso ${s.n}</span>
+      <span class="tnode-preview">${escapeHtml(preview)}</span>
+    </div>
+  `;
+  node.addEventListener("click", () => selectStep(s.n));
+  return node;
+}
+
+// Crear el mini-mapa de 100 puntitos para vista lineal
+function makeMiniMap() {
+  const mm = document.createElement("div");
+  mm.className = "minimap";
+  mm.setAttribute("aria-label", "Mini-mapa de progreso · 100 pasos");
+  const label = document.createElement("div");
+  label.className = "minimap-label";
+  label.textContent = "Vistazo rápido";
+  mm.appendChild(label);
+  const track = document.createElement("div");
+  track.className = "minimap-track";
+  STEPS.forEach(s => {
+    const dot = document.createElement("button");
+    dot.className = "mm-dot" + (isDone(s.n) ? " done" : "");
+    dot.dataset.mmN = s.n;
+    dot.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
+    dot.setAttribute("aria-label", `Paso ${s.n}${isDone(s.n) ? " — completado" : ""}`);
+    dot.title = `Paso ${s.n} · ${s.zone}`;
+    dot.addEventListener("click", () => {
+      selectStep(s.n);
+      document.querySelector(`.tnode[data-n="${s.n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    track.appendChild(dot);
+  });
+  mm.appendChild(track);
+  return mm;
+}
+
+// VISTA LINEAL — ahora con formato timeline + mini-mapa arriba
+function renderLinearView(container) {
+  container.appendChild(makeMiniMap());
+  const tl = document.createElement("div");
+  tl.className = "timeline";
+  STEPS.forEach(s => tl.appendChild(makeTimelineNode(s)));
+  container.appendChild(tl);
+}
+
+// VISTA POR ZONA — acordeón + TOC lateral + nodos timeline dentro
 function renderZoneView(container) {
   // Agrupar pasos por zona, orden por primera aparición
-  const groups = new Map(); // zone -> [steps]
+  const groups = new Map();
   STEPS.forEach(s => {
     if (!groups.has(s.zone)) groups.set(s.zone, []);
     groups.get(s.zone).push(s);
   });
+
+  // Qué zona arranca abierta por default: la que contiene el siguiente pendiente
+  const nextN = nextPending();
+  const nextZone = nextN ? STEPS[nextN - 1].zone : null;
+
+  // Layout: TOC sidebar + lista de zonas
+  const wrap = document.createElement("div");
+  wrap.className = "zone-view";
+
+  // --- TOC (sidebar)
+  const toc = document.createElement("nav");
+  toc.className = "zone-toc";
+  toc.setAttribute("aria-label", "Índice de zonas");
+  const tocList = document.createElement("ul");
+  tocList.className = "ztoc-list";
+  groups.forEach((steps, zone) => {
+    const done = steps.filter(s => isDone(s.n)).length;
+    const allDone = done === steps.length;
+    const li = document.createElement("li");
+    li.className = "ztoc-item";
+    li.style.setProperty("--zone-color", ZONE_COLOR[zone]);
+    li.innerHTML = `
+      <button class="ztoc-btn ${allDone ? "all-done" : ""}" data-zone="${escapeHtml(zone)}" title="${escapeHtml(zone)} · ${done}/${steps.length}">
+        <span class="ztoc-sigla">${zoneSigla(zone)}</span>
+        <span class="ztoc-name">${escapeHtml(zone)}</span>
+        <span class="ztoc-count">${done}/${steps.length}</span>
+      </button>
+    `;
+    li.querySelector("button").addEventListener("click", () => {
+      // Abrir el acordeón si está cerrado y scroll
+      const block = wrap.querySelector(`.zone-block[data-zone="${cssEsc(zone)}"]`);
+      if (block) {
+        block.classList.add("open");
+        const head = block.querySelector(".zone-block-head");
+        head.setAttribute("aria-expanded", "true");
+        // Pequeño delay para que el acordeón expanda antes del scroll
+        setTimeout(() => block.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+      }
+    });
+    tocList.appendChild(li);
+  });
+  toc.appendChild(tocList);
+  wrap.appendChild(toc);
+
+  // --- Lista de zonas (acordeón)
   const list = document.createElement("div");
   list.className = "zones-list";
+
   groups.forEach((steps, zone) => {
     const done = steps.filter(s => isDone(s.n)).length;
     const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
     const block = document.createElement("div");
     block.className = "zone-block";
+    block.dataset.zone = zone;
     block.style.setProperty("--zone-color", ZONE_COLOR[zone]);
+
+    // Abierta solo si contiene el siguiente pendiente
+    if (zone === nextZone) block.classList.add("open");
+
     block.innerHTML = `
-      <div class="zone-block-head">
-        <span class="zdot" aria-hidden="true"></span>
-        <span class="zname">${escapeHtml(zone)}</span>
-        <div class="zbar" aria-hidden="true"><div class="zbar-fill" style="width:${pct}%"></div></div>
-        <span class="zstats"><b>${done}</b>/${steps.length} · ${pct}%</span>
-      </div>
-      <div class="zone-block-grid"></div>
+      <button class="zone-block-head" aria-expanded="${zone === nextZone ? "true" : "false"}">
+        <span class="zsigla" aria-hidden="true">${zoneSigla(zone)}</span>
+        <div class="zhead-text">
+          <span class="zname">${escapeHtml(zone)}</span>
+          <span class="zsub">${done === steps.length ? "Completado" : (done > 0 ? "En progreso" : "Sin iniciar")}</span>
+        </div>
+        <div class="zhead-stats">
+          <span class="zpct">${pct}<span class="zpct-sym">%</span></span>
+          <span class="zcount"><b>${done}</b> / ${steps.length} pasos</span>
+        </div>
+        <span class="zchev" aria-hidden="true">▾</span>
+      </button>
+      <div class="zone-block-body"></div>
     `;
-    const grid = block.querySelector(".zone-block-grid");
-    steps.forEach(s => grid.appendChild(makeCell(s)));
+    const body = block.querySelector(".zone-block-body");
+    const tl = document.createElement("div");
+    tl.className = "timeline timeline-in-zone";
+    steps.forEach(s => tl.appendChild(makeTimelineNode(s)));
+    body.appendChild(tl);
+
+    // Click en header → toggle acordeón
+    const head = block.querySelector(".zone-block-head");
+    head.addEventListener("click", () => {
+      const isOpen = block.classList.toggle("open");
+      head.setAttribute("aria-expanded", String(isOpen));
+    });
+
     list.appendChild(block);
   });
-  container.appendChild(list);
+
+  wrap.appendChild(list);
+  container.appendChild(wrap);
+
+  // Scroll spy para TOC (highlight de la zona visible)
+  setupZoneScrollSpy(wrap);
 }
 
-function renderTimelineView(container) {
-  const tl = document.createElement("div");
-  tl.className = "timeline";
-  STEPS.forEach(s => {
-    const node = document.createElement("button");
-    node.className = "tnode" + (isDone(s.n) ? " done" : "");
-    node.dataset.n = s.n;
-    node.style.setProperty("--zone-color", ZONE_COLOR[s.zone]);
-    node.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${isDone(s.n) ? " — completado" : ""}`);
-    // Preview: primera línea del texto (hasta el primer salto o 110 chars)
-    const firstLine = s.text.split("\n")[0];
-    const preview = firstLine.length > 140 ? firstLine.slice(0, 137) + "…" : firstLine;
-    node.innerHTML = `
-      <div class="tdot"><span class="tnum">${s.n}</span></div>
-      <div class="tnode-info">
-        <span class="tnode-zone">${escapeHtml(s.zone)} · Paso ${s.n}</span>
-        <span class="tnode-preview">${escapeHtml(preview)}</span>
-      </div>
-    `;
-    node.addEventListener("click", () => selectStep(s.n));
-    tl.appendChild(node);
+// CSS.escape polyfill mínimo (algunos browsers viejos no lo tienen)
+function cssEsc(s) {
+  return (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/[^a-zA-Z0-9-_]/g, c => "\\" + c);
+}
+
+// Scroll spy: marca activa la zona que estás viendo
+function setupZoneScrollSpy(wrap) {
+  const blocks = $$(".zone-block", wrap);
+  const tocBtns = $$(".ztoc-btn", wrap);
+  if (!blocks.length || !tocBtns.length) return;
+  const setActive = zone => {
+    tocBtns.forEach(b => b.classList.toggle("active", b.dataset.zone === zone));
+  };
+  const obs = new IntersectionObserver(entries => {
+    // Tomamos la entry con mayor intersección visible
+    const visible = entries
+      .filter(e => e.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (visible) setActive(visible.target.dataset.zone);
+  }, {
+    rootMargin: "-30% 0px -50% 0px",
+    threshold: [0, .25, .5, .75, 1],
   });
-  container.appendChild(tl);
-}
-
-function renderDofusView(container) {
-  container.innerHTML = `
-    <div class="coming-soon">
-      <div class="cs-ico" aria-hidden="true">◇</div>
-      <h3>Próximamente</h3>
-      <p>Esta vista agrupará los pasos por el <b>Dofus</b> que estás obteniendo en cada momento (Esmeralda, Turquesa, Púrpura, Marfil, Ébano, Silvestre). Requiere mapear cada paso a su Dofus correspondiente — trabajo en curso.</p>
-    </div>
-  `;
+  blocks.forEach(b => obs.observe(b));
+  // Initial active
+  setActive(blocks[0].dataset.zone);
 }
 
 // Router de vistas
 const VIEWS = {
-  linear:   { label: "Lineal",    title: "Tablero · 100 pasos",   render: renderLinearView,   hasFilters: true },
-  zone:     { label: "Por zona",  title: "Pasos agrupados por zona", render: renderZoneView,  hasFilters: true },
-  timeline: { label: "Timeline",  title: "Línea de tiempo · 1 → 100", render: renderTimelineView, hasFilters: true },
-  dofus:    { label: "Por Dofus", title: "Pasos por Dofus asociado",  render: renderDofusView, hasFilters: false },
+  linear: { label: "Lineal",   title: "Línea de tiempo · 1 → 100", render: renderLinearView },
+  zone:   { label: "Por zona", title: "Pasos agrupados por zona",  render: renderZoneView },
 };
 
 function renderView() {
@@ -1863,41 +2197,54 @@ function setView(v) {
 }
 
 function updateCell(n) {
-  // Actualiza CUALQUIER representación del paso en la vista actual (celda o nodo)
-  const els = document.querySelectorAll(`[data-n="${n}"]`);
-  if (!els.length) return;
+  // Actualiza CUALQUIER representación del paso (nodo timeline, dot del mini-mapa)
   const nowDone = isDone(n);
   const s = STEPS[n - 1];
-  els.forEach(el => {
-    const wasDone = el.classList.contains("done");
+  // Nodos timeline (también celdas .cell por si quedaran)
+  document.querySelectorAll(`[data-n="${n}"]`).forEach(el => {
     el.classList.toggle("done", nowDone);
-    if (!wasDone && nowDone && el.classList.contains("cell")) {
-      el.classList.add("just-completed");
-      setTimeout(() => el.classList.remove("just-completed"), 600);
-    }
     el.setAttribute("aria-label", `Paso ${s.n} — ${s.zone}${nowDone ? " — completado" : ""}`);
   });
-  // Si estamos en vista por zona, actualizar el header de la zona afectada
-  if (state.view === "zone") updateZoneHeader(s.zone);
+  // Puntitos del mini-mapa
+  document.querySelectorAll(`[data-mm-n="${n}"]`).forEach(el => {
+    el.classList.toggle("done", nowDone);
+  });
+  // Si estamos en vista por zona, actualizar header y TOC
+  if (state.view === "zone") {
+    updateZoneHeader(s.zone);
+    updateZoneTocCount(s.zone);
+  }
 }
 
 function updateZoneHeader(zone) {
-  const block = document.querySelector(`.zone-block[style*="${ZONE_COLOR[zone].replace(/[()]/g, "\\$&")}"]`)
-              || [...document.querySelectorAll(".zone-block")].find(b => b.querySelector(".zname")?.textContent === zone);
+  const block = document.querySelector(`.zone-block[data-zone="${cssEsc(zone)}"]`);
   if (!block) return;
   const steps = STEPS.filter(s => s.zone === zone);
   const done = steps.filter(s => isDone(s.n)).length;
   const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
-  const stats = block.querySelector(".zstats");
-  const fill = block.querySelector(".zbar-fill");
-  if (stats) stats.innerHTML = `<b>${done}</b>/${steps.length} · ${pct}%`;
-  if (fill) fill.style.width = pct + "%";
+  const pctEl = block.querySelector(".zpct");
+  const cntEl = block.querySelector(".zcount");
+  const subEl = block.querySelector(".zsub");
+  if (pctEl) pctEl.innerHTML = `${pct}<span class="zpct-sym">%</span>`;
+  if (cntEl) cntEl.innerHTML = `<b>${done}</b> / ${steps.length} pasos`;
+  if (subEl) subEl.textContent = done === steps.length ? "Completado" : (done > 0 ? "En progreso" : "Sin iniciar");
+}
+
+function updateZoneTocCount(zone) {
+  const steps = STEPS.filter(s => s.zone === zone);
+  const done = steps.filter(s => isDone(s.n)).length;
+  const allDone = done === steps.length;
+  const btn = document.querySelector(`.ztoc-btn[data-zone="${cssEsc(zone)}"]`);
+  if (!btn) return;
+  btn.classList.toggle("all-done", allDone);
+  const cnt = btn.querySelector(".ztoc-count");
+  if (cnt) cnt.textContent = `${done}/${steps.length}`;
 }
 
 function updateSelectedCell() {
-  $$(".cell.selected, .tnode.selected").forEach(c => c.classList.remove("selected"));
+  $$(".cell.selected, .tnode.selected, .mm-dot.selected").forEach(c => c.classList.remove("selected"));
   if (state.selectedStep != null) {
-    document.querySelectorAll(`[data-n="${state.selectedStep}"]`).forEach(el => {
+    document.querySelectorAll(`[data-n="${state.selectedStep}"], [data-mm-n="${state.selectedStep}"]`).forEach(el => {
       el.classList.add("selected");
     });
   }
