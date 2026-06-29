@@ -17,35 +17,35 @@
 
 /* TOKENS DE DISEÑO ----------------------------------------------------------*/
 :root{
-  /* Fondos (DARK) */
-  --bg:        #0a0a0a;       /* negro profundo, como ventana del juego */
-  --bg-2:      #121212;       /* segundo plano */
-  --panel:     #1a1a1a;       /* card / panel */
-  --panel-2:   #222222;       /* panel hover */
-  --inset:     #0d0d0d;       /* "hundido" */
+  /* Fondos (DARK) — azul nocturno profundo */
+  --bg:        #0b1220;       /* azul nocturno profundo */
+  --bg-2:      #111a2c;       /* segundo plano */
+  --panel:     #16203a;       /* card / panel */
+  --panel-2:   #1d2a48;       /* panel hover */
+  --inset:     #0a1020;       /* "hundido" */
 
   /* Texto */
-  --txt:       #e8e3d6;       /* blanco pergamino */
-  --txt-soft:  #a8a195;
-  --txt-mute:  #6b665d;
+  --txt:       #e6ecf4;       /* blanco frío */
+  --txt-soft:  #a5b4c8;
+  --txt-mute:  #6b7a92;
 
   /* Líneas y bordes */
-  --line:      #2a2823;
-  --line-2:    #3a362e;
-  --line-warm: #4a3d2a;
+  --line:      #25324a;
+  --line-2:    #354562;
+  --line-warm: #4a5d80;
 
-  /* Color signature Dofus */
-  --terracotta:   #6b1a1a;    /* rojo header del juego */
-  --terracotta-2: #4a1010;
-  --amber:        #f0a040;    /* naranja-ámbar para activos/seleccionados */
-  --amber-2:      #c87a20;
-  --gold:         #f4b942;    /* dorado cálido para títulos/highlights */
-  --gold-2:       #c79420;
+  /* Color signature: header azul oscuro + acento plata + dorado opaco */
+  --terracotta:   #1a2b4d;    /* (legacy name) ahora azul header oscuro */
+  --terracotta-2: #11203c;
+  --amber:        #8fb0d6;    /* azul-plata para activos/seleccionados */
+  --amber-2:      #5a7ea8;
+  --gold:         #c8d4e0;    /* plata cálida para títulos/highlights */
+  --gold-2:       #8fa3bd;
 
   /* Estados */
-  --success:   #4caf50;        /* verde checkmark */
+  --success:   #4caf50;        /* verde checkmark — único color "vivo" */
   --success-2: #357f37;
-  --danger:    #d04040;
+  --danger:    #d04060;
 
   /* Zonas (HSL warm, no neón) */
   --zone-color: var(--gold);   /* fallback, se sobreescribe inline */
@@ -63,31 +63,32 @@
   --font-body:    'Fira Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* LIGHT MODE — pergamino claro */
+/* LIGHT MODE — azul muy claro / niebla */
 [data-theme="light"]{
-  --bg:        #e8dfc9;
-  --bg-2:      #efe7d2;
-  --panel:     #f5edd6;
-  --panel-2:   #ede4cc;
-  --inset:     #ddd2b6;
+  --bg:        #eef2f8;
+  --bg-2:      #f4f6fb;
+  --panel:     #ffffff;
+  --panel-2:   #f0f4fa;
+  --inset:     #e2e8f0;
 
-  --txt:       #1a1410;
-  --txt-soft:  #5a4d3a;
-  --txt-mute:  #8a7d68;
+  --txt:       #0f1729;
+  --txt-soft:  #455370;
+  --txt-mute:  #6b7a92;
 
-  --line:      #c8bb9c;
-  --line-2:    #b8aa88;
-  --line-warm: #a89570;
+  --line:      #d2dae6;
+  --line-2:    #bcc6d8;
+  --line-warm: #8fa3bd;
 
-  --terracotta:   #8a2424;
-  --terracotta-2: #6a1818;
-  --amber:        #b8650f;
-  --amber-2:      #944f0a;
-  --gold:         #a07412;
-  --gold-2:       #7a5408;
+  --terracotta:   #1a2b4d;
+  --terracotta-2: #0f1c38;
+  --amber:        #3a5a82;
+  --amber-2:      #2a4365;
+  --gold:         #4a5d80;
+  --gold-2:       #2a3d60;
 
-  --success:   #357f37;
-  --success-2: #2a6a2c;
+  --success:   #2a6a2c;
+  --success-2: #1f5021;
+  --danger:    #b03050;
 }
 
 /* RESET ----------------------------------------------------------------------*/
@@ -105,8 +106,8 @@ body{
   min-height:100vh;
   transition:background .25s ease, color .25s ease;
   background-image:
-    radial-gradient(circle at 20% 10%, rgba(244,185,66,.025) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(107,26,26,.04) 0%, transparent 50%);
+    radial-gradient(circle at 20% 10%, rgba(143,176,214,.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(26,43,77,.06) 0%, transparent 50%);
 }
 button{font-family:inherit; color:inherit; cursor:pointer; background:none; border:0; padding:0}
 input,select,textarea{font-family:inherit; color:inherit}
@@ -135,7 +136,7 @@ header{
   position:absolute; top:50%; transform:translateY(-50%);
   width:80px; height:24px;
   background:
-    linear-gradient(90deg, transparent, rgba(244,185,66,.15) 50%, transparent),
+    linear-gradient(90deg, transparent, rgba(143,176,214,.15) 50%, transparent),
     repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 1px, transparent 1px 4px);
   opacity:.5; pointer-events:none;
 }
@@ -153,8 +154,8 @@ header{
   font-weight:800;
   font-size:18px;
   letter-spacing:2px;
-  color:#f5e8c8;
-  text-shadow:0 1px 0 rgba(0,0,0,.5), 0 0 12px rgba(244,185,66,.15);
+  color:#e6ecf4;
+  text-shadow:0 1px 0 rgba(0,0,0,.5), 0 0 12px rgba(143,176,214,.15);
   text-transform:uppercase;
   display:flex; align-items:center; gap:10px;
   user-select:none;
@@ -163,14 +164,14 @@ header{
   width:22px; height:22px;
   border-radius:50%;
   background:radial-gradient(circle at 30% 30%, var(--gold) 0%, var(--amber-2) 50%, #5a3a10 100%);
-  box-shadow:inset 0 0 4px rgba(0,0,0,.4), 0 0 8px rgba(244,185,66,.4);
+  box-shadow:inset 0 0 4px rgba(0,0,0,.4), 0 0 8px rgba(143,176,214,.4);
   flex-shrink:0;
 }
 .spacer{flex:1}
 .icon-btn{
   background:rgba(0,0,0,.25);
-  color:#f5e8c8;
-  border:1px solid rgba(244,185,66,.2);
+  color:#e6ecf4;
+  border:1px solid rgba(143,176,214,.2);
   border-radius:var(--radius-sm);
   padding:6px 12px;
   font-size:12.5px;
@@ -182,12 +183,12 @@ header{
   white-space:nowrap;
 }
 .icon-btn:hover{
-  background:rgba(244,185,66,.15);
-  border-color:rgba(244,185,66,.5);
+  background:rgba(143,176,214,.15);
+  border-color:rgba(143,176,214,.5);
   color:#fff;
 }
 .icon-btn.danger:hover{
-  background:rgba(208,64,64,.25);
+  background:rgba(208,64,96,.25);
   border-color:var(--danger);
 }
 @media (max-width:600px){
@@ -248,7 +249,7 @@ header{
   padding:28px 26px;
   margin:18px 0;
   box-shadow:
-    inset 0 1px 0 rgba(244,185,66,.05),
+    inset 0 1px 0 rgba(143,176,214,.05),
     0 4px 24px rgba(0,0,0,.4);
   overflow:hidden;
 }
@@ -291,9 +292,9 @@ header{
 .bar-fill{
   height:100%;
   width:0%;
-  background:linear-gradient(90deg, var(--amber-2) 0%, var(--gold) 60%, #fde8a3 100%);
+  background:linear-gradient(90deg, var(--amber-2) 0%, var(--gold) 60%, #e6ecf4 100%);
   transition:width .8s cubic-bezier(.22,1,.36,1);
-  box-shadow:0 0 8px rgba(244,185,66,.4), inset 0 1px 0 rgba(255,255,255,.2);
+  box-shadow:0 0 8px rgba(143,176,214,.4), inset 0 1px 0 rgba(255,255,255,.2);
   border-radius:999px;
 }
 .hero-stats{
@@ -307,9 +308,9 @@ header{
 .hero-stats .sep{color:var(--line-2)}
 .hero-warn{
   display:inline-flex; align-items:center; gap:8px;
-  background:rgba(208,64,64,.15);
-  border:1px solid rgba(208,64,64,.5);
-  color:#ffb3b3;
+  background:rgba(208,64,96,.15);
+  border:1px solid rgba(208,64,96,.5);
+  color:#ffb8c8;
   padding:6px 14px;
   border-radius:999px;
   font-size:12.5px;
@@ -320,8 +321,8 @@ header{
   cursor:pointer;
   transition:all .2s ease;
 }
-[data-theme="light"] .hero-warn{ color:#7a2020; }
-.hero-warn:hover{ background:rgba(208,64,64,.25); transform:translateY(-1px); }
+[data-theme="light"] .hero-warn{ color:#8a2040; }
+.hero-warn:hover{ background:rgba(208,64,96,.25); transform:translateY(-1px); }
 .hero-warn.hidden{ display:none; }
 @media (max-width:640px){
   .hero{padding:20px 18px; margin:12px 0}
@@ -424,7 +425,7 @@ header{
   transition:background .12s ease;
   user-select:none;
 }
-.prereq-item:hover{ background:rgba(244,185,66,.06); }
+.prereq-item:hover{ background:rgba(143,176,214,.06); }
 .prereq-item .chk{
   width:18px; height:18px;
   border:1.5px solid var(--line-2);
@@ -486,7 +487,7 @@ header{
   border-color:var(--line-2);
 }
 .chip.active{
-  background:rgba(244,185,66,.12);
+  background:rgba(143,176,214,.12);
   border-color:var(--amber);
   color:var(--txt);
 }
@@ -538,7 +539,7 @@ header{
   user-select:none;
   transition:background .12s ease;
 }
-.toggle:hover{ background:rgba(244,185,66,.06); color:var(--txt); }
+.toggle:hover{ background:rgba(143,176,214,.06); color:var(--txt); }
 .toggle input{position:absolute; opacity:0; pointer-events:none}
 .toggle .sw{
   width:30px; height:16px;
@@ -553,7 +554,7 @@ header{
   background:var(--txt-mute);
   transition:all .2s ease;
 }
-.toggle input:checked + .sw{ background:rgba(244,185,66,.5); }
+.toggle input:checked + .sw{ background:rgba(143,176,214,.5); }
 .toggle input:checked + .sw::after{ left:16px; background:var(--gold); }
 .clear-btn{
   background:transparent;
@@ -658,13 +659,13 @@ header{
 /* Completado: fondo dorado + check verde esquina */
 .cell.done{
   background:linear-gradient(180deg,
-    rgba(244,185,66,.28) 0%,
-    rgba(200,122,32,.25) 100%);
+    rgba(143,176,214,.28) 0%,
+    rgba(143,176,214,.18) 100%);
   border-color:var(--gold);
 }
 .cell.done .num{
-  color:#fff5d8;
-  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 8px rgba(244,185,66,.4);
+  color:#ffffff;
+  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 8px rgba(143,176,214,.4);
 }
 .cell.done::after{
   content:"✓";
@@ -684,8 +685,8 @@ header{
 .cell.selected{
   border:2px solid var(--amber) !important;
   box-shadow:
-    0 0 0 2px rgba(240,160,64,.25),
-    0 0 16px rgba(240,160,64,.5),
+    0 0 0 2px rgba(143,176,214,.25),
+    0 0 16px rgba(143,176,214,.5),
     0 4px 14px rgba(0,0,0,.5);
   transform:scale(1.05);
   z-index:4;
@@ -742,7 +743,7 @@ header{
 }
 .detail-head::before{
   content:""; position:absolute; left:0; right:0; top:0; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(244,185,66,.4), transparent);
+  background:linear-gradient(90deg, transparent, rgba(143,176,214,.4), transparent);
 }
 .detail-num-wrap{ flex:1; min-width:0; }
 .detail-num-eyebrow{
@@ -755,7 +756,7 @@ header{
 .detail-num{
   font-family:var(--font-display);
   font-size:26px; font-weight:800;
-  color:#f5e8c8;
+  color:#e6ecf4;
   letter-spacing:.5px;
   text-shadow:0 1px 0 rgba(0,0,0,.4);
   margin:0;
@@ -764,15 +765,15 @@ header{
 .detail-close{
   width:28px; height:28px;
   background:rgba(0,0,0,.3);
-  border:1px solid rgba(244,185,66,.3);
+  border:1px solid rgba(143,176,214,.3);
   border-radius:var(--radius-sm);
-  color:#f5e8c8;
+  color:#e6ecf4;
   font-size:18px; line-height:1;
   flex-shrink:0;
   transition:all .15s ease;
 }
 .detail-close:hover{
-  background:rgba(208,64,64,.4);
+  background:rgba(208,64,96,.4);
   border-color:var(--danger);
 }
 .detail-body{
@@ -803,15 +804,7 @@ header{
   width:7px; height:7px; border-radius:50%;
   background:var(--zone-color, var(--gold));
 }
-.detail-weight{
-  font-size:12px;
-  color:var(--txt-mute);
-  margin-bottom:14px;
-  font-variant-numeric:tabular-nums;
-}
-.detail-weight b{ color:var(--gold); font-weight:700; }
-
-/* Texto verbatim · "card de misión" sin franja turquesa */
+/* Texto verbatim · "card de misión" con franja ámbar lateral */
 .detail-text{
   background:var(--inset);
   border:1px solid var(--line);
@@ -839,7 +832,7 @@ header{
 
 .btn-primary{
   background:linear-gradient(180deg, var(--gold) 0%, var(--gold-2) 100%);
-  color:#1a1410;
+  color:#0b1220;
   font-family:var(--font-display);
   font-weight:700;
   letter-spacing:1px;
@@ -856,11 +849,11 @@ header{
   text-shadow:0 1px 0 rgba(255,255,255,.2);
 }
 .btn-primary:hover{
-  background:linear-gradient(180deg, #f8c950, var(--gold));
+  background:linear-gradient(180deg, #a5b8d0, var(--gold));
   transform:translateY(-1px);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.3),
-    0 4px 12px rgba(244,185,66,.3);
+    0 4px 12px rgba(143,176,214,.3);
 }
 .btn-primary:active{ transform:translateY(0); }
 /* Desmarcar = look "ghost" */
@@ -874,7 +867,7 @@ header{
 .btn-primary.is-done:hover{
   border-color:var(--danger);
   color:var(--danger);
-  background:rgba(208,64,64,.08);
+  background:rgba(208,64,96,.08);
   transform:none;
 }
 
@@ -895,7 +888,7 @@ header{
 .btn-nav:hover:not(:disabled){
   border-color:var(--amber);
   color:var(--txt);
-  background:rgba(244,185,66,.08);
+  background:rgba(143,176,214,.08);
 }
 .btn-nav:disabled{ opacity:.35; cursor:not-allowed; }
 
@@ -911,7 +904,7 @@ header{
   transition:all .15s ease;
 }
 .btn-secondary:hover{
-  background:rgba(244,185,66,.1);
+  background:rgba(143,176,214,.1);
   border-style:solid;
 }
 
@@ -1019,7 +1012,6 @@ footer small{ color:var(--line-warm); }
     <div class="pct" id="sbPct">0%</div>
     <div class="bar-mini"><div class="bar-mini-fill" id="sbFill"></div></div>
     <div class="stat hide-sm"><b id="sbDone">0</b>/100 pasos</div>
-    <div class="stat hide-sm"><b id="sbPts">0</b>/960 pts</div>
   </div>
 </header>
 
@@ -1035,8 +1027,6 @@ footer small{ color:var(--line-warm); }
     <div class="bar-outer"><div class="bar-fill" id="heroFill"></div></div>
     <div class="hero-stats">
       <span><b id="statDone">0</b>/100 pasos completados</span>
-      <span class="sep">·</span>
-      <span><b id="statPts">0</b>/960 puntos ponderados</span>
       <span class="sep">·</span>
       <span>Siguiente: <b id="statNext">—</b></span>
     </div>
@@ -1371,13 +1361,14 @@ function renderHero() {
   $("#heroPct").textContent = pct + "%";
   $("#heroFill").style.width = pct + "%";
   $("#statDone").textContent = done;
-  $("#statPts").textContent = pts;
   $("#statNext").textContent = next ? "Paso " + next : "—";
   // Sticky bar
   $("#sbPct").textContent = pct + "%";
   $("#sbFill").style.width = pct + "%";
   $("#sbDone").textContent = done;
-  $("#sbPts").textContent = pts;
+  // Puntos ponderados ocultos del UI (sistema interno sigue calculando pct)
+  // Exponer en window para debug/dev:
+  window.__silvestreStats = { done, pts, pct, total: TOTAL_PTS };
   // Warn de prereqs
   const pendingPrereqs = prereqsPending();
   const warn = $("#heroWarn");
@@ -1530,8 +1521,6 @@ function updateSelectedCell() {
 // ============================================================================
 function buildDetailHtml(n) {
   const s = STEPS[n - 1];
-  const pts = TIER_POINTS[s.effort];
-  const pctWeight = ((pts / TOTAL_PTS) * 100).toFixed(2);
   const done = isDone(n);
   const prev = n > 1 ? n - 1 : null;
   const next = n < STEPS.length ? n + 1 : null;
@@ -1546,9 +1535,6 @@ function buildDetailHtml(n) {
     <div class="detail-body">
       <div class="detail-badges">
         <span class="badge zone" style="--zone-color:${ZONE_COLOR[s.zone]}"><span class="dot"></span>${escapeHtml(s.zone)}</span>
-      </div>
-      <div class="detail-weight">
-        Aporta <b>${pctWeight}%</b> del progreso total · ${pts} pts
       </div>
       <div class="detail-text">${escapeHtml(s.text)}</div>
       <div class="detail-cta">
