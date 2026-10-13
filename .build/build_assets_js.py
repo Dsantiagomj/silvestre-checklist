@@ -44,6 +44,9 @@ THEME_ICONS = {"light": "items/23011.png", "dark": "items/23007.png"}
 # Backup card: you store your progress in the chest (Cofre de Jorbak) and the
 # treasure map (Mapa del tesoro de los miner) leads you back to it.
 BACKUP_ICONS = {"chest": "items/94023.png", "map": "items/24006.png"}
+# Header buttons: the Minirreloj de arena for reset (turning the hourglass over
+# starts again) and the Catalejo de gobletrotter for the overlay (watching from afar).
+HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
@@ -292,7 +295,8 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {m["img"] for m in items.values()}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
-    paths |= {HERO_MAP, BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values()}
+    paths |= {HERO_MAP, BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
+              *HEADER_ICONS.values()}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
     if failed:
@@ -316,6 +320,7 @@ def main():
         "BRAND_ICON": BRAND_ICON,
         "THEME_ICONS": THEME_ICONS,
         "BACKUP_ICONS": BACKUP_ICONS,
+        "HEADER_ICONS": HEADER_ICONS,
         "STEP_ASSETS": steps,
         "ITEMS": items,
         "PREREQ_ICONS": prereqs,
