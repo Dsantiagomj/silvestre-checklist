@@ -1,0 +1,336 @@
+"""Turn the raw match report into the asset map the page loads, and self-host images.
+
+Icon priority per step, most distinctive first:
+  1. the item an achievement rewards (dofus eggs, relics, ingredients)
+  2. the portrait of a boss named in the step
+  3. the achievement's category icon (only 3 distinct, so last resort)
+
+Required items come from DofusDB's `need.items` on each matched achievement and
+quest. A step that only covers part of an achievement ("hasta la misión 4") still
+lists the whole achievement's needs; the page flags those as partial.
+
+Reads  : .build/data/{step_assets,achievements,quests}.json
+         (need_items.json, lookup_jobs.json and job_images_64.tar.gz are
+          fetched and cached here)
+Writes : src/data/assets.json (imported statically by the app)
+         public/img/**        (every image the page uses, mirrored from the CDN)
+Run    : python3 -I .build/build_assets_js.py
+"""
+import json
+import pathlib
+import re
+import sys
+import tarfile
+import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+
+ROOT = pathlib.Path(__file__).parent.parent
+DATA = ROOT / ".build" / "data"
+OUT_JSON = ROOT / "src" / "data" / "assets.json"
+# Vite serves public/ at the site root, so the React app requests /img/...
+IMG = ROOT / "public" / "img"
+# Image base the app requests, relative to the site root.
+APP_IMG_BASE = "img/"
+CDN = "https://api.dofusdb.fr/img/"
+# Hero background: entrance of the Royal Rainbow Blop lair, picked by eye for its
+# dark, green-lit mood. The DofusDB watermark sits in a corner the page darkens.
+HERO_MAP = "maps/1/166985728.jpg"
+# Header logo: the Dofus Silvestre item itself.
+BRAND_ICON = "items/23036.png"
+# Theme switch: Dofus Marfil (light) and Dofus Ébano (dark), the rewards of the
+# guide's "Blanco marfil" and "Negro ébano" achievements.
+THEME_ICONS = {"light": "items/23011.png", "dark": "items/23007.png"}
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
+
+# Item super types folded into the four groups the shopping list shows.
+CATEGORY = {
+    "Recurso": "recursos",
+    "Consumibles": "consumibles",
+    "Consumibles de combate": "consumibles",
+    "Arma": "equipables",
+    "Amuleto": "equipables",
+    "Anillo": "equipables",
+    "Cinturón": "equipables",
+    "Botas": "equipables",
+    "Sombrero": "equipables",
+    "Capa": "equipables",
+    "Escudo": "equipables",
+    "Dofus / Trofeo / Prismaradita": "equipables",
+    "Mascota": "equipables",
+    "Montura": "equipables",
+    "Seguidor": "equipables",
+}
+
+# Prerequisites from the guide. Achievements and quests resolve by name; jobs and
+# spells use their DofusDB ids, checked by hand on 2026-10-13.
+PREREQ_JOBS = {
+    "o1": [60, 13], "o2": [79], "o3": [65], "o4": [24, 26], "o5": [28],
+    "o6": [28, 26, 2, 36],
+}
+JOB_NAMES = {2: "Leñador", 13: "Escultor", 24: "Minero", 26: "Alquimista",
+             28: "Campesino", 36: "Pescador", 60: "Fabricante", 65: "Manitas",
+             79: "Ganadero"}
+PREREQ_SPELLS = {
+    "h1": ("spells/sort_12461.png", "Captura de Almas"),
+    "h2": ("spells/sort_11763.png", "Llamilla"),
+    "h3": ("spells/sort_11775.png", "Zanahowia Sabwosa"),
+}
+# Job icon ids differ from job ids (DofusDB: img/jobs/<iconId>.jpg).
+JOB_ICON = {}
+
+
+def short(url):
+    return url[len(CDN):] if url and url.startswith(CDN) else url
+
+
+def reward_index(achievements):
+    index = {}
+    for a in achievements:
+        for reward in a.get("rewards") or []:
+            for item in reward.get("items") or []:
+                if item.get("iconId"):
+                    index[a["id"]] = {"name": item.get("name", {}).get("es") or "",
+                                      "img": f"items/{item['iconId']}.png"}
+                    break
+            if a["id"] in index:
+                break
+    return index
+
+
+def needs(rec):
+    n = (rec or {}).get("need") or {}
+    return list(zip(n.get("items") or [], n.get("quantities") or []))
+
+
+JOB_TARBALL = ("https://github.com/dofusdude/dofus3-main/releases/download/"
+               "3.7.10.10/job_images_64.tar.gz")
+
+
+def load_need_items(ids):
+    """Item metadata for every required item, cached in need_items.json.
+
+    Only the ids missing from the cache are requested, 40 per call.
+    """
+    cache_file = DATA / "need_items.json"
+    cached = json.loads(cache_file.read_text()) if cache_file.exists() else []
+    have = {it["id"] for it in cached}
+    missing = sorted(set(ids) - have)
+    for i in range(0, len(missing), 40):
+        query = "&".join(f"id[$in][]={x}" for x in missing[i:i + 40])
+        req = urllib.request.Request(f"https://api.dofusdb.fr/items?$limit=50&{query}",
+                                     headers={"User-Agent": "silvestre/1.0"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            cached += json.load(r)["data"]
+    if missing:
+        cache_file.write_text(json.dumps(cached, ensure_ascii=False))
+    return cached
+
+
+def fetch_jobs():
+    """Job icons. DofusDB 404s on its job images, so they come from the
+    dofus3-main release tarball instead, keyed by the job's iconId."""
+    cache_file = DATA / "lookup_jobs.json"
+    if cache_file.exists():
+        icon_ids = {int(k): v for k, v in json.loads(cache_file.read_text()).items()}
+    else:
+        req = urllib.request.Request("https://api.dofusdb.fr/jobs?$limit=50",
+                                     headers={"User-Agent": "silvestre/1.0"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            icon_ids = {j["id"]: j["iconId"] for j in json.load(r)["data"]}
+        cache_file.write_text(json.dumps({str(k): v for k, v in icon_ids.items()}))
+
+    tarball = DATA / "job_images_64.tar.gz"
+    if not tarball.exists():
+        req = urllib.request.Request(JOB_TARBALL, headers={"User-Agent": "silvestre/1.0"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            tarball.write_bytes(r.read())
+
+    wanted = {icon_ids[j] for ids in PREREQ_JOBS.values() for j in ids}
+    (IMG / "jobs").mkdir(parents=True, exist_ok=True)
+    with tarfile.open(tarball) as tf:
+        for member in tf.getmembers():
+            m = re.search(r"/(\d+)-64\.png$", member.name)
+            if m and int(m[1]) in wanted and member.isfile():
+                (IMG / "jobs" / f"{m[1]}.png").write_bytes(tf.extractfile(member).read())
+    for job_id, icon in icon_ids.items():
+        JOB_ICON[job_id] = f"jobs/{icon}.png"
+
+
+def prereq_icons(prereq_texts):
+    """Map each prerequisite id to the icons that represent it."""
+    out = {}
+    for pid, text in prereq_texts.items():
+        if pid in PREREQ_JOBS:
+            out[pid] = [{"img": JOB_ICON[j], "label": JOB_NAMES[j]} for j in PREREQ_JOBS[pid]]
+        elif pid in PREREQ_SPELLS:
+            img, label = PREREQ_SPELLS[pid]
+            out[pid] = [{"img": img, "label": label}]
+        else:
+            names = re.findall(r'"([^"]+)"', text)
+            icons = []
+            for raw in names:
+                rec, _ = lookup(raw.rstrip(". "), ACH)
+                if rec:
+                    icons.append({"img": short(rec["img"]), "label": rec["name"]["es"]})
+                    continue
+                rec, _ = lookup(raw.rstrip(". "), QUEST)
+                if rec:
+                    icons.append({"img": None, "label": rec["name"]["es"], "quest": True})
+            if icons:
+                out[pid] = icons
+    return out
+
+
+def read_prereqs():
+    html = (ROOT / "src" / "data" / "steps.js").read_text()
+    pairs = re.findall(r'\{\s*id:\s*"([loh]\d+)",\s*text:\s*"((?:[^"\\]|\\.)*)"\s*\}', html)
+    return {pid: text.replace('\\"', '"') for pid, text in pairs}
+
+
+def mirror(paths):
+    """Download every CDN path into img/, skipping files already present."""
+    def one(p):
+        dest = IMG / p
+        if dest.exists() and dest.stat().st_size > 0:
+            return p, "cached"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        req = urllib.request.Request(CDN + p, headers={"User-Agent": "silvestre/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=40) as r:
+                dest.write_bytes(r.read())
+            return p, "ok"
+        except urllib.error.HTTPError as e:
+            return p, f"HTTP {e.code}"
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        return list(ex.map(one, sorted(paths)))
+
+
+def main():
+    report = json.loads((DATA / "step_assets.json").read_text())
+    achievements = json.loads((DATA / "achievements.json").read_text())
+    by_ach = {a["id"]: a for a in achievements}
+    by_quest = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
+    rewards = reward_index(achievements)
+    fetch_jobs()
+
+    wanted = set()
+    for step in report:
+        for a in step["assets"]:
+            src = by_ach if a["kind"] == "achievement" else by_quest if a["kind"] == "quest" else {}
+            wanted |= {iid for iid, _ in needs(src.get(a["id"]))}
+
+    item_meta = {}
+    for it in load_need_items(wanted):
+        super_name = (((it.get("type") or {}).get("superType") or {}).get("name") or {}).get("es")
+        item_meta[it["id"]] = {
+            "name": it["name"]["es"],
+            "img": f"items/{it['iconId']}.png",
+            "cat": CATEGORY.get(super_name, "otros"),
+            "type": ((it.get("type") or {}).get("name") or {}).get("es") or "",
+            "lvl": it.get("level") or 0,
+        }
+
+    steps, used_items = {}, set()
+    for step in report:
+        achs, bosses, dungeons, quests, req = [], [], [], [], []
+        for a in step["assets"]:
+            kind = a["kind"]
+            if kind == "achievement":
+                achs.append({"id": a["id"], "name": a["name"], "img": short(a["img"])})
+                src = by_ach.get(a["id"])
+            elif kind == "quest":
+                quests.append({"id": a["id"], "name": a["name"]})
+                src = by_quest.get(a["id"])
+            elif kind == "boss" and a["img"]:
+                bosses.append({"id": a["id"], "name": a["name"], "img": short(a["img"])})
+                src = None
+            elif kind == "dungeon":
+                dungeons.append({"id": a["id"], "name": a["name"]})
+                src = None
+            else:
+                src = None
+            if src:
+                # "s" names the source so the shopping list can count each
+                # achievement once even when several steps share it.
+                tag = f"{kind[0]}{a['id']}"
+                req += [[iid, qty, tag] for iid, qty in needs(src) if iid in item_meta]
+
+        icon = None
+        for a in achs:
+            if a["id"] in rewards:
+                r = rewards[a["id"]]
+                icon = {"src": r["img"], "label": r["name"], "from": "item"}
+                break
+        if not icon and bosses:
+            icon = {"src": bosses[0]["img"], "label": bosses[0]["name"], "from": "boss"}
+        if not icon and achs:
+            icon = {"src": achs[0]["img"], "label": achs[0]["name"], "from": "category"}
+
+        entry = {k: v for k, v in {
+            "icon": icon, "achievements": achs, "bosses": bosses,
+            "dungeons": dungeons, "quests": quests, "items": req,
+            "partial": bool(re.search(r"\bhasta\b", step["text"], re.I)) and bool(req),
+        }.items() if v}
+        if entry:
+            steps[str(step["n"])] = entry
+        used_items |= {r[0] for r in req}
+
+    items = {str(i): item_meta[i] for i in sorted(used_items)}
+    prereqs = prereq_icons(read_prereqs())
+
+    paths = set()
+    for v in steps.values():
+        if "icon" in v:
+            paths.add(v["icon"]["src"])
+        paths |= {b["img"] for b in v.get("bosses", [])}
+        paths |= {a["img"] for a in v.get("achievements", [])}
+    paths |= {m["img"] for m in items.values()}
+    paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
+    paths |= {HERO_MAP, BRAND_ICON, *THEME_ICONS.values()}
+    results = mirror({p for p in paths if not p.startswith("jobs/")})
+    failed = [r for r in results if r[1] not in ("ok", "cached")]
+    if failed:
+        # Drop references to images that do not exist rather than ship broken <img>.
+        bad = {p for p, _ in failed}
+        for m in items.values():
+            if m["img"] in bad:
+                m["img"] = None
+        for icons in prereqs.values():
+            for i in icons:
+                if i.get("img") in bad:
+                    i["img"] = None
+
+    def dump(o):
+        return json.dumps(o, ensure_ascii=False, separators=(",", ":"))
+
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUT_JSON.write_text(dump({
+        "DOFUS_IMG": APP_IMG_BASE,
+        "HERO_BG": HERO_MAP,
+        "BRAND_ICON": BRAND_ICON,
+        "THEME_ICONS": THEME_ICONS,
+        "STEP_ASSETS": steps,
+        "ITEMS": items,
+        "PREREQ_ICONS": prereqs,
+    }) + "\n")
+
+    cats = {}
+    for m in items.values():
+        cats[m["cat"]] = cats.get(m["cat"], 0) + 1
+    size = sum((IMG / p).stat().st_size for p in paths if (IMG / p).exists())
+    print(f"assets.json     : {OUT_JSON.stat().st_size // 1024} KB")
+    print(f"pasos con icono : {sum(1 for v in steps.values() if 'icon' in v)}/100")
+    print(f"pasos con ítems : {sum(1 for v in steps.values() if 'items' in v)}"
+          f" ({sum(1 for v in steps.values() if v.get('partial'))} parciales)")
+    print(f"ítems distintos : {len(items)} {cats}")
+    print(f"prerrequisitos  : {len(prereqs)} con icono")
+    print(f"imágenes        : {len(paths)} en public/img/ ({size // 1024} KB), fallidas {len(failed)}")
+    for p, why in failed:
+        print(f"   FALLA {p} {why}")
+
+
+if __name__ == "__main__":
+    main()

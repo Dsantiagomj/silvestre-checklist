@@ -1,0 +1,156 @@
+// ============================================================================
+// DATASET — 100 pasos verbatim por Sandglass
+// ============================================================================
+export const STEPS = [
+  { n: 1, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Pero ¿Dónde están los dofus?\" (Completo) (Este paso incluye también el logro \"En marcha hacia la aventura\" y el logro \"Un ciudadano modelo\")" },
+  { n: 2, zone: "Astrub", effort: "largo", text: "Astrub: Logro \"La gran biblioteca.\" (Completo)" },
+  { n: 3, zone: "Astrub", effort: "corto", text: "Astrub: Logro \"Escapadas y emboscadas\" misión 3: Leñadores en peligro. Logro \"El hábitat urbano\", misión 3: ¡Cuidado con la bestia!" },
+  { n: 4, zone: "Krosmoz", effort: "trivial", text: "Krosmoz: Misión: \"Barnabé en el espacio\"." },
+  { n: 5, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Misterios del krosmoz\" misión 2: Las primeras impresiones son engañosas, misión 5: ¿Dónde se ha ido la 7ª compañía? (hasta que puedas entrar a la mazmorra Laboratorio de Brumen Tinctorias)" },
+  { n: 6, zone: "Justicieros", effort: "trivial", text: "Justicieros: Logro \"Aquí huele a supervillano muerto\" misión 1: Proteger y servir." },
+  { n: 7, zone: "Torres de la Hermandad", effort: "medio", text: "Torres de la hermandad: Logro \"El atardecer de los muertos\", misión 1: La cólera de los dioses, misión 2 (opcional pero útil): Arma letal. (Hasta tener que dropear sacrificios de armatudinados, quemaalmas, ghuls y malditos)" },
+  { n: 8, zone: "Cania", effort: "trivial", text: "Cania: Logro \"Caniablanca\", misión 3: Paf para la tribu." },
+  { n: 9, zone: "Sidimote", effort: "trivial", text: "Sidimote: Logro \"Las leguas muertas\", hasta la misión 2: Hacerse el muerto." },
+  { n: 10, zone: "Sidimote", effort: "medio", text: "Sidimote: Logro \"Entre lubos anda el juego\", misión 7: La bestia interior, misión 8: Encender la mecha. (Hasta tener que pasar Maxilubo)" },
+  { n: 11, zone: "Cania", effort: "corto", text: "Cania: Logro \"La viajera imprudente\", hasta llegar a la misión 3: La risueña miaumiena. (Hasta tener que pasar Kanigrula)" },
+  { n: 12, zone: "Dimensiones Divinas", effort: "corto", text: "Dimensiones divinas: Logro \"El alegre retirado\" misión 4: Espionaje industrial. (Este inciso incluye todos los requisitos necesarios para llegar a esta misión) Se obtiene el requisito para utilizar el ankla de Anutropía." },
+  { n: 13, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"La hermandad de los olvidados\" Hasta llegar a la misión 6: El daño de Búril. (Hasta la parte de ir a ver a Volkaragnar)" },
+  { n: 14, zone: "Sufokia", effort: "trivial", text: "Sufokia: Logro \"¡Plof!\", misión 1: A la pesca de información." },
+  { n: 15, zone: "Sufokia", effort: "medio", text: "Sufokia: Logro \"El mar por legado\", hasta la misión 4: Su nombre es ninguno. (Hasta después de pasar Capitán Meno y avanzar con la misión. IMPORTANTE: no pelear con el Selatrop fuera la mazmorra)" },
+  { n: 16, zone: "Animatopía", effort: "largo", text: "Animatopía: Logro \"Cazadores cazados\" (Completo) (Se pueden encadenar las misiones: Sin denominación de origen, El vals de los manuales, Nuestros amigos los animalitos y Shyriiwook para dropear al mismo tiempo)" },
+  { n: 17, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Verde esmeralda\" hasta llegar a la misión 7: Draconantopía. (hasta tener que pasar Maxilubo)\nSe pasa Maxilubo y se terminan las misiones de los incisos 10 y 17." },
+  { n: 18, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Verde esmeralda\". (Completo)\nSe recomienda el alineamiento Bontariano ya que gracias al aura de Djaul solo se requieren matar 50 monstruos en total en la misión del Dofus Silvestre, a diferencia de ser Neutral o Brakmariano que requiere matar 100 y 125 monstruos en total respectivamente de forma inevitable." },
+  { n: 19, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Púrpura profundo\", hasta la misión 4: A la leche caliente, batir de repente. (Hasta tener que pasar la mazmorra del Blop multicolor real)" },
+  { n: 20, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 19. (Hasta tener que pasar la mazmorra de los Blops)\nSe pasa Blop multicolor real y se terminan las misiones de los incisos 19 y 20." },
+  { n: 21, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Púrpura profundo\". (Completo) Se debe hacer en algún punto de este inciso la misión: Cómo perder la pluma. Se obtiene el requisito para utilizar el ankla de Sramville. Se pasa Jalamut real, requisito (1/2) para obtener el acceso a Cuna del alma." },
+  { n: 22, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 29. (Hasta tener que pasar la mazmorra Laboratorio de Brumen Tinctorias)\nSe pasa Nelwynn y se terminan las misiones de los incisos 4 y 22." },
+  { n: 23, zone: "Isla de Frigost", effort: "largo", text: "Isla de Frigost: Logro \"Frío al cubo\" (Completo)." },
+  { n: 24, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro: \"Jugar a los médicos\", misión 1: Los monólogos de la vacuna." },
+  { n: 25, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", hasta la misión 3: Los cazadores. (Hasta tener que pasar Morzagüino real)" },
+  { n: 26, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"La cantera de hielo\", hasta la misión 3: El recadero. (Hasta tener que luchar contra güinos y monstruos de la zona Bosque de los pinos perdidos)" },
+  { n: 27, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Problemas y soluciones\" misión 2 (opcional pero útil): Star ski y dutch\" (Hasta tener que luchar contra monstruos de la zona Bosque de los pinos perdidos), misión 4: La marcha de la emperatriz. (Hasta tener que luchar contra güinos)" },
+  { n: 28, zone: "Isla de Frigost", effort: "medio", text: "Isla de Frigost: Logro \"Pesca fresca fresquísima\", misión 1: Pesca en aguas congeladas. (Hasta tener que luchar contra güinos y posteriormente pasar Morzagúino real) (Se pueden dropear algunas grasas de güino en las primeras 4 salas de la mazmorra del Morsagüino Real)\nSe hacen las peleas correspondientes y se pasa Morsagüino real terminando las misiones de los incisos 25, 26, 27 y 28. Se obtiene el acceso a Cuna del alma. Se obtienen los skies.\nEn este punto se debe tomar la misión de la Isla de Frigost: Logro \"La cantera de hielo\", misión 4: Luces y sombras. No es necesario hacerla, solo tenerla tomada." },
+  { n: 29, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigsot: Misión: La pesca de Mel, Misión: Mel odiosa, Misión: Mel, o «dramática». (Se pueden abandonar las peleas, no es necesario ganar)" },
+  { n: 30, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro \"Pesca fresca fresquísima\", misión 2: ¡Qué fresco es mi pischis!" },
+  { n: 31, zone: "Isla de Frigost", effort: "trivial", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", misión 4: Prefiere morir en el mar." },
+  { n: 32, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 1: Dragones y chapuzonas. (Se pasa dragocerdo y se deja pendiente roble blando)" },
+  { n: 33, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Ocre de ámbar\", hasta la misión 4: Muchos cuerboks en la cabeza. (Hasta tener que pasar Lasoberaña)" },
+  { n: 34, zone: "Reino de Amakna", effort: "medio", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", hasta la misión 2: Arak-hais, ¿dónde vais? (Hasta tener que pasar Lasoberaña) (Se pueden matar las araknas de las primeras 4 salas para validar una parte de la misión)\nSe pasa Lasoberaña y se terminan las misiones de los incisos 33 y 34." },
+  { n: 35, zone: "Reino de Amakna", effort: "corto", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 3: Munster descubre el misterio. (Hasta tener que pasar Abráknido ancestral)" },
+  { n: 36, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 33. (Hasta tener que pasar Abráknido ancentral)\nSe pasa Abráknido ancestral y se terminan las misiones de los incisos 35 y 36." },
+  { n: 37, zone: "Reino de Amakna", effort: "medio", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 4: El arte de la labia palítica. (Hasta tener que pasar Roble blando)\nSe pasa Roble blando y se terminan las misiones de los incisos 32 y 37." },
+  { n: 38, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 2: \"Extinción de los fuegos\", misión 3: Esto parece el sur, misión 4: La bruja mala del este. (Hasta tener que matar 7 monstruos de cada uno de la zona Cuna del alma. En algún momento de la misión 3 se puede lanzar la misión La sombra del reino, necesaria para el logro \"Cuatro de seis\", por lo que puede realizarse en cualquier punto hasta antes del inciso 78)\nSe pasa la Mazmorra de Roca negra completa para poder ir a la zona de Lágrimas de Uronigrido, se vuelve a Cuna del alma a pasar de nuevo la mazmorra de Roca negra hasta la sala 5 (Sin matar al jefe), se sale de la mazmorra y se termina de matar los monstruos faltantes para actualizar la misión." },
+  { n: 39, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 7: La bendición de viti. (Se pasa tynril y Morsagüino con sus respectivos ídolos, dejando pendiente Funoroshi)" },
+  { n: 40, zone: "Isla de Frigost", effort: "corto", text: "Isla de frigost: Logro \"Los supervivientes de Frigost\", misión 5: Calefacción a bajo coste, misión 6: En busca de Javi Vito. (Atención de no pasar Obsidiantre, solo es necesario hasta sala 4)" },
+  { n: 41, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Negro ébano\", misión 1: La espada de la roca. (Se hace la mazmorra de Fraktal y se obtiene el requisito para utilizar el ankla de Xelorium)\nAntes de hacer el Logro \"Selocalipsis: Resonancia\", se recomienda hacer la mazmorra de Piojoporojo y obtener el requisito para utilizar el ankla de Zurcalia, el cual también servirá para las misiones del inciso 93. (No es obligatorio hacer la mazmorra, basta con tener acceso a la dimensión de Zurcalia)" },
+  { n: 42, zone: "Selocalipsis", effort: "largo", text: "Selocalipsis: Logro \"Selocalipsis: Resonancia\". (Completo)" },
+  { n: 43, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"De qué madera estoy hecho\", misión 2: Díselo con flores, misión 3: Inmunda putrefacción (hasta tener que matar monstruos de la zona de Plantala), misión 1: El sauce del paseante (hasta tener que matar monstruos de la zona de Plantala)\nSe matan los monstruos necesarios, se termina la misión 3 del inciso 43 y se actualiza la misión 1 del inciso 43 hasta tener que pasar Kodámade." },
+  { n: 44, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Ocre de ámbar\", misión 5: Bien plantados. (Hasta tener que pasar Kodámade)" },
+  { n: 45, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 2: En la encrucijada de los mundos, misión 3: Más leña al fuego. (Hasta tener que pasar Kodámade)\nSe pasa Kodámade y se terminan las misiones de los incisos 43, 44 y 45" },
+  { n: 46, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 4: En nombre del arte. (Hasta tener que pasar Tanukui san)" },
+  { n: 47, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 55. (Hasta tener que entrar en la mazmorra de Tanukui san)\nSe pasa Tanukui san y se terminan las misiones de los incisos 46 y 47." },
+  { n: 48, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\", misión 5: El muelle de los niños perdidos, misión 6: El festival del farol. (Hasta tener que pasar Funoroshi)\nSe pasa Funoroshi con el respectivo ídolo y se terminan las misiones de los incisos 39 y 48." },
+  { n: 49, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"Las grandes mentes tienden a encontrarse\". (Completo)" },
+  { n: 50, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 5: Altar del norte, misión 8: La bendición de Thomahon. (Se pasa Roca negra, Obsidiantre y Kimbo con sus respectivos ídolos, quedando pendiente Sfinter cell) Roca negra y obsidiantre ya están en sala 5 y 4 respectivamente si se hizo bien todo lo anterior. Se desbloquea el acceso a la grieta bú." },
+  { n: 51, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 65. (Hasta tener que pasar Sfinter cell)\nSe pasa Sfinter cell con el respectivo ídolo y se terminan las misiones del inciso 50 y 51." },
+  { n: 52, zone: "Isla de Frigost", effort: "medio", text: "Isla de Frigost: Logro \"Los supervivientes de Frigost\", misión 7: Quién saca beneficio del jalamut, misión 8: Almacén de avituallamiento. (Hasta completar la misión: El slip está que arde. Requiere pasar Tengu gélifux en algún punto entre las misiones, por lo que se desbloquea el paso al Pueblo sepultado, al Bosque petrificado y la puerta de los Taponanos)" },
+  { n: 53, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"El guardián del inmaculado\" hasta la misión 3: Réquiem por un yokai. (Hasta tener que pasar Kumijo) Se recomienda realizar las primeras 4 salas antes de pasar al siguiente inciso." },
+  { n: 54, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro \"Ocre ámbar\" misión 6: No hay humo sin fuego (Se debe también completar la misión del Bosque maléfico: Logro \"Caminata mortal\" misión 2: Detenla si puedes), misión 7: Cuando se caldean las ánimas. (Hasta tener que pasar Kumijo. Retomar sala 5 como se indicó en el inciso anterior para no perder combates de la alteración de la Encantarela)\nSe pasa Kumijo, se termina la misión del inciso 54 y se actualiza la misión del inciso 53." },
+  { n: 55, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Ocre ámbar\". (Completo) (Aprovechar la alteración de la encantarela)" },
+  { n: 56, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"El guardián del inmaculado\". (Completo)" },
+  { n: 57, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"A tumbas abiertas\", misión 1: Tan lejos, tan cercanas, misión 5: Gobstinación groblin." },
+  { n: 58, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Azul turquesa\", misión 6: El salvaje salvaje oeste, misión 9: La bendición de Foluk. (Se pasa Perfósil con el respectivo ídolo, dejando pendiente Kanigrula y Cil)" },
+  { n: 59, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 70. (Hasta tener que pasar Kanigrula)\nSe pasa Kanígrula con el respectivo ídolo, se terminan las misiones de los incisos 11 y 59, y se actualiza la misión del inciso 58." },
+  { n: 60, zone: "Reino de Amakna", effort: "corto", text: "Reino de amakna: Logro \"El árbol que esconde el bosque\" misión 5: El último de nosotros. (Hasta tener que pasar Cil)" },
+  { n: 61, zone: "Alineamiento", effort: "medio", text: "Alineamiento Bontariano: Misión 85. (Hasta tener que pasar Cil)\nSe pasa Cil con el respectivo ídolo, se terminan las misiones de los incisos 58, 60 y 61. Se desbloquea el paso a la zona Colmillos de cristal." },
+  { n: 62, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"Azul turquesa\". (Completo)" },
+  { n: 63, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\" hasta la misión 3: Misión solución. (Hasta tener que dropear los corazones de Tejaiss)\nSe pasa Tejossus y se dropean los corazones de Tejaiss faltantes. Se desbloquea el acceso al Monte tórrido y se actualiza la misión del inciso 63. Se puede llegar a la sala 3 de la mazmorra de Golosotrón para obtener la miel necesaria para terminar la misión." },
+  { n: 64, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\", misión 1: De la mano. (Hasta poder entrar en la taberna)" },
+  { n: 65, zone: "Isla de Pandala", effort: "corto", text: "Isla de Pandala: Logro \"Esto son dos dragones que entran a un bar…\", misión 1: Tinta espectacular, (Hasta tener que dropear en la zona de papel), misión 6: La epopeya del monje peregrino." },
+  { n: 66, zone: "Isla de Pandala", effort: "medio", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\", misión 2: Dos alientos, una inspiración. (Hasta tener que pasar la mazmorra Recuerdo de Imagiro)\nSe pasa Recuerdo de Imagiro, se dropean las gotas de tinta, y se terminan las misiones de los incisos 65 y 66." },
+  { n: 67, zone: "Isla de Pandala", effort: "largo", text: "Isla de Pandala: Logro \"Un sueño con claroscuros\". (Completo)" },
+  { n: 68, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Selocalipsis: Resiliencia\", misión 15: Cuando el despertar no es más que un sueño, misión 16: La última muralla, (Hasta tener que dropear en la zona de tinta y papel), misión 17: Mediante este juramento se escribe el mundo, misión 18: Una profecía bastante extraña." },
+  { n: 69, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"El niño veía la nieve caer\". (Completo)" },
+  { n: 70, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"Un clan variopinto\". (Completo)" },
+  { n: 71, zone: "Archipiélago de Valonia", effort: "corto", text: "Archipiélago de Valonia: Logro \"Floritura final\", hasta la misión 3: Para que la llama tiemble. (Se puede dropear la Hoz de la misión 1 en la mazmorra de Belladona)" },
+  { n: 72, zone: "Reino de Amakna", effort: "corto", text: "Reino de Amakna: Logro \"El árbol que esconde el bosque\", misión 6: Maleza y vileza. (Se aprovecha el elixir de los barquerontes para el siguiente inciso)" },
+  { n: 73, zone: "Archipiélago de Valonia", effort: "medio", text: "Archipiélago de Valonia: Logro \"Asesor Patrimonial\", hasta la misión 3: Una última voluntad. (Hasta tener que dropear en la zona de tinta y papel. Requiere la alteración del elixir de los barquerontes)\nSe dropea en la zona de tinta y papel, se termina la misión del inciso 68 y se actualiza la misión del inciso 73 hasta tener que pasar Ilyzaelle." },
+  { n: 74, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Futuro abierto\" hasta la misión 2: Las cuatro voluntades. (Específicamente hasta tener que hacer las misiones de las dimensiones de Selocalipsis)" },
+  { n: 75, zone: "Selocalipsis", effort: "epico", text: "Selocalipsis: Logro \"La guerra interminable\", Logro \"Prisioneros del mar\", Logro \"Juicio final\" (Completos), Logro \"Vivir así es morir de corrupción\". (Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 76) con el ídolo del dios Sadida)\nEn los logros \"Prisioneros del mar\", misión 1; \"Juicio final\", misión 2; \"Vivir así es morir de corrupción\", misión 3; se puede encadenar la parte de matar monstruos de la zona con las primeras 4 salas de las mazmorras de Servidumbre, Miseria y Corrupción respectivamente." },
+  { n: 76, zone: "Alineamiento", effort: "medio", text: "Alineamiento: Hasta la misión de orden 4. (Hasta tener que pasar Ugah) (Si se escoge la orden Espíritu de la salvación, en la misión de orden 3 se tendrá que pasar Roble blando, por tanto, en el inciso 75 se puede pasar Roble blando con el ídolo del dios Sadida para validar ambas misiones)" },
+  { n: 77, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"El fin de la eternidad\" (Completo)" },
+  { n: 78, zone: "Misiones de Mundo", effort: "medio", text: "Misiones de mundo: Logro: \"Cuatro de seis\", misión 2: Alma máster. (Hasta tener que pasar Ugah)\nSe pasa Roble blando y Ugah con el ídolo del dios Sadida, y se terminan las misiones de los incisos 75, 76 y 78. Se terminan las misiones de la dimensión de corrupción." },
+  { n: 79, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro: \"Cuatro de seis\". (Completo) Se pasa Golosotrón y se obtiene acceso a Frigost 3. Recordatorio de que en la sala 3 de Golosotrón se obtiene un recurso necesario para terminar la misión del inciso 63." },
+  { n: 80, zone: "Alineamiento", effort: "corto", text: "Alineamiento Bontariano: Misión 97. (Hasta tener que pasar Mizz Frizz) (Se pueden dropear los metales malditos de una de las misiones del inciso 81: Los enemigos de mis enemigos son mis enemigos, haciendo las primeras 4 salas de Mizz Frizz)" },
+  { n: 81, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Allá bajo la montaña\", misión: Birk, hija de Bork. (Hasta justo después de pasar Dazahk Martegel y obtener la misión: La biblia de los rencores)" },
+  { n: 82, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\", misión 4: Frio… Caliente… ¡que te quemas! (Hasta después de haber pasado Nileza y tener que pasar Mizz Frizz, Sylargh y Klim)\nSe pasa Mizz Frizz, se termina la misión del inciso 80 y se actualiza la misión del inciso 82. Se dropea el sacrificio de armatudinados para el hechizo de Necronix." },
+  { n: 83, zone: "Alineamiento", effort: "corto", text: "Alineamiento Bontariano: Misión 99. (Hasta tener que pasar Ilyzaelle)" },
+  { n: 84, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Misión: La guardia muere, pero no se rinde. (Hasta tener que matar 10 monstruos de cada uno de la zona del Cuartel del día sin fin)" },
+  { n: 85, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Futuro abierto\", misión 4: La guerra de cania no se llevará a cabo, misión 3: El juicio de la muerte. (Hasta tener que pasar Ilyzaelle)\nSe pasa Ilyzaelle y se matan los monstruos de la zona del Cuartel del día sin fin faltantes, se terminan las misiones del inciso 73, 83, 84 y 85. Se dropea el sacrificio de quemaalmas para el hechizo de Necronix." },
+  { n: 86, zone: "Archipiélago de Valonia", effort: "largo", text: "Archipiélago de Valonia: Logro \"Floritura final\". (Completo)" },
+  { n: 87, zone: "Alineamiento", effort: "medio", text: "Alineamiento: Misión de orden 5." },
+  { n: 88, zone: "Atolón de los Poseídos", effort: "largo", text: "Atolón de los poseídos: Logro \"Devastados\". (Completo)" },
+  { n: 89, zone: "Pesadilla de los Devastadores", effort: "corto", text: "Pesadilla de los devastadores: Logro \"Como un demonio\", misión 1: El peso de su mirada." },
+  { n: 90, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Negro ébano\", misión 2: El forjador de leyenda, misión 3: Hasta el final del sueño. (Hasta tener que hacer aparecer los 12 sueños de cocobur)" },
+  { n: 91, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Futuro abierto\", misión 5: Toma de conciencia. (Hasta tener que dropear en sueños)\nSe dropea en sueños y se hacen las salas necesarias para completar las misiones de los incisos 89, 90 y 91." },
+  { n: 92, zone: "Selocalipsis", effort: "corto", text: "Selocalipsis: Logro \"Selocalipsis: Reminiscencia\", hasta la misión 4: Los tótems de Maimame. (Hasta tener que dropear los 6 tótems)" },
+  { n: 93, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Blanco marfil\". (Completo)\nA medida que se realiza el logro \"Blanco marfil\", se actualizan algunas misiones:\nMisión 1: El dragón blanco. (Se pasa Miauvisor y se dropea el tótem de sorpresa)\nMisión 2: Examen de paso. (Se pasa Protozorror y se dropea el tótem de asco)\nMisión 4: Golpe en Anutropía. (Se pasa Rey Nidas y se dropea el tótem de alegría)\nMisión 5: Nordalia. (Se pasa Tal Kasha, se dropea el tótem de cólera y el sacrificio de malditos para el hechizo de Necronix)\nMisión 7: Una voz de cristal. (Se evita hacer las mazmorras de Nileza y Capitán Meno gracias a las misiones de los incisos 83 y 15 respectivamente)\nMisión 8: Muerto en vida. (Se pasa Anerice, se dropea el tótem de miedo y el sacrificio de ghuls para el hechizo de Necronix)\nMisión 10: Es hora de morir. (Se pasa Sylargh, se dropea el tótem de tristeza, se termina la misión del inciso 92 y se actualiza la misión del inciso 82)\nCon los cuatro sacrificios dropeados, se termina la misión opcional del inciso 7 y se obtiene el hechizo Necronix." },
+  { n: 94, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Negro ébano\". (Completo)\nA medida que se realiza el logro \"Negro ébano\", se actualizan algunas misiones:\nMisión 7: El dragón negro. (Se pasa Klim y se termina la misión del inciso 83)" },
+  { n: 95, zone: "Isla de Frigost", effort: "corto", text: "Isla de Frigost: Logro \"Un alma helada\", misión 5: Una friolera de revelaciones. (Hasta tener que pasar Conde Kontatrás)" },
+  { n: 96, zone: "Misiones de Mundo", effort: "corto", text: "Misiones de mundo: Logro \"Seis de seis\", hasta la misión 13: Armarse contra el destino. (Hasta tener que pasar Conde Kontatrás)\nSe pasa Conde Kontatrás, se termina la misión del inciso 95 y 96.\nSe obtiene la bendición de Jiva al terminar la misión 95, una alteración que dura 50 combates, además de otorgar 6% de resistencias y 12 de resistencias fijas, bastante útil en las misiones de los incisos 97, 98 y 99, así que se recomienda aprovecharla bien." },
+  { n: 97, zone: "Misiones de Mundo", effort: "epico", text: "Misiones de mundo: Logro \"Seis de seis\". (Completo) Recordatorio de escoger el aura de Djaul en caso de ser Bonta para facilitar la misión del inciso 100.\nEn el inciso 99 te dan un cofre capaz de teletransportarte directamente al mapa de la pelea contra los cuatro jinetes, el mapa es el mismo tanto para la pelea del inciso 98 como el 99. La pelea es relativamente sencilla con el equipamiento, conocimiento de las mecánicas y placement adecuado, pero en caso de presentar dificultad, se recomienda avanzar la misión del inciso 99 hasta la obtención del cofre para poder llegar al mapa con sólo un doble click y completar la del inciso 98. En caso de completar la del inciso 99 primero, el cofre no se podrá utilizar más." },
+  { n: 98, zone: "Selocalipsis", effort: "largo", text: "Selocalipsis: Logro \"Selocalipsis: Reminiscenia\". (Completo)" },
+  { n: 99, zone: "Misiones de Mundo", effort: "largo", text: "Misiones de mundo: Logro \"El secreto de los dofus: Prólogo\" (Completo) (Requiere la alteración de la encantarela en la misión 3. Se puede aprovechar esta alteración para el sigilo de Hécate en el inciso 100)" },
+  { n: 100, zone: "Reino de Amakna", effort: "medio", text: "Reino de amakna: Logro \"El árbol que esconde el bosque\", misión: ¿Quién nos protege del protector? (Se debe hacer la misión Flovoración en algún punto de esta)" },
+];
+// ============================================================================
+
+// PREREQUISITOS
+export const PREREQS_INTRO = "Esta guía está hecha por Sandglass, una de las mejores aportaciones jamás hechas para la comunidad hispana de Dofus. Antes de comenzar con las misiones, se recomienda que el personaje sea al menos nivel 150 por temas de requerimientos de nivel en algunas misiones.";
+
+export const PREREQS_LOGROS = [
+  { id: "l1", text: "Ganadería · General: Logro \"Primeriza\"." },
+  { id: "l2", text: "Ganadería · Dragopavos: Logro \"Cazamonturas\"." },
+  { id: "l3", text: "General: Logro \"Con bases sólidas\". (Completo)" },
+  { id: "l4", text: "Isla de Otomaï: Logro \"El gran Guarrok\". (Completo)" },
+  { id: "l5", text: "Isla de Otomaï: Logro \"Turbera maldita\", misión 1: El guardián del puente de la muerte, misión 4: El caballero negro y rosa." },
+  { id: "l6", text: "Montaña de los koalaks: misión \"El cementerio primitivo\"." },
+  { id: "l7", text: "Archipiélago wabbit: misión \"Intrusión en el territorio wabbit\"." },
+  { id: "l8", text: "Isla de Moon: Logro \"Pan Koko Mío\", misión 1: Ida sin vuelta." },
+  { id: "l9", text: "Isla de Frigost: Logro \"Frío al cubo\", misión 1: La tierra banquisa." },
+];
+
+export const PREREQS_OFICIOS = [
+  { id: "o1", text: "Fabricante y Escultor nivel 10" },
+  { id: "o2", text: "Ganadero nivel 20" },
+  { id: "o3", text: "Manitas nivel 30" },
+  { id: "o4", text: "Minero y Alquimista nivel 40" },
+  { id: "o5", text: "Campesino nivel 100" },
+  { id: "o6", text: "Un oficio de recolección nivel 200 (campesino, alquimista, leñador, pescador, etc.)" },
+];
+
+export const PREREQS_HECHIZOS = [
+  { id: "h1", text: "Captura de almas (obligatorio)" },
+  { id: "h2", text: "Llamilla (obligatorio)" },
+  { id: "h3", text: "Zanahowia Sabwosa (no obligatorio, útil para el paso 64)" },
+];
+
+export const TIER_POINTS = { trivial: 1, corto: 3, medio: 8, largo: 20, epico: 50 };
+export const TIER_META = {
+  trivial: { label: "Trivial", icon: "🌱", cls: "t-trivial" },
+  corto:   { label: "Corto",   icon: "🕐", cls: "t-corto" },
+  medio:   { label: "Medio",   icon: "⚔️", cls: "t-medio" },
+  largo:   { label: "Largo",   icon: "🛡️", cls: "t-largo" },
+  epico:   { label: "Épico",   icon: "👑", cls: "t-epico" },
+};
+
+export const ALL_PREREQS = [...PREREQS_LOGROS, ...PREREQS_OFICIOS, ...PREREQS_HECHIZOS];
+export const TOTAL_PTS = STEPS.reduce((a, s) => a + TIER_POINTS[s.effort], 0);
+export const ZONES = [...new Set(STEPS.map(s => s.zone))];
+
+// Color por zona (HSL distribuido)
+export const ZONE_COLOR = {};
+ZONES.forEach((z, i) => {
+  const hue = Math.round((i / ZONES.length) * 360);
+  ZONE_COLOR[z] = `hsl(${hue}, 34%, 54%)`;
+});
