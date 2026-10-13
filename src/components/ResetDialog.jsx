@@ -31,8 +31,6 @@ export default function ResetDialog({ ref }) {
   const [canConfirm, setCanConfirm] = useState(true);
 
   const pct = progressPct(s);
-  const owned = Object.keys(s.owned).length;
-  const overlayPos = new Set([...Object.keys(s.questObj), ...Object.keys(s.questPos)]).size;
   const resetChecks = () => [...optsRef.current.querySelectorAll("input")];
   const syncResetConfirm = () => setCanConfirm(resetChecks().some(c => c.checked));
 
@@ -53,8 +51,6 @@ export default function ResetDialog({ ref }) {
     const after = takeSnapshot();
     if (scope.steps) after.done = {};
     if (scope.prereqs) after.prereqs = {};
-    if (scope.owned) after.owned = {};
-    if (scope.overlay) { after.questPos = {}; after.questObj = {}; }
 
     ringRef.current.style.setProperty("--rd-v", 0); // el anillo se vacía antes de cerrar
     setTimeout(() => {
@@ -102,8 +98,6 @@ export default function ResetDialog({ ref }) {
           <legend className="rd-legend">Qué borrar</legend>
           <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
           <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsDone(s)}</span></label>
-          <label><input type="checkbox" name="owned" /> Objetos conseguidos <span className="n" id="rdNOwned">{owned}</span></label>
-          <label><input type="checkbox" name="overlay" /> Posición en el overlay <span className="n" id="rdNOv">{overlayPos || ""}</span></label>
         </fieldset>
         <div className="rd-backup">
           Copia de seguridad:{" "}
