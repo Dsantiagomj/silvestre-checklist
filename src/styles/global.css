@@ -1696,9 +1696,77 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
 .rd-opts label:has(input:checked){ border-color:color-mix(in srgb, var(--danger) 55%, var(--line)); color:var(--txt); }
 .rd-opts input{ accent-color:var(--danger); width:15px; height:15px; }
 .rd-opts .n{ margin-left:auto; color:var(--txt-mute); font-variant-numeric:tabular-nums; }
-.rd-backup{ font-size:12.5px; color:var(--txt-mute); margin:0 2px 16px; }
-.rd-link{ color:var(--amber); font-weight:600; padding:0; }
-.rd-link:hover{ text-decoration:underline; }
+/* COPIA DE SEGURIDAD · tarjeta con cofre, mapa del tesoro y arrastrar y soltar */
+.rd-bk{
+  position:relative;
+  display:grid; grid-template-columns:auto 1fr; gap:0 14px; align-items:center;
+  margin:0 0 18px; padding:14px 14px 12px;
+  border:1px dashed var(--line-2); border-radius:14px;
+  background:
+    radial-gradient(130% 150% at 0% 0%, rgba(255,214,102,.09), transparent 55%),
+    var(--inset);
+  transition:border-color .2s ease, background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.rd-bk:hover{ border-color:var(--line-warm); }
+.rd-bk-chest{ position:relative; width:58px; height:58px; display:grid; place-items:center; }
+.rd-bk-chest img{
+  width:54px; height:54px; object-fit:contain;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)) drop-shadow(0 0 12px rgba(255,214,102,.28));
+}
+.rd-bk:hover .rd-bk-chest img{ animation:bk-bob 1.6s ease-in-out infinite; }
+@keyframes bk-bob{ 50%{ transform:translateY(-3px) rotate(-3deg); } }
+.rd-bk-check{
+  position:absolute; right:-2px; bottom:0;
+  width:20px; height:20px; border-radius:50%;
+  display:grid; place-items:center;
+  background:var(--amber); color:#0d0e0c;
+  font-size:12px; font-weight:800;
+  box-shadow:0 0 0 3px var(--inset);
+  opacity:0; transform:scale(.4);
+}
+.rd-bk-title{ margin:0; font-size:15px; font-weight:700; color:var(--txt); }
+.rd-bk-when{ margin:3px 0 0; font-size:12.5px; line-height:1.4; color:var(--txt-soft); }
+.rd-bk-when b{ color:var(--txt); font-weight:600; }
+.rd-bk-when.stale{ color:#e3b85c; }
+[data-theme="light"] .rd-bk-when.stale{ color:#7f4f00; }
+.rd-bk-actions{ grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+.bk-btn{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:7px 14px; border-radius:999px;
+  border:1px solid var(--line-2); background:var(--panel);
+  font-size:13px; font-weight:700; color:var(--txt);
+  transition:border-color .15s ease, color .15s ease, transform .15s ease, filter .15s ease;
+}
+.bk-btn:hover{ border-color:var(--amber); color:var(--amber); transform:translateY(-1px); }
+.bk-btn.primary{ background:var(--amber); border-color:var(--amber); color:#0d0e0c; }
+.bk-btn.primary:hover{ color:#0d0e0c; filter:brightness(1.08); }
+.bk-btn img{ width:20px; height:20px; object-fit:contain; margin:-3px 0; }
+.rd-bk-hint{ font-size:12px; color:var(--txt-mute); }
+.rd-bk-msg{ grid-column:1 / -1; margin:0; font-size:12.5px; color:var(--danger); }
+.rd-bk-msg:not(:empty){ margin-top:8px; }
+
+/* Arrastrando un archivo encima */
+.rd-bk[data-state="drag"]{
+  border-style:solid; border-color:var(--amber);
+  background-color:color-mix(in srgb, var(--amber) 9%, var(--inset));
+  box-shadow:0 0 0 4px rgba(183,220,105,.14);
+  transform:scale(1.015);
+}
+.rd-bk[data-state="drag"] .rd-bk-chest img{ animation:bk-bob .7s ease-in-out infinite; }
+.rd-bk[data-state="drag"] .rd-bk-when{ color:var(--amber); font-weight:600; }
+/* Copia guardada: el cofre salta y aparece la marca */
+.rd-bk[data-state="saved"]{ border-color:var(--amber); }
+.rd-bk[data-state="saved"] .rd-bk-chest img{ animation:bk-saved .6s cubic-bezier(.3,1.6,.5,1); }
+.rd-bk[data-state="saved"] .rd-bk-check{ animation:bk-check .45s cubic-bezier(.3,1.6,.5,1) .15s forwards; }
+@keyframes bk-saved{ 40%{ transform:scale(1.22) rotate(-6deg); } }
+@keyframes bk-check{ to{ opacity:1; transform:scale(1); } }
+/* Archivo inválido: la tarjeta tiembla */
+.rd-bk[data-state="error"]{ border-style:solid; border-color:var(--danger); animation:bk-shake .4s ease; }
+@keyframes bk-shake{ 20%,60%{ transform:translateX(-5px); } 40%,80%{ transform:translateX(5px); } }
+@media (prefers-reduced-motion:reduce){
+  .rd-bk, .rd-bk *{ animation:none !important; transition:none !important; }
+  .rd-bk[data-state="saved"] .rd-bk-check{ opacity:1; transform:none; }
+}
 .rd-actions{ display:flex; justify-content:flex-end; gap:8px; }
 .rd-confirm{
   padding:7px 16px; border-radius:999px;

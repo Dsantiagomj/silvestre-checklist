@@ -62,3 +62,47 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   await expect(page.locator(".cell.done")).toHaveCount(5);
   expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
 });
+
+/** Suelta un archivo sobre un elemento, como al arrastrarlo desde el escritorio. */
+async function dropFile(page, selector, name, content) {
+  await page.evaluate(({ selector, name, content }) => {
+    const target = document.querySelector(selector);
+    const dt = new DataTransfer();
+    dt.items.add(new File([content], name, { type: "application/json" }));
+    for (const type of ["dragenter", "dragover", "drop"]) {
+      target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+    }
+  }, { selector, name, content });
+}
+
+test("la copia de seguridad recuerda cuándo se hizo la última", async ({ page }) => {
+  await openApp(page, SEED);
+  await page.click("#resetBtn");
+  await expect(page.locator("#rdBackupWhen")).toContainText("Todavía no");
+  await Promise.all([page.waitForEvent("download"), page.click("#rdBackup")]);
+  await expect(page.locator("#rdBackupWhen")).toContainText("hace un momento");
+  expect(await page.evaluate(() => localStorage.getItem("silvestre:lastBackup"))).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+  await page.reload();
+  await page.click("#resetBtn");
+  await expect(page.locator("#rdBackupWhen")).toContainText("Última copia");
+});
+
+test("soltar una copia sobre la tarjeta la restaura", async ({ page }) => {
+  await openApp(page);
+  await page.click("#resetBtn");
+  const copy = JSON.stringify({ app: "silvestre-checklist", version: 1, data: { done: { 5: true, 6: true }, prereqs: {}, owned: {}, questPos: {}, questObj: {} } });
+  await dropFile(page, "#rdBackupCard", "copia.json", copy);
+  await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
+  await expect(page.locator(".cell.done")).toHaveCount(2);
+});
+
+test("un archivo que no es una copia muestra el error en la tarjeta", async ({ page }) => {
+  await openApp(page, SEED);
+  await page.click("#resetBtn");
+  await dropFile(page, "#rdBackupCard", "otra-cosa.json", JSON.stringify({ hola: "mundo" }));
+  await expect(page.locator("#rdBackupCard")).toHaveAttribute("data-state", "error");
+  await expect(page.locator("#rdBackupMsg")).toContainText("no es una copia");
+  await expect(page.locator("#resetDialog")).toBeVisible();
+  await expect(page.locator(".cell.done")).toHaveCount(5);
+});

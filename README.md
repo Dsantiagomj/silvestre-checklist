@@ -51,7 +51,8 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Header fusionado con el hero**: arriba es transparente sobre el mapa del hero; al bajar se vuelve sólido y, al dejar atrás el hero, muestra el progreso. Sustituye a la antigua barra pegajosa.
 - ✅ **Prerrequisitos** (18 items: logros previos, oficios, hechizos) checkeables como sección colapsable. **NO suman al progreso del Silvestre** — son tracking separado. Si tienes prereqs pendientes, aparece un warning chip clickeable arriba.
 - ✅ **Modo claro/oscuro** con un interruptor de dos huevos del juego, Dofus Ébano y Dofus Marfil: intercambian sitio en arco y el que llega eclosiona. La página cambia con una diagonal desde la esquina del interruptor, y volver es el mismo recorrido al revés.
-- ✅ **Reiniciar con red de seguridad**: un diálogo muestra tu progreso, deja elegir qué borrar (pasos, prerrequisitos) sin tocar los objetos conseguidos ni la posición en el overlay, y ofrece descargar o restaurar una copia en JSON. Tras reiniciar, un aviso permite deshacer durante 8 segundos.
+- ✅ **Reiniciar con red de seguridad**: un diálogo muestra tu progreso, deja elegir qué borrar (pasos, prerrequisitos) sin tocar los objetos conseguidos ni la posición en el overlay. Tras reiniciar, un aviso permite deshacer durante 8 segundos.
+- ✅ **Copia de seguridad**: dentro del mismo diálogo, una tarjeta con el cofre del juego dice cuándo fue la última copia (y avisa si hace más de 14 días o nunca), descarga el progreso en JSON y lo restaura con un botón o soltando el archivo encima.
 - ✅ **Filtros**: chips por zona, chips por tier, toggle "solo pendientes", búsqueda por texto o número.
 - ✅ **Navegación por teclado**: ←/→ entre pasos, espacio para marcar, Esc para cerrar.
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
