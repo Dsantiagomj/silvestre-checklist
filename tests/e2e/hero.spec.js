@@ -120,38 +120,3 @@ test("objetos necesarios lleva a su sección", async ({ page }) => {
   await page.click("#heroItems");
   await expect(page.locator("#shop")).toBeInViewport();
 });
-
-test("Sandglass esconde un guiño Xelor: el tiempo rebobina y vuelve", async ({ page }) => {
-  await openApp(page, SEED);
-  const pctText = await page.locator("#heroPct").textContent();
-  const pct = parseFloat(pctText);
-  expect(pct).toBeGreaterThan(0);
-
-  const egg = page.locator(".hero-eyebrow #sandglassEgg");
-  await expect(egg).toHaveText("Sandglass");
-  await expect(page.locator("#sandglassNote")).toBeHidden();
-
-  await egg.click();
-  const note = page.locator("#sandglassNote");
-  await expect(note).toBeVisible();
-  await expect(note).toContainText("Xelor");
-  await expect(note.locator("img")).toHaveAttribute("src", /breeds\/symbol_5\.png$/);
-
-  // El porcentaje retrocede y después vuelve a su valor
-  await expect(page.locator(".hero")).toHaveClass(/\brewind\b/);
-  await expect.poll(async () => parseFloat(await page.locator("#heroPct").textContent())).toBeLessThan(pct);
-  await expect(page.locator(".hero")).not.toHaveClass(/\brewind\b/, { timeout: 3_000 });
-  await expect(page.locator("#heroPct")).toHaveText(pctText);
-});
-
-test("con movimiento reducido el guiño Xelor solo muestra la nota", async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
-  const page = await ctx.newPage();
-  await openApp(page, SEED);
-  const pctText = await page.locator("#heroPct").textContent();
-  await page.click("#sandglassEgg");
-  await expect(page.locator("#sandglassNote")).toContainText("Xelor");
-  await expect(page.locator(".hero")).not.toHaveClass(/\brewind\b/);
-  await expect(page.locator("#heroPct")).toHaveText(pctText);
-  await ctx.close();
-});

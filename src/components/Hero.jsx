@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ALL_PREREQS, STEPS } from "../data/steps.js";
 import {
   doneCount, isMobile, nextPending, prereqsDone, prereqsPending, progressPct, selectStep,
   setPrereqsOpen, useAppState,
 } from "../state/store.js";
-import { BRAND_ICON, EASTER_ICONS, HERO_BG, HERO_ICONS, ITEMS, assetsFor, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, HERO_BG, HERO_ICONS, ITEMS, assetsFor, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
@@ -17,11 +17,6 @@ const FX = [
 
 // Parallax: el mapa baja a este ritmo respecto al scroll (0 = fijo con la página)
 const PARALLAX = 0.35;
-
-// Guiño Xelor: duración del rebobinado (baja a 0 y vuelve) y de la nota
-const REWIND_MS = 1400;
-const XELOR_NOTE_MS = 5000;
-const easeInOut = t => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 /** Nombre corto de un paso: lo primero entrecomillado del texto de Sandglass. */
 function stepTitle(step) {
@@ -68,36 +63,6 @@ export default function Hero() {
   const heroRef = useRef(null);
   const bgRef = useRef(null);
 
-  // Guiño Xelor: Sandglass juega Xelor, la clase del tiempo, así que su nombre rebobina el progreso
-  const [rewindPct, setRewindPct] = useState(null);   // porcentaje mostrado durante el rebobinado
-  const [xelorNote, setXelorNote] = useState(false);
-  const rewindFrame = useRef(0);
-  const noteTimer = useRef(0);
-  const shownPct = rewindPct ?? pct;
-
-  useEffect(() => () => { cancelAnimationFrame(rewindFrame.current); clearTimeout(noteTimer.current); }, []);
-
-  function rewindTime() {
-    setXelorNote(true);
-    clearTimeout(noteTimer.current);
-    noteTimer.current = setTimeout(() => setXelorNote(false), XELOR_NOTE_MS);
-    if (prefersReducedMotion() || rewindFrame.current) return;
-    const start = performance.now();
-    const tick = now => {
-      const t = Math.min((now - start) / REWIND_MS, 1);
-      // Primera mitad: el tiempo retrocede hasta 0. Segunda: vuelve a donde estaba
-      const k = t < 0.5 ? 1 - easeInOut(t * 2) : easeInOut((t - 0.5) * 2);
-      if (t < 1) {
-        setRewindPct(Math.round(pct * k * 10) / 10);
-        rewindFrame.current = requestAnimationFrame(tick);
-      } else {
-        rewindFrame.current = 0;
-        setRewindPct(null);
-      }
-    };
-    rewindFrame.current = requestAnimationFrame(tick);
-  }
-
   // Parallax del mapa, solo mientras el hero está a la vista y sin movimiento reducido
   useEffect(() => {
     const bg = bgRef.current;
@@ -115,7 +80,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className={"hero" + (rewindPct !== null ? " rewind" : "")} aria-label="Progreso global" ref={heroRef}
+    <section className="hero" aria-label="Progreso global" ref={heroRef}
       style={heroMap ? { "--hero-bg": `url("${imgUrl(heroMap)}")` } : undefined}>
       <div className="hero-bg" ref={bgRef} aria-hidden="true"></div>
       <div className="hero-veil" aria-hidden="true"></div>
@@ -127,20 +92,7 @@ export default function Hero() {
 
       <div className="hero-inner">
         <div className="hero-copy">
-          <p className="hero-eyebrow">
-            Guía de{" "}
-            <span className="sandglass">
-              <button type="button" id="sandglassEgg" onClick={rewindTime}>Sandglass</button>
-              <span className={"xelor-note" + (xelorNote ? " open" : "")} id="sandglassNote" role="status">
-                {xelorNote && (
-                  <>
-                    {EASTER_ICONS?.xelor && <img src={imgUrl(EASTER_ICONS.xelor)} alt="" />}
-                    <span>Sandglass, Xelor de pura cepa. El tiempo está de su lado.</span>
-                  </>
-                )}
-              </span>
-            </span>
-          </p>
+          <p className="hero-eyebrow">Guía de Sandglass</p>
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
           <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
 
@@ -194,7 +146,7 @@ export default function Hero() {
         </div>
 
         <div className="hero-visual">
-          <div className={"hero-egg" + (obtained ? " obtained" : "")} style={{ "--p": shownPct }} aria-hidden="true">
+          <div className={"hero-egg" + (obtained ? " obtained" : "")} style={{ "--p": pct }} aria-hidden="true">
             <div className="egg-ring"></div>
             <div className="egg-glow"></div>
             {BRAND_ICON && (
@@ -206,7 +158,7 @@ export default function Hero() {
           </div>
           <div className="egg-pct">
             <span className="egg-pct-row">
-              <b id="heroPct">{shownPct}%</b>
+              <b id="heroPct">{pct}%</b>
               <button type="button" className="pct-info" id="pctInfo" aria-describedby="pctNote"
                 aria-label="Cómo se calcula el porcentaje">i</button>
               <span className="pct-note" id="pctNote" role="tooltip">
