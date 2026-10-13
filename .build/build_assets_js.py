@@ -19,6 +19,8 @@ Run    : python3 -I .build/build_assets_js.py
 import json
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
 import tarfile
 import urllib.error
@@ -33,9 +35,13 @@ IMG = ROOT / "public" / "img"
 # Image base the app requests, relative to the site root.
 APP_IMG_BASE = "img/"
 CDN = "https://api.dofusdb.fr/img/"
-# Hero background: entrance of the Royal Rainbow Blop lair, picked by eye for its
-# dark, green-lit mood. The DofusDB watermark sits in a corner the page darkens.
-HERO_MAP = "maps/1/166985728.jpg"
+# Hero background, one map per theme, picked by eye:
+#   dark  — Refugio Silvestre: snowy fir forest at dusk; it even shares the name.
+#   light — Mazmorra de los Escarahojas: a sunny forest that reads well without a veil.
+HERO_MAPS = {"dark": "maps/1/223350028.jpg", "light": "maps/1/88080387.jpg"}
+# Full-width hero art is shipped at the source width but recompressed: the raw
+# maps weigh 1-1.8 MB each.
+HERO_JPEG_QUALITY = 55
 # Header logo: the Dofus Silvestre item itself.
 BRAND_ICON = "items/23036.png"
 # Theme switch: Dofus Marfil (light) and Dofus Ébano (dark), the rewards of the
@@ -196,6 +202,17 @@ def read_prereqs():
     return {pid: text.replace('\\"', '"') for pid, text in pairs}
 
 
+def optimize_jpeg(path, quality):
+    """Recompress a JPEG in place with macOS sips. Call it only on a fresh download:
+    recompressing an already-compressed file loses quality on every run.
+    Without sips (not macOS) the original stays and the build says so."""
+    if not shutil.which("sips"):
+        return "sin sips: se deja el original"
+    subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", str(quality),
+                    str(path), "--out", str(path)], check=True, capture_output=True)
+    return f"{path.stat().st_size // 1024} KB"
+
+
 def mirror(paths):
     """Download every CDN path into img/, skipping files already present."""
     def one(p):
@@ -295,10 +312,14 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {m["img"] for m in items.values()}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
-    paths |= {HERO_MAP, BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
+    paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
               *HEADER_ICONS.values()}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
+    fresh = {p for p, status in results if status == "ok"}
+    for theme, rel in HERO_MAPS.items():
+        if rel in fresh:
+            print(f"mapa del hero ({theme}): {optimize_jpeg(IMG / rel, HERO_JPEG_QUALITY)}")
     if failed:
         # Drop references to images that do not exist rather than ship broken <img>.
         bad = {p for p, _ in failed}
@@ -316,7 +337,7 @@ def main():
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(dump({
         "DOFUS_IMG": APP_IMG_BASE,
-        "HERO_BG": HERO_MAP,
+        "HERO_BG": HERO_MAPS,
         "BRAND_ICON": BRAND_ICON,
         "THEME_ICONS": THEME_ICONS,
         "BACKUP_ICONS": BACKUP_ICONS,

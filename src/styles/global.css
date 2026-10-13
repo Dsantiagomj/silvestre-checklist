@@ -1625,7 +1625,9 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
 .brand{ white-space:nowrap; }
 @media (max-width:420px){ .brand{ font-size:16px; gap:7px; } .brand-icon{ width:24px; height:24px; } }
 
-/* Hero a sangre, sube por detrás del header */
+/* Hero a sangre, sube por detrás del header.
+   Velo solo donde va el texto (izquierda) y en el borde superior para el header;
+   a la derecha el mapa se ve limpio. */
 .hero{
   margin:calc(-1 * var(--header-h)) 0 22px;
   padding:calc(var(--header-h) + 52px) 0 40px;
@@ -1633,18 +1635,18 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
   border-radius:0;
   box-shadow:none;
   background:
-    linear-gradient(180deg, rgba(13,14,12,.75) 0%, transparent 22%),
-    linear-gradient(90deg, rgba(13,14,12,.97) 0%, rgba(13,14,12,.84) 40%, rgba(13,14,12,.4) 100%),
-    linear-gradient(0deg, var(--bg) 0%, transparent 38%),
-    var(--hero-bg, none) center 35% / cover no-repeat,
+    linear-gradient(180deg, rgba(13,14,12,.72) 0%, transparent 26%),
+    linear-gradient(90deg, rgba(13,14,12,.96) 0%, rgba(13,14,12,.8) 46%, rgba(13,14,12,.25) 100%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 32%),
+    var(--hero-bg, none) center 40% / cover no-repeat,
     var(--panel);
 }
 [data-theme="light"] .hero{
   background:
-    linear-gradient(180deg, rgba(247,248,242,.8) 0%, transparent 22%),
-    linear-gradient(90deg, rgba(247,248,242,.98) 0%, rgba(247,248,242,.92) 45%, rgba(247,248,242,.74) 100%),
-    linear-gradient(0deg, var(--bg) 0%, transparent 38%),
-    var(--hero-bg, none) center 35% / cover no-repeat,
+    linear-gradient(180deg, rgba(247,248,242,.92) 0%, rgba(247,248,242,.6) 18%, transparent 34%),
+    linear-gradient(90deg, rgba(247,248,242,.94) 0%, rgba(247,248,242,.8) 42%, rgba(247,248,242,.1) 75%, transparent 100%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 26%),
+    var(--hero-bg, none) center 45% / cover no-repeat,
     var(--panel);
   box-shadow:none;
 }

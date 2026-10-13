@@ -13,6 +13,8 @@ export default function Hero() {
   const pct = progressPct(s);
   const next = nextPending(s);
   const pendingPrereqs = prereqsPending(s);
+  // Un mapa por tema: el claro es un bosque de día, que se lee sin velo encima
+  const heroMap = HERO_BG?.[s.theme] ?? null;
 
   // Puntos ponderados ocultos del UI (sistema interno sigue calculando pct)
   // Exponer en window para debug/dev:
@@ -27,7 +29,7 @@ export default function Hero() {
 
   return (
     <section className="hero" aria-label="Progreso global"
-      style={HERO_BG ? { "--hero-bg": `url("${imgUrl(HERO_BG)}")` } : undefined}>
+      style={heroMap ? { "--hero-bg": `url("${imgUrl(heroMap)}")` } : undefined}>
       <div className="hero-inner">
         <p className="hero-eyebrow">Guía de Sandglass · 100 pasos</p>
         <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>

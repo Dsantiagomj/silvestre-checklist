@@ -6,6 +6,7 @@ import DATA from "../data/assets.json";
 export const ASSETS = DATA.STEP_ASSETS || {};
 export const ITEMS = DATA.ITEMS || {};
 export const PREREQ_ICONS = DATA.PREREQ_ICONS || {};
+/** Mapa de fondo del hero por tema: { dark, light }. */
 export const HERO_BG = DATA.HERO_BG || null;
 export const BRAND_ICON = DATA.BRAND_ICON || null;
 export const THEME_ICONS = DATA.THEME_ICONS || null;
