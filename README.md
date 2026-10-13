@@ -1,6 +1,6 @@
 # Checklist Dofus Silvestre — rediseño
 
-Prototipo HTML standalone que rediseña el checklist del Dofus Silvestre en **torrentearcano.com/checklist-silvestre-2**. La guía sigue siendo la de **Sandglass** — los textos de los 100 pasos NO se modificaron. Lo que cambia es **cómo se calcula y se muestra el progreso**, más una nueva interfaz tipo dashboard gaming.
+App web (React + Vite) que rediseña el checklist del Dofus Silvestre de **torrentearcano.com/checklist-silvestre-2**. La guía sigue siendo la de **Sandglass** — los textos de los 100 pasos NO se modificaron. Lo que cambia es **cómo se calcula y se muestra el progreso**, más una nueva interfaz tipo dashboard gaming.
 
 ---
 
@@ -48,22 +48,161 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - Al tocar un paso, sube un **bottom sheet** estilo app nativa con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
 
 ### Otras features
-- ✅ **Barra sticky compacta**: al hacer scroll, una mini-barra con % se queda fija arriba.
+- ✅ **Header fusionado con el hero**: arriba es transparente sobre el mapa del hero; al bajar se vuelve sólido y, al dejar atrás el hero, muestra el progreso. Sustituye a la antigua barra pegajosa.
 - ✅ **Prerrequisitos** (18 items: logros previos, oficios, hechizos) checkeables como sección colapsable. **NO suman al progreso del Silvestre** — son tracking separado. Si tienes prereqs pendientes, aparece un warning chip clickeable arriba.
-- ✅ **Modo claro/oscuro** con switch (dark gaming + light pergamino).
+- ✅ **Modo claro/oscuro** con un interruptor de dos huevos del juego, Dofus Ébano y Dofus Marfil: intercambian sitio en arco y el que llega eclosiona. La página cambia con una diagonal desde la esquina del interruptor, y volver es el mismo recorrido al revés.
+- ✅ **Reiniciar con red de seguridad**: un diálogo muestra tu progreso, deja elegir qué borrar (pasos, prerrequisitos, objetos conseguidos, posición en el overlay) y ofrece descargar o restaurar una copia en JSON. Tras reiniciar, un aviso permite deshacer durante 8 segundos.
 - ✅ **Filtros**: chips por zona, chips por tier, toggle "solo pendientes", búsqueda por texto o número.
 - ✅ **Navegación por teclado**: ←/→ entre pasos, espacio para marcar, Esc para cerrar.
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
 - ✅ **Nota aclaratoria** de Sandglass sobre "Hasta tener que pasar X jefe".
-- ✅ **Zero dependencies**: sin CDN, sin fuentes externas, abre offline.
+- ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
+- ✅ **Objetos necesarios**: cada paso lista lo que piden sus logros y misiones, y una sección aparte suma todo lo pendiente por categoría (recursos, consumibles, equipables, otros). Cada objeto se puede marcar como conseguido y la lista se copia como texto.
+- ✅ **Overlay**: una ventana compacta que se queda encima del juego y te lleva objetivo a objetivo por las misiones del paso, con mapa y coordenadas. Ver abajo.
+- ✅ **Misiones por paso**: el detalle de cada paso lista sus misiones con el NPC inicial, el nivel y todos los objetivos.
+- ✅ **Iconos en prerrequisitos**: oficios, hechizos y logros previos con su icono del juego.
+- ✅ **Estética tipo duffus.fr**: carbón verdoso, acento lima, tipografía Barlow y un mapa del juego de fondo en la cabecera.
 
 ---
 
-## Cómo abrirlo
+## Assets del juego (DofusDB)
 
-1. Doble click en `silvestre.html` → se abre en tu navegador.
-2. Marca pasos como completados haciendo click/tap.
-3. El progreso se guarda en `localStorage`.
+Los 100 pasos citan logros, misiones y jefes por su nombre en español. Eso permite
+emparejarlos automáticamente contra [DofusDB](https://dofusdb.fr) y traer el arte real
+del juego. El emparejamiento cubre **99 de los 100 pasos**; el que falta es el 87
+("Misión de orden 5"), que no nombra nada concreto.
+
+Cada paso elige su icono en este orden:
+
+| Prioridad | Fuente | Pasos |
+|-----------|--------|-------|
+| 1 | Ítem que recompensa el logro (los Dofus de colores, reliquias, ingredientes) | 70 |
+| 2 | Retrato del jefe que el paso exige pasar | 14 |
+| 3 | Icono de categoría del logro | 12 |
+
+La primera fuente es la buena. El logro "Blanco marfil" recompensa el ítem 7115, que es
+el Dofus Marfil, así que el paso 93 muestra ese huevo. Los iconos de categoría son el
+último recurso porque Ankama solo tiene tres para todo el checklist.
+
+El panel de detalle añade los retratos de los jefes nombrados en el texto (64 en total,
+36 jefes distintos) y chips de mazmorra y misión.
+
+### Objetos necesarios
+
+DofusDB guarda en cada logro y misión un campo `need.items` con los objetos que pide.
+Sumándolos salen **260 objetos distintos en 69 pasos**: 194 recursos, 34 consumibles,
+25 equipables y 7 de otro tipo.
+
+Dos detalles de cómo se cuentan:
+
+- Si varios pasos comparten logro (el "Azul turquesa" aparece en seis), sus objetos se
+  cuentan una sola vez en la lista global.
+- 40 de esos pasos dicen "hasta la misión N". DofusDB no separa los objetos por misión,
+  así que el paso muestra los del logro entero y lo avisa con una nota.
+
+### Todo auto-alojado
+
+Las 336 imágenes de iconos, jefes y objetos viven en `public/img/` (5.2 MB), copiadas de DofusDB por el script de build.
+Los iconos de oficio salen del release `job_images_64.tar.gz` de
+[dofusdude/dofus3-main](https://github.com/dofusdude/dofus3-main), porque DofusDB
+devuelve 404 en los suyos. La excepción son los mapas del overlay: son 1.210 y pesarían
+unos 80 MB, así que se cargan desde DofusDB al verlos. Si no cargan, el overlay sigue sin
+la imagen. Lo demás externo es Google Fonts.
+
+### Regenerar los assets
+
+```bash
+python3 -I .build/fetch_dofusdb.py     # descarga logros, jefes, mazmorras y misiones
+python3 -I .build/match_assets.py      # empareja los 100 pasos e imprime la cobertura
+python3 -I .build/build_assets_js.py   # escribe src/data/assets.json (60 KB) y copia las imágenes a public/img/
+python3 -I .build/build_quests_js.py   # escribe src/data/quests.json (506 KB): misiones y objetivos por paso
+```
+
+El primer paso baja unos 190 MB a `.build/data/`, que está en `.gitignore`. Se versionan
+los JSON de `src/data/` y `public/img/`. Las respuestas de la API (nombres, posiciones de
+mapa, oficios) se cachean en `.build/data/lookup_*.json`, así que regenerar no vuelve a
+pedir nada que ya esté descargado.
+
+## Misiones de cada paso
+
+Cada logro guarda sus objetivos en orden, y cada objetivo es "terminar la misión X". Sandglass
+numera las misiones igual: la "misión 4" de un logro es su cuarto objetivo. Con eso cada
+paso se resuelve a sus misiones:
+
+- "hasta la misión N" toma de la 1 a la N.
+- "misión 7, misión 8" toma exactamente esas.
+- "(Completo)" o sin números toma el logro entero.
+- "Alineamiento Bontariano: Misión N" usa la misión de alineamiento cuyo requisito es nivel
+  de alineamiento N−1 en el bando de Bonta. El paso cubre desde la misión que dejó en pausa
+  el paso de alineamiento anterior hasta la N.
+
+Resultado: **97 de 100 pasos**, 344 misiones y 4.546 objetivos, 3.642 de ellos con mapa o
+coordenadas. Los nombres de NPC, objetos y monstruos dentro de los textos se resuelven todos.
+Quedan fuera el 76 y el 87 ("misión de orden"), que dependen de la orden que elijas, y el 77,
+cuyo logro no tiene misiones.
+
+`src/data/quests.json` pesa 506 KB y la página lo carga en diferido, después del primer render.
+
+## Overlay
+
+El botón **Overlay** de la cabecera abre una ventana de 380×640 que sigue la estructura del
+overlay de duffus.fr:
+
+- Cabecera con la misión, el NPC que la da, el nivel, la zona y las coordenadas.
+- Selector para moverte entre las misiones del paso ("Misión 4 / 10").
+- Objetos necesarios del paso.
+- El mapa donde se hace el objetivo. Si el objetivo no trae ubicación, muestra la última
+  conocida y lo dice.
+- El objetivo actual en grande, con un contador ("5 / 16"), y los tres siguientes debajo.
+- Las indicaciones de Sandglass para el paso, plegadas.
+- Abajo y siempre visibles: paso anterior, marcar hecho, paso siguiente.
+
+Se avanza objetivo a objetivo porque 313 de las 344 misiones tienen una sola etapa con una
+docena de objetivos. Al terminar una misión pasa a la siguiente. La posición se guarda por
+misión, así que puedes cerrar la ventana y volver donde estabas.
+
+Las coordenadas son botones: al pulsarlas copian `/travel x,y` para pegarlo en el chat del
+juego. Con la ventana enfocada, ←/→ cambian de paso, ↑/↓ de objetivo y espacio marca el paso.
+
+Lo que marques en el overlay se refleja en la página y al revés. Si no hay ningún paso
+seleccionado, muestra el siguiente pendiente.
+
+Usa la API Document Picture-in-Picture, la misma que duffus.fr. En **Chrome y Edge** la
+ventana se queda por encima de todo, incluido el cliente de Dofus. Firefox y Safari no
+la implementan: ahí se abre un popup normal con el mismo contenido, pero no flota. En
+móvil el botón no aparece.
+
+## Cómo trabajar en él
+
+Es una app de React 19 con Vite. Necesita Node 20 o superior.
+
+```bash
+npm install
+npm run dev        # servidor de desarrollo con recarga en caliente
+npm run build      # genera dist/, un sitio estático
+npm run preview    # sirve dist/ en http://127.0.0.1:4173
+```
+
+El progreso se guarda en `localStorage`, con las mismas claves que la versión anterior, así
+que quien ya tuviera progreso lo conserva.
+
+### Pruebas
+
+```bash
+npx playwright test
+```
+
+Son 17 pruebas de extremo a extremo con Playwright en `tests/e2e/`: grid, detalle, misiones,
+filtros, prerrequisitos, lista de objetos, tema, header, reinicio con copia de seguridad,
+overlay y móvil. Sin `APP_URL`, construyen el sitio y lo prueban en `vite preview`. Con
+`APP_URL` se pueden pasar contra cualquier otro despliegue:
+
+```bash
+APP_URL=https://mi-despliegue.example/ npx playwright test
+```
+
+Se escribieron contra la antigua versión de un solo archivo antes de migrar a React, y las
+dos versiones las pasaban sin cambios.
 
 ---
 
@@ -71,33 +210,49 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 
 1. **La clasificación de esfuerzo es aproximada**. Yo clasifiqué los 100 pasos basándome en patrones del texto ("Completo" = más esfuerzo, "misión X" = menos), pero **Sandglass y jugadores experimentados son la autoridad real**. Si algún peso parece mal calibrado, se cambia en 1 línea del array `STEPS` en el HTML.
 
-2. **Próximo paso**: cuando esté la lista de misiones individuales por paso (work in progress), refinaremos el scoring usando cantidad/dificultad real de sub-misiones.
+2. **Los pesos aún no usan las misiones**. `src/data/quests.json` ya trae las misiones y objetivos de cada paso; el siguiente paso natural es recalibrar el esfuerzo con esa cantidad real en vez de con patrones del texto.
 
 3. **El progreso vive en localStorage** — sin sync a servidor / cuenta de usuario.
 
+4. **El emparejamiento de assets es automático**. Un paso puede mostrar el icono de una
+   recompensa secundaria en vez de la que tú esperarías, porque el script toma el primer
+   logro del texto que entrega un ítem. Los jefes se detectan por nombre propio en
+   mayúscula, lo que descarta falsos positivos como "la guerra interminable" pero
+   dependería de que Sandglass siga escribiéndolos así. Revisar
+   `.build/data/step_assets.json` para auditar cualquier paso.
+
+5. **Los datos vienen de DofusDB**, un servicio de terceros. Las imágenes ya están
+   copiadas en `public/img/`, así que la página no depende de él para funcionar; solo para
+   regenerar los datos.
+
+6. **Los objetos de pasos parciales están inflados**. Un paso "hasta la misión 4" lista los
+   objetos del logro entero, porque DofusDB no los separa por misión. La lista global no
+   se ve afectada: cuenta cada logro una vez.
+
+7. **Los mapas del overlay dependen de DofusDB**. Iconos y objetos están en `public/img/`, pero los
+   mapas se enlazan desde su CDN por tamaño.
+
+8. **La sintaxis de `/travel` no está verificada en el juego**. La única referencia que
+   encontré es una extensión para dofus-map.com que copia `/travel` seguido de dos
+   coordenadas. Si el juego espera otro formato, se cambia en `copyTravel()`.
+
+9. **Las misiones de alineamiento salen del criterio de inicio**, no de un listado oficial.
+   Los niveles cuadran con lo que dice cada paso (la 99, nivel 199, lleva al Mirador de
+   Ilyzaelle), pero es una inferencia.
+
+
 ---
 
-## Implementación en Squarespace
+## Despliegue
 
-El sitio actual de torrentearcano.com es **Squarespace** (no WordPress). Opciones:
+`npm run build` deja en `dist/` un sitio estático de unos 6.7 MB, de los que 5.8 MB son
+imágenes. Se puede subir tal cual a cualquier hosting estático: Netlify, GitHub Pages o
+Cloudflare Pages. Las misiones (`quests`, 95 KB comprimidas) van en un archivo aparte que solo
+se descarga cuando hace falta.
 
-### Opción A: Code Block (más rápido)
-1. Editor de Squarespace → agregar bloque "Code" en la página
-2. Pegar todo el contenido de `silvestre.html` (desde `<style>` en adelante o el archivo completo)
-3. El bloque Code acepta HTML+CSS+JS inline
-4. ⚠️ Algunos estilos pueden colisionar con el tema. Si pasa, envolver todo en `<div id="silvestre-app">` y prefijar selectores con `#silvestre-app`.
-
-### Opción B: Page Header Injection (más limpio)
-1. Settings → Advanced → Code Injection → Page Header (de la página del checklist)
-2. Pegar el `<style>` y `<script>` ahí
-3. En el contenido, dejar solo el HTML body
-4. Requiere plan Squarespace Business o superior
-
-### Opción C: Custom CSS + Code Block
-1. `<style>` → Design → Custom CSS (sin tags `<style>`)
-2. `<script>` y HTML → Code Block en la página
-
-**Recomendación**: empezar con Opción A para validar; migrar a B si se quiere algo más limpio a largo plazo.
+Ya no es viable pegarlo en un bloque de Squarespace: son varios archivos y una carpeta de
+imágenes. Para enlazarlo desde torrentearcano.com, lo práctico es un enlace o un iframe
+apuntando al sitio desplegado.
 
 ---
 
@@ -105,19 +260,31 @@ El sitio actual de torrentearcano.com es **Squarespace** (no WordPress). Opcione
 
 ```
 silvestre-checklist/
-├── README.md
-├── silvestre.html       ← archivo principal (single-file, abrir con doble click)
-└── .build/              ← internos (no enviar al usuario final)
-    ├── steps.js         ← dataset canónico de referencia (100 pasos verbatim)
-    └── steps_data.py    ← script de verificación de la clasificación de tiers
+├── index.html                ← entrada de Vite
+├── src/
+│   ├── main.jsx, App.jsx
+│   ├── state/store.js        ← estado único y persistencia en localStorage
+│   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
+│   ├── overlay/              ← ventana Picture-in-Picture (portal de React)
+│   ├── lib/                  ← imágenes, carga diferida de misiones, animaciones
+│   ├── data/                 ← steps.js (los 100 pasos de Sandglass) y JSON generados
+│   └── styles/global.css
+├── public/img/               ← las 336 imágenes del juego, auto-alojadas (5.2 MB)
+├── tests/e2e/                ← pruebas de Playwright
+└── .build/                   ← internos (no enviar al usuario final)
+    ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
+    ├── match_assets.py       ← empareja los 100 pasos con logros, jefes y misiones
+    ├── build_assets_js.py    ← genera los datos de pasos y copia las imágenes
+    ├── build_quests_js.py    ← resuelve cada paso a sus misiones
+    ├── steps.js, steps_data.py
+    └── data/                 ← datos crudos y cachés de la API (gitignored)
 ```
-
----
 
 ## Créditos
 
 - **Guía original de los 100 pasos**: Sandglass — autoridad de la comunidad hispana de Dofus
 - **Sistema actual de checklist en torrentearcano.com**: el dueño del sitio
 - **Rediseño del scoring + UI**: este proyecto
+- **Datos y arte del juego**: [DofusDB](https://dofusdb.fr)
 
 Dofus es una marca de Ankama. Esta es una herramienta no oficial hecha por y para la comunidad.
