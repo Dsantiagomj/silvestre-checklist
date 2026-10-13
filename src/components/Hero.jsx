@@ -39,6 +39,10 @@ function openShop() {
   document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function showBoard() {
+  document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 function goToStep(n) {
   selectStep(n);
   // En escritorio el detalle vive junto al tablero; en móvil sube la hoja inferior
@@ -96,7 +100,7 @@ export default function Hero() {
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
           <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
 
-          <div className="hero-next" id="heroNext">
+          <div className={"hero-next" + (nextStep ? "" : " done")} id="heroNext">
             {nextStep ? (
               <>
                 <div className="hero-next-art">
@@ -110,10 +114,17 @@ export default function Hero() {
                 <button className="hero-next-go" id="heroNextGo" onClick={() => goToStep(next)}>Continuar →</button>
               </>
             ) : (
-              <div className="hero-next-meta">
-                <p className="hero-next-kicker">Checklist completado</p>
-                <p className="hero-next-name">Los 100 pasos del Dofus Silvestre</p>
-              </div>
+              <>
+                <div className="hero-next-art">
+                  {BRAND_ICON ? <img src={imgUrl(BRAND_ICON)} alt="" /> : <b>✓</b>}
+                </div>
+                <div className="hero-next-meta">
+                  <p className="hero-next-kicker">Guía completada</p>
+                  <p className="hero-next-name">¡El Dofus Silvestre es tuyo!</p>
+                  <p className="hero-next-sub">Recorriste los 100 pasos de Sandglass.</p>
+                </div>
+                <button className="hero-next-go" id="heroNextGo" onClick={showBoard}>Ver el tablero</button>
+              </>
             )}
           </div>
 

@@ -46,7 +46,14 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator("#heroPct")).toHaveText("100%");
   await expect(page.locator(".hero-egg")).toHaveClass(/obtained/);
   await expect(page.locator(".egg-pct small")).toContainText("¡Obtenido!");
-  await expect(page.locator("#heroNext")).toContainText("completado");
+  // La tarjeta del siguiente paso se vuelve un trofeo con el propio Dofus
+  const card = page.locator("#heroNext");
+  await expect(card).toHaveClass(/\bdone\b/);
+  await expect(card.locator(".hero-next-name")).toHaveText("¡El Dofus Silvestre es tuyo!");
+  await expect(card).toContainText("100 pasos");
+  await expect(card.locator(".hero-next-art img")).toHaveAttribute("src", /items\/23036\.png$/);
+  await page.click("#heroNextGo");
+  await expect(page.locator("#grid")).toBeInViewport();
 });
 
 test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page }) => {
