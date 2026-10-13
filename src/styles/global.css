@@ -1831,22 +1831,39 @@ header.show-progress .tb-xp{ opacity:1; transform:none; }
 [data-theme="light"] .hero-title .hl{ color:#9fcf4f; }
 .hero-sub{ margin:0 0 22px; max-width:520px; font-size:17px; line-height:1.5; color:var(--txt-soft); }
 
-/* Contadores con iconos del juego */
-.hero-stats{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
-.hero-stat{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:5px 14px 5px 6px; border-radius:999px;
-  background:color-mix(in srgb, var(--bg) 62%, transparent);
+/* Lo que necesitas: prerrequisitos y objetos, aparte de los pasos */
+.hero-reqs{ margin-top:16px; max-width:540px; }
+.hero-reqs-title{
+  margin:0 0 8px;
+  font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;
+  color:var(--txt-mute);
+}
+.hero-reqs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.hero-req{
+  position:relative;
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px 14px 10px; border-radius:14px;
+  background:color-mix(in srgb, var(--bg) 66%, transparent);
   border:1px solid var(--line-2);
   backdrop-filter:blur(6px);
-  font-size:13.5px; color:var(--txt-soft);
+  text-align:left;
+  transition:border-color .15s ease, transform .15s ease;
 }
-.hero-stat img{ width:26px; height:26px; object-fit:contain; }
-.hero-stat b{ color:var(--txt); font-weight:700; font-variant-numeric:tabular-nums; }
-button.hero-stat{ transition:border-color .15s ease, transform .15s ease; }
-button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
-.hero-stat.warn{ border-color:rgba(224,85,107,.55); color:#ff9aac; }
-[data-theme="light"] .hero-stat.warn{ color:#a02a42; }
+.hero-req:hover{ border-color:var(--amber); transform:translateY(-1px); }
+.hero-req img{ width:32px; height:32px; object-fit:contain; flex-shrink:0; }
+.hero-req-meta{ display:flex; flex-direction:column; min-width:0; }
+.hero-req-name{ font-size:13px; font-weight:600; color:var(--txt-soft); }
+.hero-req-count{ font-size:13px; color:var(--txt-mute); font-variant-numeric:tabular-nums; }
+.hero-req-count b{ font-size:18px; color:var(--txt); }
+.hero-req-bar{
+  position:absolute; left:12px; right:12px; bottom:6px; height:3px;
+  border-radius:999px; background:color-mix(in srgb, var(--txt) 12%, transparent); overflow:hidden;
+}
+.hero-req-bar i{ display:block; height:100%; background:var(--amber); border-radius:999px; transition:width .6s ease; }
+.hero-req.warn{ border-color:rgba(224,85,107,.55); }
+.hero-req.warn .hero-req-name{ color:#ff9aac; }
+.hero-req.warn .hero-req-bar i{ background:#e0556b; }
+[data-theme="light"] .hero-req.warn .hero-req-name{ color:#a02a42; }
 
 /* Siguiente paso */
 .hero-next{
@@ -1913,14 +1930,42 @@ button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
 .hero-egg.obtained .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
 @keyframes egg-float{ 50%{ transform:translateY(-7px); } }
 @keyframes egg-obtained{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
-.egg-pct{ margin:0; text-align:center; line-height:1; }
-.egg-pct b{
+/* Cifra y pasos con fondo propio: debajo del disco el mapa queda a la vista */
+.egg-pct{
+  text-align:center; line-height:1;
+  padding:8px 14px 9px; border-radius:14px;
+  background:color-mix(in srgb, var(--bg) 62%, transparent);
+  backdrop-filter:blur(6px);
+}
+.egg-pct-row{ position:relative; display:inline-flex; align-items:flex-start; gap:4px; }
+/* Nota del porcentaje: explica el ponderado al pasar el ratón o con el foco */
+.pct-info{
+  width:18px; height:18px; margin-top:4px;
+  border-radius:50%; border:1px solid var(--line-2);
+  background:color-mix(in srgb, var(--bg) 70%, transparent);
+  font:italic 700 11px/1 Georgia, serif; color:var(--txt-soft);
+  display:grid; place-items:center;
+  transition:border-color .15s ease, color .15s ease;
+}
+.pct-info:hover, .pct-info:focus-visible{ border-color:var(--amber); color:var(--amber); }
+.pct-note{
+  display:none;
+  position:absolute; top:calc(100% + 8px); left:50%; z-index:5;
+  width:240px; transform:translateX(-50%);
+  padding:10px 12px; border-radius:10px;
+  background:var(--panel-2); border:1px solid var(--line-2);
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+  font-size:12.5px; line-height:1.45; text-align:left; color:var(--txt-soft);
+}
+.pct-info:hover + .pct-note, .pct-info:focus-visible + .pct-note, .pct-info:focus + .pct-note{ display:block; }
+.egg-pct small b{ color:var(--txt); }
+.egg-pct-row > b{
   font-family:'Lilita One', var(--font-body); font-weight:400; font-size:46px;
   color:var(--amber);
   -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 4px 0 #121410;
   font-variant-numeric:tabular-nums;
 }
-[data-theme="light"] .egg-pct b{ color:#9fcf4f; }
+[data-theme="light"] .egg-pct-row > b{ color:#9fcf4f; }
 .egg-pct small{ display:block; margin-top:6px; font-size:11.5px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; color:var(--txt-soft); }
 
 /* Ambiente: luciérnagas que suben (oscuro) u hojas que caen (claro) */
@@ -1961,9 +2006,10 @@ button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
   .hero-visual{ order:-1; }
   .hero-egg{ --size:180px; }
   .egg-body{ width:104px; height:104px; }
-  .egg-pct b{ font-size:36px; }
+  .egg-pct-row > b{ font-size:36px; }
   .hero-sub{ font-size:15px; margin-bottom:16px; }
   .hero-next{ flex-wrap:wrap; }
+  .hero-reqs-grid{ grid-template-columns:1fr; }
   .hero-next-go{ width:100%; text-align:center; }
   /* En móvil el texto ocupa todo el ancho: velo vertical, el mapa se ve arriba
      detrás del huevo y se va cubriendo donde empieza el texto */

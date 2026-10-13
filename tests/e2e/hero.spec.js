@@ -89,3 +89,32 @@ test("el parallax y el ambiente respetan el movimiento reducido", async ({ brows
     await ctx.close();
   }
 });
+
+test("la descripción explica la página y el ponderado es una nota del porcentaje", async ({ page }) => {
+  await openApp(page);
+  const sub = page.locator(".hero-sub");
+  await expect(sub).toContainText("Dofus Silvestre");
+  await expect(sub).not.toContainText("ponderado");
+  // La nota se asocia al porcentaje y aparece al pasar el ratón o con el foco
+  const info = page.locator("#pctInfo");
+  await expect(info).toHaveAttribute("aria-describedby", "pctNote");
+  await expect(page.locator("#pctNote")).toBeHidden();
+  await info.hover();
+  await expect(page.locator("#pctNote")).toBeVisible();
+  await expect(page.locator("#pctNote")).toContainText("esfuerzo");
+});
+
+test("los pasos van con el progreso y los requisitos van aparte", async ({ page }) => {
+  await openApp(page, SEED);
+  await expect(page.locator(".hero-visual #statDone")).toHaveText("3");
+  const reqs = page.locator(".hero-reqs");
+  await expect(reqs).toContainText("Lo que necesitas");
+  await expect(reqs.locator("#statPre")).toHaveText("1");
+  await expect(reqs.locator("#statOwned")).toHaveText("2");
+});
+
+test("objetos necesarios lleva a su sección", async ({ page }) => {
+  await openApp(page);
+  await page.click("#heroItems");
+  await expect(page.locator("#shop")).toBeInViewport();
+});
