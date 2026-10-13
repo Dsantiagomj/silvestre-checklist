@@ -1,6 +1,6 @@
 # Checklist Dofus Silvestre — rediseño
 
-App web (React + Vite) que rediseña el checklist del Dofus Silvestre de **torrentearcano.com/checklist-silvestre-2**. La guía sigue siendo la de **Sandglass** — los textos de los 100 pasos NO se modificaron. Lo que cambia es **cómo se calcula y se muestra el progreso**, más una nueva interfaz tipo dashboard gaming.
+App web (React + Vite) que rediseña el checklist del Dofus Silvestre de **torrentearcano.com/checklist-silvestre**. La guía sigue siendo la de **Sandglass**, en su versión 4: los textos de los 100 pasos se importan tal cual de esa página y NO se modificaron. Lo que cambia es **cómo se calcula y se muestra el progreso**, más una nueva interfaz tipo dashboard gaming.
 
 ---
 
@@ -111,6 +111,21 @@ Los iconos de oficio salen del release `job_images_64.tar.gz` de
 devuelve 404 en los suyos. La excepción son los mapas del overlay: son 1.210 y pesarían
 unos 80 MB, así que se cargan desde DofusDB al verlos. Si no cargan, el overlay sigue sin
 la imagen. Lo demás externo es Google Fonts.
+
+### Actualizar la guía
+
+Cuando Sandglass publica una versión nueva, se importa de la página de torrentearcano:
+
+```bash
+curl -sL -A "Mozilla/5.0" -o /tmp/ta/page.html https://www.torrentearcano.com/checklist-silvestre
+python3 -I .build/import_guide.py /tmp/ta/page.html
+```
+
+Reescribe los pasos de `src/data/steps.js` y guarda una copia de los datos de la página en
+`.build/lists/torrentearcano.json`. La página publica también qué pasos de la versión
+anterior forman cada paso nuevo (`PREVIOUS_STEPS`). Con esa tabla se migra el progreso
+guardado y las copias de seguridad antiguas: un paso nuevo queda hecho si lo estaban todos
+los antiguos que lo forman. Después hay que regenerar los assets.
 
 ### Regenerar los assets
 
@@ -275,6 +290,7 @@ silvestre-checklist/
 ├── public/img/               ← las 336 imágenes del juego, auto-alojadas (5.2 MB)
 ├── tests/e2e/                ← pruebas de Playwright
 └── .build/                   ← internos (no enviar al usuario final)
+    ├── import_guide.py       ← importa los pasos de la guía desde torrentearcano
     ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
     ├── match_assets.py       ← empareja los 100 pasos con logros, jefes y misiones
     ├── build_assets_js.py    ← genera los datos de pasos y copia las imágenes
