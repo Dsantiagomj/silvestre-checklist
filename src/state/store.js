@@ -5,6 +5,7 @@
 import { useSyncExternalStore } from "react";
 import { STEPS, ALL_PREREQS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
+import { ITEMS } from "../lib/assets.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -87,7 +88,16 @@ export const isDone = (s, n) => !!s.done[n];
 export const doneCount = s => STEPS.filter(st => s.done[st.n]).length;
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? TIER_POINTS[st.effort] : 0), 0);
 export const progressPct = s => (TOTAL_PTS ? Math.round((donePts(s) / TOTAL_PTS) * 1000) / 10 : 0);
-export const prereqsDone = s => ALL_PREREQS.filter(p => s.prereqs[p.id]).length;
+// Terminar la guía implica tener los prerrequisitos y los objetos, aunque no se marcaran a mano
+export const guideComplete = s => doneCount(s) === STEPS.length;
+export const isPrereqDone = (s, id) => guideComplete(s) || !!s.prereqs[id];
+export const prereqsDone = s => ALL_PREREQS.filter(p => isPrereqDone(s, p.id)).length;
+/** Prerrequisitos marcados a mano: lo que borra un reinicio. */
+export const prereqsMarked = s => ALL_PREREQS.filter(p => s.prereqs[p.id]).length;
+const ALL_OWNED = Object.fromEntries(Object.keys(ITEMS).map(id => [id, true]));
+/** Objetos conseguidos: los marcados, o todos si la guía está completa. */
+export const ownedMap = s => (guideComplete(s) ? ALL_OWNED : s.owned);
+export const ownedCount = s => Object.keys(ownedMap(s)).filter(id => ITEMS[id]).length;
 export const prereqsPending = s => ALL_PREREQS.length - prereqsDone(s);
 export const nextPending = s => {
   const st = STEPS.find(x => !s.done[x.n]);

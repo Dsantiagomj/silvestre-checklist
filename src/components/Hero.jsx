@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ALL_PREREQS, STEPS } from "../data/steps.js";
 import {
-  doneCount, isMobile, nextPending, prereqsDone, prereqsPending, progressPct, selectStep,
+  doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
   setPrereqsOpen, useAppState,
 } from "../state/store.js";
 import { BRAND_ICON, HERO_BG, HERO_ICONS, ITEMS, assetsFor, imgUrl } from "../lib/assets.js";
@@ -55,7 +55,7 @@ export default function Hero() {
   const pct = progressPct(s);
   const done = doneCount(s);
   const pendingPrereqs = prereqsPending(s);
-  const owned = Object.keys(s.owned).filter(id => ITEMS[id]).length;
+  const owned = ownedCount(s);
   const totalItems = Object.keys(ITEMS).length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;

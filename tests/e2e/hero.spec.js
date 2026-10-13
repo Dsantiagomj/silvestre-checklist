@@ -127,3 +127,19 @@ test("objetos necesarios lleva a su sección", async ({ page }) => {
   await page.click("#heroItems");
   await expect(page.locator("#shop")).toBeInViewport();
 });
+
+test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", async ({ page }) => {
+  const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
+  await openApp(page, { "silvestre:done": all });
+  // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
+  const [pre, preTotal] = (await page.locator("#heroWarn .hero-req-count").textContent()).split("/");
+  expect(pre).toBe(preTotal);
+  const [own, ownTotal] = (await page.locator("#heroItems .hero-req-count").textContent()).split("/");
+  expect(own).toBe(ownTotal);
+  await expect(page.locator("#heroWarn")).not.toHaveClass(/\bwarn\b/);
+  await expect(page.locator(".prereq-item:not(.done)")).toHaveCount(0);
+  await expect(page.locator(".shop-item:not(.owned)")).toHaveCount(0);
+  // El diálogo de reinicio cuenta lo que hay guardado, no lo deducido
+  await page.click("#resetBtn");
+  await expect(page.locator("#rdNPre")).toHaveText("0");
+});
