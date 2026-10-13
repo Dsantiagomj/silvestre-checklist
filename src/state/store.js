@@ -1,0 +1,265 @@
+// ============================================================================
+// STORE — única fuente de verdad. Toda la UI se deriva de este estado, así que
+// ya no hace falta acordarse de llamar a renderX() tras cada cambio.
+// ============================================================================
+import { useSyncExternalStore } from "react";
+import { STEPS, ALL_PREREQS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
+import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
+
+export const LS = {
+  done: "silvestre:done",
+  prereqs: "silvestre:prereqs",
+  theme: "silvestre:theme",
+  notaDismissed: "silvestre:notaDismissed",
+  prereqsOpen: "silvestre:prereqsOpen",
+  owned: "silvestre:owned",
+  questPos: "silvestre:questPos",
+  questObj: "silvestre:questObjective",
+};
+
+const readObj = key => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "{}") || {};
+  } catch {
+    return {};
+  }
+};
+
+export const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+
+function initialState() {
+  const done = readObj(LS.done);
+  const prereqs = readObj(LS.prereqs);
+  const savedOpen = localStorage.getItem(LS.prereqsOpen);
+  const pendingPrereqs = ALL_PREREQS.filter(p => !prereqs[p.id]).length;
+  return {
+    done,
+    prereqs,
+    owned: readObj(LS.owned),
+    theme: localStorage.getItem(LS.theme) || "dark",
+    questPos: readObj(LS.questPos), // paso -> índice de misión
+    questObj: readObj(LS.questObj), // misión -> índice de objetivo
+    notaDismissed: localStorage.getItem(LS.notaDismissed) === "1",
+    // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
+    prereqsOpen: savedOpen === "1" || (savedOpen === null && pendingPrereqs > 0),
+    selectedStep: null,
+    sheetOpen: false,
+    filters: { zones: [], pending: false, search: "" },
+    shopTab: "todo",
+    shopPendingOnly: true,
+    // Cada vez que la versión vanilla repintaba la lista entera se repetía la
+    // animación de entrada; este contador remonta la rejilla en esos mismos casos.
+    shopEpoch: 0,
+    questsLoaded: questsData() != null,
+    toast: { seq: 0, visible: false, text: "", actionLabel: "", ms: 8000 },
+  };
+}
+
+let state = initialState();
+const listeners = new Set();
+
+const PERSISTED = ["done", "prereqs", "owned", "questPos", "questObj"];
+
+function setState(patch) {
+  const prev = state;
+  const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
+  if (next === prev) return;
+  state = next;
+  for (const k of PERSISTED) {
+    if (next[k] !== prev[k]) localStorage.setItem(LS[k], JSON.stringify(next[k]));
+  }
+  listeners.forEach(l => l());
+}
+
+export const getState = () => state;
+const subscribe = l => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+
+/** Hook de lectura: devuelve el estado completo (inmutable). */
+export const useAppState = () => useSyncExternalStore(subscribe, getState);
+
+// ============================================================================
+// SELECTORES
+// ============================================================================
+export const isDone = (s, n) => !!s.done[n];
+export const doneCount = s => STEPS.filter(st => s.done[st.n]).length;
+export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? TIER_POINTS[st.effort] : 0), 0);
+export const progressPct = s => (TOTAL_PTS ? Math.round((donePts(s) / TOTAL_PTS) * 1000) / 10 : 0);
+export const prereqsDone = s => ALL_PREREQS.filter(p => s.prereqs[p.id]).length;
+export const prereqsPending = s => ALL_PREREQS.length - prereqsDone(s);
+export const nextPending = s => {
+  const st = STEPS.find(x => !s.done[x.n]);
+  return st ? st.n : null;
+};
+export const overlayStep = s => s.selectedStep ?? nextPending(s) ?? STEPS.length;
+
+export const stepMatches = (s, step) => {
+  const { zones, pending, search } = s.filters;
+  if (zones.length && !zones.includes(step.zone)) return false;
+  if (pending && s.done[step.n]) return false;
+  const q = search.trim().toLowerCase();
+  if (q && !step.text.toLowerCase().includes(q) && !String(step.n).includes(q)) return false;
+  return true;
+};
+
+export const hasActiveFilters = s => {
+  const f = s.filters;
+  return f.zones.length > 0 || f.pending || f.search.trim().length > 0;
+};
+
+// ============================================================================
+// ACCIONES
+// ============================================================================
+export function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  localStorage.setItem(LS.theme, t);
+  setState({ theme: t });
+}
+
+export function selectStep(n) {
+  if (n < 1 || n > STEPS.length) return;
+  setState({ selectedStep: n, ...(isMobile() ? { sheetOpen: true } : null) });
+}
+
+/** Desde el overlay: cambia el paso sin abrir la hoja móvil. */
+export function overlayGo(n) {
+  if (n < 1 || n > STEPS.length) return;
+  setState({ selectedStep: n });
+}
+
+export const clearSelection = () => setState({ selectedStep: null });
+export const closeSheet = () => setState({ sheetOpen: false });
+
+export function toggleStep(n) {
+  setState(s => {
+    const done = { ...s.done };
+    if (done[n]) delete done[n];
+    else done[n] = true;
+    return { done, shopEpoch: s.shopEpoch + 1 };
+  });
+}
+
+export function goToNextPending() {
+  const n = nextPending(state);
+  if (n == null) return;
+  selectStep(n);
+  // Scroll al grid en desktop, al sheet ya está abierto en mobile
+  if (!isMobile()) {
+    document.querySelector(`.cell[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
+export function togglePrereq(id) {
+  setState(s => {
+    const prereqs = { ...s.prereqs };
+    if (prereqs[id]) delete prereqs[id];
+    else prereqs[id] = true;
+    return { prereqs };
+  });
+}
+
+export function setPrereqsOpen(open, persist) {
+  if (persist) localStorage.setItem(LS.prereqsOpen, open ? "1" : "0");
+  setState({ prereqsOpen: open });
+}
+
+export function dismissNota() {
+  localStorage.setItem(LS.notaDismissed, "1");
+  setState({ notaDismissed: true });
+}
+
+// Filtros
+const setFilters = patch => setState(s => ({ filters: { ...s.filters, ...patch } }));
+export const toggleZone = z =>
+  setFilters({
+    zones: state.filters.zones.includes(z) ? state.filters.zones.filter(x => x !== z) : [...state.filters.zones, z],
+  });
+export const setSearch = v => setFilters({ search: v });
+export const setPendingFilter = b => setFilters({ pending: b });
+export const clearFilters = () => setFilters({ zones: [], pending: false, search: "" });
+
+// Objetos necesarios
+export const setShopTab = tab => setState(s => ({ shopTab: tab, shopEpoch: s.shopEpoch + 1 }));
+export const setShopPendingOnly = b => setState(s => ({ shopPendingOnly: b, shopEpoch: s.shopEpoch + 1 }));
+export function toggleOwned(id) {
+  setState(s => {
+    const owned = { ...s.owned };
+    if (owned[id]) delete owned[id];
+    else owned[id] = true;
+    return { owned };
+  });
+}
+
+// Misiones del overlay
+export function loadQuests() {
+  if (state.questsLoaded) return;
+  loadQuestsData(() => {
+    if (!state.questsLoaded) setState({ questsLoaded: true });
+  });
+}
+
+export function moveQuest(delta) {
+  const n = overlayStep(state);
+  const cur = currentQuest(n, state.questPos, state.questObj);
+  if (!cur) return;
+  const i = Math.max(0, Math.min(cur.list.length - 1, cur.i + delta));
+  setState(s => ({ questPos: { ...s.questPos, [n]: i } }));
+}
+
+export function moveObjective(delta) {
+  const cur = currentQuest(overlayStep(state), state.questPos, state.questObj);
+  if (!cur) return;
+  const next = cur.k + delta;
+  if (next >= cur.objs.length) return moveQuest(1); // fin de la misión: pasa a la siguiente
+  if (next < 0) return;
+  setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: next } }));
+}
+
+// ---------------------------------------------------------------------------
+// Instantánea del progreso: la usan el reinicio, el deshacer y la copia de seguridad
+// ---------------------------------------------------------------------------
+export const takeSnapshot = () => ({
+  done: { ...state.done },
+  prereqs: { ...state.prereqs },
+  owned: { ...state.owned },
+  questPos: { ...state.questPos },
+  questObj: { ...state.questObj },
+});
+
+export function applySnapshot(snap) {
+  setState(s => ({
+    done: snap.done || {},
+    prereqs: snap.prereqs || {},
+    owned: snap.owned || {},
+    questPos: snap.questPos || {},
+    questObj: snap.questObj || {},
+    selectedStep: null,
+    sheetOpen: false,
+    shopEpoch: s.shopEpoch + 1,
+  }));
+  // La versión vanilla siempre reescribía las cinco claves, aunque no cambiaran.
+  for (const k of PERSISTED) localStorage.setItem(LS[k], JSON.stringify(state[k]));
+}
+
+// ---------------------------------------------------------------------------
+// Aviso inferior con acción
+// ---------------------------------------------------------------------------
+let toastTimer;
+let toastAction = null;
+export function showToast(text, actionLabel = "", onAction = null, ms = 8000) {
+  toastAction = onAction;
+  clearTimeout(toastTimer);
+  setState(s => ({ toast: { seq: s.toast.seq + 1, visible: true, text, actionLabel, ms } }));
+  toastTimer = setTimeout(hideToast, ms);
+}
+export function hideToast() {
+  clearTimeout(toastTimer);
+  setState(s => ({ toast: { ...s.toast, visible: false } }));
+}
+export function runToastAction() {
+  const fn = toastAction;
+  hideToast();
+  fn?.();
+}

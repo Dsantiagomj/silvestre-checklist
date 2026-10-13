@@ -1,0 +1,104 @@
+// ============================================================================
+// OVERLAY · ventana siempre encima del juego (Document Picture-in-Picture)
+// ============================================================================
+// Chrome y Edge abren una ventana PiP que se queda por encima de cualquier
+// aplicación, incluido el cliente de Dofus. El resto de navegadores recibe un
+// popup normal, que no flota pero muestra lo mismo. La UI se pinta con un
+// portal de React en el documento de esa ventana, así que comparte el estado.
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  getState, loadQuests, moveObjective, overlayGo, overlayStep, toggleStep, useAppState,
+} from "../state/store.js";
+import OverlayView from "./OverlayView.jsx";
+
+/** Copia todas las hojas de estilo (en dev son <style>, en build <link>). */
+function copyStyles(doc) {
+  document.querySelectorAll("style, link[rel=stylesheet]").forEach(node => {
+    const clone = node.cloneNode(true);
+    // La ventana nueva no comparte la URL base de esta página.
+    if (clone.tagName === "LINK") clone.href = node.href;
+    doc.head.appendChild(clone);
+  });
+  const meta = doc.createElement("meta");
+  meta.name = "viewport";
+  meta.content = "width=device-width, initial-scale=1";
+  doc.head.appendChild(meta);
+}
+
+function overlayKeys(e) {
+  const n = overlayStep(getState());
+  if (e.key === "ArrowLeft") overlayGo(n - 1);
+  if (e.key === "ArrowRight") overlayGo(n + 1);
+  if (e.key === "ArrowUp") moveObjective(-1);
+  if (e.key === "ArrowDown") moveObjective(1);
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    toggleStep(n);
+  }
+}
+
+/** Ventana del overlay y la función que la abre (o la enfoca si ya existe). */
+export function useOverlayWindow() {
+  const [win, setWin] = useState(null);
+  const winRef = useRef(null);
+
+  const open = useCallback(async () => {
+    const current = winRef.current;
+    if (current && !current.closed) {
+      current.focus();
+      return;
+    }
+    const size = { width: 380, height: 640 };
+    let w = null;
+    if ("documentPictureInPicture" in window) {
+      try {
+        w = await window.documentPictureInPicture.requestWindow(size);
+      } catch (err) {
+        console.warn("PiP no disponible, uso popup:", err);
+      }
+    }
+    if (!w) {
+      w = window.open("", "silvestre-overlay", `popup,width=${size.width},height=${size.height}`);
+      if (!w) {
+        alert("El navegador bloqueó la ventana del overlay. Permite popups para este sitio.");
+        return;
+      }
+      w.document.title = "Silvestre · Overlay";
+      w.document.head.replaceChildren();
+      w.document.body.replaceChildren();
+    }
+    copyStyles(w.document);
+    w.document.body.className = "ov-body";
+    w.document.addEventListener("keydown", overlayKeys);
+    w.addEventListener("pagehide", () => {
+      if (winRef.current === w) {
+        winRef.current = null;
+        setWin(null);
+      }
+    });
+    winRef.current = w;
+    setWin(w);
+  }, []);
+
+  return [win, open];
+}
+
+/** Pinta el overlay dentro de la ventana abierta y la mantiene sincronizada. */
+export default function OverlayWindow({ win }) {
+  const s = useAppState();
+  const n = overlayStep(s);
+
+  useEffect(() => {
+    if (win) loadQuests();
+  }, [win]);
+
+  // El overlay sigue el tema de la página (en el mismo commit, dentro de la View Transition)
+  useLayoutEffect(() => {
+    if (win && !win.closed) win.document.documentElement.setAttribute("data-theme", s.theme);
+  }, [win, s.theme]);
+
+  if (!win || win.closed) return null;
+  // key: al cambiar de paso los desplegables vuelven a su estado inicial
+  return createPortal(<OverlayView key={n} />, win.document.body);
+}
