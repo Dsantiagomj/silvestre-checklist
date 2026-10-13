@@ -3,7 +3,7 @@
 // ya no hace falta acordarse de llamar a renderX() tras cada cambio.
 // ============================================================================
 import { useSyncExternalStore } from "react";
-import { STEPS, ALL_PREREQS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
+import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
 import { ITEMS } from "../lib/assets.js";
 
@@ -16,7 +16,28 @@ export const LS = {
   owned: "silvestre:owned",
   questPos: "silvestre:questPos",
   questObj: "silvestre:questObjective",
+  guide: "silvestre:guide",
 };
+
+// Versión de la guía de Sandglass con la que se numeran los pasos guardados
+export const GUIDE_VERSION = 4;
+
+/**
+ * Pasa progreso de la versión anterior de la guía a la numeración actual. Un paso
+ * nuevo queda hecho si lo estaban todos los antiguos que lo forman; la misión en
+ * curso solo se conserva cuando el paso no se fusionó ni se dividió.
+ */
+export function migrateProgress(done = {}, questPos = {}) {
+  const uses = {};
+  PREVIOUS_STEPS.flat().forEach(p => { uses[p] = (uses[p] || 0) + 1; });
+  const out = { done: {}, questPos: {} };
+  PREVIOUS_STEPS.forEach((prev, i) => {
+    const n = i + 1;
+    if (prev.every(p => done[p])) out.done[n] = true;
+    if (prev.length === 1 && uses[prev[0]] === 1 && questPos[prev[0]] != null) out.questPos[n] = questPos[prev[0]];
+  });
+  return out;
+}
 
 const readObj = key => {
   try {
@@ -28,8 +49,23 @@ const readObj = key => {
 
 export const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
+/** Progreso guardado, migrado una sola vez si viene de la versión anterior de la guía. */
+function readProgress() {
+  let done = readObj(LS.done);
+  let questPos = readObj(LS.questPos);
+  if (localStorage.getItem(LS.guide) !== String(GUIDE_VERSION)) {
+    if (Object.keys(done).length || Object.keys(questPos).length) {
+      ({ done, questPos } = migrateProgress(done, questPos));
+      localStorage.setItem(LS.done, JSON.stringify(done));
+      localStorage.setItem(LS.questPos, JSON.stringify(questPos));
+    }
+    localStorage.setItem(LS.guide, String(GUIDE_VERSION));
+  }
+  return { done, questPos };
+}
+
 function initialState() {
-  const done = readObj(LS.done);
+  const { done, questPos } = readProgress();
   const prereqs = readObj(LS.prereqs);
   const savedOpen = localStorage.getItem(LS.prereqsOpen);
   const pendingPrereqs = ALL_PREREQS.filter(p => !prereqs[p.id]).length;
@@ -38,7 +74,7 @@ function initialState() {
     prereqs,
     owned: readObj(LS.owned),
     theme: localStorage.getItem(LS.theme) || "dark",
-    questPos: readObj(LS.questPos), // paso -> índice de misión
+    questPos, // paso -> índice de misión
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
     notaDismissed: localStorage.getItem(LS.notaDismissed) === "1",
     // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
@@ -231,6 +267,7 @@ export function moveObjective(delta) {
 // Instantánea del progreso: la usan el reinicio, el deshacer y la copia de seguridad
 // ---------------------------------------------------------------------------
 export const takeSnapshot = () => ({
+  guide: GUIDE_VERSION,
   done: { ...state.done },
   prereqs: { ...state.prereqs },
   owned: { ...state.owned },
@@ -239,6 +276,8 @@ export const takeSnapshot = () => ({
 });
 
 export function applySnapshot(snap) {
+  // Una copia hecha con la versión anterior de la guía trae la numeración vieja
+  if (snap.guide !== GUIDE_VERSION) snap = { ...snap, ...migrateProgress(snap.done, snap.questPos) };
   setState(s => ({
     done: snap.done || {},
     prereqs: snap.prereqs || {},

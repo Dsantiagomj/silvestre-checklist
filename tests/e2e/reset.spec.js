@@ -46,7 +46,8 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   await download.saveAs(file);
   const backup = JSON.parse(fs.readFileSync(file, "utf8"));
   expect(backup.app).toBe("silvestre-checklist");
-  expect(Object.keys(backup.data).sort()).toEqual(["done", "owned", "prereqs", "questObj", "questPos"]);
+  expect(Object.keys(backup.data).sort()).toEqual(["done", "guide", "owned", "prereqs", "questObj", "questPos"]);
+  expect(backup.data.guide).toBe(4); // la numeración de pasos con la que se guardó
 
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
