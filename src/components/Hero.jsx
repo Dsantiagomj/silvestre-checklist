@@ -35,6 +35,10 @@ function openPrereqs() {
   document.getElementById("prereqs")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function openShop() {
+  document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function goToStep(n) {
   selectStep(n);
   // En escritorio el detalle vive junto al tablero; en móvil sube la hoja inferior
@@ -48,6 +52,7 @@ export default function Hero() {
   const done = doneCount(s);
   const pendingPrereqs = prereqsPending(s);
   const owned = Object.keys(s.owned).filter(id => ITEMS[id]).length;
+  const totalItems = Object.keys(ITEMS).length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
   const nextIcon = next ? assetsFor(next)?.icon : null;
@@ -89,25 +94,7 @@ export default function Hero() {
         <div className="hero-copy">
           <p className="hero-eyebrow">Guía de Sandglass · 100 pasos</p>
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
-          <p className="hero-sub">Progreso ponderado por esfuerzo, los objetos que vas a necesitar y un overlay que se queda encima del juego.</p>
-
-          <div className="hero-stats">
-            <span className="hero-stat">
-              {BRAND_ICON && <img src={imgUrl(BRAND_ICON)} alt="" />}
-              <span><b id="statDone">{done}</b>/{STEPS.length} pasos</span>
-            </span>
-            <button className={"hero-stat" + (pendingPrereqs > 0 ? " warn" : "")} id="heroWarn" onClick={openPrereqs}
-              aria-label={pendingPrereqs > 0
-                ? `${pendingPrereqs} prerrequisitos pendientes. Ver prerrequisitos`
-                : "Prerrequisitos completos. Ver prerrequisitos"}>
-              {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}
-              <span><b id="statPre">{prereqsDone(s)}</b>/{ALL_PREREQS.length} prerrequisitos</span>
-            </button>
-            <span className="hero-stat">
-              {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
-              <span><b id="statOwned">{owned}</b>/{Object.keys(ITEMS).length} objetos</span>
-            </span>
-          </div>
+          <p className="hero-sub">Los 100 pasos de Sandglass para obtener el Dofus Silvestre, con las misiones, jefes y objetos de cada uno.</p>
 
           <div className="hero-next" id="heroNext">
             {nextStep ? (
@@ -129,6 +116,33 @@ export default function Hero() {
               </div>
             )}
           </div>
+
+          {/* Requisitos del Dofus: van aparte de los pasos, que son el progreso */}
+          <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
+            <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
+            <div className="hero-reqs-grid">
+              <button className={"hero-req" + (pendingPrereqs > 0 ? " warn" : "")} id="heroWarn" onClick={openPrereqs}
+                aria-label={pendingPrereqs > 0
+                  ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
+                  : "Prerrequisitos completos. Ver prerrequisitos"}>
+                {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}
+                <span className="hero-req-meta">
+                  <span className="hero-req-name">Prerrequisitos</span>
+                  <span className="hero-req-count"><b id="statPre">{prereqsDone(s)}</b>/{ALL_PREREQS.length}</span>
+                </span>
+                <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
+              </button>
+              <button className="hero-req" id="heroItems" onClick={openShop}
+                aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
+                {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
+                <span className="hero-req-meta">
+                  <span className="hero-req-name">Objetos necesarios</span>
+                  <span className="hero-req-count"><b id="statOwned">{owned}</b>/{totalItems}</span>
+                </span>
+                <span className="hero-req-bar"><i style={{ width: `${(owned / totalItems) * 100}%` }}></i></span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="hero-visual">
@@ -142,10 +156,18 @@ export default function Hero() {
               </div>
             )}
           </div>
-          <p className="egg-pct">
-            <b id="heroPct">{pct}%</b>
-            <small>{obtained ? "¡Obtenido!" : "Obtención"}</small>
-          </p>
+          <div className="egg-pct">
+            <span className="egg-pct-row">
+              <b id="heroPct">{pct}%</b>
+              <button type="button" className="pct-info" id="pctInfo" aria-describedby="pctNote"
+                aria-label="Cómo se calcula el porcentaje">i</button>
+              <span className="pct-note" id="pctNote" role="tooltip">
+                Ponderado por esfuerzo: un logro completo cuenta más que una misión corta,
+                así que el porcentaje no es solo pasos hechos entre 100.
+              </span>
+            </span>
+            <small>{obtained ? "¡Obtenido!" : "Obtención"} · <b id="statDone">{done}</b>/{STEPS.length} pasos</small>
+          </div>
         </div>
       </div>
     </section>
