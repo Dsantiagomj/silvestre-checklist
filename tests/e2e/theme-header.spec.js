@@ -60,19 +60,26 @@ test("los botones de overlay y reinicio usan objetos del juego", async ({ page }
     .toMatch(/^matrix\(-1, [^,]+, [^,]+, -1/);
 });
 
-test("al dejar atrás el hero, el header muestra una barra de experiencia a todo el ancho", async ({ page }) => {
+test("el progreso del header aparece centrado solo al salir del hero", async ({ page }) => {
   await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
   const pct = parseFloat(await page.locator("#heroPct").innerText());
+  const bar = page.locator("header .tb-progress");
+  // Arriba y aún dentro del hero no se ve
+  await expect(bar).not.toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 200));
+  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
+  await expect(bar).not.toBeVisible();
+  // Fuera del hero aparece, centrado en el header
   await page.evaluate(() => window.scrollTo(0, 1200));
-  await expect(page.locator("header")).toHaveClass(/show-progress/);
-  const xp = page.locator("header .tb-xp");
-  await expect(xp).toBeVisible();
-  const [bar, header] = await Promise.all([xp.boundingBox(), page.locator("header").boundingBox()]);
-  expect(bar.width).toBe(1440);
-  expect(Math.abs((bar.y + bar.height) - (header.y + header.height))).toBeLessThanOrEqual(2);
+  await expect(bar).toBeVisible();
+  await expect.poll(async () => {
+    const box = await bar.boundingBox();
+    return Math.abs(box.x + box.width / 2 - 720);
+  }).toBeLessThanOrEqual(3);
   const fill = await page.locator("#sbFill").evaluate(el => el.style.width);
   expect(parseFloat(fill)).toBeCloseTo(pct, 1);
   await expect(page.locator("#sbPct")).toHaveText(`${pct}%`);
+  await expect(page.locator("#sbDone")).toHaveText("3");
 });
 
 test("el progreso oculto del header no ocupa sitio", async ({ browser }) => {
