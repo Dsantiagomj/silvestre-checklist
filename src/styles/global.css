@@ -1923,6 +1923,35 @@ header.show-progress .tb-progress{
   transition:filter .15s ease, transform .15s ease;
 }
 .hero-next-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
+/* Guía completada: la tarjeta se vuelve un trofeo con un borde de luz que gira */
+@property --trophy-a{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+.hero-next.done{
+  position:relative; isolation:isolate;
+  border-color:transparent;
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) 82%, transparent), color-mix(in srgb, var(--bg) 82%, transparent)) padding-box,
+    conic-gradient(from var(--trophy-a), #f6d77a, #b7dc69, #4f8a22, #b7dc69, #f6d77a) border-box;
+  border:1.5px solid transparent;
+  box-shadow:0 14px 34px rgba(0,0,0,.25), 0 0 28px rgba(183,220,105,.22);
+  animation:trophy-spin 6s linear infinite;
+}
+@keyframes trophy-spin{ to{ --trophy-a:360deg; } }
+.hero-next.done .hero-next-art{
+  background:radial-gradient(circle at 50% 45%, rgba(246,215,122,.35), transparent 70%), var(--inset);
+  border-color:rgba(246,215,122,.45);
+}
+.hero-next.done .hero-next-art img{
+  filter:drop-shadow(0 0 8px rgba(183,220,105,.7));
+  animation:trophy-float 3.2s ease-in-out infinite;
+}
+@keyframes trophy-float{ 50%{ transform:translateY(-3px) rotate(-4deg); } }
+.hero-next.done .hero-next-kicker{ color:var(--gold-ink); }
+.hero-next.done .hero-next-name{
+  font-family:'Lilita One', var(--font-body); font-weight:400; font-size:21px; letter-spacing:.3px;
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-next.done, .hero-next.done .hero-next-art img{ animation:none; }
+}
 
 /* Obtención: el Dofus se llena de color desde abajo dentro de un anillo de 10 tramos */
 .hero-visual{ display:flex; flex-direction:column; align-items:center; gap:8px; }
