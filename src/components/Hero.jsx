@@ -51,7 +51,7 @@ export default function Hero() {
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
   const nextIcon = next ? assetsFor(next)?.icon : null;
-  const hatched = pct >= 100;
+  const obtained = pct >= 100;
   // Un mapa por tema: el claro es un bosque de día, que se lee sin velo encima
   const heroMap = HERO_BG?.[s.theme] ?? null;
 
@@ -132,7 +132,7 @@ export default function Hero() {
         </div>
 
         <div className="hero-visual">
-          <div className={"hero-egg" + (hatched ? " hatched" : "")} style={{ "--p": pct }} aria-hidden="true">
+          <div className={"hero-egg" + (obtained ? " obtained" : "")} style={{ "--p": pct }} aria-hidden="true">
             <div className="egg-ring"></div>
             <div className="egg-glow"></div>
             {BRAND_ICON && (
@@ -144,7 +144,7 @@ export default function Hero() {
           </div>
           <p className="egg-pct">
             <b id="heroPct">{pct}%</b>
-            <small>{hatched ? "¡Eclosionado!" : "Eclosión"}</small>
+            <small>{obtained ? "¡Obtenido!" : "Obtención"}</small>
           </p>
         </div>
       </div>

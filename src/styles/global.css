@@ -1405,7 +1405,7 @@ a:hover{ text-decoration:underline; }
 /* INTERRUPTOR DE TEMA · Dofus Marfil (claro) / Dofus Ébano (oscuro) --------
    Los dos huevos siempre a la vista: el activo grande a la izquierda, el otro
    pequeño y apagado a la derecha. Al cambiar intercambian sitio en arco (el que
-   se apaga por arriba, el que se activa por abajo) y el que llega eclosiona con
+   se apaga por arriba, el que se activa por abajo) y el que llega aparece con
    un rebote y chispas de su color. */
 .theme-switch{
   position:relative;
@@ -1876,7 +1876,7 @@ button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
 }
 .hero-next-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
 
-/* Incubadora: el huevo se llena de color desde abajo dentro de un anillo de 10 tramos */
+/* Obtención: el Dofus se llena de color desde abajo dentro de un anillo de 10 tramos */
 .hero-visual{ display:flex; flex-direction:column; align-items:center; gap:8px; }
 .hero-egg{
   --size:240px;
@@ -1909,10 +1909,10 @@ button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
 .egg-off{ filter:grayscale(1) brightness(.42) drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
 [data-theme="light"] .egg-off{ filter:grayscale(1) brightness(.8) opacity(.55); }
 .egg-on{ clip-path:inset(calc((100 - var(--p)) * 1%) 0 0 0); filter:drop-shadow(0 0 12px rgba(183,220,105,.5)); }
-.hero-egg.hatched .egg-body{ animation:egg-hatch 1.2s ease-in-out infinite; }
-.hero-egg.hatched .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
+.hero-egg.obtained .egg-body{ animation:egg-obtained 1.2s ease-in-out infinite; }
+.hero-egg.obtained .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
 @keyframes egg-float{ 50%{ transform:translateY(-7px); } }
-@keyframes egg-hatch{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
+@keyframes egg-obtained{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
 .egg-pct{ margin:0; text-align:center; line-height:1; }
 .egg-pct b{
   font-family:'Lilita One', var(--font-body); font-weight:400; font-size:46px;
@@ -1979,6 +1979,6 @@ button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
 
 @media (prefers-reduced-motion:reduce){
   .hero-fx{ display:none; }
-  .egg-body, .hero-egg.hatched .egg-body{ animation:none; }
+  .egg-body, .hero-egg.obtained .egg-body{ animation:none; }
   .hero-egg{ transition:none; }
 }
