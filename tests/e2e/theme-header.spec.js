@@ -102,3 +102,26 @@ test("el progreso oculto del header no ocupa sitio", async ({ browser }) => {
     .toBeGreaterThanOrEqual(left - 2);
   await ctx.close();
 });
+
+test("en el tema claro el acento tiene contraste suficiente como relleno y como texto", async ({ page }) => {
+  await openApp(page, { "silvestre:theme": "light", "silvestre:done": { 1: true } });
+  const ratio = (fg, bg) => page.evaluate(([fg, bg]) => {
+    const lum = c => {
+      const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+        v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * r + .7152 * g + .0722 * b;
+    };
+    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+    return (a + .05) / (b + .05);
+  }, [fg, bg]);
+  const style = (sel, prop) => page.locator(sel).first().evaluate((el, p) => getComputedStyle(el)[p], prop);
+  const pageBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  // Botón principal: texto sobre el relleno del acento
+  expect(await ratio(await style("#overlayBtn", "color"), await style("#overlayBtn", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+  expect(await ratio(await style("#heroNextGo", "color"), await style("#heroNextGo", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+  // Acento usado como texto sobre el fondo de la página
+  expect(await ratio(await style(".hero-eyebrow", "color"), pageBg)).toBeGreaterThanOrEqual(4.5);
+  expect(await ratio(await style(".section-num", "color"), pageBg)).toBeGreaterThanOrEqual(4.5);
+});
