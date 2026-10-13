@@ -15,7 +15,9 @@ test("el diálogo muestra los conteos reales y exige elegir algo", async ({ page
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator("#rdNSteps")).toHaveText("5");
   await expect(page.locator("#rdNPre")).toHaveText("2");
-  await expect(page.locator("#rdNOwned")).toHaveText("2");
+  // Solo se puede reiniciar el progreso de la guía: objetos y overlay no son opciones
+  await expect(page.locator('#resetDialog input[name="owned"]')).toHaveCount(0);
+  await expect(page.locator('#resetDialog input[name="overlay"]')).toHaveCount(0);
   await page.uncheck('#resetDialog input[name="steps"]');
   await page.uncheck('#resetDialog input[name="prereqs"]');
   await expect(page.locator("#rdConfirm")).toBeDisabled();
@@ -36,7 +38,7 @@ test("reiniciar borra solo lo elegido y se puede deshacer", async ({ page }) => 
   expect(Object.keys(await readLS(page, "silvestre:done"))).toHaveLength(5);
 });
 
-test("la copia descargada se puede restaurar tras un reinicio total", async ({ page }, info) => {
+test("la copia descargada se puede restaurar tras un reinicio", async ({ page }, info) => {
   await openApp(page, SEED);
   await page.click("#resetBtn");
   const [download] = await Promise.all([page.waitForEvent("download"), page.click("#rdBackup")]);
@@ -46,11 +48,12 @@ test("la copia descargada se puede restaurar tras un reinicio total", async ({ p
   expect(backup.app).toBe("silvestre-checklist");
   expect(Object.keys(backup.data).sort()).toEqual(["done", "owned", "prereqs", "questObj", "questPos"]);
 
-  await page.check('#resetDialog input[name="owned"]');
-  await page.check('#resetDialog input[name="overlay"]');
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
-  expect(await readLS(page, "silvestre:owned")).toEqual({});
+  await expect(page.locator(".cell.done")).toHaveCount(0);
+  // El reinicio nunca toca los objetos conseguidos ni la posición del overlay
+  expect(Object.keys(await readLS(page, "silvestre:owned"))).toHaveLength(2);
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
 
   await page.click("#resetBtn");
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click("#rdRestore")]);
