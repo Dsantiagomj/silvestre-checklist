@@ -16,3 +16,14 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Datos descargados de DofusDB (regenerables con .build/fetch_dofusdb.py)
+.build/data/
+
+# Python
+__pycache__/
+
+# Build y pruebas
+dist/
+test-results/
+playwright-report/
