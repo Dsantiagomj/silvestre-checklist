@@ -92,9 +92,9 @@ export default function Hero() {
 
       <div className="hero-inner">
         <div className="hero-copy">
-          <p className="hero-eyebrow">Guía de Sandglass · 100 pasos</p>
+          <p className="hero-eyebrow">Guía de Sandglass</p>
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
-          <p className="hero-sub">Los 100 pasos de Sandglass para obtener el Dofus Silvestre, con las misiones, jefes y objetos de cada uno.</p>
+          <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
 
           <div className="hero-next" id="heroNext">
             {nextStep ? (

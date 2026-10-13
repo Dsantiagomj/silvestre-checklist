@@ -93,7 +93,9 @@ test("el parallax y el ambiente respetan el movimiento reducido", async ({ brows
 test("la descripción explica la página y el ponderado es una nota del porcentaje", async ({ page }) => {
   await openApp(page);
   const sub = page.locator(".hero-sub");
-  await expect(sub).toContainText("Dofus Silvestre");
+  await expect(sub).toHaveText("Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.");
+  // El eyebrow da crédito a Sandglass; los "100 pasos" ya los dicen título y descripción
+  await expect(page.locator(".hero-eyebrow")).toHaveText("Guía de Sandglass");
   await expect(sub).not.toContainText("ponderado");
   // La nota se asocia al porcentaje y aparece al pasar el ratón o con el foco
   const info = page.locator("#pctInfo");
