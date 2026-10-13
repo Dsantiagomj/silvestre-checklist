@@ -3,6 +3,15 @@ import { doneCount, progressPct, useAppState } from "../state/store.js";
 import { BRAND_ICON, imgUrl } from "../lib/assets.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
 
+/** Una palabra del logotipo, letra a letra; --k escalona la ola. */
+function LogoWord({ text, className, start }) {
+  return (
+    <span className={className}>
+      {[...text].map((ch, i) => <i key={i} style={{ "--k": start + i }}>{ch}</i>)}
+    </span>
+  );
+}
+
 /** HEADER · estilo ventana de juego Dofus */
 export default function Header({ onOverlay, onReset }) {
   const s = useAppState();
@@ -35,7 +44,12 @@ export default function Header({ onOverlay, onReset }) {
         <div className="title-bar-inner">
           <div className="brand">
             {BRAND_ICON && <img className="brand-icon" id="brandIcon" alt="" aria-hidden="true" src={imgUrl(BRAND_ICON)} />}
-            <span>Dofus <span className="hl">Silvestre</span></span>
+            <span className="sr-only">Dofus Silvestre</span>
+            {/* Letras sueltas para la ola al pasar el ratón; el nombre ya se anuncia arriba */}
+            <span className="logo" aria-hidden="true">
+              <LogoWord text="Dofus" className="w1" start={0} />
+              <LogoWord text="Silvestre" className="w2" start={5} />
+            </span>
           </div>
           {/* Aparece al dejar atrás el hero: reemplaza a la antigua barra pegajosa */}
           <div className="tb-progress" aria-hidden="true">
