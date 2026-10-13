@@ -9,6 +9,7 @@ export const PREREQ_ICONS = DATA.PREREQ_ICONS || {};
 export const HERO_BG = DATA.HERO_BG || null;
 export const BRAND_ICON = DATA.BRAND_ICON || null;
 export const THEME_ICONS = DATA.THEME_ICONS || null;
+export const BACKUP_ICONS = DATA.BACKUP_ICONS || null;
 
 const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
 
