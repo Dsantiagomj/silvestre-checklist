@@ -12,6 +12,7 @@ export const BRAND_ICON = DATA.BRAND_ICON || null;
 export const THEME_ICONS = DATA.THEME_ICONS || null;
 export const BACKUP_ICONS = DATA.BACKUP_ICONS || null;
 export const HEADER_ICONS = DATA.HEADER_ICONS || null;
+export const HERO_ICONS = DATA.HERO_ICONS || null;
 
 const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
 

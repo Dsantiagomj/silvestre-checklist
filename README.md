@@ -48,6 +48,7 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - Al tocar un paso, sube un **bottom sheet** estilo app nativa con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
 
 ### Otras features
+- ✅ **Hero inmersivo**: el mapa del juego ocupa todo el ancho y casi toda la pantalla, con parallax al bajar, luciérnagas de noche y hojas que caen de día. El progreso es el propio Dofus Silvestre, que se llena de color desde abajo dentro de un anillo de 10 tramos y eclosiona al 100 %. Debajo del título, contadores de pasos, prerrequisitos y objetos, y una tarjeta con el siguiente paso que lleva a su detalle. El parallax y el ambiente se apagan con movimiento reducido.
 - ✅ **Header fusionado con el hero**: arriba es transparente sobre el mapa del hero; al bajar se vuelve sólido y, al dejar atrás el hero, muestra el progreso. Sustituye a la antigua barra pegajosa.
 - ✅ **Prerrequisitos** (18 items: logros previos, oficios, hechizos) checkeables como sección colapsable. **NO suman al progreso del Silvestre** — son tracking separado. Si tienes prereqs pendientes, aparece un warning chip clickeable arriba.
 - ✅ **Modo claro/oscuro** con un interruptor de dos huevos del juego, Dofus Ébano y Dofus Marfil: intercambian sitio en arco y el que llega eclosiona. La página cambia con una diagonal desde la esquina del interruptor, y volver es el mismo recorrido al revés.

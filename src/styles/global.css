@@ -190,46 +190,13 @@ header{
   :root{ --header-h:48px; }
 }
 
-/* HERO · panel oscuro tipo "info de Dofus" -----------------------------------*/
-.hero{
-  position:relative;
-  background:linear-gradient(180deg, var(--panel) 0%, var(--bg-2) 100%);
-  border:1px solid var(--line-2);
-  border-radius:var(--radius-lg);
-  padding:28px 26px;
-  margin:18px 0;
-  box-shadow:
-    inset 0 1px 0 rgba(183,220,105,.05),
-    0 4px 24px rgba(0,0,0,.4);
-  overflow:hidden;
-}
-.hero::before{
-  content:"";
-  position:absolute; top:0; left:0; right:0; height:1px;
-  background:linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
-  opacity:.4;
-}
+/* HERO ---------------------------------------------------------------------*/
 .hero-eyebrow{
   font-family:var(--font-display);
   font-size:11px; font-weight:700;
   letter-spacing:3px; text-transform:uppercase;
   color:var(--txt-mute);
   margin:0 0 8px;
-}
-.hero-pct{
-  font-family:var(--font-display);
-  font-size:clamp(56px, 10vw, 88px);
-  font-weight:800;
-  line-height:1;
-  letter-spacing:-1px;
-  color:var(--gold);
-  text-shadow:0 2px 0 rgba(0,0,0,.4);
-  font-variant-numeric:tabular-nums;
-  margin:4px 0 18px;
-  display:flex; align-items:baseline; gap:6px;
-}
-.hero-pct .pct-sym{
-  font-size:.5em; color:var(--amber-2); margin-left:2px;
 }
 .bar-outer{
   height:14px;
@@ -246,36 +213,6 @@ header{
   transition:width .8s cubic-bezier(.22,1,.36,1);
   box-shadow:0 0 8px rgba(183,220,105,.4), inset 0 1px 0 rgba(255,255,255,.2);
   border-radius:999px;
-}
-.hero-stats{
-  display:flex; flex-wrap:wrap; gap:6px 22px;
-  margin-top:14px;
-  font-size:13.5px;
-  color:var(--txt-soft);
-  font-variant-numeric:tabular-nums;
-}
-.hero-stats b{color:var(--txt); font-weight:600}
-.hero-stats .sep{color:var(--line-2)}
-.hero-warn{
-  display:inline-flex; align-items:center; gap:8px;
-  background:rgba(208,64,96,.15);
-  border:1px solid rgba(208,64,96,.5);
-  color:#ffb8c8;
-  padding:6px 14px;
-  border-radius:999px;
-  font-size:12.5px;
-  font-weight:600;
-  font-family:var(--font-display);
-  letter-spacing:.5px;
-  margin-bottom:14px;
-  cursor:pointer;
-  transition:all .2s ease;
-}
-[data-theme="light"] .hero-warn{ color:#8a2040; }
-.hero-warn:hover{ background:rgba(208,64,96,.25); transform:translateY(-1px); }
-.hero-warn.hidden{ display:none; }
-@media (max-width:640px){
-  .hero{padding:20px 18px; margin:12px 0}
 }
 
 /* NOTA ----------------------------------------------------------------------*/
@@ -1138,25 +1075,6 @@ a:hover{ text-decoration:underline; }
 .icon-btn.primary:hover{ background:var(--gold); border-color:var(--gold); color:#0d0e0c; }
 .icon-btn.danger:hover{ background:rgba(224,85,107,.12); border-color:var(--danger); color:var(--danger); }
 
-/* Hero con mapa del juego de fondo */
-.hero{
-  background:
-    linear-gradient(90deg, rgba(13,14,12,.97) 0%, rgba(13,14,12,.86) 42%, rgba(13,14,12,.45) 100%),
-    linear-gradient(0deg, rgba(13,14,12,.9) 0%, transparent 45%),
-    var(--hero-bg, none) center 35% / cover no-repeat,
-    var(--panel);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:42px 40px 30px;
-  box-shadow:0 20px 60px rgba(0,0,0,.45);
-}
-[data-theme="light"] .hero{
-  background:
-    linear-gradient(90deg, rgba(247,248,242,.98) 0%, rgba(247,248,242,.92) 45%, rgba(247,248,242,.74) 100%),
-    var(--hero-bg, none) center 35% / cover no-repeat,
-    var(--panel);
-}
-.hero::before{ display:none; }
 .hero-eyebrow{
   font-family:var(--font-body);
   color:var(--amber);
@@ -1174,14 +1092,9 @@ a:hover{ text-decoration:underline; }
   font-size:16.5px; line-height:1.5;
   color:var(--txt-soft);
 }
-.hero-pct{ color:var(--amber); font-size:clamp(46px, 7vw, 70px); margin:2px 0 14px; text-shadow:none; }
-.hero-pct .pct-sym{ color:var(--amber-2); }
 .bar-outer{ height:10px; background:rgba(0,0,0,.35); border-color:var(--line-2); }
 [data-theme="light"] .bar-outer{ background:var(--inset); }
-[data-theme="light"] .hero{ box-shadow:0 12px 36px rgba(40,50,30,.12); }
 .bar-fill{ background:linear-gradient(90deg, var(--amber-2), var(--amber)); box-shadow:0 0 14px rgba(183,220,105,.45); }
-.hero-warn{ background:rgba(224,85,107,.1); border-color:rgba(224,85,107,.45); color:#ff9aac; }
-@media (max-width:640px){ .hero{ padding:28px 20px 22px; } }
 
 /* Cards */
 .grid-section, .detail-panel, .prereqs, .shop{
@@ -1625,36 +1538,6 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
 .brand{ white-space:nowrap; }
 @media (max-width:420px){ .brand{ font-size:16px; gap:7px; } .brand-icon{ width:24px; height:24px; } }
 
-/* Hero a sangre, sube por detrás del header.
-   Velo solo donde va el texto (izquierda) y en el borde superior para el header;
-   a la derecha el mapa se ve limpio. */
-.hero{
-  margin:calc(-1 * var(--header-h)) 0 22px;
-  padding:calc(var(--header-h) + 52px) 0 40px;
-  border:0; border-bottom:1px solid var(--line);
-  border-radius:0;
-  box-shadow:none;
-  background:
-    linear-gradient(180deg, rgba(13,14,12,.72) 0%, transparent 26%),
-    linear-gradient(90deg, rgba(13,14,12,.96) 0%, rgba(13,14,12,.8) 46%, rgba(13,14,12,.25) 100%),
-    linear-gradient(0deg, var(--bg) 0%, transparent 32%),
-    var(--hero-bg, none) center 40% / cover no-repeat,
-    var(--panel);
-}
-[data-theme="light"] .hero{
-  background:
-    linear-gradient(180deg, rgba(247,248,242,.92) 0%, rgba(247,248,242,.6) 18%, transparent 34%),
-    linear-gradient(90deg, rgba(247,248,242,.94) 0%, rgba(247,248,242,.8) 42%, rgba(247,248,242,.1) 75%, transparent 100%),
-    linear-gradient(0deg, var(--bg) 0%, transparent 26%),
-    var(--hero-bg, none) center 45% / cover no-repeat,
-    var(--panel);
-  box-shadow:none;
-}
-.hero-inner{ max-width:var(--maxw); margin:0 auto; padding:0 18px; }
-@media (max-width:640px){
-  .hero{ padding:calc(var(--header-h) + 30px) 0 26px; margin-bottom:14px; }
-  .hero-inner{ padding:0 12px; }
-}
 
 /* REINICIAR · diálogo con resumen ------------------------------------------*/
 @property --rd-v{ syntax:'<number>'; inherits:false; initial-value:0; }
@@ -1862,3 +1745,220 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
 .icon-btn:hover .btn-icon[data-kind="spyglass"]{ transform:rotate(-18deg) scale(1.18) translateX(2px); }
 @media (max-width:600px){ .icon-btn.has-icon{ padding:4px 7px; } }
 @media (prefers-reduced-motion:reduce){ .btn-icon{ transition:none; } }
+
+/* HERO INMERSIVO -----------------------------------------------------------
+   El mapa ocupa todo el ancho y casi toda la pantalla, en su propia capa para
+   el parallax (.hero-bg). Encima van los velos (.hero-veil), el ambiente
+   (.hero-fx: luciérnagas de noche, hojas de día) y el contenido. A la derecha,
+   el Dofus Silvestre se llena de color desde abajo según el progreso. */
+@property --p{ syntax:'<number>'; inherits:true; initial-value:0; }
+.hero{
+  position:relative; isolation:isolate; overflow:hidden;
+  min-height:clamp(620px, 82vh, 880px);
+  margin:calc(-1 * var(--header-h)) 0 22px;
+  padding:calc(var(--header-h) + 48px) 0 56px;
+  display:flex; align-items:center;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+}
+.hero-bg{
+  position:absolute; inset:-8% 0 0; z-index:-3;
+  background:var(--hero-bg, none) center 40% / cover no-repeat;
+  transform-origin:50% 0;
+  will-change:transform;
+}
+[data-theme="light"] .hero-bg{ background-position:center 45%; }
+.hero-veil{
+  position:absolute; inset:0; z-index:-2; pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(13,14,12,.75) 0%, transparent 22%),
+    linear-gradient(90deg, rgba(13,14,12,.95) 0%, rgba(13,14,12,.72) 38%, rgba(13,14,12,.15) 70%, transparent 100%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 26%),
+    radial-gradient(120% 90% at 70% 45%, transparent 55%, rgba(0,0,0,.5) 100%);
+}
+[data-theme="light"] .hero-veil{
+  background:
+    linear-gradient(180deg, rgba(247,248,242,.92) 0%, rgba(247,248,242,.55) 16%, transparent 30%),
+    linear-gradient(90deg, rgba(247,248,242,.95) 0%, rgba(247,248,242,.82) 36%, rgba(247,248,242,.12) 68%, transparent 100%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 22%),
+    radial-gradient(120% 90% at 70% 45%, transparent 60%, rgba(60,70,40,.2) 100%);
+}
+
+.hero-inner{
+  position:relative; width:100%;
+  max-width:var(--maxw); margin:0 auto; padding:0 18px;
+  display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:40px;
+}
+.hero-copy{ max-width:660px; }
+.hero-eyebrow{
+  margin:0 0 10px;
+  font-family:var(--font-body); font-size:12px; font-weight:700;
+  letter-spacing:2.6px; text-transform:uppercase;
+  color:var(--amber);
+}
+.hero-title{
+  margin:0 0 12px;
+  font-family:var(--font-body); font-size:clamp(34px, 5vw, 62px);
+  font-weight:700; line-height:1.02; letter-spacing:-.5px;
+  color:var(--txt);
+}
+.hero-title .hl{
+  font-family:'Lilita One', var(--font-body); font-weight:400; letter-spacing:.5px;
+  color:var(--amber);
+  -webkit-text-stroke:2px #121410; paint-order:stroke fill;
+  text-shadow:0 4px 0 #121410, 0 0 26px rgba(183,220,105,.35);
+}
+[data-theme="light"] .hero-title .hl{ color:#9fcf4f; }
+.hero-sub{ margin:0 0 22px; max-width:520px; font-size:17px; line-height:1.5; color:var(--txt-soft); }
+
+/* Contadores con iconos del juego */
+.hero-stats{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
+.hero-stat{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:5px 14px 5px 6px; border-radius:999px;
+  background:color-mix(in srgb, var(--bg) 62%, transparent);
+  border:1px solid var(--line-2);
+  backdrop-filter:blur(6px);
+  font-size:13.5px; color:var(--txt-soft);
+}
+.hero-stat img{ width:26px; height:26px; object-fit:contain; }
+.hero-stat b{ color:var(--txt); font-weight:700; font-variant-numeric:tabular-nums; }
+button.hero-stat{ transition:border-color .15s ease, transform .15s ease; }
+button.hero-stat:hover{ border-color:var(--amber); transform:translateY(-1px); }
+.hero-stat.warn{ border-color:rgba(224,85,107,.55); color:#ff9aac; }
+[data-theme="light"] .hero-stat.warn{ color:#a02a42; }
+
+/* Siguiente paso */
+.hero-next{
+  display:flex; align-items:center; gap:14px;
+  max-width:540px; padding:12px; border-radius:16px;
+  background:color-mix(in srgb, var(--bg) 72%, transparent);
+  border:1px solid var(--line-2);
+  backdrop-filter:blur(8px);
+  box-shadow:0 14px 34px rgba(0,0,0,.25);
+}
+.hero-next-art{
+  width:56px; height:56px; flex-shrink:0;
+  display:grid; place-items:center;
+  border-radius:12px; background:var(--inset); border:1px solid var(--line);
+}
+.hero-next-art img{ width:84%; height:84%; object-fit:contain; }
+.hero-next-art b{ font-family:'Lilita One', var(--font-body); font-weight:400; font-size:22px; color:var(--amber); }
+.hero-next-meta{ min-width:0; flex:1; }
+.hero-next-kicker{ margin:0; font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--txt-mute); }
+.hero-next-name{ margin:2px 0 0; font-size:17px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hero-next-sub{ margin:1px 0 0; font-size:12.5px; color:var(--txt-soft); }
+.hero-next-go{
+  padding:10px 18px; border-radius:999px;
+  background:var(--amber); color:#0d0e0c;
+  font-size:14px; font-weight:800; white-space:nowrap;
+  transition:filter .15s ease, transform .15s ease;
+}
+.hero-next-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
+
+/* Incubadora: el huevo se llena de color desde abajo dentro de un anillo de 10 tramos */
+.hero-visual{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.hero-egg{
+  --size:240px;
+  position:relative; width:var(--size); height:var(--size);
+  display:grid; place-items:center;
+  transition:--p .8s cubic-bezier(.22,1,.36,1);
+}
+.hero-egg::before{
+  content:""; position:absolute; inset:-14px; border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--bg) 72%, transparent) 0%, color-mix(in srgb, var(--bg) 45%, transparent) 62%, transparent 72%);
+  backdrop-filter:blur(3px);
+}
+.egg-ring{
+  position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(var(--amber) calc(var(--p) * 3.6deg), rgba(255,255,255,.1) 0);
+  -webkit-mask:repeating-conic-gradient(#000 0 33deg, transparent 33deg 36deg), radial-gradient(circle, transparent calc(50% - 12px), #000 calc(50% - 11px));
+  -webkit-mask-composite:source-in;
+          mask:repeating-conic-gradient(#000 0 33deg, transparent 33deg 36deg), radial-gradient(circle, transparent calc(50% - 12px), #000 calc(50% - 11px));
+          mask-composite:intersect;
+  filter:drop-shadow(0 0 8px rgba(183,220,105,.5));
+}
+[data-theme="light"] .egg-ring{ background:conic-gradient(var(--amber) calc(var(--p) * 3.6deg), rgba(0,0,0,.12) 0); }
+.egg-glow{
+  position:absolute; width:62%; height:62%; border-radius:50%;
+  background:radial-gradient(circle, rgba(183,220,105,.55), transparent 70%);
+  opacity:calc(.15 + var(--p) / 140);
+}
+.egg-body{ position:relative; width:128px; height:128px; animation:egg-float 3.4s ease-in-out infinite; }
+.egg-body img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.egg-off{ filter:grayscale(1) brightness(.42) drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
+[data-theme="light"] .egg-off{ filter:grayscale(1) brightness(.8) opacity(.55); }
+.egg-on{ clip-path:inset(calc((100 - var(--p)) * 1%) 0 0 0); filter:drop-shadow(0 0 12px rgba(183,220,105,.5)); }
+.hero-egg.hatched .egg-body{ animation:egg-hatch 1.2s ease-in-out infinite; }
+.hero-egg.hatched .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
+@keyframes egg-float{ 50%{ transform:translateY(-7px); } }
+@keyframes egg-hatch{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
+.egg-pct{ margin:0; text-align:center; line-height:1; }
+.egg-pct b{
+  font-family:'Lilita One', var(--font-body); font-weight:400; font-size:46px;
+  color:var(--amber);
+  -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 4px 0 #121410;
+  font-variant-numeric:tabular-nums;
+}
+[data-theme="light"] .egg-pct b{ color:#9fcf4f; }
+.egg-pct small{ display:block; margin-top:6px; font-size:11.5px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; color:var(--txt-soft); }
+
+/* Ambiente: luciérnagas que suben (oscuro) u hojas que caen (claro) */
+.hero-fx{ position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.hero-fx i{
+  position:absolute; left:var(--x); bottom:-4%;
+  width:var(--s); height:var(--s); border-radius:50%;
+  background:radial-gradient(circle, #f6ffd8 0%, rgba(200,236,120,.95) 40%, transparent 72%);
+  box-shadow:0 0 calc(var(--s) * 2.2) calc(var(--s) * .4) rgba(183,220,105,.55);
+  opacity:0;
+  animation:firefly var(--t) ease-in-out var(--d) infinite;
+}
+@keyframes firefly{
+  0%  { transform:translate(0, 0); opacity:0; }
+  15% { opacity:.95; }
+  45% { transform:translate(34px, -34vh); opacity:.35; }
+  70% { opacity:.9; }
+  100%{ transform:translate(-22px, -78vh); opacity:0; }
+}
+[data-theme="light"] .hero-fx i{
+  top:-6%; bottom:auto; box-shadow:none;
+  width:calc(var(--s) * 1.8); height:calc(var(--s) * 1.8);
+  border-radius:0 100% 0 100%;
+  background:linear-gradient(135deg, #f4b844, #c65a1e);
+  animation:leaf-fall var(--t) linear var(--d) infinite;
+}
+[data-theme="light"] .hero-fx i:nth-child(3n){ background:linear-gradient(135deg, #a6d65a, #4f8a22); }
+@keyframes leaf-fall{
+  0%  { transform:translate(0, 0) rotate(0); opacity:0; }
+  10% { opacity:.9; }
+  100%{ transform:translate(70px, 92vh) rotate(560deg); opacity:0; }
+}
+
+/* Móvil: el huevo arriba y más pequeño, el contenido debajo */
+@media (max-width:900px){
+  .hero{ min-height:auto; padding:calc(var(--header-h) + 26px) 0 34px; margin-bottom:14px; }
+  .hero-inner{ grid-template-columns:1fr; gap:18px; padding:0 14px; }
+  .hero-visual{ order:-1; }
+  .hero-egg{ --size:180px; }
+  .egg-body{ width:104px; height:104px; }
+  .egg-pct b{ font-size:36px; }
+  .hero-sub{ font-size:15px; margin-bottom:16px; }
+  .hero-next{ flex-wrap:wrap; }
+  .hero-next-go{ width:100%; text-align:center; }
+  /* En móvil el texto ocupa todo el ancho: velo vertical, el mapa se ve arriba
+     detrás del huevo y se va cubriendo donde empieza el texto */
+  .hero-veil{
+    background:
+      linear-gradient(180deg, rgba(13,14,12,.6) 0%, rgba(13,14,12,.35) 22%, rgba(13,14,12,.82) 44%, rgba(13,14,12,.92) 70%, var(--bg) 100%);
+  }
+  [data-theme="light"] .hero-veil{
+    background:
+      linear-gradient(180deg, rgba(247,248,242,.75) 0%, rgba(247,248,242,.35) 22%, rgba(247,248,242,.86) 44%, rgba(247,248,242,.94) 70%, var(--bg) 100%);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .hero-fx{ display:none; }
+  .egg-body, .hero-egg.hatched .egg-body{ animation:none; }
+  .hero-egg{ transition:none; }
+}
