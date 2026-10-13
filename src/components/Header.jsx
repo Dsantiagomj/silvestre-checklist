@@ -57,9 +57,8 @@ export default function Header({ onOverlay, onReset }) {
               <LogoWord text="Silvestre" className="w2" start={5} />
             </span>
           </div>
-          {/* Aparece al dejar atrás el hero: reemplaza a la antigua barra pegajosa */}
+          {/* Aparece junto a la marca al dejar atrás el hero; oculto no ocupa sitio */}
           <div className="tb-progress" aria-hidden="true">
-            <div className="bar-mini"><div className="bar-mini-fill" id="sbFill" style={{ width: pct + "%" }}></div></div>
             <b className="tb-pct" id="sbPct">{pct}%</b>
             <span className="tb-done"><b id="sbDone">{doneCount(s)}</b>/100</span>
           </div>
@@ -74,6 +73,10 @@ export default function Header({ onOverlay, onReset }) {
             <span className="lbl">Reiniciar</span>
           </button>
         </div>
+      </div>
+      {/* Barra de experiencia: el borde inferior del header, en 10 tramos */}
+      <div className="tb-xp" aria-hidden="true">
+        <div className="tb-xp-fill" id="sbFill" style={{ width: pct + "%" }}></div>
       </div>
     </header>
   );
