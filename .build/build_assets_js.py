@@ -56,6 +56,8 @@ HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
 # Hero counters: the laurel-wreathed Dofus of the achievements panel for
 # prerequisites, and the Mochila de recolector for the items to gather.
 HERO_ICONS = {"prereqs": "achievements/458.png", "items": "items/81028.png"}
+# Easter egg: Sandglass mains Xelor, the time class, whose symbol is an hourglass.
+EASTER_ICONS = {"xelor": "breeds/symbol_5.png"}
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
@@ -316,7 +318,7 @@ def main():
     paths |= {m["img"] for m in items.values()}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), *HERO_ICONS.values()}
+              *HEADER_ICONS.values(), *HERO_ICONS.values(), *EASTER_ICONS.values()}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
     fresh = {p for p, status in results if status == "ok"}
@@ -346,6 +348,7 @@ def main():
         "BACKUP_ICONS": BACKUP_ICONS,
         "HEADER_ICONS": HEADER_ICONS,
         "HERO_ICONS": HERO_ICONS,
+        "EASTER_ICONS": EASTER_ICONS,
         "STEP_ASSETS": steps,
         "ITEMS": items,
         "PREREQ_ICONS": prereqs,
