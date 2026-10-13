@@ -30,20 +30,22 @@ test("el hero ocupa todo el ancho y casi toda la pantalla", async ({ page }) => 
   expect(box.height).toBeGreaterThanOrEqual(900 * 0.72);
 });
 
-test("la incubadora se llena con el progreso", async ({ page }) => {
+test("el Dofus se llena de color con el progreso", async ({ page }) => {
   await openApp(page, SEED);
   const pct = parseFloat(await page.locator("#heroPct").innerText());
   expect(pct).toBeGreaterThan(0);
   const p = await page.locator(".hero-egg").evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue("--p")));
   expect(p).toBeCloseTo(pct, 1);
-  await expect(page.locator(".hero-egg")).not.toHaveClass(/hatched/);
+  await expect(page.locator(".hero-egg")).not.toHaveClass(/obtained/);
+  await expect(page.locator(".egg-pct small")).toContainText("Obtención");
 });
 
-test("al completar los 100 pasos el huevo eclosiona", async ({ page }) => {
+test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   await expect(page.locator("#heroPct")).toHaveText("100%");
-  await expect(page.locator(".hero-egg")).toHaveClass(/hatched/);
+  await expect(page.locator(".hero-egg")).toHaveClass(/obtained/);
+  await expect(page.locator(".egg-pct small")).toContainText("¡Obtenido!");
   await expect(page.locator("#heroNext")).toContainText("completado");
 });
 

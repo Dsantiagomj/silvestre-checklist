@@ -46,7 +46,7 @@ export default function ThemeSwitch() {
   }, [theme]);
 
   /**
-   * Cambio de tema: los huevos intercambian sitio y el que llega eclosiona, y a la
+   * Cambio de tema: los huevos intercambian sitio y el que llega aparece con un rebote, y a la
    * vez la noche entra (o se retira) en diagonal desde la esquina del interruptor.
    * Sin View Transitions o con movimiento reducido, el tema cambia sin más.
    */
