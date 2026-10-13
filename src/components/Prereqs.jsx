@@ -1,7 +1,7 @@
 import {
   ALL_PREREQS, PREREQS_HECHIZOS, PREREQS_INTRO, PREREQS_LOGROS, PREREQS_OFICIOS,
 } from "../data/steps.js";
-import { prereqsDone, setPrereqsOpen, togglePrereq, useAppState } from "../state/store.js";
+import { isPrereqDone, prereqsDone, setPrereqsOpen, togglePrereq, useAppState } from "../state/store.js";
 import { PREREQ_ICONS, imgUrl } from "../lib/assets.js";
 
 const GROUPS = [
@@ -47,7 +47,7 @@ export default function Prereqs() {
             <div className="prereqs-group" key={g.id}>
               <h3>{g.title}</h3>
               <div id={g.id}>
-                {g.items.map(p => <PrereqItem key={p.id} p={p} done={!!s.prereqs[p.id]} />)}
+                {g.items.map(p => <PrereqItem key={p.id} p={p} done={isPrereqDone(s, p.id)} />)}
               </div>
             </div>
           ))}

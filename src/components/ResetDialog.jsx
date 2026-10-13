@@ -1,6 +1,6 @@
 import { useImperativeHandle, useRef, useState } from "react";
 import {
-  applySnapshot, doneCount, getState, prereqsDone, progressPct, showToast, takeSnapshot, useAppState,
+  applySnapshot, doneCount, getState, prereqsMarked, progressPct, showToast, takeSnapshot, useAppState,
 } from "../state/store.js";
 import { BRAND_ICON, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
@@ -72,7 +72,7 @@ export default function ResetDialog({ ref }) {
         <fieldset className="rd-opts" ref={optsRef} onChange={syncResetConfirm}>
           <legend className="rd-legend">Qué borrar</legend>
           <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
-          <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsDone(s)}</span></label>
+          <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsMarked(s)}</span></label>
         </fieldset>
         <BackupCard onRestore={restoreBackup} />
         <div className="rd-actions">

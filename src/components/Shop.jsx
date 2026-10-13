@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { ITEMS, assetsFor, imgUrl, mergeItems } from "../lib/assets.js";
-import { setShopPendingOnly, setShopTab, toggleOwned, useAppState } from "../state/store.js";
+import { ownedMap, setShopPendingOnly, setShopTab, toggleOwned, useAppState } from "../state/store.js";
 
 // ============================================================================
 // OBJETOS NECESARIOS · lista agregada de todo lo que piden los pasos
@@ -25,11 +25,12 @@ function shopRows(s) {
 
 export default function Shop() {
   const s = useAppState();
+  const have = ownedMap(s);
   const all = shopRows(s);
   const counts = { todo: all.length };
   all.forEach(r => { counts[r.cat] = (counts[r.cat] || 0) + 1; });
   const list = all.filter(r => s.shopTab === "todo" || r.cat === s.shopTab);
-  const owned = list.filter(r => s.owned[r.id]).length;
+  const owned = list.filter(r => have[r.id]).length;
   const scope = s.shopPendingOnly ? "los pasos pendientes" : "los 100 pasos";
 
   const [copyLabel, setCopyLabel] = useState(null);
@@ -37,7 +38,7 @@ export default function Shop() {
   useEffect(() => () => clearTimeout(copyTimer.current), []);
 
   async function copyList() {
-    const lines = list.filter(r => !s.owned[r.id]).map(r => `${r.q}x ${r.name}`);
+    const lines = list.filter(r => !have[r.id]).map(r => `${r.q}x ${r.name}`);
     const text = lines.join("\n");
     let label = "Copiar lista";
     try {
@@ -84,8 +85,8 @@ export default function Shop() {
           vanilla repintaba la lista entera; marcar un objeto no la repite. */}
       <div className="shop-grid" id="shopGrid" key={s.shopEpoch}>
         {list.length ? list.map((r, i) => (
-          <button key={r.id} className={"shop-item" + (s.owned[r.id] ? " owned" : "")} data-id={r.id}
-            style={{ "--i": Math.min(i, 40) }} aria-pressed={String(!!s.owned[r.id])}
+          <button key={r.id} className={"shop-item" + (have[r.id] ? " owned" : "")} data-id={r.id}
+            style={{ "--i": Math.min(i, 40) }} aria-pressed={String(!!have[r.id])}
             onClick={() => toggleOwned(String(r.id))}>
             {r.img && <img src={imgUrl(r.img)} alt="" loading="lazy" />}
             <span className="meta">

@@ -3,7 +3,7 @@ import { STEPS, ZONE_COLOR } from "../data/steps.js";
 import { assetsFor, imgUrl, mergeItems } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import {
-  clearSelection, closeSheet, goToNextPending, isMobile, loadQuests, selectStep, toggleStep, useAppState,
+  clearSelection, closeSheet, goToNextPending, isMobile, loadQuests, ownedMap, selectStep, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
 
@@ -121,7 +121,7 @@ export default function StepDetail({ n }) {
         <div className="detail-badges">
           <span className="badge zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><span className="dot"></span>{step.zone}</span>
         </div>
-        <AssetBlock n={n} owned={s.owned} questsLoaded={s.questsLoaded} />
+        <AssetBlock n={n} owned={ownedMap(s)} questsLoaded={s.questsLoaded} />
         <div className="detail-text">{step.text}</div>
         <div className="detail-cta">
           <button className={"btn-primary" + (done ? " is-done" : "")} id="toggleBtn" onClick={() => toggleStep(n)}>
