@@ -1844,3 +1844,19 @@ header.show-progress .tb-progress{ opacity:1; transform:none; }
   .brand:hover .logo i{ animation:none; }
   .brand .brand-icon{ transition:none; }
 }
+
+/* BOTONES DEL HEADER CON OBJETOS DEL JUEGO --------------------------------
+   Reiniciar: el Minirreloj de arena se da la vuelta (volver a empezar).
+   Overlay: el Catalejo de gobletrotter se inclina y acerca (vigilar desde lejos). */
+.icon-btn.has-icon{ padding:4px 14px 4px 7px; gap:7px; }
+.btn-icon{
+  width:26px; height:26px; object-fit:contain;
+  margin:-2px 0;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));
+  transition:transform .45s cubic-bezier(.3,1.5,.5,1);
+}
+.icon-btn:hover .btn-icon[data-kind="hourglass"]{ transform:rotate(180deg); }
+.icon-btn:active .btn-icon[data-kind="hourglass"]{ transform:rotate(360deg); transition-duration:.3s; }
+.icon-btn:hover .btn-icon[data-kind="spyglass"]{ transform:rotate(-18deg) scale(1.18) translateX(2px); }
+@media (max-width:600px){ .icon-btn.has-icon{ padding:4px 7px; } }
+@media (prefers-reduced-motion:reduce){ .btn-icon{ transition:none; } }

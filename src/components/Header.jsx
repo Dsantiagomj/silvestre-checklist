@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { doneCount, progressPct, useAppState } from "../state/store.js";
-import { BRAND_ICON, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, HEADER_ICONS, imgUrl } from "../lib/assets.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
 
 /** Una palabra del logotipo, letra a letra; --k escalona la ola. */
@@ -10,6 +10,12 @@ function LogoWord({ text, className, start }) {
       {[...text].map((ch, i) => <i key={i} style={{ "--k": start + i }}>{ch}</i>)}
     </span>
   );
+}
+
+/** Icono de botón sacado de un objeto del juego; sin datos, cae al glifo de siempre. */
+function GameIcon({ path, fallback, kind }) {
+  if (!path) return <span aria-hidden="true">{fallback}</span>;
+  return <img className="btn-icon" data-kind={kind} src={imgUrl(path)} alt="" />;
 }
 
 /** HEADER · estilo ventana de juego Dofus */
@@ -58,12 +64,14 @@ export default function Header({ onOverlay, onReset }) {
             <span className="tb-done"><b id="sbDone">{doneCount(s)}</b>/100</span>
           </div>
           <div className="spacer"></div>
-          <button className="icon-btn primary" id="overlayBtn" aria-label="Abrir overlay sobre el juego" onClick={onOverlay}>
-            ⧉<span className="lbl">Overlay</span>
+          <button className="icon-btn primary has-icon" id="overlayBtn" aria-label="Abrir overlay sobre el juego" onClick={onOverlay}>
+            <GameIcon path={HEADER_ICONS?.overlay} fallback="⧉" kind="spyglass" />
+            <span className="lbl">Overlay</span>
           </button>
           <ThemeSwitch />
-          <button className="icon-btn danger" id="resetBtn" aria-label="Reiniciar progreso" onClick={onReset}>
-            ↺<span className="lbl">Reiniciar</span>
+          <button className="icon-btn danger has-icon" id="resetBtn" aria-label="Reiniciar progreso" onClick={onReset}>
+            <GameIcon path={HEADER_ICONS?.reset} fallback="↺" kind="hourglass" />
+            <span className="lbl">Reiniciar</span>
           </button>
         </div>
       </div>
