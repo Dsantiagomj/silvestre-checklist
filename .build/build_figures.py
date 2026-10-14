@@ -8,6 +8,7 @@ from DOFUS_ROAD, before any of these):
   2. The NPC that starts the step's first quest (rendered from its look); for a quest
      with no start, the first NPC it sends you to. A first quest whose NPC depends on
      the class (step 7) shows none.
+  STEP_FIGURE sets the figure by hand where there is nothing better (step 7).
   3. Nothing: the app falls back to the boss the step resolves.
 
 Figures are rendered by Ankama's look renderer and mirrored into public/img/npcs/.
@@ -52,6 +53,12 @@ CURATED = {
     "El árbol que esconde el bosque": ("silvosse", "Silvosse", "Dofus Silvestre", "{6626|||130}"),
 }
 
+
+# Step -> figure for a step with nothing better: step 7's quest is given by the NPC of
+# your class, but in it you talk to the goddess Feca.
+STEP_FIGURE = {
+    "7": ("diosa-feca", "Diosa Feca", "La cólera de los dioses", "{4841}"),
+}
 
 
 def _get(url, raw=False, tries=4):
@@ -125,8 +132,11 @@ def main():
         sp = starts.get(n)
         npc = sp and sp.get("npcId")
         figure = None
+        if n in STEP_FIGURE:
+            key, name, label, look = STEP_FIGURE[n]
+            figure = {"img": render(key, look), "name": name, "as": label}
         for entry in plans.get(n, []):
-            pick = entry["t"] == "a" and CURATED.get(entry["name"])
+            pick = not figure and entry["t"] == "a" and CURATED.get(entry["name"])
             if pick and not (pick[2] == DRAGON and npc == MERIANA):
                 key, name, label, look = pick
                 figure = {"img": render(key, look), "name": name, "as": label}
