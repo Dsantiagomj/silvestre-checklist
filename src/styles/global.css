@@ -2158,37 +2158,28 @@ header.show-progress .tb-progress{
   transition:border-color .15s ease, background .15s ease, transform .15s ease;
 }
 .pr-card:hover{ border-color:var(--amber); transform:translateY(-1px); }
-/* Losa del icono, como las casillas del inventario */
+/* Iconos sueltos: los de oficios y hechizos ya traen su propio marco */
 .pr-card .pr-icons{
   position:relative; flex:none;
-  display:grid; place-items:center; width:56px; height:56px; border-radius:12px;
-  background:radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--txt) 8%, var(--inset)), var(--inset));
-  border:1px solid var(--line-2);
+  display:grid; place-items:center; width:52px; height:52px;
 }
-.pr-card .pr-icons img{ width:40px; height:40px; object-fit:contain; }
-.pr-card .pr-icons.pair img{ position:absolute; width:32px; height:32px; }
-.pr-card .pr-icons.pair img:first-child{ left:4px; top:4px; }
-.pr-card .pr-icons.pair img:nth-child(2){ right:4px; bottom:4px; }
-.pr-card .pr-icons.quad{ grid-template-columns:1fr 1fr; gap:2px; padding:4px; box-sizing:border-box; }
-.pr-card .pr-icons.quad img{ width:22px; height:22px; }
+.pr-card .pr-icons img{ width:48px; height:48px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+.pr-card .pr-icons.pair img{ position:absolute; width:36px; height:36px; }
+.pr-card .pr-icons.pair img:first-child{ left:0; top:0; }
+.pr-card .pr-icons.pair img:nth-child(2){ right:0; bottom:0; }
+.pr-card .pr-icons.quad{ grid-template-columns:1fr 1fr; gap:3px; }
+.pr-card .pr-icons.quad img{ width:24px; height:24px; }
 .pr-card .pr-quest{ font-size:26px; }
 .pr-body{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
 .pr-zone{ font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--txt-mute); }
 .pr-title{ font-size:14px; font-weight:600; line-height:1.35; color:var(--txt-soft); }
-.pr-sub{ font-size:12px; color:var(--txt-mute); }
-.pr-badge{
-  flex:none; align-self:flex-start; margin-top:2px;
-  padding:2px 9px; border-radius:999px;
-  font-size:11.5px; font-weight:800; white-space:nowrap;
-  color:var(--accent-ink); background:color-mix(in srgb, var(--amber) 14%, transparent);
-  border:1px solid color-mix(in srgb, var(--amber) 35%, transparent);
-}
-.pr-badge.soft{ color:var(--txt-mute); background:transparent; border-color:var(--line-2); }
+.pr-sub{ font-size:12.5px; color:var(--txt-mute); }
+.pr-sub b{ font-weight:700; color:var(--accent-ink); }
+.pr-sub b.soft{ color:var(--txt-soft); }
 .pr-card.done{
   border-color:color-mix(in srgb, var(--amber) 60%, transparent);
   background:linear-gradient(180deg, color-mix(in srgb, var(--amber) 12%, var(--inset)), var(--inset));
 }
-.pr-card.done .pr-icons{ border-color:color-mix(in srgb, var(--amber) 55%, transparent); }
 .pr-card.done .pr-title{ color:var(--txt); }
 .pr-card.done::after{
   content:"✓"; position:absolute; top:-7px; right:-7px;
