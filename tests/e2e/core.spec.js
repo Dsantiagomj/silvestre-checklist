@@ -3,10 +3,11 @@ import { openApp, readLS } from "./helpers.js";
 
 test("carga los 100 pasos con su arte y sin errores", async ({ page }) => {
   const errors = await openApp(page);
-  await expect(page.locator(".diary-row .row-art img")).toHaveCount(96);
+  // Solo los pasos que dan un Dofus o resuelven un jefe llevan imagen
+  await expect(page.locator(".diary-row .row-art img")).toHaveCount(32);
   // Las imágenes de la lista cargan en diferido: basta con las que están a la vista
   await expect.poll(() => page.locator(".diary-row .row-art img").evaluateAll(
-    imgs => imgs.filter(i => i.complete && i.naturalWidth > 0).length), { timeout: 15_000 }).toBeGreaterThanOrEqual(8);
+    imgs => imgs.filter(i => i.complete && i.naturalWidth > 0).length), { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
   expect(errors).toEqual([]);
 });
 

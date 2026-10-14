@@ -4,13 +4,13 @@ import { openApp, readLS } from "./helpers.js";
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 
-test("el diario lista los 100 pasos agrupados por el Dofus al que llevan", async ({ page }) => {
+test("el diario lista los 100 pasos seguidos, sin capítulos por Dofus", async ({ page }) => {
   await openApp(page);
   await expect(page.locator("#diary .section-num")).toHaveText("02");
   await expect(page.locator(".diary-row")).toHaveCount(100);
-  const groups = page.locator(".diary-group-head");
-  await expect(groups.first()).toContainText("Dofawa");
-  await expect(groups.last()).toContainText("Dofus Silvestre");
+  await expect(page.locator(".diary-group-head")).toHaveCount(0);
+  const nums = await page.locator(".diary-row .row-num").allInnerTexts();
+  expect(nums.map(Number)).toEqual(Array.from({ length: 100 }, (_, i) => i + 1));
   // Cada fila: número, título y zona
   await expect(row(page, 34).locator(".row-num")).toHaveText("34");
   await expect(row(page, 34).locator(".row-title")).toHaveText("El árbol que esconde el bosque");
@@ -225,8 +225,8 @@ test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de mis
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-main');
   await expect(page.locator("#journal .q-item summary .quest-mark")).toHaveCount(2, { timeout: 15_000 });
-  // Los 4 pasos sin icono propio no quedan en blanco
-  await expect(page.locator(".diary-row .row-art .quest-mark")).toHaveCount(4);
+  // En la lista, sin icono de relleno: lo que no da un Dofus ni resuelve un jefe va en blanco
+  await expect(page.locator(".diary-row .row-art .quest-mark")).toHaveCount(0);
 });
 
 test("un paso que pide el logro completo lo dice en la cabecera, no como consejo", async ({ page }) => {
@@ -518,7 +518,7 @@ test("si el verde sigue «hasta tener que pasar X», esa nueva parada sale en ro
   await stepData(page, 43);
   const j = page.locator("#journal");
   // Avisos: lo que se resuelve y, después, hasta dónde llegar ahora
-  await expect(j.locator(".call.stop")).toHaveText(/Hasta tener que pasar Kodámade/);
+  await expect(j.locator(".call.stop").filter({ hasText: "Hasta tener que pasar Kodámade" })).toHaveCount(1);
   const quest = name => j.locator(".q-item", { has: page.locator(".q-name", { hasText: name }) });
   // Inmunda putrefacción: se termina al matar los monstruos (verde)
   await expect(quest("Inmunda putrefacción").locator(".obj-resume + .obj-row")).toContainText("Mildiu de Pandala");
@@ -532,5 +532,18 @@ test("si el verde sigue «hasta tener que pasar X», esa nueva parada sale en ro
   await expect(sauce.locator(".obj-stop + .obj-row")).toContainText("Hoja de Kodámade");
   // Lo mismo en el 72, con Ilyzaelle
   await stepData(page, 72);
-  await expect(j.locator(".call.stop")).toHaveText(/Hasta tener que pasar Ilyzaelle/);
+  await expect(j.locator(".call.stop").filter({ hasText: "Hasta tener que pasar Ilyzaelle" })).toHaveCount(1);
+});
+
+test("en la lista, cada paso lleva solo el Dofus que da o el jefe que resuelve", async ({ page }) => {
+  await openApp(page);
+  const art = n => row(page, n).locator(".row-art img");
+  await expect(page.locator(".diary-row .row-art img")).toHaveCount(32);
+  // Un Dofus
+  await expect(art(18)).toHaveAttribute("src", /items\//);
+  // El jefe que nombra el verde (en el 84 se pasa Mizz Frizz, no Klim)
+  await expect(art(34)).toHaveAttribute("src", /monsters\/1267\.png$/);
+  await expect(art(84)).toHaveAttribute("alt", "Mizz Frizz");
+  // Nada: un paso sin Dofus ni jefe resuelto, y el 43, que solo deja a Kodámade pendiente
+  for (const n of [2, 4, 10, 43]) await expect(art(n)).toHaveCount(0);
 });
