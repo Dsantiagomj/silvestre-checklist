@@ -181,8 +181,9 @@ test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => 
 test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el mercadillo", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
-  const slot = page.locator("#journal .journal-needs .slot").first();
+  // La glándula se gasta en el paso 35 («Munster descubre el misterio»)
+  await page.click('.diary-row[data-n="35"] .row-main');
+  const slot = page.locator('#journal .journal-needs .slot[data-id="16215"]');
   await slot.hover();
   await slot.locator(".slot-copy").click();
   await expect(slot.locator(".slot-copied")).toHaveText("Copiado");
@@ -458,4 +459,30 @@ test("la parada de Maxilubo (paso 10) cae antes del hueso que se consigue venci�
   await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop")).toContainText("Hasta tener que pasar Maxilubo");
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Consigue un hueso de hierro");
+});
+
+/** Abre un paso y devuelve las casillas de «Necesitas» (ids) y los nombres de sus misiones. */
+async function stepData(page, n) {
+  await page.click(`.diary-row[data-n="${n}"] .row-main`);
+  await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
+  await page.locator("#journal .journal-quests, #journal .asset-note").first().waitFor({ timeout: 15_000 });
+  return {
+    needs: await page.locator("#journal .journal-needs .slot").evaluateAll(els => els.map(e => e.dataset.id)),
+    quests: await page.locator("#journal .q-item .q-name").allInnerTexts(),
+  };
+}
+
+test("los objetos revisados con Torrente Arcano y DofusDB van en el paso donde se gastan", async ({ page }) => {
+  await openApp(page);
+  // 19 → 21: Calavera, Llave del Ring Eskarlata y Tallo de bambuto (misiones 5 y 6 de Púrpura profundo)
+  expect((await stepData(page, 19)).needs).toEqual([]);
+  expect((await stepData(page, 21)).needs).toEqual(expect.arrayContaining(["15444", "15477", "7290"]));
+  // 34 → 35: la Glándula de arak-hai la consume «Munster descubre el misterio»
+  expect((await stepData(page, 34)).needs).not.toContain("16215");
+  expect((await stepData(page, 35)).needs).toContain("16215");
+  // 75: las tablas y la cuerda eran un duplicado del 76
+  const s75 = (await stepData(page, 75)).needs;
+  for (const k of ["16496", "16494", "16499", "16492", "9935"]) expect(s75).not.toContain(k);
+  expect(s75).toContain("1334");
+  expect((await stepData(page, 76)).needs).toEqual(expect.arrayContaining(["16496", "16494", "16499", "16492", "9935"]));
 });

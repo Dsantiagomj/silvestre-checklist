@@ -46,10 +46,19 @@ TA_CACHE = DATA / "ta_needs.json"
 ITEM_QUESTS = ROOT / "lists" / "item_quests.json"
 # Items asked for by a quest the step does not list, only its guide names it.
 # Step -> {item key: quest}.
+# Also items reviewed by hand that stay where the page puts them though their quest is
+# listed in another step: the quest is split across steps.
 MANUAL = {
     # "Ver a Dark Vlad y morir... o no" asks to do this one first (torrentearcano)
     "1": {"2268": "Un péndulo para guiar sus pasos", "9318": "Un péndulo para guiar sus pasos",
           "746": "Un péndulo para guiar sus pasos"},
+    # The beer of "De la mano" is brewed in the tavern, after step 64 stops at its door
+    # and before "Dos alientos" (step 66) lets it go on
+    "66": {"1977": "De la mano", "23972": "De la mano", "23179": "De la mano", "7055": "De la mano"},
+    # Order 4: "4 de ellas con cuerda de escalada (uno de ellos siendo tú)"
+    "78": {"9935": "Aprendizaje: Maestro de los Pergaminos"},
+    # "Muerte y renovación" needs "Santísimo poder" done, which step 80 finishes
+    "80": {"311": "Muerte y renovación"},
 }
 RECIPES = DATA / "recipes.json"
 API = "https://api.dofusdb.fr/"
@@ -289,6 +298,9 @@ def main(args):
             qty = row["a"][0][1]
             label = f"{names[key]} ×{qty}" + (f" [{row['g']}]" if row.get("g") else "")
             found = why.get(key)
+            manual = MANUAL.get(str(n), {}).get(key)
+            if manual:
+                found = [(qty, manual, "revisado a mano")]
             if prereq.get(row["k"]) == qty:
                 lines.append(f"  = {label} · también en los prerrequisitos")
                 totals["prereq"] += 1
