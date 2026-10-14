@@ -219,3 +219,49 @@ test("tras el zoom al diario el contenido no vuelve a aparecer (sin parpadeo)", 
   // Una vez visible, no vuelve a apagarse
   expect(Math.min(...seen.slice(peak))).toBeGreaterThanOrEqual(0.9);
 });
+
+test("el zoom espera a que el diario esté listo: no se muestra a medio cargar", async ({ page }) => {
+  // Las misiones (su chunk) tardan: el diario no debe aparecer sin ellas
+  let release;
+  const held = new Promise(r => { release = r; });
+  await page.route(/quests-[\w-]+\.js$/, async route => { await held; await route.continue(); });
+  await openApp(page, null, { view: "map" });
+  await page.waitForTimeout(400);
+  await page.click('.map-node[data-n="34"]');
+  await page.click("#mapCard .map-card-open");
+  await page.waitForTimeout(700);
+  const during = await page.evaluate(() => {
+    const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+    const op = el => parseFloat(getComputedStyle(el).opacity);
+    return { layers: layers.length, entering: op(layers.find(l => !l.hasAttribute("inert"))),
+      leaving: op(layers.find(l => l.hasAttribute("inert"))) };
+  });
+  // El mapa sigue ampliado y visible; el diario, oculto mientras carga
+  expect(during.layers).toBe(2);
+  expect(during.entering).toBeLessThan(0.05);
+  expect(during.leaving).toBeGreaterThan(0.9);
+  release();
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
+  // Al aparecer, las misiones ya están
+  await expect(page.locator("#journal .q-item").first()).toBeVisible();
+  expect(await page.locator("#journal .asset-note", { hasText: "Cargando misiones" }).count()).toBe(0);
+});
+
+test("con todo a mano, la vista nueva aparece sin agotar la espera", async ({ page }) => {
+  await openApp(page, null, { view: "map" });
+  await page.waitForLoadState("networkidle");
+  await page.click('.map-node[data-n="34"]');
+  const shown = await page.evaluate(async () => {
+    document.querySelector("#mapCard .map-card-open").click();
+    const t0 = performance.now();
+    await new Promise(r => requestAnimationFrame(r));
+    const layer = document.querySelector(".steps-stage > .steps-layer:not([inert])");
+    while (performance.now() - t0 < 3000) {
+      await new Promise(r => requestAnimationFrame(r));
+      if (parseFloat(getComputedStyle(layer).opacity) > 0.05) return performance.now() - t0;
+    }
+    return Infinity;
+  });
+  // El límite es 1,5 s: esperar lo que el navegador no va a cargar lo agotaría
+  expect(shown).toBeLessThan(1000);
+});

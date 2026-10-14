@@ -1,12 +1,15 @@
-import { memo, useLayoutEffect, useRef, useState } from "react";
-import { AnimatePresence, LazyMotion, m, useIsPresent, useReducedMotion } from "motion/react";
+import { createContext, memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AnimatePresence, usePresence, useReducedMotion } from "motion/react";
+import { useAnimate } from "motion/react-mini";
+import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter, setStepsView,
+  clearFilters, goToNextPending, hasActiveFilters, nextPending, revealMapNode, selectStep, setSearch, setStatusFilter,
+  setStepsView, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
@@ -134,27 +137,67 @@ const VIEWS = [
   ["diary", "Diario", "stepsViewDiary"],
 ];
 
-// Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual, en la línea
-// de duffus.fr (0,3 s, easeInOut). Del mapa al diario se entra (la vista que se va crece
-// y la que llega sale de más lejos); del diario al mapa se sale (al revés). `custom` es
-// la vista de destino, que AnimatePresence pasa también a la que se va.
-const ZOOM = {
-  enter: to => ({ opacity: 0, transform: to === "map" ? "scale(1.15)" : "scale(0.94)" }),
-  center: { opacity: 1, transform: "scale(1)" },
-  exit: to => ({ opacity: 0, transform: to === "map" ? "scale(0.9)" : "scale(1.15)" }),
-};
-const ZOOM_EASE = { duration: 0.3, ease: "easeInOut" };
-const loadFeatures = () => import("../lib/motionFeatures.js").then(mod => mod.default);
+// Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual (0,3 s,
+// easeInOut, en la línea de duffus.fr) que hace de pantalla de carga. Del mapa al diario
+// se entra (el mapa crece); del diario al mapa se sale (el diario se encoge). La vista
+// que se va se queda así hasta que la que llega, preparada invisible encima, avisa de
+// que está lista (lib/viewSwap.js); entonces se cruzan.
+const ZOOM = { duration: 0.3, ease: "easeInOut" };
+const ZOOMED = { map: "scale(1.15)", diary: "scale(0.94)" };     // de dónde llega cada vista
+const LEAVING = { map: "scale(0.9)", diary: "scale(1.15)" };     // a dónde va la que se va
+
+/** El cambio en curso: { id, to } y el canal por el que la nueva avisa a la vieja. */
+const SwapContext = createContext(null);
 
 /** Una de las dos vistas. La que se va queda inerte y sin ids mientras sale. */
-function ViewLayer({ ref, origin, reduce, children }) {
-  const present = useIsPresent();
+function ViewLayer({ ref, view, origin, reduce, children }) {
+  const [present, safeToRemove] = usePresence();
+  const swap = useContext(SwapContext);
+  const [scope, animate] = useAnimate();
+  const setRef = el => {
+    scope.current = el;
+    if (typeof ref === "function") ref(el);
+    else if (ref) ref.current = el;
+  };
+
+  // La que llega: invisible y en su sitio de partida hasta estar lista, luego aparece
+  useLayoutEffect(() => {
+    const el = scope.current;
+    if (!swap.current || swap.current.to !== view || reduce) return;
+    const { id } = swap.current;
+    el.style.opacity = "0";
+    el.style.transform = ZOOMED[view];
+    let alive = true;
+    whenReady(el, view).then(() => {
+      if (!alive) return;
+      swap.channel.ready(id);
+      animate(el, { opacity: [0, 1], transform: [ZOOMED[view], "scale(1)"] }, ZOOM).then(() => {
+        el.style.opacity = "";
+        el.style.transform = "";
+      });
+    });
+    return () => { alive = false; swap.channel.ready(id); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // La que se va: hace su zoom, espera a la nueva y se desvanece mientras esta aparece
+  useEffect(() => {
+    if (present) return;
+    if (reduce || !swap.current) return safeToRemove();
+    const el = scope.current;
+    const { id, to } = swap.current;
+    (async () => {
+      await animate(el, { transform: LEAVING[to] }, ZOOM);
+      await swap.channel.when(id);
+      await animate(el, { opacity: 0 }, ZOOM);
+      safeToRemove();
+    })();
+  }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <m.div ref={ref} className="steps-layer" variants={ZOOM} initial="enter" animate="center" exit="exit"
-      transition={reduce ? { duration: 0 } : ZOOM_EASE}
-      style={{ transformOrigin: origin }} inert={!present} aria-hidden={!present || undefined}>
+    <div ref={setRef} className="steps-layer" style={{ transformOrigin: origin }}
+      inert={!present} aria-hidden={!present || undefined}>
       <LeavingContext.Provider value={!present}>{children}</LeavingContext.Provider>
-    </m.div>
+    </div>
   );
 }
 
@@ -173,7 +216,12 @@ export default function Diary({ mobile }) {
   const [swap, setSwap] = useState(null);
   const switching = useRef(false);
   const height = useRef(0);
+  // El cambio en curso se decide al renderizar, para que la vista nueva lo vea al montarse
   const lastView = useRef(s.stepsView);
+  const swapInfo = useRef({ current: null, channel: makeChannel() }).current;
+  if (lastView.current !== s.stepsView) {
+    swapInfo.current = reduce ? null : { id: (swapInfo.current?.id ?? 0) + 1, to: s.stepsView };
+  }
   useLayoutEffect(() => {
     if (lastView.current === s.stepsView) return;
     lastView.current = s.stepsView;
@@ -199,10 +247,15 @@ export default function Diary({ mobile }) {
       <ZoneSeals s={s} current={current} />
       <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
         style={swap != null ? { minHeight: swap } : undefined}>
-        <LazyMotion features={loadFeatures} strict>
-          <AnimatePresence mode="popLayout" initial={false} custom={s.stepsView}
-            onExitComplete={() => { switching.current = false; setSwap(null); }}>
-            <ViewLayer key={s.stepsView} origin={origin} reduce={reduce}>
+        <SwapContext.Provider value={swapInfo}>
+          <AnimatePresence mode="popLayout" initial={false}
+            onExitComplete={() => {
+              switching.current = false;
+              setSwap(null);
+              const n = takeMapFocus();
+              if (n != null) requestAnimationFrame(() => revealMapNode(n));
+            }}>
+            <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
               {map ? (
                 <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
               ) : (
@@ -218,7 +271,7 @@ export default function Diary({ mobile }) {
               )}
             </ViewLayer>
           </AnimatePresence>
-        </LazyMotion>
+        </SwapContext.Provider>
       </div>
     </section>
   );
