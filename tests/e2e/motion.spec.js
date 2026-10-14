@@ -118,3 +118,43 @@ test("las secciones entran al hacer scroll", async ({ page }) => {
     el.getAnimations().some(a => a.animationName === "reveal" && a.timeline && !(a.timeline instanceof DocumentTimeline)));
   expect(reveal).toBe(true);
 });
+
+/** Nombres de las animaciones en curso en un selector. */
+const names = (page, sel) => page.evaluate(s => document.getAnimations()
+  .filter(a => a.effect?.target?.matches?.(s)).map(a => a.animationName), sel);
+
+test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) => {
+  await openApp(page);
+  await page.waitForTimeout(500);
+  await page.click("#stepsViewMap");
+  // La vista que se va queda encima, como instantánea, mientras entra la nueva
+  await expect(page.locator(".steps-leaving")).toHaveCount(1);
+  expect(await names(page, ".steps-leaving")).toContain("zoom-away-small");
+  expect(await names(page, ".steps-current")).toContain("zoom-from-near");
+  // Centro del zoom: el sello del paso actual (el 1)
+  const origin = await page.locator(".steps-stage").evaluate(el => [el.style.getPropertyValue("--zx"), el.style.getPropertyValue("--zy")]);
+  const node = await page.locator('.map-node[data-n="1"]').evaluate(el => [el.style.left, el.style.top]);
+  expect(origin).toEqual(node);
+  // La instantánea no repite ids y se va al terminar
+  await expect(page.locator("#journal")).toHaveCount(0);
+  await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
+});
+
+test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
+  await openApp(page);
+  await page.click("#stepsViewMap");
+  await page.waitForTimeout(800);
+  await page.click('.map-node[data-n="34"]');
+  await page.click("#mapCard .map-card-open");
+  expect(await names(page, ".steps-leaving")).toContain("zoom-into");
+  expect(await names(page, ".steps-current")).toContain("zoom-from-far");
+  await expect(page.locator("#journal")).toHaveCount(1);
+  await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
+});
+
+test("con movimiento reducido el cambio de vista no deja instantánea", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openApp(page);
+  await page.click("#stepsViewMap");
+  await expect(page.locator(".steps-leaving")).toHaveCount(0);
+});

@@ -224,7 +224,15 @@ export function overlayGo(n) {
 
 export const clearSelection = () => setState({ selectedStep: null });
 
+// Quien anima el cambio de vista guarda aquí una instantánea de la que se va
+let beforeViewSwitch = null;
+export function onBeforeViewSwitch(fn) {
+  beforeViewSwitch = fn;
+  return () => { if (beforeViewSwitch === fn) beforeViewSwitch = null; };
+}
+
 export function setStepsView(view) {
+  if (state.stepsView !== view) beforeViewSwitch?.(view);
   localStorage.setItem(LS.stepsView, view);
   setState({ stepsView: view });
 }

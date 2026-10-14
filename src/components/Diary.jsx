@@ -1,14 +1,15 @@
-import { memo, useLayoutEffect, useRef } from "react";
-import { useHeightMorph } from "../lib/motion.js";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { prefersReducedMotion, useHeightMorph } from "../lib/motion.js";
 import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter, setStepsView,
+  clearFilters, goToNextPending, hasActiveFilters, nextPending, onBeforeViewSwitch, selectStep, setSearch,
+  setStatusFilter, setStepsView,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
-import StepMap from "./StepMap.jsx";
+import StepMap, { mapPoint } from "./StepMap.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import QuestMark from "./QuestMark.jsx";
 
@@ -130,6 +131,46 @@ const VIEWS = [
   ["map", "Mapa", "stepsViewMap"],
 ];
 
+// Lo que dura el cambio de vista; luego la instantánea de la vista que se fue desaparece
+const SWAP_MS = 560;
+
+/**
+ * Cambio entre diario y mapa como un zoom sobre el sello del paso actual: del mapa al
+ * diario se entra en él (zoom in) y del diario al mapa se sale (zoom out). Las dos vistas
+ * no conviven en React, así que la que se va queda encima como instantánea estática
+ * (sin ids, para no repetirlos) mientras entra la nueva.
+ */
+function useViewZoom(stageRef, view, step) {
+  const snapshot = useRef(null);
+  const leavingRef = useRef(null);
+  const [swap, setSwap] = useState(null);
+
+  useEffect(() => onBeforeViewSwitch(() => {
+    const current = stageRef.current?.querySelector(".steps-current");
+    if (!current || prefersReducedMotion()) return;
+    const clone = current.cloneNode(true);
+    clone.removeAttribute("class");
+    clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+    snapshot.current = clone;
+  }), [stageRef]);
+
+  useLayoutEffect(() => {
+    const clone = snapshot.current;
+    snapshot.current = null;
+    if (!clone) return;
+    const at = mapPoint(stageRef.current.clientWidth, step);
+    setSwap({ to: view, x: at.x, y: at.y, clone });
+    const t = setTimeout(() => setSwap(null), SWAP_MS);
+    return () => clearTimeout(t);
+  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useLayoutEffect(() => {
+    if (swap) leavingRef.current?.replaceChildren(swap.clone);
+  }, [swap]);
+
+  return { swap, leavingRef };
+}
+
 /** 02 · Los 100 pasos: como diario (lista y detalle) o como mapa del camino. */
 export default function Diary({ mobile }) {
   const s = useAppState();
@@ -140,6 +181,7 @@ export default function Diary({ mobile }) {
   // Cambiar de vista o de paso mueve lo de debajo con suavidad, sin saltos
   const stageRef = useRef(null);
   useHeightMorph(stageRef, map ? "map" : `diary-${current}`);
+  const { swap, leavingRef } = useViewZoom(stageRef, s.stepsView, s.selectedStep ?? next);
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
@@ -152,7 +194,10 @@ export default function Diary({ mobile }) {
         <DiaryBar s={s} />
       </div>
       <ZoneSeals s={s} current={current} />
-      <div className="steps-stage" ref={stageRef}>
+      <div className={"steps-stage" + (swap ? ` swap to-${swap.to}` : "")} ref={stageRef}
+        style={swap ? { "--zx": `${swap.x}px`, "--zy": `${swap.y}px` } : undefined}>
+      {swap && <div className="steps-leaving" ref={leavingRef} aria-hidden="true" inert></div>}
+      <div className="steps-current">
       {map ? (
         <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
       ) : (
@@ -166,6 +211,7 @@ export default function Diary({ mobile }) {
           )}
         </div>
       )}
+      </div>
       </div>
     </section>
   );
