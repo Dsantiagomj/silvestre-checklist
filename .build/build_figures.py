@@ -2,10 +2,12 @@
 
 The figure, in order of preference (the Dofus egg a step gives is chosen in the app,
 from DOFUS_ROAD, before any of these):
-  1. A curated figure for the step (STEP_FIGURE) or its achievement: the primordial dragon of its Dofus, the
+  1. A curated figure for the achievement: the primordial dragon of its Dofus, the
      Selocalipsis horseman or Draconiros, Silvosse for the Silvestre line.
      The primordial lines that Meriana starts keep Meriana: she is the face of those.
-  2. The NPC that starts the step's first quest (rendered from its look).
+  2. The NPC that starts the step's first quest (rendered from its look); for a quest
+     with no start, the first NPC it sends you to. A first quest whose NPC depends on
+     the class (step 7) shows none.
   3. Nothing: the app falls back to the boss the step resolves.
 
 Figures are rendered by Ankama's look renderer and mirrored into public/img/npcs/.
@@ -50,11 +52,6 @@ CURATED = {
     "El árbol que esconde el bosque": ("silvosse", "Silvosse", "Dofus Silvestre", "{6626|||130}"),
 }
 
-# Step -> figure, for steps whose achievement has no curated figure and no start NPC:
-# 64 is "Un sueño con claroscuros", the dream of Imagirorukam.
-STEP_FIGURE = {
-    "64": ("imagirorukam", "Imagirorukam", "Un sueño con claroscuros", "{5997|||80}"),
-}
 
 
 def _get(url, raw=False, tries=4):
@@ -102,15 +99,24 @@ def main():
     IMG_DIR.mkdir(parents=True, exist_ok=True)
 
     def start_of(qid):
-        for sp in (raw.get(qid) or {}).get("startPosition") or []:
-            if sp and sp.get("mapId"):
-                return sp
+        """Where the quest starts: {mapId, npcId}, {"cls": True} if it depends on the
+        class, or just {npcId} when it starts on its own with "go see NPC"."""
+        q = raw.get(qid) or {}
+        positions = [sp for sp in q.get("startPosition") or [] if sp and sp.get("mapId")]
+        if len(positions) > 1 and "PG=" in (q.get("startCriterion") or ""):
+            return {"cls": True}
+        if positions:
+            return positions[0]
+        first = next((o for st in q.get("steps") or [] if st for o in st.get("objectives") or [] if o), None)
+        if first and first.get("className") == "QuestObjectiveGoToNpcData":
+            return {"npcId": (first.get("parameters") or {}).get("parameter0")}
         return None
 
     starts = {}
     for n, ids in app["STEP_QUESTS"].items():
         found = [sp for sp in (start_of(q) for q in ids if q != "clase") if sp]
-        if found:
+        # A first quest that depends on the class has no one NPC or map: none is shown
+        if found and not found[0].get("cls"):
             starts[n] = found[0]
     looks = npc_looks({sp["npcId"] for sp in starts.values() if sp.get("npcId")})
 
@@ -119,22 +125,19 @@ def main():
         sp = starts.get(n)
         npc = sp and sp.get("npcId")
         figure = None
-        if n in STEP_FIGURE:
-            key, name, label, look = STEP_FIGURE[n]
-            figure = {"img": render(key, look), "name": name, "as": label}
         for entry in plans.get(n, []):
-            pick = not figure and entry["t"] == "a" and CURATED.get(entry["name"])
+            pick = entry["t"] == "a" and CURATED.get(entry["name"])
             if pick and not (pick[2] == DRAGON and npc == MERIANA):
                 key, name, label, look = pick
                 figure = {"img": render(key, look), "name": name, "as": label}
                 break
         if not figure and npc and looks.get(npc):
-            quest = app["QUESTS"][str(next(q for q in app["STEP_QUESTS"][n] if start_of(q) is sp))]
+            quest = app["QUESTS"][str(next(q for q in app["STEP_QUESTS"][n] if start_of(q) == sp))]
             name = (quest.get("st") or {}).get("npc")
             if name:
                 figure = {"img": render(f"npc-{npc}", looks[npc]), "name": name, "as": "Inicia el paso"}
         entry = {}
-        if sp:
+        if sp and sp.get("mapId"):
             entry["m"] = sp["mapId"]
         if figure:
             entry["f"] = figure

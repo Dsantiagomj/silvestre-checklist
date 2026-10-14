@@ -255,7 +255,10 @@ function Quests({ step, quests, loaded, s }) {
                 <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
               )}
             </summary>
-            {q.st && (
+            {q.st?.cls && (
+              <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>
+            )}
+            {q.st && !q.st.cls && (
               <p className="q-start">
                 Empieza con <b>{q.st.npc || "un PNJ"}</b>{q.st.a ? ` en ${q.st.a}` : ""} <CoordChip x={q.st.x} y={q.st.y} />
               </p>

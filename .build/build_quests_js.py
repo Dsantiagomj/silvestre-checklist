@@ -331,9 +331,18 @@ def main():
     for qid in used:
         q = quests[qid]
         start = None
-        for sp in q.get("startPosition") or []:
-            if not sp:
-                continue
+        positions = [sp for sp in q.get("startPosition") or [] if sp]
+        if len(positions) > 1 and "PG=" in (q.get("startCriterion") or ""):
+            # One start per class (PG = class): the NPC depends on the player's class
+            positions, start = [], {"cls": True}
+        elif not positions:
+            # No start: it starts on its own; the first NPC to go see stands in for it
+            first = next((o for st in q.get("steps") or [] if st for o in st.get("objectives") or [] if o), None)
+            if first and first.get("className") == "QuestObjectiveGoToNpcData":
+                npc = names.get("npc", {}).get((first.get("parameters") or {}).get("parameter0"))
+                if npc:
+                    start = {"npc": npc, "m": 0, "x": None, "y": None, "a": None}
+        for sp in positions:
             pos = starts.get(sp.get("mapId")) or {}
             start = {
                 "npc": names.get("npc", {}).get(sp.get("npcId")),

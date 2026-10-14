@@ -570,12 +570,25 @@ test("el estandarte lleva lo más representativo del paso sobre el mapa donde em
     .toHaveAttribute("style", /maps\/0\.5\/122421248\.jpg/);
   // Figuras elegidas: el dragón de su Dofus, los jinetes, Draconiros y Silvosse
   for (const [n, want] of [[39, "Dragón primordial:Aguabrial"], [74, "Jinete del Selocalipsis:Guerra"],
-    [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"], [64, "Un sueño con claroscuros:Imagirorukam"]]) {
+    [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"], [64, "Inicia el paso:Pandawelo"]]) {
     await stepData(page, n);
     expect(await figure(page)).toBe(want);
   }
   // La figura es una imagen que carga
   await expect.poll(() => page.locator("#journal .journal-show img").evaluate(i => i.naturalWidth)).toBeGreaterThan(0);
+});
+
+test("una misión que da el PNJ de cada clase lo dice, y el paso no pone a uno cualquiera", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 7);
+  // Sin PNJ único ni jefe, el estandarte va sin figura
+  await expect(page.locator("#journal .journal-banner .journal-show")).toHaveCount(0);
+  const q = page.locator("#journal .q-item", { hasText: "La cólera de los dioses" });
+  await expect(q.locator(".q-start")).toContainText("depende de tu clase");
+  await expect(q.locator(".q-start")).not.toContainText("Rigal");
+  // Sin punto de inicio, el primer PNJ al que se va: Pandawelo en «De la mano»
+  await stepData(page, 64);
+  await expect(page.locator("#journal .q-item", { hasText: "De la mano" }).locator(".q-start")).toContainText("Pandawelo");
 });
 
 test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
