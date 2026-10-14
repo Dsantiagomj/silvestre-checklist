@@ -132,7 +132,7 @@ const VIEWS = [
 ];
 
 // Lo que dura el cambio de vista; luego la instantánea de la vista que se fue desaparece
-export const SWAP_MS = 520;
+export const SWAP_MS = 320;
 
 /**
  * Cambio entre diario y mapa como un zoom sobre el sello del paso actual: del mapa al

@@ -249,7 +249,7 @@ export function showOnMap(n) {
     const node = document.querySelector(`.map-node[data-n="${n}"]`);
     const r = node?.getBoundingClientRect();
     if (r && (r.top < 80 || r.bottom > innerHeight)) node.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, prefersReducedMotion() ? 0 : 540);
+  }, prefersReducedMotion() ? 0 : 340);
 }
 
 /** Desde el mapa: abre el paso en el diario. */
