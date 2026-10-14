@@ -31,7 +31,7 @@ test("el hero ocupa todo el ancho y casi toda la pantalla", async ({ page }) => 
   expect(box.height).toBeGreaterThanOrEqual(900 * 0.72);
 });
 
-test("el Dofus se llena de color con el progreso", async ({ page }) => {
+test("el anillo marca el progreso y el Dofus sigue apagado hasta el final", async ({ page }) => {
   await openApp(page, SEED);
   const pct = parseFloat(await page.locator("#heroPct").innerText());
   expect(pct).toBeGreaterThan(0);
@@ -39,6 +39,46 @@ test("el Dofus se llena de color con el progreso", async ({ page }) => {
   expect(p).toBeCloseTo(pct, 1);
   await expect(page.locator(".hero-egg")).not.toHaveClass(/obtained/);
   await expect(page.locator(".egg-pct small")).toContainText("Obtención");
+  // El huevo no se va encendiendo: el Silvestre, apagado
+  await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "off");
+  await expect(page.locator(".egg-body .egg-on")).toHaveCount(0);
+  await expect(page.locator(".egg-body .egg-off")).toHaveAttribute("src", /items\/23036\.png$/);
+});
+
+const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
+
+test("con el paso 99 hecho, en el anillo está la Piñata de pino", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(99) });
+  await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "pinata");
+  await expect(page.locator(".egg-body .egg-on")).toHaveAttribute("src", /items\/23035\.png$/);
+  await expect(page.locator(".egg-body .egg-off")).toHaveCount(0);
+});
+
+test("al marcar el 100 se sube al hero y la Piñata de pino se convierte en el Dofus Silvestre", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(99) });
+  const egg = page.locator(".hero-egg");
+  await page.locator('.diary-row[data-n="100"] .row-check').click();
+  // Sube hasta el hero y se ve la transformación
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(80);
+  await expect(egg).toHaveClass(/morphing/);
+  await expect(page.locator(".egg-body .egg-from")).toHaveAttribute("src", /items\/23035\.png$/);
+  // Al terminar, el Silvestre encendido
+  await expect(egg).not.toHaveClass(/morphing/, { timeout: 6_000 });
+  await expect(egg).toHaveAttribute("data-stage", "silvestre");
+  await expect(page.locator(".egg-body .egg-on")).toHaveAttribute("src", /items\/23036\.png$/);
+  await expect(page.locator(".egg-body .egg-from")).toHaveCount(0);
+  // Al recargar ya está encendido, sin repetir la animación
+  await page.reload();
+  await expect(egg).toHaveAttribute("data-stage", "silvestre");
+  await expect(egg).not.toHaveClass(/morphing/);
+});
+
+test("con movimiento reducido el Dofus cambia sin animación", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openApp(page, { "silvestre:done": upTo(99) });
+  await page.locator('.diary-row[data-n="100"] .row-check').click();
+  await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "silvestre");
+  await expect(page.locator(".hero-egg")).not.toHaveClass(/morphing/);
 });
 
 test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {

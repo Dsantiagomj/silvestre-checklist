@@ -1569,11 +1569,37 @@ header.show-progress .tb-progress{
 .egg-body img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .egg-off{ filter:grayscale(1) brightness(.42) drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
 [data-theme="light"] .egg-off{ filter:grayscale(1) brightness(.8) opacity(.55); }
-/* El recorte marca hasta dónde se ha llenado. Por los lados y abajo se sale del cuadro
-   para no cortar el brillo: si no, el drop-shadow deja un borde recto alrededor. */
-.egg-on{ clip-path:inset(calc((100 - var(--p)) * 1%) -40px -40px -40px); filter:drop-shadow(0 0 12px rgba(183,220,105,.5)); }
+/* El huevo no se llena con el progreso (eso lo dice el anillo): el Silvestre va apagado,
+   con el 99 la Piñata de pino encendida y con el 100 el Silvestre encendido */
+.egg-on{ filter:drop-shadow(0 0 14px rgba(183,220,105,.6)); }
+.hero-egg[data-stage="silvestre"] .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
 .hero-egg.obtained .egg-body{ animation:egg-obtained 1.2s ease-in-out infinite; }
-.hero-egg.obtained .egg-on{ clip-path:inset(-40px); filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
+/* La transformación (MORPH_MS en Hero.jsx): mientras sube al hero la Piñata espera;
+   luego tiembla cada vez más, se llena de luz y estalla; el Silvestre sale del destello */
+.hero-egg.morphing .egg-body{ animation:none; }
+.hero-egg.morphing .egg-from{ animation:egg-morph-out 2.3s cubic-bezier(.5,0,.75,0) .7s both; }
+.hero-egg.morphing .egg-on{ animation:egg-morph-in 1.1s cubic-bezier(.3,1.5,.5,1) 2.3s both; }
+.egg-flash{
+  position:absolute; inset:-60%; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, #fff 0, rgba(233,255,190,.9) 18%, rgba(183,220,105,.45) 40%, transparent 68%);
+  animation:egg-morph-flash 1.2s ease-out 2.05s both;
+}
+.hero-egg.morphing .egg-ring{ animation:egg-morph-ring 1.4s ease-out 2.1s both; }
+@keyframes egg-morph-out{
+  0%{ transform:none; filter:drop-shadow(0 0 14px rgba(183,220,105,.6)); }
+  15%{ transform:rotate(-6deg); } 25%{ transform:rotate(6deg); } 35%{ transform:rotate(-9deg); }
+  45%{ transform:rotate(9deg) scale(1.03); } 55%{ transform:rotate(-12deg) scale(1.05); }
+  65%{ transform:rotate(12deg) scale(1.08); } 75%{ transform:rotate(-14deg) scale(1.1); }
+  85%{ transform:rotate(0) scale(1.15); filter:brightness(2.2) drop-shadow(0 0 30px #fff); opacity:1; }
+  100%{ transform:scale(1.6); filter:brightness(4) drop-shadow(0 0 40px #fff); opacity:0; }
+}
+@keyframes egg-morph-in{
+  0%{ opacity:0; transform:scale(.3); filter:brightness(3) drop-shadow(0 0 40px #fff); }
+  60%{ opacity:1; transform:scale(1.18); }
+  100%{ opacity:1; transform:scale(1); filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
+}
+@keyframes egg-morph-flash{ 0%{ opacity:0; transform:scale(.2); } 25%{ opacity:1; } 100%{ opacity:0; transform:scale(1.4); } }
+@keyframes egg-morph-ring{ 0%{ filter:drop-shadow(0 0 8px rgba(183,220,105,.5)); } 30%{ filter:drop-shadow(0 0 26px rgba(233,255,190,1)) brightness(1.5); } 100%{ filter:drop-shadow(0 0 8px rgba(183,220,105,.5)); } }
 @keyframes egg-float{ 50%{ transform:translateY(-7px); } }
 @keyframes egg-obtained{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
 /* Cifra y pasos con fondo propio: debajo del disco el mapa queda a la vista */
