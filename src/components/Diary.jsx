@@ -78,6 +78,7 @@ function DiaryWindow({ step, children }) {
   const ref = useRef(null);
   useLayoutEffect(() => {
     ref.current.querySelector(".diary-detail")?.scrollTo(0, 0);
+    ref.current.querySelector(".diary-detail .journal-body")?.scrollTo(0, 0);
   }, [step]);
   return <div className="diary-window" ref={ref}>{children}</div>;
 }
