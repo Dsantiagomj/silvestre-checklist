@@ -2585,10 +2585,12 @@ header.show-progress .tb-progress{
   50%{ box-shadow:0 0 0 14px color-mix(in srgb, var(--amber) 8%, transparent), 0 0 46px color-mix(in srgb, var(--amber) 80%, transparent); }
 }
 @media (prefers-reduced-motion:no-preference){
-  /* Mientras dura el zoom entre diario y mapa solo se mueven las dos capas */
+  /* Zoom entre diario y mapa: las dos capas en la GPU y la que se va, quieta por dentro.
+     La que llega NO se toca: si se le quitaran sus animaciones de entrada durante el
+     zoom, al devolvérselas arrancarían de cero y el contenido parpadearía */
   .steps-stage.swap{ overflow:clip; }
   .steps-stage.swap .steps-layer{ will-change:transform, opacity; backface-visibility:hidden; }
-  .steps-stage.swap .steps-layer *{ animation:none !important; transition:none !important; }
+  .steps-stage.swap .steps-layer[inert] *{ animation:none !important; transition:none !important; }
   /* Otro paso: el paisaje se asienta, el jefe aparece de un salto y el texto sube */
   .journal-bg{ animation:hero-bg-in .55s cubic-bezier(.2,.8,.2,1) both; }
   .journal-show{ animation:boss-pop .45s cubic-bezier(.3,1.4,.5,1) .08s both; }
