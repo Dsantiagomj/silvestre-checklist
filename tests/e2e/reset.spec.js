@@ -149,6 +149,7 @@ test("reiniciar los pasos borra también el avance de las misiones, y deshacer l
   expect(await readLS(page, "silvestre:questPos")).toEqual({});
   // En el diario, los objetivos vuelven a empezar
   await page.click('.diary-row[data-n="1"] .row-main');
+  await page.locator("#journal .q-item").first().locator("summary").click();
   const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   await expect(rows.first()).toHaveClass(/\bnow\b/);

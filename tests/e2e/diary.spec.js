@@ -345,7 +345,7 @@ test("los objetivos de una misión son una ruta de medallones con su avance", as
   await openApp(page, { "silvestre:questPos": { 5: 0 }, "silvestre:questObjective": { 894: 3 } });
   await page.click('.diary-row[data-n="5"] .row-main');
   const quest = page.locator("#journal .q-item", { hasText: "Las primeras impresiones" });
-  await quest.evaluate(e => { e.open = true; });
+  await quest.locator("summary").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   // Medallón con un objeto del juego por tipo: carta para hablar, espada para combatir…
@@ -366,7 +366,7 @@ test("con el paso hecho, todos sus objetivos salen hechos", async ({ page }) => 
   await openApp(page, { "silvestre:done": { 4: true, 5: true } });
   await page.click('.diary-row[data-n="5"] .row-main');
   const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
-  await page.locator("#journal .q-item").first().evaluate(e => { e.open = true; });
+  await page.locator("#journal .q-item").first().locator("summary").click();
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   expect(await rows.evaluateAll(els => els.every(el => el.classList.contains("done")))).toBe(true);
 });
@@ -377,7 +377,7 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   await openApp(page);
   await page.click('.diary-row[data-n="5"] .row-main');
   const quest = page.locator("#journal .q-item").first();
-  await quest.evaluate(e => { e.open = true; });
+  await quest.locator("summary").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   expect(await routeStates(rows)).toMatch(/^n-+$/);
@@ -394,10 +394,25 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "");
 });
 
-test("la misión en curso del paso se abre sola", async ({ page }) => {
-  await openApp(page, { "silvestre:questPos": { 5: 1 } });
-  await page.click('.diary-row[data-n="5"] .row-main');
-  await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "", { timeout: 15_000 });
+test("al abrir un paso todas sus misiones salen plegadas, también la de la parada y la que va en curso", async ({ page }) => {
+  // Paso 17: la primera misión es la que va en curso y otra lleva la línea verde
+  await openApp(page, { "silvestre:questPos": { 17: 0 } });
+  await page.click('.diary-row[data-n="17"] .row-main');
+  const quests = page.locator("#journal .q-item");
+  await expect(quests.first()).toBeVisible({ timeout: 15_000 });
+  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
+  // Una sola misión, igual
+  await page.click('.diary-row[data-n="4"] .row-main');
+  await expect(page.locator("#journal .journal-num")).toHaveText("4");
+  await expect(quests).toHaveCount(1);
+  await expect(quests.first()).not.toHaveAttribute("open", "");
+  // Desde el mapa, igual
+  await page.click("#journal .journal-to-map");
+  await page.locator('.map-node[data-n="17"]').click();
+  await page.locator("#mapCard .map-card-open").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("17");
+  await expect(quests.first()).toBeVisible({ timeout: 15_000 });
+  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
 });
 
 test("«hasta que puedas entrar a la mazmorra» pone la parada antes de entrar en ella", async ({ page }) => {
@@ -443,6 +458,4 @@ test("la parada de Maxilubo (paso 10) cae antes del hueso que se consigue venci�
   await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop")).toContainText("Hasta tener que pasar Maxilubo");
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Consigue un hueso de hierro");
-  // La misión con la parada va abierta
-  await expect(quest).toHaveAttribute("open", "");
 });

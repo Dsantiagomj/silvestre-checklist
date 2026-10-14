@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
@@ -151,8 +151,15 @@ function Quests({ step, quests, loaded, s }) {
   const found = stopPoint(step, quests);
   const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1];
   const stop = found && (done ? { ...found, text: done, resume: true } : found);
-  // La misión en curso (la del avance del overlay o del diario) va abierta
-  const pos = Math.min(s.questPos[step.n] || 0, quests.length - 1);
+  // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
+  // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso)
+  const [opened, setOpened] = useState(() => new Set());
+  const setOpen = (id, on) => setOpened(prev => {
+    if (prev.has(id) === on) return prev;
+    const next = new Set(prev);
+    if (on) next.add(id); else next.delete(id);
+    return next;
+  });
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
@@ -161,10 +168,13 @@ function Quests({ step, quests, loaded, s }) {
         const at = progressOf(s, step.n, quests, i, q);
         const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
         // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él
-        const pick = s.done[step.n] ? null : k => setObjective(step.n, i, q.id, k, total, quests.length);
+        const pick = s.done[step.n] ? null : k => {
+          setObjective(step.n, i, q.id, k, total, quests.length);
+          if (k >= total && quests[i + 1]) setOpen(quests[i + 1].id, true);
+        };
         return (
-          <details className="q-item" key={q.id}
-            open={stop?.quest === q.id || quests.length === 1 || (!s.done[step.n] && i === pos)}>
+          <details className="q-item" key={q.id} open={opened.has(q.id)}
+            onToggle={e => setOpen(q.id, e.currentTarget.open)}>
             <summary>
               <QuestMark className="q-mark" />
               <span className="q-name">{q.n}</span>
