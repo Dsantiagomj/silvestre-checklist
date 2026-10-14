@@ -136,6 +136,8 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
+  await page.click("#needsShowSummary");
+  await page.click("#needsShowLists");
   await expect(page.locator("#prereqsCount")).toHaveText("18/18");
   await expect(page.locator(".pr-card:not(.done)")).toHaveCount(0);
   await page.click("#tabItems");

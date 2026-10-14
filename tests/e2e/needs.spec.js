@@ -299,3 +299,39 @@ test("en la lista la búsqueda filtra en vez de atenuar", async ({ page }) => {
   expect(n).toBeGreaterThan(0);
   await expect(page.locator("#items .slot.list:not(.match)")).toHaveCount(0);
 });
+
+const ALL_DONE = range(1, 100);
+
+test("al 100 % la sección se contrae en una franja y se despliega en dos niveles", async ({ page }) => {
+  await openApp(page, { "silvestre:done": ALL_DONE });
+  const needs = page.locator("#needs");
+  // Franja: todo reunido, sin pestañas ni listas
+  await expect(needs.locator(".needs-done-title")).toHaveText("Todo reunido");
+  await expect(needs.locator(".needs-done-chip")).toHaveText(["18 prerrequisitos", "420 objetos"]);
+  await expect(page.locator("#tabItems")).toHaveCount(0);
+  await expect(page.locator(".needs-summary")).toHaveCount(0);
+  // Primer nivel: el resumen de lo reunido
+  await page.click("#needsShowSummary");
+  const summary = page.locator(".needs-summary");
+  await expect(summary.locator(".needs-sum-total")).toHaveText("6.770");
+  await expect(summary.locator(".needs-sum-top li")).toHaveCount(6);
+  await expect(summary.locator(".needs-sum-top li").first()).toContainText("Pepita");
+  await expect(summary.locator(".needs-sum-top li").first()).toContainText("2.202");
+  await expect(summary.locator(".needs-sum-cats")).toContainText("1 cosmético");
+  await expect(summary.locator(".needs-sum-cats")).not.toContainText("1 cosméticos");
+  // Segundo nivel: las listas completas, y se puede volver a contraer
+  await page.click("#needsShowLists");
+  await expect(page.locator("#tabPrereqs")).toBeVisible();
+  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await page.click("#needsCollapse");
+  await expect(page.locator("#tabItems")).toHaveCount(0);
+  await expect(needs.locator(".needs-done-title")).toBeVisible();
+});
+
+test("si se baja del 100 % la sección vuelve a su forma normal", async ({ page }) => {
+  const almost = { ...ALL_DONE };
+  delete almost[100];
+  await openApp(page, { "silvestre:done": almost });
+  await expect(page.locator(".needs-done-title")).toHaveCount(0);
+  await expect(page.locator("#tabPrereqs")).toBeVisible();
+});

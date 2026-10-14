@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ALL_PREREQS } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
-import { ALL_ROWS } from "../lib/resources.js";
+import { ALL_ROWS, CATEGORIES, RES_ITEMS, rowName } from "../lib/resources.js";
 import {
-  getState, ownedCount, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setNeedsTab, setRowsOwned, showToast,
+  getState, guideComplete, ownedCount, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setNeedsTab, setRowsOwned, showToast,
   useAppState,
 } from "../state/store.js";
 import ItemsPanel, { itemsView } from "./needs/ItemsPanel.jsx";
@@ -27,6 +27,66 @@ function Tab({ id, tab, active, icon, name, done, total, hint }) {
   );
 }
 
+// Resumen de lo reunido: se calcula una vez, es la guía entera
+const fmt = new Intl.NumberFormat("es", { useGrouping: "always" });
+const UNITS = ALL_ROWS.reduce((n, r) => n + r.a[0][1], 0);
+const TOP = [...ALL_ROWS].sort((a, b) => b.a[0][1] - a.a[0][1]).slice(0, 6);
+const BY_CAT = CATEGORIES.map(([k, label]) => [label.toLowerCase(), ALL_ROWS.filter(r => r.c === k)
+  .reduce((n, r) => n + r.a[0][1], 0)]).filter(([, n]) => n > 0);
+
+/**
+ * Con la guía completa: una franja que confirma que está todo, que se despliega en el
+ * resumen de lo reunido y, desde ahí, en las listas completas.
+ */
+function DoneStrip({ level, setLevel }) {
+  return (
+    <>
+      <div className="needs-done">
+        <span className="needs-done-ok" aria-hidden="true">✓</span>
+        <div className="needs-done-head">
+          <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
+          <p className="needs-done-title">Todo reunido</p>
+        </div>
+        <span className="needs-done-chip">
+          {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}{ALL_PREREQS.length} prerrequisitos
+        </span>
+        <span className="needs-done-chip">
+          {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}{ALL_ROWS.length} objetos
+        </span>
+        <div className="spacer"></div>
+        <button type="button" className="needs-done-toggle" id="needsShowSummary" aria-expanded={String(level === "summary")}
+          onClick={() => setLevel(level === "summary" ? "strip" : "summary")}>
+          {level === "summary" ? "Ocultar resumen ▴" : "Ver resumen ▾"}
+        </button>
+      </div>
+      {level === "summary" && (
+        <div className="needs-summary">
+          <div className="needs-sum-big">
+            <b className="needs-sum-total">{fmt.format(UNITS)}</b>
+            <span>unidades reunidas<br />en {ALL_ROWS.length} objetos distintos</span>
+          </div>
+          <ol className="needs-sum-top" aria-label="Lo que más pesó">
+            {TOP.map(r => (
+              <li key={r.k}>
+                {RES_ITEMS[r.a[0][0]].img && <img src={imgUrl(RES_ITEMS[r.a[0][0]].img)} alt="" />}
+                <b>{fmt.format(r.a[0][1])}</b>
+                <span>{rowName(r)}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="needs-sum-cats">
+            {BY_CAT.map(([label, n]) => <span key={label}><b>{fmt.format(n)}</b> {n === 1 ? label.replace(/s$/, "") : label}</span>)}
+            <span><b>{ALL_PREREQS.length}</b> prerrequisitos</span>
+          </p>
+          <button type="button" className="needs-act" id="needsShowLists" onClick={() => setLevel("lists")}>
+            Ver listas completas
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 /**
  * LO QUE NECESITAS · prerrequisitos y objetos en una sección con dos pestañas.
  * "Marcar todo" y "Limpiar" actúan sobre lo que se ve y se pueden deshacer.
@@ -34,6 +94,9 @@ function Tab({ id, tab, active, icon, name, done, total, hint }) {
 export default function Needs() {
   const s = useAppState();
   const searchRef = useRef(null);
+  // Con la guía completa: strip (franja) | summary (resumen) | lists (como siempre)
+  const [doneLevel, setDoneLevel] = useState("strip");
+  const complete = guideComplete(s);
   const tab = s.needsTab;
   const items = tab === "items" ? itemsView(s) : null;
   const toMark = tab === "items" ? items.visible.filter(r => !rowHave(s, r)) : null;
@@ -45,6 +108,7 @@ export default function Needs() {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
       e.preventDefault();
+      setDoneLevel("lists");   // con la guía completa, despliega las listas para que haya buscador
       setNeedsTab("items");
       requestAnimationFrame(() => {
         searchRef.current?.focus();
@@ -74,11 +138,22 @@ export default function Needs() {
   const canMark = tab === "prereqs" ? preDone < ALL_PREREQS.length : toMark.length > 0;
   const canClear = tab === "prereqs" ? Object.keys(s.prereqs).length > 0 : toClear.length > 0;
 
+  if (complete && doneLevel !== "lists") {
+    return (
+      <section className="needs done" id="needs" aria-labelledby="needsTitle">
+        <DoneStrip level={doneLevel} setLevel={setDoneLevel} />
+      </section>
+    );
+  }
+
   return (
     <section className="needs" id="needs" aria-labelledby="needsTitle">
       <div className="needs-head">
         <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
         <div className="spacer"></div>
+        {complete && (
+          <button type="button" className="needs-act" id="needsCollapse" onClick={() => setDoneLevel("strip")}>Contraer ▴</button>
+        )}
         <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
           ✓ Marcar todo
         </button>
