@@ -133,7 +133,7 @@ export default function Hero() {
           <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
             <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
             <div className="hero-reqs-grid">
-              <button className={"hero-req" + (pendingPrereqs > 0 ? " warn" : "")} id="heroWarn" onClick={openPrereqs}
+              <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={openPrereqs}
                 aria-label={pendingPrereqs > 0
                   ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
                   : "Prerrequisitos completos. Ver prerrequisitos"}>
@@ -144,7 +144,7 @@ export default function Hero() {
                 </span>
                 <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
               </button>
-              <button className="hero-req" id="heroItems" onClick={openShop}
+              <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={openShop}
                 aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
                 {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
                 <span className="hero-req-meta">

@@ -1915,10 +1915,15 @@ header.show-progress .tb-progress{
   border-radius:999px; background:color-mix(in srgb, var(--txt) 12%, transparent); overflow:hidden;
 }
 .hero-req-bar i{ display:block; height:100%; background:var(--amber); border-radius:999px; transition:width .6s ease; }
-.hero-req.warn{ border-color:rgba(224,85,107,.55); }
-.hero-req.warn .hero-req-name{ color:#ff9aac; }
-.hero-req.warn .hero-req-bar i{ background:#e0556b; }
-[data-theme="light"] .hero-req.warn .hero-req-name{ color:#a02a42; }
+/* Pendiente es lo normal al empezar: neutro. Completo: borde de acento y una marca */
+.hero-req.complete{ border-color:color-mix(in srgb, var(--accent-ink) 70%, transparent); }
+.hero-req.complete .hero-req-name{ color:var(--accent-ink); }
+.hero-req.complete::after{
+  content:"✓";
+  position:absolute; top:8px; right:10px;
+  display:grid; place-items:center; width:20px; height:20px; border-radius:50%;
+  background:var(--amber); color:#142208; font-size:12px; font-weight:800;
+}
 
 /* Siguiente paso */
 .hero-next{
