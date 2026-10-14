@@ -6,6 +6,7 @@ import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
 import { loadQuests, markSteps, selectStep, toggleStep, useAppState } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
+import QuestMark from "./QuestMark.jsx";
 
 // Los tres resaltados de la guía (rojo, verde, azul en torrentearcano)
 const CALL = {
@@ -97,7 +98,7 @@ function Quests({ step, quests, loaded }) {
         return (
           <details className="q-item" key={q.id} open={stop?.quest === q.id || quests.length === 1}>
             <summary>
-              <span className="q-num">{i + 1}</span>
+              <QuestMark className="q-mark" />
               <span className="q-name">{q.n}</span>
               <span className="q-lv">{`nv. ${q.lv}`}</span>
               {missionGuide(q.n) && (

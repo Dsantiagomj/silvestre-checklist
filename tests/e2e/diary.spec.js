@@ -162,3 +162,11 @@ test("pulsar un objeto de «Necesitas» copia su nombre para el mercadillo", asy
   await expect(page.locator("#journal .req-copied")).toContainText("Glándula de arak-hai");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Glándula de arak-hai");
 });
+
+test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de misión", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await expect(page.locator("#journal .q-item summary .quest-mark")).toHaveCount(2, { timeout: 15_000 });
+  // Los 4 pasos sin icono propio no quedan en blanco
+  await expect(page.locator(".diary-row .row-art .quest-mark")).toHaveCount(4);
+});

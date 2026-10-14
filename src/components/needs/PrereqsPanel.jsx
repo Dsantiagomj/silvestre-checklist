@@ -3,6 +3,7 @@ import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
 import { isPrereqDone, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
+import QuestMark from "../QuestMark.jsx";
 
 const GROUPS = [
   { title: "Logros previos", items: PREREQS_LOGROS },
@@ -53,7 +54,7 @@ function PrereqCard({ p, done }) {
       <span className={"pr-icons" + layout} aria-hidden="true">
         {icons.length
           ? icons.slice(0, 4).map((i, k) => <img key={k} src={imgUrl(i.img)} alt="" loading="lazy" />)
-          : <span className="pr-quest">📜</span>}
+          : <span className="pr-quest"><QuestMark /></span>}
       </span>
       <span className="pr-body">
         {zone && <span className="pr-zone">{zone}</span>}

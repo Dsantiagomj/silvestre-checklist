@@ -721,8 +721,12 @@ a:hover{ text-decoration:underline; }
   width:26px; height:26px;
   display:grid; place-items:center;
   border-radius:6px; background:var(--inset); border:1px solid var(--line);
-  font-size:13px;
 }
+/* Símbolo de misión: misma «!» en prerrequisitos, misiones del paso y filas sin imagen */
+.quest-mark{ display:block; width:auto; height:100%; filter:drop-shadow(0 0 4px rgba(143,209,58,.45)); }
+.pr-quest .quest-mark{ height:70%; }
+.q-mark{ flex:none; height:20px; }
+.row-art .quest-mark{ height:24px; margin:auto; }
 
 /* Objetos necesarios dentro del detalle */
 .req{
@@ -932,12 +936,6 @@ button.req-item{ padding:0; font:inherit; color:inherit; cursor:copy; }
 }
 .q-item > summary::-webkit-details-marker{ display:none; }
 .q-item[open] > summary{ border-bottom:1px solid var(--line); }
-.q-num{
-  width:20px; height:20px; flex-shrink:0;
-  display:grid; place-items:center;
-  border-radius:50%; background:var(--inset);
-  font-size:11px; font-weight:700; color:var(--accent-ink);
-}
 .q-name{ flex:1; min-width:0; font-weight:600; color:var(--txt); }
 .q-lv{ font-size:11.5px; color:var(--txt-mute); }
 .q-start{ margin:8px 10px 4px; font-size:12px; color:var(--txt-soft); }
@@ -1826,7 +1824,9 @@ header.show-progress .tb-progress{
 .pr-card .pr-icons.pair img:nth-child(2){ right:0; bottom:0; }
 .pr-card .pr-icons.quad{ grid-template-columns:1fr 1fr; gap:3px; }
 .pr-card .pr-icons.quad img{ width:24px; height:24px; }
-.pr-card .pr-quest{ font-size:26px; }
+/* Mismo marco que los iconos de logro: la «!» no queda pequeña a su lado */
+.pr-card .pr-icons .pr-quest{ width:48px; height:48px; box-shadow:0 2px 4px rgba(0,0,0,.25); }
+.pr-card .pr-quest .quest-mark{ height:64%; }
 .pr-body{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
 .pr-zone{ font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--txt-mute); }
 .pr-title{ font-size:14px; font-weight:600; line-height:1.35; color:var(--txt-soft); }
