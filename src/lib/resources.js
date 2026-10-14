@@ -29,13 +29,14 @@ export const rowsOf = n => RES_STEPS[String(n)] || [];
  * Suma las filas de varios pasos. Los objetos que se conservan tras usarse (r) cuentan
  * el máximo, no la suma, y las filas solo necesarias en un caso concreto (x) no cuentan:
  * son las reglas del compilado de la propia página. Con `had(k, n)` (la parte del paso
- * n ya está cogida o cubierta) cada fila lleva además lo que falta en `left`.
+ * n ya está cogida o cubierta) cada fila lleva además lo que falta en `left`. Con
+ * `skip(k, n)` esa parte no cuenta (lo ya gastado, o lo que aún no).
  */
-export function aggregate(steps, had) {
+export function aggregate(steps, had, skip) {
   const rows = new Map();
   for (const n of steps) {
     for (const row of rowsOf(n)) {
-      if (row.x) continue;
+      if (row.x || skip?.(row.k, n)) continue;
       const cur = rows.get(row.k);
       const left = had && row.a.map(([, q]) => (had(row.k, n) ? 0 : q));
       if (!cur) {
