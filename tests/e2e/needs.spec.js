@@ -341,9 +341,13 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await page.click("#needsCollapse");
   const strip = page.locator("#needs .needs-strip");
   // Los objetos de los pasos 1 a 40 ya cuentan como cubiertos
-  await expect(strip.locator(".needs-done-chip")).toHaveText(["Prerrequisitos 18/18", /^Objetos \d+\/420$/]);
-  await expect(strip.locator(".needs-done-chip").nth(1)).toHaveText(`Objetos ${await page.locator("#heroItems .hero-req-count").textContent()}`);
+  await expect(strip.locator(".needs-meter b")).toHaveText(["18/18", /^\d+\/420$/]);
+  await expect(strip.locator(".needs-meter b").nth(1)).toHaveText(await page.locator("#heroItems .hero-req-count").textContent());
   await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
+  // Los objetos de "Pronto" a la vista: hasta 6 iconos y el resto en "+N"
+  const soon = Number((await strip.locator(".needs-strip-title").textContent()).match(/\d+/)[0]);
+  await expect(strip.locator(".needs-strip-icons img")).toHaveCount(Math.min(6, soon));
+  if (soon > 6) await expect(strip.locator(".needs-strip-icons .more")).toHaveText(`+${soon - 6}`);
   await expect(page.locator("#tabItems")).toHaveCount(0);
   // Se recuerda
   await page.reload();
@@ -352,6 +356,16 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await expect(page.locator("#tabItems")).toBeVisible();
   await page.reload();
   await expect(page.locator("#tabItems")).toBeVisible();
+});
+
+test("Marcar todo y Limpiar van con la lista, no junto a Ocultar", async ({ page }) => {
+  await openApp(page, MID);
+  await expect(page.locator(".needs-head .needs-act")).toHaveCount(0);
+  await expect(page.locator("#needsCollapse")).toHaveText(/^Ocultar/);
+  await page.click("#tabItems");
+  await expect(page.locator(".needs-toolbar #needsMarkAll")).toBeVisible();
+  await page.click("#tabPrereqs");
+  await expect(page.locator(".pr-top #needsClear")).toBeVisible();
 });
 
 test("las tarjetas del hero y el atajo / despliegan la sección contraída", async ({ page }) => {

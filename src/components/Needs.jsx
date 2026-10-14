@@ -88,30 +88,49 @@ function DoneStrip({ level, setLevel }) {
   );
 }
 
+const SOON_ICONS = 6;
+
+function Meter({ label, done, total }) {
+  return (
+    <span className="needs-meter">
+      <span>{label}</span><b>{done}/{total}</b>
+      <span className="needs-meter-bar" aria-hidden="true"><i style={{ width: `${(done / total) * 100}%` }}></i></span>
+    </span>
+  );
+}
+
 /**
- * Contraída a mano antes de terminar: lo esencial a la vista para no olvidar lo que falta
- * (prerrequisitos, objetos y lo que piden los próximos pasos).
+ * Contraída a mano antes de terminar: lo que piden tus próximos pasos (con sus iconos)
+ * y cómo vas. Toda la tarjeta la despliega.
  */
 function ProgressStrip({ s }) {
-  const soon = aggregate(soonSteps(s).filter(n => STEPS_WITH_ITEMS.includes(n))).filter(r => !rowHave(s, r)).length;
+  const soon = aggregate(soonSteps(s).filter(n => STEPS_WITH_ITEMS.includes(n))).filter(r => !rowHave(s, r));
+  const icons = soon.slice(0, SOON_ICONS);
   return (
-    <div className="needs-done needs-strip">
-      <div className="needs-done-head">
-        <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
-        <p className="needs-strip-title">
-          {soon ? `Pronto: ${soon} objetos para tus próximos pasos` : "Nada que reunir para tus próximos pasos"}
-        </p>
-      </div>
-      <span className="needs-done-chip">
-        {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}Prerrequisitos {prereqsDone(s)}/{ALL_PREREQS.length}
-      </span>
-      <span className="needs-done-chip">
-        {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}Objetos {ownedCount(s)}/{ALL_ROWS.length}
-      </span>
-      <div className="spacer"></div>
-      <button type="button" className="needs-done-toggle" id="needsExpand" aria-expanded="false"
-        onClick={() => setNeedsCollapsed(false)}>Desplegar ▾</button>
-    </div>
+    <>
+      <h2 className="sr-only" id="needsTitle">Lo que necesitas</h2>
+      <button type="button" className="needs-strip" id="needsExpand" aria-expanded="false"
+        onClick={() => setNeedsCollapsed(false)}>
+        <span className="needs-strip-head">
+          <span className="section-title" aria-hidden="true"><span className="section-num">01</span>Lo que necesitas</span>
+          <span className="needs-strip-title">
+            {soon.length ? `Pronto: ${soon.length} objetos para tus próximos pasos` : "Nada que reunir para tus próximos pasos"}
+          </span>
+        </span>
+        <span className="needs-strip-icons" aria-hidden="true">
+          {icons.map(r => {
+            const it = RES_ITEMS[r.a[0][0]];
+            return it.img ? <img key={r.k} src={imgUrl(it.img)} alt="" title={rowName(r)} /> : null;
+          })}
+          {soon.length > icons.length && <span className="more">+{soon.length - icons.length}</span>}
+        </span>
+        <span className="needs-meters">
+          <Meter label="Prerrequisitos" done={prereqsDone(s)} total={ALL_PREREQS.length} />
+          <Meter label="Objetos" done={ownedCount(s)} total={ALL_ROWS.length} />
+        </span>
+        <span className="needs-strip-go">Mostrar <i aria-hidden="true">▾</i></span>
+      </button>
+    </>
   );
 }
 
@@ -168,6 +187,18 @@ export default function Needs() {
   const canMark = tab === "prereqs" ? preDone < ALL_PREREQS.length : toMark.length > 0;
   const canClear = tab === "prereqs" ? Object.keys(s.prereqs).length > 0 : toClear.length > 0;
 
+  // Actúan sobre la pestaña abierta: van con su lista, no en la cabecera de la sección
+  const actions = (
+    <div className="needs-actions">
+      <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
+        ✓ Marcar todo
+      </button>
+      <button type="button" className="needs-act clear" id="needsClear" disabled={!canClear} onClick={() => act(false)}>
+        Limpiar
+      </button>
+    </div>
+  );
+
   if (!complete && s.needsCollapsed) {
     return (
       <section className="needs done" id="needs" aria-labelledby="needsTitle">
@@ -189,27 +220,21 @@ export default function Needs() {
       <div className="needs-head">
         <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
         <div className="spacer"></div>
-        <button type="button" className="needs-act" id="needsCollapse"
-          onClick={() => (complete ? setDoneLevel("strip") : setNeedsCollapsed(true))}>Contraer ▴</button>
-        <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
-          ✓ Marcar todo
-        </button>
-        <button type="button" className="needs-act clear" id="needsClear" disabled={!canClear} onClick={() => act(false)}>
-          Limpiar
-        </button>
+        <button type="button" className="needs-hide" id="needsCollapse" aria-expanded="true"
+          onClick={() => (complete ? setDoneLevel("strip") : setNeedsCollapsed(true))}>Ocultar <i aria-hidden="true">▴</i></button>
       </div>
-      <p className="needs-hint" id="needsHint">
-        {tab === "prereqs"
-          ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
-          : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
-      </p>
       <div className="needs-tabs" role="tablist" aria-label="Lo que necesitas">
         <Tab id="tabPrereqs" tab="prereqs" active={tab === "prereqs"} icon={HERO_ICONS?.prereqs} name="Prerrequisitos"
           done={preDone} total={ALL_PREREQS.length} hint="antes de empezar" />
         <Tab id="tabItems" tab="items" active={tab === "items"} icon={HERO_ICONS?.items} name="Objetos necesarios"
           done={ownedCount(s)} total={ALL_ROWS.length} hint="para los pasos pendientes" />
       </div>
-      {tab === "prereqs" ? <PrereqsPanel /> : <ItemsPanel searchRef={searchRef} />}
+      <p className="needs-hint" id="needsHint">
+        {tab === "prereqs"
+          ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
+          : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
+      </p>
+      {tab === "prereqs" ? <PrereqsPanel actions={actions} /> : <ItemsPanel searchRef={searchRef} actions={actions} />}
     </section>
   );
 }
