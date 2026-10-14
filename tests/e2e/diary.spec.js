@@ -667,6 +667,22 @@ test("en escritorio solo se desplazan avisos y misiones; la barra de pasos queda
   await expect(page.locator("#journal .journal-banner")).toBeInViewport();
 });
 
+test("el texto de la guía va con su rótulo, sin cita en cursiva ni flechas", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 1);
+  const guide = page.locator("#journal .goal-guide");
+  await expect(guide.locator(".goal-guide-label")).toHaveText("Texto de la guía");
+  await expect(guide.locator("img")).toHaveAttribute("src", /items\/25007\.png$/);
+  const base = guide.locator(".journal-base");
+  await expect(base).toHaveText("Misiones de mundo: Logro \"Pero ¿Dónde están los dofus?\"");
+  expect(await base.evaluate(el => getComputedStyle(el).fontStyle)).toBe("normal");
+  expect(await base.evaluate(el => getComputedStyle(el).borderLeftStyle)).toBe("none");
+  expect(await base.evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);
+  expect(await base.locator(".guide-link").first().evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);  // Un nombre que ya acaba en «?» no lleva punto detrás
+  await stepData(page, 34);
+  await expect(page.locator("#journal .goal-head .goal-line")).toHaveText("Misiones 1 a 2 del logro, hasta Arak-hais, ¿dónde vais?");
+});
+
 test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
   await openApp(page);
   await stepData(page, 17);

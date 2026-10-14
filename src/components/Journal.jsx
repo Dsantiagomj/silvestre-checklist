@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { CALL_ICONS, HEADER_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { CALL_ICONS, HEADER_ICONS, OBJ_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { MAP_IMG, groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
@@ -116,14 +116,16 @@ const listSteps = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.a
 /** Una frase con lo que pide el paso de un logro ("Misiones 1 a 7 del logro, hasta X."). */
 function goalText(e) {
   const name = k => e.m[k - 1] || "un objetivo del logro";
+  // Cierra con punto, salvo si el nombre de la misión ya acaba en «?», «!» o «.»
+  const end = t => (/[?!.]$/.test(t) ? t : `${t}.`);
   if (e.mode === "all") return e.m.length === 1 ? "La misión del logro." : `Las ${e.m.length} misiones del logro.`;
   if (e.mode === "upto") {
     const k = e.on.at(-1);
-    return k > 1 ? `Misiones 1 a ${k} del logro, hasta ${name(k)}.` : `Misión 1 del logro: ${name(1)}.`;
+    return end(k > 1 ? `Misiones 1 a ${k} del logro, hasta ${name(k)}` : `Misión 1 del logro: ${name(1)}`);
   }
-  return e.on.length > 1
-    ? `Misiones ${listSteps(e.on)} del logro: ${listSteps(e.on.map(name))}.`
-    : `Misión ${e.on[0]} del logro: ${name(e.on[0])}.`;
+  return end(e.on.length > 1
+    ? `Misiones ${listSteps(e.on)} del logro: ${listSteps(e.on.map(name))}`
+    : `Misión ${e.on[0]} del logro: ${name(e.on[0])}`);
 }
 
 const TIERS = Object.keys(TIER_META);
@@ -196,7 +198,13 @@ function Goal({ step, done }) {
           ))}
         </ul>
       )}
-      <blockquote className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></blockquote>
+      <div className="goal-guide">
+        {OBJ_ICONS.free && <img src={imgUrl(OBJ_ICONS.free)} alt="" />}
+        <div>
+          <small className="goal-guide-label">Texto de la guía</small>
+          <p className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></p>
+        </div>
+      </div>
       {includes.length > 0 && (
         <div className="goal-inc">
           {includes.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
