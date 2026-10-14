@@ -237,11 +237,15 @@ test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos g
   const otomai = page.locator('.pr-card[data-id="l4"]');
   await expect(otomai.locator(".pr-zone")).toHaveText("Isla de Otomaï");
   await expect(otomai.locator(".pr-title")).toHaveText('Logro "El gran Guarrok". (Completo)');
-  await expect(page.locator('.pr-card[data-id="o5"] .pr-badge')).toHaveText("Nv. 100");
+  // Nivel y obligatoriedad en palabras, bajo el nombre (no en una etiqueta suelta)
+  await expect(page.locator(".pr-badge")).toHaveCount(0);
   await expect(page.locator('.pr-card[data-id="o5"] .pr-title')).toHaveText("Campesino");
-  await expect(page.locator('.pr-card[data-id="h1"] .pr-badge')).toHaveText("Obligatorio");
-  await expect(page.locator('.pr-card[data-id="h3"] .pr-badge')).toHaveText("Opcional");
-  await expect(page.locator('.pr-card[data-id="h3"] .pr-sub')).toHaveText("Útil para el paso 64");
+  await expect(page.locator('.pr-card[data-id="o5"] .pr-sub')).toHaveText("Nivel 100");
+  await expect(page.locator('.pr-card[data-id="o6"] .pr-sub')).toHaveText("Nivel 200 · campesino, alquimista, leñador, pescador, etc.");
+  await expect(page.locator('.pr-card[data-id="h1"] .pr-sub')).toHaveText("Obligatorio");
+  await expect(page.locator('.pr-card[data-id="h3"] .pr-sub')).toHaveText("Opcional · útil para el paso 64");
+  // Los iconos del juego ya traen marco: sin losa propia alrededor
+  expect(await page.locator('.pr-card[data-id="o5"] .pr-icons').evaluate(el => getComputedStyle(el).borderTopStyle)).toBe("none");
   const icon = await page.locator('.pr-card[data-id="l4"] .pr-icons img').boundingBox();
   expect(icon.width).toBeGreaterThanOrEqual(36);
   // Tres columnas en escritorio

@@ -14,31 +14,34 @@ const PREREQ_ROWS = aggregate([PREREQ_STEP]);
 /**
  * Parte el texto de Sandglass para la tarjeta, sin cambiar lo que dice:
  *   'Isla de Otomaï: Logro "X". (Completo)' -> zona "Isla de Otomaï", título 'Logro "X". (Completo)'
- *   "Campesino nivel 100"                   -> título "Campesino", etiqueta "Nv. 100"
- *   "Llamilla (obligatorio)"                -> título "Llamilla", etiqueta "Obligatorio"
+ *   "Campesino nivel 100"                   -> título "Campesino", detalle "Nivel 100"
+ *   "Zanahowia (no obligatorio, útil …)"    -> título "Zanahowia", detalle "Opcional · útil …"
+ * El detalle va en palabras bajo el nombre: una etiqueta suelta no decía qué era.
  */
 export function prereqParts(text) {
   let title = text.trim().replace(/\.$/, "");
-  let zone = null, badge = null, sub = null;
+  let zone = null, lead = null, rest = [];
   const paren = title.match(/^(.*?)\s*\(([^)]*)\)$/);
   if (paren && /obligatorio|etc\./i.test(paren[2])) {
     title = paren[1];
-    const [kind, ...rest] = paren[2].split(/,\s*/);
-    if (/^no obligatorio$/i.test(kind)) badge = "Opcional";
-    else if (/^obligatorio$/i.test(kind)) badge = "Obligatorio";
-    else rest.unshift(kind);
-    if (rest.length) sub = rest.join(", ").replace(/^./, c => c.toUpperCase());
+    const [kind, ...more] = paren[2].split(/,\s*/);
+    if (/^no obligatorio$/i.test(kind)) lead = "Opcional";
+    else if (/^obligatorio$/i.test(kind)) lead = "Obligatorio";
+    else more.unshift(kind);
+    rest = more;
   }
   const level = title.match(/^(.*?)\s+nivel\s+(\d+)$/i);
-  if (level) { title = level[1]; badge = `Nv. ${level[2]}`; }
+  if (level) { title = level[1]; lead = `Nivel ${level[2]}`; }
   const colon = title.indexOf(": ");
   if (colon > 0) { zone = title.slice(0, colon); title = title.slice(colon + 2); }
-  return { zone, title, badge, sub };
+  const tail = rest.join(", ");
+  const sub = lead ? { lead, tail } : tail ? { lead: null, tail: tail.replace(/^./, c => c.toUpperCase()) } : null;
+  return { zone, title, sub };
 }
 
 function PrereqCard({ p, done }) {
   const icons = (PREREQ_ICONS[p.id] || []).filter(i => i.img);
-  const { zone, title, badge, sub } = prereqParts(p.text);
+  const { zone, title, sub } = prereqParts(p.text);
   const layout = icons.length >= 3 ? " quad" : icons.length === 2 ? " pair" : "";
   return (
     <button type="button" className={"pr-card" + (done ? " done" : "")} data-id={p.id}
@@ -51,9 +54,13 @@ function PrereqCard({ p, done }) {
       <span className="pr-body">
         {zone && <span className="pr-zone">{zone}</span>}
         <span className="pr-title">{title}</span>
-        {sub && <span className="pr-sub">{sub}</span>}
+        {sub && (
+          <span className="pr-sub">
+            {sub.lead && <b className={sub.lead === "Opcional" ? "soft" : ""}>{sub.lead}</b>}
+            {sub.lead && sub.tail ? " · " : ""}{sub.tail}
+          </span>
+        )}
       </span>
-      {badge && <span className={"pr-badge" + (badge === "Opcional" ? " soft" : "")}>{badge}</span>}
     </button>
   );
 }
