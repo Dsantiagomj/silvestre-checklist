@@ -17,6 +17,8 @@ export const HERO_ICONS = DATA.HERO_ICONS || null;
 export const OCRE_ICON = DATA.OCRE_ICON || null;
 /** Iconos de los avisos de la guía: { stop, done, tip }. */
 export const CALL_ICONS = DATA.CALL_ICONS || {};
+/** Medallones de la ruta de objetivos: un objeto del juego por tipo de objetivo. */
+export const OBJ_ICONS = DATA.OBJ_ICONS || {};
 /** Los Dofus que da la guía antes del Silvestre: { name, img, step, achievement }. */
 export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
 

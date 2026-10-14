@@ -329,9 +329,11 @@ test("los objetivos de una misión son una ruta de medallones con su avance", as
   await quest.locator("summary").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
-  // Medallón con icono dibujado, sin emojis
-  await expect(rows.first().locator(".obj-med svg")).toHaveCount(1);
-  expect((await rows.first().locator(".obj-med").innerText()).trim()).toBe("");
+  // Medallón con un objeto del juego por tipo: carta para hablar, espada para combatir…
+  await expect(rows.first().locator(".obj-med img")).toHaveAttribute("src", /items\/24065\.png$/);
+  await expect(rows.filter({ hasText: "Vence" }).locator(".obj-med img")).toHaveAttribute("src", /items\/6009\.png$/);
+  await expect(rows.filter({ hasText: "Lana de jalató" }).locator(".obj-med img")).toHaveAttribute("src", /items\/141012\.png$/);
+  await expect(quest.locator(".obj-med svg")).toHaveCount(0);
   // Avance: los tres primeros hechos, el cuarto es el actual
   const states = await rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")));
   expect(states.join("")).toMatch(/^dddn-+$/);
