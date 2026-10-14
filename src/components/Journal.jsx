@@ -2,6 +2,7 @@ import { Fragment, useEffect } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
+import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
 import { loadQuests, markSteps, selectStep, toggleStep, useAppState } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
@@ -14,6 +15,18 @@ const CALL = {
 };
 
 const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
+
+/** Texto de la guía con sus misiones y logros enlazados y los incisos como pasos. */
+function RichText({ text }) {
+  return linkify(text).map((part, i) =>
+    part.href ? (
+      <a key={i} className="guide-link" href={part.href} target="_blank" rel="noopener">{part.t}</a>
+    ) : part.step ? (
+      <button key={i} type="button" className="step-ref" data-n={part.step} onClick={() => selectStep(part.step)}>{part.t}</button>
+    ) : (
+      part.t
+    ));
+}
 
 /** Cabecera de escenario: el paisaje de la zona, el paso y su jefe o su icono. */
 function Hero({ step, done, quests }) {
@@ -55,7 +68,7 @@ function Calls({ step }) {
           <i aria-hidden="true">{CALL[kind].icon}</i>
           <div>
             <b>{CALL[kind].label}</b>
-            {text}
+            <RichText text={text} />
             {kind === "done" && step.closes && (
               <span className="call-steps">
                 Cierra también:
@@ -87,6 +100,9 @@ function Quests({ step, quests, loaded }) {
               <span className="q-num">{i + 1}</span>
               <span className="q-name">{q.n}</span>
               <span className="q-lv">{`nv. ${q.lv}`}</span>
+              {missionGuide(q.n) && (
+                <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
+              )}
             </summary>
             {q.st && (
               <p className="q-start">
@@ -157,7 +173,7 @@ export default function Journal({ n, id }) {
     <article className="journal" id={id} aria-label={`Paso ${n}`}>
       <Hero step={step} done={!!s.done[n]} quests={quests} />
       <div className="journal-body">
-        <p className="journal-base">{step.base}</p>
+        <p className="journal-base"><RichText text={step.base} /></p>
         <Calls step={step} />
         {(reward || a?.bosses?.length > 1) && (
           <div className="journal-extras">

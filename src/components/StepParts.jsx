@@ -58,28 +58,46 @@ export function Objectives({ objs, stop }) {
 
 /**
  * Desplegable "Objetos necesarios (N)" de un paso, según la lista de torrentearcano.
- * Lo usan el detalle, el overlay y los prerrequisitos (paso 0).
+ * Lo usan el detalle, el overlay y los prerrequisitos (paso 0). Pulsar un objeto
+ * copia su nombre, para buscarlo en el mercadillo del juego.
  */
 export function ReqBlock({ n, open, s, title = "Objetos necesarios" }) {
+  const [copied, setCopied] = useState(null);
+  const timer = useRef();
+  useEffect(() => () => clearTimeout(timer.current), []);
   const rows = rowsOf(n);
   if (!rows.length) return null;
+
+  async function copy(e, name) {
+    const doc = e.currentTarget.ownerDocument;
+    if (await copyText(doc, name)) {
+      setCopied(name);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(null), 2500);
+    } else {
+      doc.defaultView.prompt("Copia el nombre:", name);
+    }
+  }
+
   return (
     <details className="req" open={open}>
       <summary>{title} <span className="n">({rows.length})</span></summary>
       <div className="req-grid">
         {rows.map(row => {
-          const tip = [`${rowQty(row)} × ${rowName(row)}`, row.g, row.n].filter(Boolean).join(" · ");
+          const name = RES_ITEMS[row.a[0][0]].name;
+          const tip = [`${rowQty(row)} × ${rowName(row)}`, row.g, row.n, "Pulsa para copiar el nombre"].filter(Boolean).join(" · ");
           return (
-            <div key={row.k} className={"req-item" + (rowHave(s, row, [n]) ? " owned" : "") + (row.a.length > 1 ? " alt" : "")}
-              title={tip}>
+            <button type="button" key={row.k} title={tip} onClick={e => copy(e, name)}
+              className={"req-item" + (rowHave(s, row, [n]) ? " owned" : "") + (row.a.length > 1 ? " alt" : "") + (copied === name ? " copied" : "")}>
               {row.a.map(([id]) => RES_ITEMS[id].img
                 ? <img key={id} src={imgUrl(RES_ITEMS[id].img)} alt={RES_ITEMS[id].name} loading="lazy" />
                 : <span key={id} className="item-unknown" role="img" aria-label={RES_ITEMS[id].name}>?</span>)}
               <span className="q">{row.a[0][1]}</span>
-            </div>
+            </button>
           );
         })}
       </div>
+      <p className="req-copied" role="status">{copied ? <>📋 «{copied}» copiado · pégalo en el buscador del mercadillo</> : null}</p>
     </details>
   );
 }

@@ -771,6 +771,10 @@ a:hover{ text-decoration:underline; }
   font-variant-numeric:tabular-nums;
 }
 .req-item.owned{ opacity:.35; }
+button.req-item{ padding:0; font:inherit; color:inherit; cursor:copy; }
+.req-item.copied{ border-color:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 30%, transparent); opacity:1; }
+.req-copied{ min-height:1.4em; margin:-4px 14px 12px; font-size:12.5px; color:var(--accent-ink); }
+.req-copied:empty{ display:none; }
 /* Alternativas: los dos objetos en diagonal dentro del mismo hueco */
 .req-item.alt img{ position:absolute; width:58%; height:58%; }
 .req-item.alt img:first-child{ left:4%; top:4%; }
@@ -2405,3 +2409,15 @@ header.show-progress .tb-progress{
   .journal-body{ padding:4px 16px 20px; }
   .journal-cta .detail-nav{ margin-left:0; width:100%; }
 }
+
+/* Enlaces de la guía: misiones y logros a Torrente Arcano, incisos a sus pasos */
+.guide-link{ color:var(--accent-ink); text-decoration:underline; text-decoration-color:color-mix(in srgb, var(--accent-ink) 45%, transparent); text-underline-offset:3px; }
+.guide-link::after{ content:" ↗"; font-size:.8em; }
+.guide-link:hover{ text-decoration-color:currentColor; }
+.step-ref{
+  padding:0 6px; border:1px solid var(--line-warm); border-radius:999px; background:var(--inset);
+  font:inherit; font-weight:700; color:var(--txt); cursor:pointer;
+}
+.step-ref:hover{ border-color:var(--amber); }
+.q-guide{ margin-left:8px; font-size:12px; font-weight:700; color:var(--accent-ink); text-decoration:none; white-space:nowrap; }
+.q-guide:hover{ text-decoration:underline; }

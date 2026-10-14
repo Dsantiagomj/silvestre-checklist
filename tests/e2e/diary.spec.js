@@ -133,3 +133,32 @@ test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }
   await page.fill("#searchInput", "Lasoberaña");
   await expect.poll(() => page.locator(".diary-row").count()).toBeLessThan(6);
 });
+
+test("misiones y logros enlazan a su guía en Torrente Arcano", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  const j = page.locator("#journal");
+  const mission = j.locator('.journal-base a[href="https://www.torrentearcano.com/arak-hais-donde-vais"]');
+  await expect(mission).toHaveText("Arak-hais, ¿dónde vais?");
+  await expect(mission).toHaveAttribute("target", "_blank");
+  await expect(j.locator('.journal-base a[href="https://www.torrentearcano.com/el-arbol-que-esconde-el-bosque"]')).toHaveCount(1);
+  // La misión del paso lleva su guía también en la lista de misiones
+  const quest = j.locator(".q-item", { hasText: "Arak-hais, ¿dónde vais?" });
+  await expect(quest.locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/arak-hais-donde-vais");
+});
+
+test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="77"] .row-main');
+  await page.locator('#journal .call.stop .step-ref[data-n="78"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("78");
+});
+
+test("pulsar un objeto de «Necesitas» copia su nombre para el mercadillo", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.locator("#journal .req-item").first().click();
+  await expect(page.locator("#journal .req-copied")).toContainText("Glándula de arak-hai");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Glándula de arak-hai");
+});
