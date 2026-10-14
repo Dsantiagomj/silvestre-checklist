@@ -5,13 +5,12 @@
 import { useSyncExternalStore } from "react";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
-import { PREREQ_STEP, REQUIRED_ROWS } from "../lib/resources.js";
+import { PREREQ_STEP, REQUIRED_ROWS, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 
 export const LS = {
   done: "silvestre:done",
   prereqs: "silvestre:prereqs",
   theme: "silvestre:theme",
-  prereqsOpen: "silvestre:prereqsOpen",
   owned: "silvestre:owned",
   questPos: "silvestre:questPos",
   questObj: "silvestre:questObjective",
@@ -66,7 +65,6 @@ function readProgress() {
 function initialState() {
   const { done, questPos } = readProgress();
   const prereqs = readObj(LS.prereqs);
-  const savedOpen = localStorage.getItem(LS.prereqsOpen);
   const pendingPrereqs = ALL_PREREQS.filter(p => !prereqs[p.id]).length;
   return {
     done,
@@ -75,13 +73,15 @@ function initialState() {
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de misión
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
-    // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
-    prereqsOpen: savedOpen === "1" || (savedOpen === null && pendingPrereqs > 0),
+    // "Lo que necesitas" abre en prerrequisitos mientras falte alguno
+    needsTab: pendingPrereqs > 0 && Object.keys(done).length < STEPS.length ? "prereqs" : "items",
     selectedStep: null,
     sheetOpen: false,
     filters: { zones: [], pending: false, search: "" },
     shopTab: "todo",
     shopPendingOnly: true,
+    shopSort: "soon",   // soon (Pronto primero) | qty | az
+    shopQuery: "",
     // Cada vez que la versión vanilla repintaba la lista entera se repetía la
     // animación de entrada; este contador remonta la rejilla en esos mismos casos.
     shopEpoch: 0,
@@ -134,7 +134,23 @@ export const stepCovered = (s, n) =>
  * pasos que lo piden. Así el contador avanza solo al completar pasos.
  */
 export const rowHave = (s, row, steps = row.steps) =>
-  guideComplete(s) || !!s.owned[row.k] || steps.every(n => stepCovered(s, n));
+  guideComplete(s) || steps.every(n => stepCovered(s, n) || stepOwned(s, row.k, n));
+/** Conseguido a mano para ese paso: el objeto entero (clave sola) o solo esa parte ("clave#paso"). */
+const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`];
+
+/**
+ * Los próximos pasos pendientes (los prerrequisitos primero si faltan). Son la
+ * franja "Pronto" de los objetos: lo que hay que reunir ya.
+ */
+export function soonSteps(s, count = 5) {
+  const out = ALL_PREREQS.every(p => isPrereqDone(s, p.id)) ? [] : [PREREQ_STEP];
+  for (const st of STEPS) {
+    if (out.length - (out[0] === PREREQ_STEP ? 1 : 0) >= count) break;
+    if (!s.done[st.n]) out.push(st.n);
+  }
+  return out;
+}
+export const pendingItemSteps = s => STEPS_WITH_ITEMS.filter(n => !stepCovered(s, n));
 export const ownedCount = s => REQUIRED_ROWS.filter(r => rowHave(s, r)).length;
 export const prereqsPending = s => ALL_PREREQS.length - prereqsDone(s);
 export const nextPending = s => {
@@ -208,9 +224,15 @@ export function togglePrereq(id) {
   });
 }
 
-export function setPrereqsOpen(open, persist) {
-  if (persist) localStorage.setItem(LS.prereqsOpen, open ? "1" : "0");
-  setState({ prereqsOpen: open });
+export function setAllPrereqs(on) {
+  setState({ prereqs: on ? Object.fromEntries(ALL_PREREQS.map(p => [p.id, true])) : {} });
+}
+
+// Lo que necesitas: pestaña activa y acceso desde el hero
+export const setNeedsTab = tab => setState({ needsTab: tab });
+export function openNeeds(tab) {
+  setNeedsTab(tab);
+  document.getElementById("needs")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -227,14 +249,36 @@ export const clearFilters = () => setFilters({ zones: [], pending: false, search
 // Objetos necesarios
 export const setShopTab = tab => setState(s => ({ shopTab: tab, shopEpoch: s.shopEpoch + 1 }));
 export const setShopPendingOnly = b => setState(s => ({ shopPendingOnly: b, shopEpoch: s.shopEpoch + 1 }));
-export function toggleOwned(id) {
+export const setShopSort = sort => setState(s => ({ shopSort: sort, shopEpoch: s.shopEpoch + 1 }));
+export const setShopQuery = q => setState({ shopQuery: q });
+
+/**
+ * Marca o desmarca filas de objetos para sus pasos (row.steps). Una fila de "Pronto"
+ * marca solo esa parte ("clave#paso"); lo marcado como objeto entero se respeta y,
+ * al desmarcar una parte, se reparte en los pasos que quedan.
+ */
+export function setRowsOwned(rows, on) {
   setState(s => {
     const owned = { ...s.owned };
-    if (owned[id]) delete owned[id];
-    else owned[id] = true;
+    for (const row of rows) {
+      if (on) {
+        for (const n of row.steps) owned[`${row.k}#${n}`] = true;
+        continue;
+      }
+      if (owned[row.k]) {
+        delete owned[row.k];
+        for (const m of ROW_BY_KEY.get(row.k)?.steps || []) {
+          if (!row.steps.includes(m)) owned[`${row.k}#${m}`] = true;
+        }
+      }
+      for (const n of row.steps) delete owned[`${row.k}#${n}`];
+    }
     return { owned };
   });
 }
+export const toggleRowOwned = row => setRowsOwned([row], !rowHave(state, row));
+/** Deshacer de "Marcar todo"/"Limpiar": vuelve a lo marcado antes, sin tocar nada más. */
+export const restoreMarks = (owned, prereqs) => setState({ owned, prereqs });
 
 // Misiones del overlay
 export function loadQuests() {

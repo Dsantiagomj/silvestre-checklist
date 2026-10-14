@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { ALL_PREREQS, STEPS } from "../data/steps.js";
 import {
   doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
-  setPrereqsOpen, useAppState,
+  openNeeds, useAppState,
 } from "../state/store.js";
 import { BRAND_ICON, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { REQUIRED_ROWS } from "../lib/resources.js";
@@ -30,15 +30,6 @@ function stepTitle(step) {
 function stepScope(step) {
   const m = step.text.match(/hasta (?:llegar a )?la misi[oó]n (\d+)/i);
   return m ? `hasta la misión ${m[1]}` : null;
-}
-
-function openPrereqs() {
-  setPrereqsOpen(true, false);
-  document.getElementById("prereqs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function openShop() {
-  document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function goToStep(n) {
@@ -118,7 +109,7 @@ export default function Hero() {
               <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
                 <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
                 <div className="hero-reqs-grid">
-                  <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={openPrereqs}
+                  <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={() => openNeeds("prereqs")}
                     aria-label={pendingPrereqs > 0
                       ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
                       : "Prerrequisitos completos. Ver prerrequisitos"}>
@@ -129,7 +120,7 @@ export default function Hero() {
                     </span>
                     <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
                   </button>
-                  <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={openShop}
+                  <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={() => openNeeds("items")}
                     aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
                     {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
                     <span className="hero-req-meta">

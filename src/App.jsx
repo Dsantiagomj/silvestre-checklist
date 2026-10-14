@@ -7,11 +7,10 @@ import { useMediaQuery } from "./lib/useMediaQuery.js";
 import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
-import Prereqs from "./components/Prereqs.jsx";
 import Filters from "./components/Filters.jsx";
 import Grid from "./components/Grid.jsx";
 import DetailPanel from "./components/DetailPanel.jsx";
-import Shop from "./components/Shop.jsx";
+import Needs from "./components/Needs.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
 import ResetDialog from "./components/ResetDialog.jsx";
 import Toast from "./components/Toast.jsx";
@@ -60,7 +59,6 @@ export default function App() {
       <Hero />
       <div className="wrap">
         <Nota />
-        <Prereqs />
         <Filters />
         {/* LAYOUT PRINCIPAL */}
         <div className="main-layout">
@@ -70,7 +68,7 @@ export default function App() {
           </section>
           <DetailPanel mobile={mobile} />
         </div>
-        <Shop />
+        <Needs />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />

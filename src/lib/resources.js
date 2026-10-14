@@ -49,3 +49,9 @@ export const STEPS_WITH_ITEMS = Object.keys(RES_STEPS).map(Number);
 /** Lo que pide la guía entera. Las filas con grupo (misión opcional, una orden) no son para todos. */
 export const ALL_ROWS = aggregate(STEPS_WITH_ITEMS);
 export const REQUIRED_ROWS = ALL_ROWS.filter(r => !r.g);
+/** Cada objeto con todos los pasos que lo piden. */
+export const ROW_BY_KEY = new Map(ALL_ROWS.map(r => [r.k, r]));
+
+/** Minúsculas y sin tildes: "bambu" encuentra "Madera de bambú". */
+export const normText = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+export const rowMatches = (row, q) => !q || row.a.some(([id]) => normText(RES_ITEMS[id].name).includes(q));
