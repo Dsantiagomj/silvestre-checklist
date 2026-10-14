@@ -431,6 +431,8 @@ test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async 
   const ocre = page.locator("#prereqs .pr-ocre");
   await expect(ocre).toContainText("Dofus Ocre");
   await expect(ocre).toContainText("paso 79");
-  await ocre.locator(".step-ref").click();
-  await expect(page.locator("#journal .journal-num")).toHaveText("55");
+  // Lo da la misión "La eterna cosecha", que no es ningún paso de la guía
+  await expect(ocre).toContainText("La eterna cosecha");
+  await expect(ocre.locator(".step-ref")).toHaveCount(0);
+  await expect(ocre.locator("img")).toHaveAttribute("src", /items\/23012\.png$/);
 });

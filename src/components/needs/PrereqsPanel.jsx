@@ -1,7 +1,7 @@
 import { PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
-import { DOFUS_ROAD, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
+import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
-import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
+import { isPrereqDone, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 
 const GROUPS = [
@@ -69,27 +69,18 @@ function PrereqCard({ p, done }) {
   );
 }
 
-const OCRE = DOFUS_ROAD.find(d => d.name === "Dofus Ocre");
-
-function showStep(n) {
-  openInDiary(n);
-  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-/** La recomendación de Sandglass sobre el Dofus Ocre, con el paso donde lo da la guía. */
+/**
+ * La recomendación de Sandglass sobre el Dofus Ocre. No es ningún paso de la guía:
+ * lo da la misión "La eterna cosecha", que se hace aparte.
+ */
 function OcreNote() {
   return (
     <aside className="pr-ocre">
-      {OCRE && <img src={imgUrl(OCRE.img)} alt="" />}
+      {OCRE_ICON && <img src={imgUrl(OCRE_ICON)} alt="" />}
       <div>
         <b>Empieza el Dofus Ocre cuanto antes</b>
         <p>{PREREQS_OCRE}</p>
-        {OCRE && (
-          <p className="pr-ocre-step">
-            En esta guía se completa en el{" "}
-            <button type="button" className="step-ref" data-n={OCRE.step} onClick={() => showStep(OCRE.step)}>paso {OCRE.step}</button>.
-          </p>
-        )}
+        <p className="pr-ocre-step">Lo da la misión «La eterna cosecha», que no forma parte de los 100 pasos.</p>
       </div>
     </aside>
   );
