@@ -50,6 +50,9 @@ export function itemsView(s) {
   }
   const inCat = r => s.shopTab === "todo" || r.c === s.shopTab;
   for (const b of bands) b.rows = b.rows.filter(inCat);
+  // Al buscar, lo que coincide sube al principio de su franja: sin tener que bajar a
+  // buscarlo entre lo atenuado (en la lista ya se filtra)
+  if (q) for (const b of bands) b.rows = [...b.rows.filter(r => rowMatches(r, q)), ...b.rows.filter(r => !rowMatches(r, q))];
   // «Marcar todo»/«Limpiar» actúan sobre lo pendiente: lo gastado ya no se coge
   const visible = bands.filter(b => b.id !== "used").flatMap(b => b.rows).filter(r => rowMatches(r, q));
   return { q, bands, counts, total: all.size, matches, visible };
