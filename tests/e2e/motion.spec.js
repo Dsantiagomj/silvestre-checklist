@@ -288,26 +288,42 @@ test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page })
   expect(Math.abs(after - before)).toBeLessThan(4);
 });
 
-test("plegar y desplegar misiones no mueve la lista de pasos, ni con el final del diario a la vista", async ({ page }) => {
+/** Posición de la lista en cada fotograma mientras se pulsan las cabeceras indicadas. */
+const listTops = (page, clicks) => page.evaluate(async clicks => {
+  const box = document.querySelector(".diary-list");
+  const sums = document.querySelectorAll("#journal .q-item summary");
+  const out = [Math.round(box.getBoundingClientRect().top)];
+  for (const k of clicks) {
+    sums[k].click();
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => requestAnimationFrame(r));
+      out.push(Math.round(box.getBoundingClientRect().top));
+    }
+  }
+  return out;
+}, clicks);
+
+test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.locator("#journal .q-item").nth(5).waitFor({ timeout: 15_000 });
+  // Con el diario a media pantalla (la lista fija arriba)
+  await page.evaluate(() => scrollTo(0, document.querySelector(".diary-window").getBoundingClientRect().top + scrollY + 300));
+  await page.waitForTimeout(600);
+  const tops = await listTops(page, [0, 2, 0, 2]);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+});
+
+test("con el final del diario a la vista, plegar una misión no arrastra la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.click('.diary-row[data-n="5"] .row-main');
   await page.locator("#journal .q-item").first().waitFor({ timeout: 15_000 });
+  await page.locator("#journal .q-item summary").first().click();
   await page.waitForTimeout(600);
   await page.evaluate(() => { const w = document.querySelector(".diary-window"); scrollTo(0, w.getBoundingClientRect().bottom + scrollY - innerHeight + 40); });
   await page.waitForTimeout(600);
-  const tops = await page.evaluate(async () => {
-    const box = document.querySelector(".diary-list");
-    const out = [Math.round(box.getBoundingClientRect().top)];
-    const sum = document.querySelector("#journal .q-item summary");
-    for (const _ of [0, 1]) {
-      sum.click();
-      for (let i = 0; i < 25; i++) {
-        await new Promise(r => requestAnimationFrame(r));
-        out.push(Math.round(box.getBoundingClientRect().top));
-      }
-    }
-    return out;
-  });
+  const tops = await listTops(page, [0]);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
