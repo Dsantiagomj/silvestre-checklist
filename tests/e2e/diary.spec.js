@@ -690,6 +690,10 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
     const optional = page.locator("#journal .q-item .q-optional");
     await expect(optional).toHaveCount(1);
     await expect(page.locator("#journal .q-item", { has: page.locator(".q-optional") }).locator(".q-name")).toHaveText(new RegExp(name, "i"));
+    // La etiqueta va pegada al nombre, no al otro extremo de la fila
+    const gap = await page.locator("#journal .q-optional").evaluate(el =>
+      el.getBoundingClientRect().left - el.previousElementSibling.getBoundingClientRect().right);
+    expect(gap).toBeLessThan(20);
   }
 });
 
