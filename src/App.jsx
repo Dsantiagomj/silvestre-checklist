@@ -7,7 +7,6 @@ import { useMediaQuery } from "./lib/useMediaQuery.js";
 import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
-import Filters from "./components/Filters.jsx";
 import Diary from "./components/Diary.jsx";
 import Needs from "./components/Needs.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
@@ -59,7 +58,6 @@ export default function App() {
       <div className="wrap">
         <Needs />
         <Nota />
-        <Filters />
         <Diary mobile={mobile} />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
