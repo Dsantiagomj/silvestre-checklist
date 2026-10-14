@@ -4,6 +4,7 @@
 import { STEPS } from "../data/steps.js";
 import { DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
 import FIGURES from "../data/figures.json";
+import PLANS from "../data/plans.json";
 
 /**
  * Título corto del paso: el logro que persigue o, si no hay, el texto base sin
@@ -16,12 +17,34 @@ export function stepTitle(step) {
 }
 
 /**
+ * Misiones que la guía marca "misión N (opcional pero útil): Nombre" (pasos 7 y 27):
+ * [{ k, name }], con el nombre de la misión tal como sale en el logro si se conoce.
+ */
+export function optionalMissions(step) {
+  const plan = (PLANS[step.n] || []).find(e => e.t === "a");
+  return [...step.text.matchAll(/misi[oó]n (\d+) \(opcional pero útil\):?\s*([^,(]+)/gi)].map(m => {
+    const k = Number(m[1]);
+    return { k, name: plan?.m[k - 1] || m[2].replace(/["“”.]/g, "").trim() };
+  });
+}
+
+/** La nota suelta "Opcional pero útil" dice de qué misión habla. */
+function namedOptional(step) {
+  const marks = step.marks || [];
+  const opt = optionalMissions(step);
+  if (opt.length !== 1) return marks;
+  return marks.map(([kind, text]) => (kind === "note" && /^opcional pero útil\.?$/i.test(text.trim())
+    ? [kind, `La misión ${opt[0].k}, «${opt[0].name}», es opcional pero útil.`]
+    : [kind, text]));
+}
+
+/**
  * Avisos que muestra el detalle. Un paso con verde se resuelve en sí mismo: su rojo
  * no es dónde parar sino dónde se retoma (la línea verde de la ruta), así que no va
  * como aviso; lo que añade tras su primera frase ("Retomar sala 5 como…") queda como nota.
  */
 export function stepCalls(step) {
-  const marks = step.marks || [];
+  const marks = namedOptional(step);
   if (!resolvesHere(step)) return marks;
   const calls = marks.flatMap(([kind, text]) => {
     if (kind !== "stop") return [[kind, text]];

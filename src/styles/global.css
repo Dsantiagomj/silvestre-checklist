@@ -2682,6 +2682,12 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .journal-to-map{ background:#fffaf0; border-color:#c9b98f; color:#3b3324; backdrop-filter:none; }
 [data-theme="light"] .journal-to-map:hover{ background:#fff; border-color:#8a6510; }
 [data-theme="light"] [data-theme="light"] [data-theme="light"] 
+/* Misión que la guía da por opcional pero útil */
+.q-optional{
+  padding:1px 8px; border-radius:999px; border:1px solid var(--gw-line); background:var(--gw-panel-2);
+  font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-soft);
+}
+
 /* Misiones de varios logros: un título por logro */
 .q-group + .q-group{ margin-top:14px; }
 .q-group-head{

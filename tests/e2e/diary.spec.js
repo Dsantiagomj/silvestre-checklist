@@ -682,6 +682,17 @@ test("el texto de la guía va con su rótulo, sin cita en cursiva ni flechas", a
   expect(await base.locator(".guide-link").first().evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);
 });
 
+test("«opcional pero útil» dice qué misión es y la marca en la lista", async ({ page }) => {
+  await openApp(page);
+  for (const [n, name] of [[27, "Star ski y Dutch"], [7, "Arma letal"]]) {
+    await stepData(page, n);
+    await expect(page.locator("#journal .goal-calls .call.note")).toHaveText(/Nota\s*La misión 2, «.+», es opcional pero útil\./i);
+    const optional = page.locator("#journal .q-item .q-optional");
+    await expect(optional).toHaveCount(1);
+    await expect(page.locator("#journal .q-item", { has: page.locator(".q-optional") }).locator(".q-name")).toHaveText(new RegExp(name, "i"));
+  }
+});
+
 test("el detalle del paso es el estandarte y su objetivo, con el texto de la guía una sola vez", async ({ page }) => {
   await openApp(page);
   await stepData(page, 17);
