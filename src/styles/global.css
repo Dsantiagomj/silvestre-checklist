@@ -2470,7 +2470,7 @@ header.show-progress .tb-progress{
   --gw-btn-line:#6b6252;
   --gw-btn-ink:#f0e6cf;
 }
-[data-theme="light"] .journal-body, [data-theme="light"] .journal-cta{
+[data-theme="light"] .journal-body, [data-theme="light"] .journal-cta, [data-theme="light"] .journal-top{
   --gw-panel:linear-gradient(180deg, #fbf6e9, #f1e8d2);
   --gw-panel-2:#f8f2e2;
   --gw-line:#d5c8a6;
@@ -2633,6 +2633,27 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 }
 
 .goal-head .goal-line{ display:block; margin-top:4px; font-size:15px; line-height:1.4; color:#ece3cc; }
+
+/* Tema claro: el objetivo va en pergamino, con tinta oscura. El estandarte sigue igual:
+   es el mapa del juego con su figura, y se lee sobre su propio fondo */
+[data-theme="light"] .journal-top{
+  background:linear-gradient(180deg, #f8f1de, #efe4c6) #f4ebd3; color:#3b3324; border-bottom-color:#d5c8a6;
+}
+[data-theme="light"] .journal-title{ color:#3b2a10; -webkit-text-stroke:0; text-shadow:0 1px 0 rgba(255,255,255,.6); }
+[data-theme="light"] .goal-head .goal-line, [data-theme="light"] .goal-lines li{ color:#4a3d22; }
+[data-theme="light"] .goal-of{ color:#7a5410; }
+[data-theme="light"] .goal-ach .is-complete{ border-color:#f4ebd3; }
+[data-theme="light"] .goal-effort img{ filter:none; }
+[data-theme="light"] .goal-effort img.off{ opacity:.28; }
+[data-theme="light"] .goal-inc .call{ color:#4a3d22; }
+[data-theme="light"] .journal-goal .journal-base{ border-left-color:#c9b98f; color:#5e5240; }
+[data-theme="light"] .journal-goal .journal-base::after{ color:#7a6f58; }
+[data-theme="light"] .journal-goal .guide-link, [data-theme="light"] .journal-goal .step-ref{ color:#6b4a0c; }
+[data-theme="light"] .journal-to-map{ background:#fffaf0; border-color:#c9b98f; color:#3b3324; backdrop-filter:none; }
+[data-theme="light"] .journal-to-map:hover{ background:#fff; border-color:#8a6510; }
+[data-theme="light"] .goal-foot{ border-top-color:#d5c8a6; }
+[data-theme="light"] .goal-foot .badge{ background:#fffaf0; color:#6b4a0c; border-color:#c9b98f; }
+[data-theme="light"] .goal-foot .badge:hover{ background:#fff; border-color:#8a6510; }
 
 /* Misiones de varios logros: un título por logro */
 .q-group + .q-group{ margin-top:14px; }

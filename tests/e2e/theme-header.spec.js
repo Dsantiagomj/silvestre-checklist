@@ -190,3 +190,26 @@ test("la pestaña lleva de favicon el huevo del Dofus Silvestre", async ({ page,
     expect(res.headers()["content-type"]).toContain("image/png");
   }
 });
+
+test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
+  await openApp(page, { "silvestre:theme": "light" });
+  await page.click('.diary-row[data-n="2"] .row-main');
+  const lum = c => {
+    const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+      v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    });
+    return .2126 * r + .7152 * g + .0722 * b;
+  };
+  const bg = await page.locator("#journal .journal-top").evaluate(el => getComputedStyle(el).backgroundColor);
+  // Fondo claro, como el resto del diario en este tema
+  expect(lum(bg)).toBeGreaterThan(.6);
+  for (const sel of [".journal-title", ".goal-head .goal-line", ".journal-goal .journal-base", ".journal-to-map"]) {
+    await expect.poll(async () => {
+      const fg = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).color);
+      const own = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).backgroundColor);
+      const back = own === "rgba(0, 0, 0, 0)" ? bg : own;
+      const [a, b] = [lum(fg), lum(back)].sort((x, y) => y - x);
+      return (a + .05) / (b + .05);
+    }, { timeout: 3_000, message: sel }).toBeGreaterThanOrEqual(4.5);
+  }
+});
