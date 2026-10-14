@@ -553,3 +553,49 @@ test("los prerrequisitos con guía en Torrente Arcano la enlazan; abrirla no los
   await (await popup).close();
   await expect(page.locator('#prereqs .pr-card[data-id="l5"]')).toHaveAttribute("aria-pressed", "false");
 });
+
+const PRE_ROWS = ["421", "885", "7904", "429", "399", "1455", "1456", "1457", "1458", "8759", "2553", "2618", "2551", "2617", "1002", "1021", "1019"];
+const chips = page => page.locator("#bandSoon .band-steps i");
+const badges = page => page.locator("#bandSoon .slot").evaluateAll(els =>
+  els.map(el => el.querySelector(".st")?.textContent ?? null));
+
+test("«Pronto» son los prerrequisitos y 5 pasos, y avanza al completar pasos", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  await expect(chips(page)).toHaveText(["Pre", "1", "2", "3", "4", "5"]);
+  // Prerrequisitos completos: sus objetos ya no están y quedan 5 pasos
+  await openApp(page, { "silvestre:prereqs": ALL_PREREQS });
+  await page.click("#tabItems");
+  await expect(chips(page)).toHaveText(["1", "2", "3", "4", "5"]);
+  expect(await badges(page)).not.toContain("Pre");
+  // Paso 1 hecho: del 2 al 6; y con el 2, del 3 al 7
+  await openApp(page, { "silvestre:prereqs": ALL_PREREQS, "silvestre:done": { 1: true } });
+  await page.click("#tabItems");
+  await expect(chips(page)).toHaveText(["2", "3", "4", "5", "6"]);
+  await openApp(page, { "silvestre:prereqs": ALL_PREREQS, "silvestre:done": { 1: true, 2: true } });
+  await page.click("#tabItems");
+  await expect(chips(page)).toHaveText(["3", "4", "5", "6", "7"]);
+});
+
+test("en «Pronto» los objetos van por paso: prerrequisitos, 1, 2, 3…", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  const order = (await badges(page)).map(b => (b === "Pre" ? 0 : Number(b)));
+  expect(order[0]).toBe(0);
+  expect(order).toEqual([...order].sort((a, b) => a - b));
+});
+
+test("la etiqueta de un paso se marca cuando todo lo suyo está reunido", async ({ page }) => {
+  await openApp(page, { "silvestre:owned": Object.fromEntries(PRE_ROWS.map(k => [`${k}#0`, true])) });
+  await page.click("#tabItems");
+  await expect(chips(page).nth(0)).toHaveClass(/\bdone\b/);
+  await expect(chips(page).nth(0)).toHaveAttribute("title", /reunido/);
+  // El paso 1 aún no
+  await expect(chips(page).nth(1)).not.toHaveClass(/\bdone\b/);
+  // Un paso sin objetos no se marca: se atenúa
+  await expect(chips(page).nth(2)).toHaveClass(/\bempty\b/);
+  await expect(chips(page).nth(2)).toHaveAttribute("title", "Paso 2: sin objetos que reunir");
+  // Al coger lo del paso 1 desde «Pronto», su etiqueta se marca
+  for (const k of ["2268", "9318", "746"]) await page.locator(`#bandSoon .slot[data-id="${k}"] .slot-main`).click();
+  await expect(chips(page).nth(1)).toHaveClass(/\bdone\b/);
+});

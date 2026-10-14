@@ -1,4 +1,4 @@
-import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName } from "../../lib/resources.js";
+import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName, rowsOf } from "../../lib/resources.js";
 import {
   PAGE_SIZES, pendingItemSteps, rowHave, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
   setShopTab, setShopView, soonSteps,
@@ -24,7 +24,9 @@ export function itemsView(s) {
     const chips = soonSteps(s);
     const soon = chips.filter(n => STEPS_WITH_ITEMS.includes(n));
     bands = [
-      { id: "soon", chips, rows: aggregate(soon, had) },
+      // Por paso, en el orden de la guía: prerrequisitos, 1, 2, 3… (sort es estable:
+      // dentro de un paso se queda el orden por categoría)
+      { id: "soon", chips, rows: aggregate(soon, had).sort((a, b) => Math.min(...a.steps) - Math.min(...b.steps)) },
       { id: "later", rows: aggregate(scope.filter(n => !soon.includes(n)), had) },
     ];
   } else {
@@ -48,10 +50,24 @@ export function itemsView(s) {
   return { q, bands, counts, total: all.size, matches, visible };
 }
 
-function SoonChips({ chips }) {
+/**
+ * Los pasos de «Pronto». Cada uno se marca cuando todo lo que pide está reunido; uno
+ * que no pide nada se atenúa (marcarlo diría que está hecho).
+ */
+function SoonChips({ chips, s }) {
   return (
     <span className="band-steps">
-      {chips.map(n => <i key={n}>{n === PREREQ_STEP ? "Pre" : n}</i>)}
+      {chips.map(n => {
+        const name = n === PREREQ_STEP ? "Prerrequisitos" : `Paso ${n}`;
+        const rows = rowsOf(n).filter(r => !r.x);
+        const done = rows.length > 0 && rows.every(r => rowHave(s, r, [n]));
+        const title = !rows.length ? `${name}: sin objetos que reunir` : done ? `${name}: todo reunido` : name;
+        return (
+          <i key={n} className={!rows.length ? "empty" : done ? "done" : undefined} title={title}>
+            {n === PREREQ_STEP ? "Pre" : n}
+          </i>
+        );
+      })}
     </span>
   );
 }
@@ -209,7 +225,7 @@ export default function ItemsPanel({ searchRef }) {
                 <span className="band-pill">Pronto</span>
                 <b id="bandSoonTitle">Tus próximos pasos</b>
                 <em>· {soonRows.length} objetos</em>
-                <SoonChips chips={soon.chips} />
+                <SoonChips chips={soon.chips} s={s} />
               </div>
               <Slots rows={soonRows} band="soon" s={s} q={q} later={laterQty} />
             </section>
