@@ -548,37 +548,35 @@ test("en la lista, cada paso lleva solo el Dofus que da o el jefe que resuelve",
   for (const n of [2, 4, 10, 43]) await expect(art(n)).toHaveCount(0);
 });
 
-/** La tarjeta del paso: logros con sus fichas de misión. */
-const planCards = page => page.locator("#journal .plan-card");
-const pips = card => card.locator(".plan-pip").evaluateAll(els => els.map(e =>
-  (e.classList.contains("on") ? "o" : "-") + (e.classList.contains("end") ? "!" : "")));
+/** La línea del paso: sus medallones, en orden, como "tipo:texto principal". */
+const lineNodes = page => page.locator("#journal .step-line .line-node").evaluateAll(els =>
+  els.map(e => `${e.dataset.kind}:${e.querySelector(".line-label")?.textContent.trim()}`));
 
-test("la descripción del paso es una tarjeta de objetivo: el logro y sus misiones como fichas", async ({ page }) => {
+test("la descripción del paso es una línea: logro, misiones, jefe y pasos que cierra", async ({ page }) => {
   await openApp(page);
-  // Hasta la misión 7 de 8: de la 1 a la 7, y la 7 destacada con su nombre
+  // 17: Verde esmeralda, misiones 1–7, se pasa Maxilubo y cierra el 10
   await stepData(page, 17);
-  const card = planCards(page).first();
-  await expect(card.locator(".plan-title")).toHaveText("Verde esmeralda");
-  await expect(card.locator(".plan-icon img")).toHaveAttribute("src", /achievements\//);
-  expect(await pips(card)).toEqual(["o", "o", "o", "o", "o", "o", "o!", "-"]);
-  await expect(card.locator(".plan-pip.end")).toHaveAttribute("title", /Draconantropía/);
-  await expect(card.locator(".plan-sub")).toContainText("Hasta la misión 7");
-  // Misiones sueltas: solo esas, encendidas
+  expect(await lineNodes(page)).toEqual(["ach:Verde esmeralda", "missions:Misiones 1 a 7", "boss:Maxilubo", "closes:Cierra el 10"]);
+  await expect(page.locator('#journal .line-node[data-kind="missions"] .line-num')).toHaveText("1–7");
+  await expect(page.locator('#journal .line-node[data-kind="missions"] .line-caption')).toHaveText("hasta Draconantropía");
+  await expect(page.locator('#journal .line-node[data-kind="ach"] img')).toHaveAttribute("src", /achievements\//);
+  // 5: misiones sueltas, se queda a medias y se cierra en el 22
   await stepData(page, 5);
-  expect((await pips(planCards(page).first())).filter(p => p.startsWith("o")).length).toBe(2);
-  // Logro completo: todas
+  expect(await lineNodes(page)).toEqual(["ach:Misterios del Krosmoz", "missions:Misiones 2 y 5", "stop:Hasta aquí", "closedin:Se cierra en el 22"]);
+  // Los pasos enlazan
+  await page.locator('#journal .line-node[data-kind="closedin"] button').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("22");
+  // 2: logro completo
   await stepData(page, 2);
-  expect((await pips(planCards(page).first())).every(p => p.startsWith("o"))).toBe(true);
-  await expect(planCards(page).first().locator(".plan-sub")).toContainText("Logro completo");
-  // Dos logros, dos tarjetas
+  expect((await lineNodes(page))[1]).toBe("missions:Logro completo");
+  // 3: dos logros
   await stepData(page, 3);
-  await expect(planCards(page)).toHaveCount(2);
-  // Alineamiento
+  expect((await lineNodes(page)).filter(n => n.startsWith("ach:"))).toHaveLength(2);
+  // 20: alineamiento, de la 1 a la 19
   await stepData(page, 20);
-  await expect(planCards(page).first().locator(".plan-title")).toHaveText("Misión 19");
-  await expect(planCards(page).first().locator(".plan-sub")).toHaveText("De la misión 1 a la 19 del alineamiento");
-  // El texto de la guía se conserva debajo, y ya no hay fichas de jefes sueltas
-  await expect(page.locator("#journal .journal-base")).toContainText("Alineamiento Bontariano");
+  expect((await lineNodes(page)).slice(0, 2)).toEqual(["align:Alineamiento", "missions:Misiones 1 a 19"]);
+  // El texto de la guía, debajo como cita; sin fichas de jefes sueltas
+  await expect(page.locator("#journal .journal-base.is-source")).toContainText("Alineamiento Bontariano");
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
