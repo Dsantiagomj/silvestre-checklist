@@ -86,6 +86,11 @@ export default function Needs() {
           Limpiar
         </button>
       </div>
+      <p className="needs-hint" id="needsHint">
+        {tab === "prereqs"
+          ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
+          : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
+      </p>
       <div className="needs-tabs" role="tablist" aria-label="Lo que necesitas">
         <Tab id="tabPrereqs" tab="prereqs" active={tab === "prereqs"} icon={HERO_ICONS?.prereqs} name="Prerrequisitos"
           done={preDone} total={ALL_PREREQS.length} hint="antes de empezar" />

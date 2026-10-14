@@ -79,22 +79,38 @@ export default function ItemsPanel({ searchRef }) {
 
   return (
     <div className="needs-panel items-panel" id="items" role="tabpanel" aria-labelledby="tabItems">
-      <aside className="needs-rail">
+      <div className="needs-toolbar">
         <div className="needs-find">
           <svg className="needs-find-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" /><path d="M10.4 10.4 14 14" /></svg>
           <input ref={searchRef} type="search" id="needsSearch" value={s.shopQuery} autoComplete="off"
             placeholder="Buscar objeto" aria-label="Buscar objeto"
             onChange={e => setShopQuery(e.target.value)}
             onKeyDown={e => { if (e.key === "Escape") setShopQuery(""); }} />
-          {s.shopQuery && (
-            <button type="button" className="needs-find-x" id="needsSearchClear" aria-label="Borrar búsqueda"
-              onClick={() => { setShopQuery(""); searchRef.current?.focus(); }}>×</button>
-          )}
+          <span className="needs-find-end">
+            {q ? (
+              <>
+                <span id="needsMatches"><b>{matches}</b> de {total}</span>
+                <button type="button" className="needs-find-x" id="needsSearchClear" aria-label="Borrar búsqueda"
+                  onClick={() => { setShopQuery(""); searchRef.current?.focus(); }}>×</button>
+              </>
+            ) : <kbd title="Atajo para buscar">/</kbd>}
+          </span>
         </div>
-        <p className="needs-find-meta">
-          {q ? <span id="needsMatches"><b>{matches}</b> de {total}</span> : <span>{total} objetos</span>}
-          <span>atajo <kbd>/</kbd></span>
-        </p>
+        <div className="needs-sort" role="group" aria-label="Ordenar">
+          {SORTS.map(([k, label]) => (
+            <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
+              onClick={() => setShopSort(k)}>{label}</button>
+          ))}
+        </div>
+        <label className="toggle">
+          <input type="checkbox" id="shopPendingToggle" checked={s.shopPendingOnly}
+            onChange={e => setShopPendingOnly(e.target.checked)} />
+          <span className="sw"></span>
+          Solo pasos pendientes
+        </label>
+      </div>
+
+      <div className="items-body">
         <div className="needs-cats" role="group" aria-label="Categorías">
           {CATS.map(([k, label]) => (
             <button key={k} type="button" className={"needs-cat" + (q && counts[k] ? " hit" : "")} data-cat={k}
@@ -103,48 +119,33 @@ export default function ItemsPanel({ searchRef }) {
             </button>
           ))}
         </div>
-      </aside>
 
-      <div className="needs-main" key={s.shopEpoch}>
-        <div className="needs-toolbar">
-          <div className="needs-sort" role="group" aria-label="Ordenar">
-            {SORTS.map(([k, label]) => (
-              <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
-                onClick={() => setShopSort(k)}>{label}</button>
-            ))}
-          </div>
-          <label className="toggle">
-            <input type="checkbox" id="shopPendingToggle" checked={s.shopPendingOnly}
-              onChange={e => setShopPendingOnly(e.target.checked)} />
-            <span className="sw"></span>
-            Solo pasos pendientes
-          </label>
+        <div className="needs-main" key={s.shopEpoch}>
+          {empty && <p className="needs-empty">Nada pendiente en esta categoría.</p>}
+
+          {soon && soon.rows.length > 0 && (
+            <section className="band soon" id="bandSoon" aria-labelledby="bandSoonTitle">
+              <div className="band-h">
+                <span className="band-pill">Pronto</span>
+                <b id="bandSoonTitle">Tus próximos pasos</b>
+                <em>· {soon.rows.length} objetos</em>
+                <SoonChips chips={soon.chips} />
+              </div>
+              <Slots rows={soon.rows} band="soon" s={s} q={q} later={laterQty} />
+            </section>
+          )}
+
+          {later && later.rows.length > 0 && (
+            <section className="band later" id="bandLater" aria-label="Más adelante">
+              <p className="later-h">Más adelante · {later.rows.length} objetos</p>
+              <Slots rows={later.rows} band="later" s={s} q={q} />
+            </section>
+          )}
+
+          {bands[0].id === "all" && bands[0].rows.length > 0 && (
+            <Slots rows={bands[0].rows} band="all" s={s} q={q} />
+          )}
         </div>
-
-        {empty && <p className="needs-empty">Nada pendiente en esta categoría.</p>}
-
-        {soon && soon.rows.length > 0 && (
-          <section className="band soon" id="bandSoon" aria-labelledby="bandSoonTitle">
-            <div className="band-h">
-              <span className="band-pill">Pronto</span>
-              <b id="bandSoonTitle">Tus próximos pasos</b>
-              <em>· {soon.rows.length} objetos</em>
-              <SoonChips chips={soon.chips} />
-            </div>
-            <Slots rows={soon.rows} band="soon" s={s} q={q} later={laterQty} />
-          </section>
-        )}
-
-        {later && later.rows.length > 0 && (
-          <section className="band later" id="bandLater" aria-label="Más adelante">
-            <p className="later-h">Más adelante · {later.rows.length} objetos</p>
-            <Slots rows={later.rows} band="later" s={s} q={q} />
-          </section>
-        )}
-
-        {bands[0].id === "all" && bands[0].rows.length > 0 && (
-          <Slots rows={bands[0].rows} band="all" s={s} q={q} />
-        )}
       </div>
     </div>
   );
