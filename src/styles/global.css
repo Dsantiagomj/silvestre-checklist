@@ -677,9 +677,8 @@ a:hover{ text-decoration:underline; }
 [data-theme="light"] .bar-outer{ background:var(--inset); }
 .bar-fill{ background:linear-gradient(90deg, var(--amber-2), var(--amber)); box-shadow:0 0 14px rgba(183,220,105,.45); }
 
-/* Plegar una misión no debe mover la página: sin el anclaje del navegador, que subía el
-   scroll y arrastraba la lista fija (y la ventana no encoge dentro del paso: DiaryWindow) */
-html, .diary-window, .diary-window *{ overflow-anchor:none; }
+/* Plegar una misión dentro del detalle no debe mover lo que se ve: sin el anclaje del navegador */
+.diary-window, .diary-window *{ overflow-anchor:none; }
 
 /* Cards */
 .needs,
@@ -2267,15 +2266,16 @@ header.show-progress .tb-progress{
 .seal-pin circle{ fill:var(--bg); }
 .seal.here .seal-name{ color:var(--accent-ink); }
 
-.diary-window{ display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip; }
+/* El diario es un panel del alto de la pantalla: la lista y el detalle se desplazan
+   cada uno por dentro. Así desplegar misiones no cambia la altura de la página y la
+   lista no se mueve nunca */
+.diary-window{
+  display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr);
+  height:calc(100vh - var(--header-h) - 24px); min-height:520px; overflow:clip;
+}
 
 .diary-side{
-  position:sticky; top:calc(var(--header-h) + 12px); align-self:start;
-  display:flex; flex-direction:column;
-  /* --side-room: lo que queda de la ventana del diario bajo el tope (DiaryWindow) */
-  /* --side-max: alto que cabe también al final de la página; --side-room: lo que queda
-     de ventana bajo el tope (DiaryWindow) */
-  max-height:min(calc(100vh - var(--header-h) - 24px), var(--side-max, 100vh), var(--side-room, 100vh));
+  display:flex; flex-direction:column; min-height:0;
   background:var(--bg-2); border-right:1px solid var(--line);
 }
 .diary-tabs{ display:flex; gap:4px; padding:10px; border-bottom:1px solid var(--line); }
@@ -2344,7 +2344,7 @@ header.show-progress .tb-progress{
 .diary-row.done .row-art{ opacity:.5; }
 
 /* Detalle: el escenario va siempre en oscuro, como un estandarte, en los dos temas */
-.diary-detail{ min-width:0; }
+.diary-detail{ min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
 .journal-hero{
   position:relative; isolation:isolate; overflow:hidden;
   display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
@@ -2615,8 +2615,9 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   .journal-show img{ animation:none; }
 }
 @media (max-width:900px){
-  .diary-window{ grid-template-columns:1fr; }
-  .diary-side{ position:static; max-height:none; border-right:0; }
+  .diary-window{ grid-template-columns:1fr; height:auto; min-height:0; }
+  .diary-side{ border-right:0; }
+  .diary-detail{ overflow:visible; }
   .diary-list{ overflow:visible; }
   .diary-group-head{ top:var(--header-h); }
 }

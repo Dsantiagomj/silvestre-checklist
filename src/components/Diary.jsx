@@ -69,49 +69,15 @@ const Row = memo(function Row({ step, done, current }) {
 });
 
 /**
- * La ventana del diario (lista y detalle). Dentro de un mismo paso no encoge: al
- * plegar una misión con el final a la vista, la página se acortaba, el navegador
- * subía el scroll y la lista fija, pegada al final de la ventana, saltaba con él.
- * Guarda la altura máxima del paso como mínimo; al cambiar de paso vuelve a medir.
+ * La ventana del diario (lista y detalle): un panel del alto de la pantalla en el que
+ * cada lado se desplaza por dentro. Al cambiar de paso, el detalle vuelve arriba.
  */
 function DiaryWindow({ step, children }) {
   const ref = useRef(null);
-  const [floor, setFloor] = useState(0);
   useLayoutEffect(() => {
-    setFloor(0);
-    const el = ref.current;
-    const ro = new ResizeObserver(() => setFloor(f => Math.max(f, el.offsetHeight)));
-    ro.observe(el);
-    return () => ro.disconnect();
+    ref.current.querySelector(".diary-detail")?.scrollTo(0, 0);
   }, [step]);
-  // La lista fija nunca es más alta que lo que queda de ventana bajo su tope: así el
-  // final de la ventana no la empuja hacia arriba (y no salta al desplegar o plegar
-  // misiones); en vez de subir, encoge por abajo y sus pasos se quedan donde están
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const side = el.querySelector(".diary-side");
-    if (!side) return undefined;
-    const fit = () => {
-      const top = parseFloat(getComputedStyle(side).top) || 0;
-      const box = el.getBoundingClientRect();
-      el.style.setProperty("--side-room", `${Math.max(220, box.bottom - top)}px`);
-      // Altura fija que cabe incluso al final de la página (descontando lo que hay
-      // debajo de la ventana, el pie): así no crece ni encoge al desplegar misiones
-      const below = document.documentElement.scrollHeight - (box.bottom + scrollY);
-      el.style.setProperty("--side-max", `${Math.max(300, innerHeight - top - below - 12)}px`);
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    addEventListener("scroll", fit, { passive: true });
-    addEventListener("resize", fit);
-    return () => {
-      ro.disconnect();
-      removeEventListener("scroll", fit);
-      removeEventListener("resize", fit);
-    };
-  }, []);
-  return <div className="diary-window" ref={ref} style={floor ? { minHeight: floor } : undefined}>{children}</div>;
+  return <div className="diary-window" ref={ref}>{children}</div>;
 }
 
 /** La lista de pasos por capítulos, con las pestañas de estado. */
