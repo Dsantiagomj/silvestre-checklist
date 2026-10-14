@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ALL_PREREQS, STEPS } from "../data/steps.js";
 import {
   doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
   openNeeds, useAppState,
 } from "../state/store.js";
-import { BRAND_ICON, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, DOFUS_ROAD, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import DofusRoad from "./DofusRoad.jsx";
 import { prefersReducedMotion } from "../lib/motion.js";
@@ -38,6 +38,38 @@ function goToStep(n) {
   if (!isMobile()) document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// La Piñata de pino: la da el paso 99 y es la que se convierte en el Dofus Silvestre
+const PINATA = DOFUS_ROAD.find(d => d.step === 99);
+// Lo que dura la transformación (egg-morph-* en el CSS): subir al hero y convertirse
+const MORPH_MS = 3400;
+
+/**
+ * El huevo del anillo: el Silvestre apagado hasta el final; con el paso 99 hecho, la
+ * Piñata de pino; con el 100, el Silvestre encendido.
+ */
+const eggStage = s => (s.done[100] ? "silvestre" : s.done[99] && PINATA ? "pinata" : "off");
+
+/**
+ * Al marcar el 100 con la Piñata en el anillo, sube al hero y la convierte en el
+ * Silvestre. Solo en ese momento: al recargar, el Silvestre ya está encendido.
+ */
+function useMorph(stage) {
+  const [morph, setMorph] = useState(false);
+  const prev = useRef(stage);
+  useEffect(() => {
+    const was = prev.current;
+    prev.current = stage;
+    if (stage !== "silvestre" || was !== "pinata") return;
+    const still = prefersReducedMotion();
+    window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
+    if (still) return;
+    setMorph(true);
+    const t = setTimeout(() => setMorph(false), MORPH_MS);
+    return () => { clearTimeout(t); setMorph(false); };
+  }, [stage]);
+  return morph;
+}
+
 /** HERO inmersivo: mapa a pantalla completa con parallax, el huevo como progreso */
 export default function Hero() {
   const s = useAppState();
@@ -50,6 +82,8 @@ export default function Hero() {
   const nextStep = next ? STEPS[next - 1] : null;
   const nextIcon = next ? assetsFor(next)?.icon : null;
   const obtained = pct >= 100;
+  const stage = eggStage(s);
+  const morph = useMorph(stage);
   // Un mapa por tema: el claro es un bosque de día, que se lee sin velo encima
   const heroMap = HERO_BG?.[s.theme] ?? null;
 
@@ -138,13 +172,17 @@ export default function Hero() {
         </div>
 
         <div className="hero-visual">
-          <div className={"hero-egg" + (obtained ? " obtained" : "")} style={{ "--p": pct }} aria-hidden="true">
+          <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph ? " morphing" : "")} data-stage={stage}
+            style={{ "--p": pct }} aria-hidden="true">
             <div className="egg-ring"></div>
             <div className="egg-glow"></div>
             {BRAND_ICON && (
               <div className="egg-body">
-                <img className="egg-off" src={imgUrl(BRAND_ICON)} alt="" />
-                <img className="egg-on" src={imgUrl(BRAND_ICON)} alt="" />
+                {stage === "off" && <img className="egg-off" src={imgUrl(BRAND_ICON)} alt="" />}
+                {stage === "pinata" && <img className="egg-on" src={imgUrl(PINATA.img)} alt="" />}
+                {stage === "silvestre" && morph && <img className="egg-from" src={imgUrl(PINATA.img)} alt="" />}
+                {stage === "silvestre" && <img className="egg-on" src={imgUrl(BRAND_ICON)} alt="" />}
+                {morph && <i className="egg-flash"></i>}
               </div>
             )}
           </div>
