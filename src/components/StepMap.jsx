@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { doneIcon, resolvesHere, showcase, stepTitle } from "../lib/journal.js";
+import { doneIcon, showcase, stepCalls, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
 import { useLeaving, useLiveId } from "../lib/leaving.js";
 
@@ -91,8 +91,8 @@ function Card({ step, pos, width, height, done }) {
   }, [leaving]);
   const show = showcase(step.n);
   const zone = ZONE_IMG[step.zone];
-  // Si el paso se resuelve solo, no hay dónde parar
-  const stops = resolvesHere(step) ? [] : (step.marks || []).filter(m => m[0] === "stop");
+  // Las mismas paradas que el detalle: si el paso se resuelve solo, solo la que deja el verde
+  const stops = stepCalls(step).filter(m => m[0] === "stop");
   const { left, top } = placeCard(pos, step.n, cardH, width, height);
   return (
     <div className="map-card" id={useLiveId("mapCard")} ref={ref} style={{ left, top, width: CARD_W }}>

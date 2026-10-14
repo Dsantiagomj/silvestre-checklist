@@ -22,11 +22,24 @@ export function stepTitle(step) {
 export function stepCalls(step) {
   const marks = step.marks || [];
   if (!resolvesHere(step)) return marks;
-  return marks.flatMap(([kind, text]) => {
+  const calls = marks.flatMap(([kind, text]) => {
     if (kind !== "stop") return [[kind, text]];
     const extra = text.match(/^.*?\.\s+(\S[\s\S]*)$/)?.[1];
     return extra ? [["note", extra]] : [];
   });
+  // Si lo que se resuelve sigue "hasta tener que pasar X", esa sí es una parada
+  const next = followUpStop(step);
+  return next ? [...calls, ["stop", next]] : calls;
+}
+
+/**
+ * La parada que deja el verde: "…y se actualiza la misión 1 del inciso 43 hasta tener
+ * que pasar Kodámade." Tras resolver lo del paso, una misión sigue y vuelve a parar.
+ */
+export function followUpStop(step) {
+  const done = step.marks?.find(m => m[0] === "done")?.[1];
+  const m = done?.match(/hasta tener que pasar (.+?)\.?$/i);
+  return m ? `Hasta tener que pasar ${m[1]}` : null;
 }
 export const resolvesHere = step => !!step.marks?.some(m => m[0] === "done");
 /** Lo que se resuelve: el jefe que se pasa; sin jefe, la espada del juego. */
@@ -151,6 +164,12 @@ export const STOP_AT = {
  * [{ quest, index, text }] con el índice sobre los objetivos aplanados de la misión.
  */
 export function stopPoints(step, quests) {
+  const next = followUpStop(step);
+  const after = next && stopPoint({ marks: [["stop", next]] }, quests);
+  return [...ownStops(step, quests), ...(after ? [{ ...after, followUp: true }] : [])];
+}
+
+function ownStops(step, quests) {
   const stops = (step.marks || []).filter(m => m[0] === "stop").map(m => m[1]);
   const at = STOP_AT[step.n];
   if (at && stops.length) {

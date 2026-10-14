@@ -503,11 +503,34 @@ test("las paradas revisadas en las guías caen en su objetivo, también cuando u
   const after = async (n, quest, text) => {
     await stepData(page, n);
     const q = page.locator("#journal .q-item", { has: page.locator(".q-name", { hasText: quest }) });
-    await expect(q.locator(":is(.obj-stop, .obj-resume) + .obj-row")).toContainText(text);
+    // Una misión puede tener más de una línea (verde y luego roja): la que va antes de ese objetivo
+    await expect(q.locator(":is(.obj-stop, .obj-resume) + .obj-row").filter({ hasText: text })).toHaveCount(1);
   };
   await after(25, "Los cazadores", "Registra la caverna en busca de Gerard");
   await after(87, "El juicio de la Muerte", /Entrégale a Maestro Cuerbok.*Fuego devorador/);
   // El 43 para en dos misiones
   await after(43, "El sauce del paseante", /Entrégale a Surivitna.*Esporas soporíferas/);
   await after(43, "Inmunda putrefacción", /Entrégale a Fhang.*Mildiu de Pandala/);
+});
+
+test("si el verde sigue «hasta tener que pasar X», esa nueva parada sale en rojo (paso 43, Kodámade)", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 43);
+  const j = page.locator("#journal");
+  // Avisos: lo que se resuelve y, después, hasta dónde llegar ahora
+  await expect(j.locator(".call.stop")).toHaveText(/Hasta tener que pasar Kodámade/);
+  const quest = name => j.locator(".q-item", { has: page.locator(".q-name", { hasText: name }) });
+  // Inmunda putrefacción: se termina al matar los monstruos (verde)
+  await expect(quest("Inmunda putrefacción").locator(".obj-resume + .obj-row")).toContainText("Mildiu de Pandala");
+  await expect(quest("Inmunda putrefacción").locator(".obj-stop")).toHaveCount(0);
+  // El sauce del paseante: sigue tras los monstruos (verde) y para en Kodámade (rojo)
+  const sauce = quest("El sauce del paseante");
+  await expect(sauce.locator(".obj-resume + .obj-row")).toContainText("Esporas soporíferas");
+  // La verde no repite la parada que dice la roja
+  await expect(sauce.locator(".obj-resume")).not.toContainText("Kodámade");
+  await expect(sauce.locator(".obj-stop")).toContainText("Hasta tener que pasar Kodámade");
+  await expect(sauce.locator(".obj-stop + .obj-row")).toContainText("Hoja de Kodámade");
+  // Lo mismo en el 72, con Ilyzaelle
+  await stepData(page, 72);
+  await expect(j.locator(".call.stop")).toHaveText(/Hasta tener que pasar Ilyzaelle/);
 });

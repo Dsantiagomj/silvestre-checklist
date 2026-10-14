@@ -157,8 +157,11 @@ function Quests({ step, quests, loaded, s }) {
   if (!quests.length) return null;
   // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
   // línea verde con lo que se resuelve, en vez de la roja de parar
-  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1];
-  const stops = stopPoints(step, quests).map(p => (done ? { ...p, text: done, resume: true } : p));
+  // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
+  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1]
+    .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
+  // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
+  const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
@@ -190,12 +193,12 @@ function Quests({ step, quests, loaded, s }) {
             {q.s.map((stg, j) => {
               const from = offset;
               offset += stg.o.length;
-              const stop = stops.find(p => p.quest === q.id && p.index >= from && p.index < offset);
+              const here = stops.filter(p => p.quest === q.id && p.index >= from && p.index < offset);
               return (
                 <Fragment key={j}>
                   {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
                   <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
-                    stop={stop ? { index: stop.index - from, text: stop.text, resume: stop.resume } : null} />
+                    stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
                 </Fragment>
               );
             })}
