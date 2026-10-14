@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from "react";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
-import { ITEMS } from "../lib/assets.js";
+import { PREREQ_STEP, REQUIRED_ROWS } from "../lib/resources.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -130,10 +130,16 @@ export const isPrereqDone = (s, id) => guideComplete(s) || !!s.prereqs[id];
 export const prereqsDone = s => ALL_PREREQS.filter(p => isPrereqDone(s, p.id)).length;
 /** Prerrequisitos marcados a mano: lo que borra un reinicio. */
 export const prereqsMarked = s => ALL_PREREQS.filter(p => s.prereqs[p.id]).length;
-const ALL_OWNED = Object.fromEntries(Object.keys(ITEMS).map(id => [id, true]));
-/** Objetos conseguidos: los marcados, o todos si la guía está completa. */
-export const ownedMap = s => (guideComplete(s) ? ALL_OWNED : s.owned);
-export const ownedCount = s => Object.keys(ownedMap(s)).filter(id => ITEMS[id]).length;
+/** Un paso ya no pide nada si está hecho; el "paso 0" son los prerrequisitos. */
+export const stepCovered = (s, n) =>
+  n === PREREQ_STEP ? ALL_PREREQS.every(p => isPrereqDone(s, p.id)) : !!s.done[n];
+/**
+ * Un objeto ya no hace falta si lo marcaste como conseguido o si hiciste todos los
+ * pasos que lo piden. Así el contador avanza solo al completar pasos.
+ */
+export const rowHave = (s, row, steps = row.steps) =>
+  guideComplete(s) || !!s.owned[row.k] || steps.every(n => stepCovered(s, n));
+export const ownedCount = s => REQUIRED_ROWS.filter(r => rowHave(s, r)).length;
 export const prereqsPending = s => ALL_PREREQS.length - prereqsDone(s);
 export const nextPending = s => {
   const st = STEPS.find(x => !s.done[x.n]);

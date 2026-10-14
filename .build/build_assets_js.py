@@ -5,12 +5,10 @@ Icon priority per step, most distinctive first:
   2. the portrait of a boss named in the step
   3. the achievement's category icon (only 3 distinct, so last resort)
 
-Required items come from DofusDB's `need.items` on each matched achievement and
-quest. A step that only covers part of an achievement ("hasta la misión 4") still
-lists the whole achievement's needs; the page flags those as partial.
+The items each step needs are not built here: see build_resources.py.
 
 Reads  : .build/data/{step_assets,achievements,quests}.json
-         (need_items.json, lookup_jobs.json and job_images_64.tar.gz are
+         (lookup_jobs.json and job_images_64.tar.gz are
           fetched and cached here)
 Writes : src/data/assets.json (imported statically by the app)
          public/img/**        (every image the page uses, mirrored from the CDN)
@@ -60,25 +58,6 @@ HERO_ICONS = {"prereqs": "achievements/458.png", "items": "items/81028.png"}
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
 
-# Item super types folded into the four groups the shopping list shows.
-CATEGORY = {
-    "Recurso": "recursos",
-    "Consumibles": "consumibles",
-    "Consumibles de combate": "consumibles",
-    "Arma": "equipables",
-    "Amuleto": "equipables",
-    "Anillo": "equipables",
-    "Cinturón": "equipables",
-    "Botas": "equipables",
-    "Sombrero": "equipables",
-    "Capa": "equipables",
-    "Escudo": "equipables",
-    "Dofus / Trofeo / Prismaradita": "equipables",
-    "Mascota": "equipables",
-    "Montura": "equipables",
-    "Seguidor": "equipables",
-}
-
 # Prerequisites from the guide. Achievements and quests resolve by name; jobs and
 # spells use their DofusDB ids, checked by hand on 2026-10-13.
 PREREQ_JOBS = {
@@ -115,33 +94,8 @@ def reward_index(achievements):
     return index
 
 
-def needs(rec):
-    n = (rec or {}).get("need") or {}
-    return list(zip(n.get("items") or [], n.get("quantities") or []))
-
-
 JOB_TARBALL = ("https://github.com/dofusdude/dofus3-main/releases/download/"
                "3.7.10.10/job_images_64.tar.gz")
-
-
-def load_need_items(ids):
-    """Item metadata for every required item, cached in need_items.json.
-
-    Only the ids missing from the cache are requested, 40 per call.
-    """
-    cache_file = DATA / "need_items.json"
-    cached = json.loads(cache_file.read_text()) if cache_file.exists() else []
-    have = {it["id"] for it in cached}
-    missing = sorted(set(ids) - have)
-    for i in range(0, len(missing), 40):
-        query = "&".join(f"id[$in][]={x}" for x in missing[i:i + 40])
-        req = urllib.request.Request(f"https://api.dofusdb.fr/items?$limit=50&{query}",
-                                     headers={"User-Agent": "silvestre/1.0"})
-        with urllib.request.urlopen(req, timeout=40) as r:
-            cached += json.load(r)["data"]
-    if missing:
-        cache_file.write_text(json.dumps(cached, ensure_ascii=False))
-    return cached
 
 
 def fetch_jobs():
@@ -237,52 +191,22 @@ def mirror(paths):
 def main():
     report = json.loads((DATA / "step_assets.json").read_text())
     achievements = json.loads((DATA / "achievements.json").read_text())
-    by_ach = {a["id"]: a for a in achievements}
-    by_quest = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
     rewards = reward_index(achievements)
     fetch_jobs()
 
-    wanted = set()
+    steps = {}
     for step in report:
-        for a in step["assets"]:
-            src = by_ach if a["kind"] == "achievement" else by_quest if a["kind"] == "quest" else {}
-            wanted |= {iid for iid, _ in needs(src.get(a["id"]))}
-
-    item_meta = {}
-    for it in load_need_items(wanted):
-        super_name = (((it.get("type") or {}).get("superType") or {}).get("name") or {}).get("es")
-        item_meta[it["id"]] = {
-            "name": it["name"]["es"],
-            "img": f"items/{it['iconId']}.png",
-            "cat": CATEGORY.get(super_name, "otros"),
-            "type": ((it.get("type") or {}).get("name") or {}).get("es") or "",
-            "lvl": it.get("level") or 0,
-        }
-
-    steps, used_items = {}, set()
-    for step in report:
-        achs, bosses, dungeons, quests, req = [], [], [], [], []
+        achs, bosses, dungeons, quests = [], [], [], []
         for a in step["assets"]:
             kind = a["kind"]
             if kind == "achievement":
                 achs.append({"id": a["id"], "name": a["name"], "img": short(a["img"])})
-                src = by_ach.get(a["id"])
             elif kind == "quest":
                 quests.append({"id": a["id"], "name": a["name"]})
-                src = by_quest.get(a["id"])
             elif kind == "boss" and a["img"]:
                 bosses.append({"id": a["id"], "name": a["name"], "img": short(a["img"])})
-                src = None
             elif kind == "dungeon":
                 dungeons.append({"id": a["id"], "name": a["name"]})
-                src = None
-            else:
-                src = None
-            if src:
-                # "s" names the source so the shopping list can count each
-                # achievement once even when several steps share it.
-                tag = f"{kind[0]}{a['id']}"
-                req += [[iid, qty, tag] for iid, qty in needs(src) if iid in item_meta]
 
         icon = None
         for a in achs:
@@ -297,14 +221,11 @@ def main():
 
         entry = {k: v for k, v in {
             "icon": icon, "achievements": achs, "bosses": bosses,
-            "dungeons": dungeons, "quests": quests, "items": req,
-            "partial": bool(re.search(r"\bhasta\b", step["text"], re.I)) and bool(req),
+            "dungeons": dungeons, "quests": quests,
         }.items() if v}
         if entry:
             steps[str(step["n"])] = entry
-        used_items |= {r[0] for r in req}
 
-    items = {str(i): item_meta[i] for i in sorted(used_items)}
     prereqs = prereq_icons(read_prereqs())
 
     paths = set()
@@ -313,7 +234,6 @@ def main():
             paths.add(v["icon"]["src"])
         paths |= {b["img"] for b in v.get("bosses", [])}
         paths |= {a["img"] for a in v.get("achievements", [])}
-    paths |= {m["img"] for m in items.values()}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
               *HEADER_ICONS.values(), *HERO_ICONS.values()}
@@ -326,9 +246,6 @@ def main():
     if failed:
         # Drop references to images that do not exist rather than ship broken <img>.
         bad = {p for p, _ in failed}
-        for m in items.values():
-            if m["img"] in bad:
-                m["img"] = None
         for icons in prereqs.values():
             for i in icons:
                 if i.get("img") in bad:
@@ -347,19 +264,12 @@ def main():
         "HEADER_ICONS": HEADER_ICONS,
         "HERO_ICONS": HERO_ICONS,
         "STEP_ASSETS": steps,
-        "ITEMS": items,
         "PREREQ_ICONS": prereqs,
     }) + "\n")
 
-    cats = {}
-    for m in items.values():
-        cats[m["cat"]] = cats.get(m["cat"], 0) + 1
     size = sum((IMG / p).stat().st_size for p in paths if (IMG / p).exists())
     print(f"assets.json     : {OUT_JSON.stat().st_size // 1024} KB")
     print(f"pasos con icono : {sum(1 for v in steps.values() if 'icon' in v)}/100")
-    print(f"pasos con ítems : {sum(1 for v in steps.values() if 'items' in v)}"
-          f" ({sum(1 for v in steps.values() if v.get('partial'))} parciales)")
-    print(f"ítems distintos : {len(items)} {cats}")
     print(f"prerrequisitos  : {len(prereqs)} con icono")
     print(f"imágenes        : {len(paths)} en public/img/ ({size // 1024} KB), fallidas {len(failed)}")
     for p, why in failed:

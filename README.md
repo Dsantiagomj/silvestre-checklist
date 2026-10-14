@@ -60,7 +60,7 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
 - ✅ **Nota aclaratoria** de Sandglass sobre "Hasta tener que pasar X jefe".
 - ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
-- ✅ **Objetos necesarios**: cada paso lista lo que piden sus logros y misiones, y una sección aparte suma todo lo pendiente por categoría (recursos, consumibles, equipables, otros). Cada objeto se puede marcar como conseguido y la lista se copia como texto.
+- ✅ **Objetos necesarios**: la lista de torrentearcano, paso a paso. Cada paso muestra lo que pide, los prerrequisitos muestran lo suyo y una sección aparte lo suma por categoría (recursos, consumibles, equipables, almas, criaturas, cosméticos). Un objeto deja de hacer falta al completar todos los pasos que lo piden, o al marcarlo como conseguido. La lista se copia como texto.
 - ✅ **Overlay**: una ventana compacta que se queda encima del juego y te lleva objetivo a objetivo por las misiones del paso, con mapa y coordenadas. Ver abajo.
 - ✅ **Misiones por paso**: el detalle de cada paso lista sus misiones con el NPC inicial, el nivel y todos los objetivos.
 - ✅ **Iconos en prerrequisitos**: oficios, hechizos y logros previos con su icono del juego.
@@ -92,16 +92,24 @@ El panel de detalle añade los retratos de los jefes nombrados en el texto (64 e
 
 ### Objetos necesarios
 
-DofusDB guarda en cada logro y misión un campo `need.items` con los objetos que pide.
-Sumándolos salen **260 objetos distintos en 69 pasos**: 194 recursos, 34 consumibles,
-25 equipables y 7 de otro tipo.
+Salen de la misma página de torrentearcano: Sandglass lista, paso a paso, solo lo que hay
+que reunir (recursos base, equipo, consumibles, almas, criaturas), sin los objetos
+intermedios que se fabrican por el camino. El "paso 0" son los prerrequisitos.
+`.build/build_resources.py` busca cada nombre en DofusDB para su imagen y escribe
+`src/data/resources.json`: **408 objetos en 68 pasos**.
 
-Dos detalles de cómo se cuentan:
+La suma se hace con las mismas reglas que el compilado de la página, y el script lo
+comprueba contra `.build/lists/compilado.txt` (421 de 421 filas iguales):
 
-- Si varios pasos comparten logro (el "Azul turquesa" aparece en seis), sus objetos se
-  cuentan una sola vez en la lista global.
-- 40 de esos pasos dicen "hasta la misión N". DofusDB no separa los objetos por misión,
-  así que el paso muestra los del logro entero y lo avisa con una nota.
+- Lo que se conserva tras usarlo (Mazorrasombrero, Varita pitusa, Piedra de alma mediana,
+  Calzoncillo de repuesto de capitán chafer) cuenta una vez aunque lo pidan dos pasos.
+- El Elixir de los barquerontes sale en su paso pero no suma: solo hace falta si se perdió
+  la alteración.
+- Los objetos de una misión opcional o de una sola orden de alineamiento llevan etiqueta y
+  no cuentan en el total del hero.
+
+Cuatro nombres no existen en DofusDB y salen sin imagen: Hoja de kalipto, Esencia de cil,
+Filtro de dragonalgas y "Recursos recolectables de los reinos de tinta y papel".
 
 ### Todo auto-alojado
 
@@ -134,6 +142,7 @@ python3 -I .build/fetch_dofusdb.py     # descarga logros, jefes, mazmorras y mis
 python3 -I .build/match_assets.py      # empareja los 100 pasos e imprime la cobertura
 python3 -I .build/build_assets_js.py   # escribe src/data/assets.json (60 KB) y copia las imágenes a public/img/
 python3 -I .build/build_quests_js.py   # escribe src/data/quests.json (506 KB): misiones y objetivos por paso
+python3 -I .build/build_resources.py   # escribe src/data/resources.json: los objetos de cada paso
 ```
 
 El primer paso baja unos 190 MB a `.build/data/`, que está en `.gitignore`. Se versionan
@@ -243,18 +252,14 @@ dos versiones las pasaban sin cambios.
    copiadas en `public/img/`, así que la página no depende de él para funcionar; solo para
    regenerar los datos.
 
-6. **Los objetos de pasos parciales están inflados**. Un paso "hasta la misión 4" lista los
-   objetos del logro entero, porque DofusDB no los separa por misión. La lista global no
-   se ve afectada: cuenta cada logro una vez.
-
-7. **Los mapas del overlay dependen de DofusDB**. Iconos y objetos están en `public/img/`, pero los
+6. **Los mapas del overlay dependen de DofusDB**. Iconos y objetos están en `public/img/`, pero los
    mapas se enlazan desde su CDN por tamaño.
 
-8. **La sintaxis de `/travel` no está verificada en el juego**. La única referencia que
+7. **La sintaxis de `/travel` no está verificada en el juego**. La única referencia que
    encontré es una extensión para dofus-map.com que copia `/travel` seguido de dos
    coordenadas. Si el juego espera otro formato, se cambia en `copyTravel()`.
 
-9. **Las misiones de alineamiento salen del criterio de inicio**, no de un listado oficial.
+8. **Las misiones de alineamiento salen del criterio de inicio**, no de un listado oficial.
    Los niveles cuadran con lo que dice cada paso (la 99, nivel 199, lleva al Mirador de
    Ilyzaelle), pero es una inferencia.
 
@@ -295,6 +300,8 @@ silvestre-checklist/
     ├── match_assets.py       ← empareja los 100 pasos con logros, jefes y misiones
     ├── build_assets_js.py    ← genera los datos de pasos y copia las imágenes
     ├── build_quests_js.py    ← resuelve cada paso a sus misiones
+    ├── build_resources.py    ← objetos de cada paso desde la lista de torrentearcano
+    ├── lists/                ← datos importados de torrentearcano y su compilado
     ├── steps.js, steps_data.py
     └── data/                 ← datos crudos y cachés de la API (gitignored)
 ```

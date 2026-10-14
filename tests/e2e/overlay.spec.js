@@ -9,7 +9,7 @@ test("el overlay sigue las misiones del paso y se sincroniza con la página", as
   await expect(page.locator(".quests-block > summary")).toContainText("(10)", { timeout: 15_000 });
   const [ov] = await Promise.all([context.waitForEvent("page"), page.click("#overlayBtn")]);
   await expect(ov.locator(".ov-qhead .ov-title")).toHaveText("El dragón blanco", { timeout: 10_000 });
-  await expect(ov.locator(".req > summary")).toContainText("(9)");
+  await expect(ov.locator(".req > summary")).toContainText("(12)");
   await expect(ov.locator(".ov-obj .ov-label")).toContainText("1 / 16");
 
   await ov.click('[data-ob="1"]');

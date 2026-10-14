@@ -15,8 +15,8 @@ test("el detalle del paso 93 muestra recompensa, jefes y objetos", async ({ page
   await expect(page.locator(".detail-art-name")).toHaveText("Dofus Marfil");
   await expect(page.locator(".detail-art-label")).toHaveText("Recompensa");
   await expect(page.locator(".boss-row .boss-chip")).toHaveCount(6);
-  await expect(page.locator(".req > summary").first()).toContainText("(9)");
-  await expect(page.locator(".req-item")).toHaveCount(9);
+  const req = page.locator(".req", { has: page.locator("summary", { hasText: "Objetos necesarios (12)" }) });
+  await expect(req.locator(".req-item")).toHaveCount(12);
 });
 
 test("el detalle lista las misiones del paso cuando cargan", async ({ page }) => {
