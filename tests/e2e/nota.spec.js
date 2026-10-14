@@ -55,21 +55,40 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
   }));
   expect(z.marker).toBeLessThan(z.step);
   expect(z.marker).toBeLessThan(z.boss);
+
   // Pasar el ratón la repite desde el principio
   const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
   await page.locator(".nota-example").hover();
   await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
-  // La pausa aparece en cada casilla cuando el punto pasa por ella, no antes
+
+  // Se detiene la animación y se salta a cada momento: no depende de lo rápida que vaya la máquina
+  const at = ms => page.locator(".nota-track").evaluate((t, ms) => {
+    for (const a of t.getAnimations({ subtree: true })) { a.pause(); a.currentTime = ms; }
+  }, ms);
   const pauses = () => page.locator(".nota-step.paused").evaluateAll(els =>
     els.map(el => Number(getComputedStyle(el, "::before").opacity)));
+
+  // Al empezar no hay pausas: las deja el punto al pasar (43 a 0,5 s, 44 a 1,2 s)
+  await at(100);
   expect(await pauses()).toEqual([0, 0]);
-  await expect.poll(pauses, { timeout: 2_000 }).toEqual([1, 1]);
-  // Da tiempo a seguirla: a los 2 s todavía no ha caído el jefe
-  await page.waitForTimeout(500);
+  await at(900);
+  expect(await pauses()).toEqual([1, 0]);
+  // Con las dos pausas puestas el jefe sigue en pie: hay tiempo para seguir la historia
+  await at(2500);
+  expect(await pauses()).toEqual([1, 1]);
   expect((await exampleState(page)).boss).not.toContain("grayscale(1)");
-  // Al terminar: los tres pasos con ✓ y el jefe vencido, y se queda así
-  await expect.poll(() => exampleState(page), { timeout: 10_000 })
-    .toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
+  // El jefe cae antes de que se marque nada
+  await at(4700);
+  expect(await exampleState(page)).toMatchObject({ checks: [0, 0, 0], boss: expect.stringContaining("grayscale(1)") });
+  // El 45 primero, luego hacia atrás
+  await at(5300);
+  expect((await exampleState(page)).checks).toEqual([0, 0, 1]);
+  await at(6000);
+  expect((await exampleState(page)).checks).toEqual([0, 1, 1]);
+  // Final: los tres con ✓, sin pausas, y se queda así
+  await at(8000);
+  expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
+  expect(await pauses()).toEqual([0, 0]);
 });
 
 test("con movimiento reducido el ejemplo muestra directamente el final", async ({ browser }) => {
