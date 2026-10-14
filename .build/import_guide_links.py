@@ -5,13 +5,18 @@ mission ("misión 2: Arak-hais, ¿dónde vais?") to a page of its own, built fro
 the mission title (slugifyTorrentArcano) unless missionUrlOverrides says
 otherwise. This script finds the same names in the step texts, builds the same
 URLs and keeps only the ones that answer, so the app never links a missing page.
+It also links every quest the diary lists (src/data/quests.json) whose page, by the
+same slug, is in the site's sitemap: most have a guide the step text never names.
 
 Usage:
   curl -sL -A "Mozilla/5.0" -o /tmp/ta/page.html https://www.torrentearcano.com/checklist-silvestre
   python3 -I .build/import_guide_links.py /tmp/ta/page.html
 
 Writes:
-  src/data/guides.json  { achievements: { name: url }, missions: { title: url } }
+  src/data/guides.json  { achievements: { name: url }, missions: { title: url },
+                          quests: { title: url } }
+"missions" are named in the step texts and get linked there; "quests" only in the
+diary's quest list, so a short title ("Memo", "Enigma") never links ordinary words.
 """
 import json
 import pathlib
@@ -24,6 +29,7 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "data" / "guides.json"
+QUESTS = ROOT / "src" / "data" / "quests.json"
 SITE = "https://www.torrentearcano.com/"
 
 # The page's own pattern (linkMissions), on the raw text instead of escaped HTML
@@ -69,6 +75,35 @@ def missions(texts):
     return sorted(found)
 
 
+def site_pages():
+    """Every page the site lists in its sitemap (Squarespace keeps it complete)."""
+    req = urllib.request.Request(SITE + "sitemap.xml", headers={"User-Agent": "Mozilla/5.0"})
+    for attempt in range(4):
+        time.sleep(2 * attempt)  # the site resets bursts of connections
+        try:
+            with urllib.request.urlopen(req, timeout=30) as res:
+                return set(re.findall(r"<loc>([^<]+)</loc>", res.read().decode("utf-8")))
+        except (urllib.error.URLError, ConnectionError, TimeoutError):
+            pass
+    raise SystemExit("sin respuesta del sitemap")
+
+
+def page_for(name, overrides, pages):
+    """The quest's page in the sitemap. Besides the page's own slug, the site's pages
+    sometimes drop dots and apostrophes ("el-slip-esta-que-arde", "la-ascension-de-qutan")
+    or carry Squarespace's "-1" for a repeated title."""
+    if name in overrides:
+        return overrides[name] if overrides[name] in pages else None
+    base = slug(name)
+    compact = slug(re.sub(r"[.'’]", "", name))
+    return next((SITE + c for c in (base, compact, base + "-1") if SITE + c in pages), None)
+
+
+def quest_names():
+    """The names of the quests the diary lists, as the app shows them."""
+    return sorted({q["n"] for q in json.loads(QUESTS.read_text())["QUESTS"].values()})
+
+
 def answers(url, tries=4):
     """One request at a time, with a pause: the site resets bursts of connections."""
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -91,15 +126,24 @@ def main(page):
     achievements = js_object(html, "achievementLinks")
     overrides = js_object(html, "missionUrlOverrides")
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS}
-    urls = sorted(set(wanted.values()) | set(achievements.values()))
-    ok = {url: answers(url) for url in urls}
+    pages = site_pages()
+    diary_only = {}
+    for name in quest_names():
+        url = page_for(name, overrides, pages)
+        if url and name not in wanted:
+            diary_only[name] = url
+    urls = sorted(set(wanted.values()) | set(achievements.values()) | set(diary_only.values()))
+    # The sitemap answers for most; only what it lacks is asked one by one
+    ok = {url: url in pages or answers(url) for url in urls}
     out = {
         "achievements": {k: v for k, v in achievements.items() if ok[v]},
         "missions": {k: v for k, v in wanted.items() if ok[v]},
+        "quests": dict(sorted(diary_only.items())),
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n")
     missing = sorted(k for k, v in wanted.items() if not ok[v])
-    print(f"logros: {len(out['achievements'])}/{len(achievements)}; misiones: {len(out['missions'])}/{len(wanted)}")
+    print(f"logros: {len(out['achievements'])}/{len(achievements)}; misiones: {len(out['missions'])}/{len(wanted)}"
+          f"; misiones solo del diario: {len(diary_only)}")
     if missing:
         print("misiones sin página:", "; ".join(missing))
 

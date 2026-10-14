@@ -296,3 +296,14 @@ test("la misión de clase sale como una sola fila con su guía, no la de una cla
   const names = await j.locator(".q-item .q-name").allInnerTexts();
   expect(names.indexOf("Misión de clase")).toBe(names.indexOf("Consejo de clase") + 1);
 });
+
+test("las misiones del paso enlazan su guía de Torrente Arcano aunque el texto no las nombre", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  const q = name => page.locator("#journal .q-item", { has: page.locator(".q-name", { hasText: new RegExp(`^${name}$`) }) });
+  await expect(q("Destino Astrub").locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/destino-astrub", { timeout: 15_000 });
+  await expect(q("Ver a Dark Vlad y morir\\.\\.\\. o no").locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/ver-a-dark-vlad-y-morir-o-no");
+  // Todas menos «Respuestas para todo», que no tiene página
+  await expect(page.locator("#journal .q-item .q-guide")).toHaveCount(15);
+  await expect(q("Respuestas para todo").locator(".q-guide")).toHaveCount(0);
+});

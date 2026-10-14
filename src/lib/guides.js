@@ -8,12 +8,14 @@ const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(
 const byName = obj => new Map(Object.entries(obj).map(([k, v]) => [norm(k), v]));
 const MISSIONS = byName(GUIDES.missions);
 const ACHIEVEMENTS = byName(GUIDES.achievements);
+// Las misiones que solo salen en la lista del diario: se enlazan allí, no en el texto
+const QUESTS = byName(GUIDES.quests || {});
 // Los nombres largos primero: "Ocre de ámbar" antes que una misión que lo contenga
 const NAMES = [...Object.entries(GUIDES.missions), ...Object.entries(GUIDES.achievements)]
   .sort((a, b) => b[0].length - a[0].length);
 const INCISOS = /incisos?\s+(\d+(?:\s*(?:,|y)\s*\d+)*)/gi;
 
-export const missionGuide = name => MISSIONS.get(norm(name)) || null;
+export const missionGuide = name => MISSIONS.get(norm(name)) || QUESTS.get(norm(name)) || null;
 export const achievementGuide = name => ACHIEVEMENTS.get(norm(name)) || null;
 
 /**
