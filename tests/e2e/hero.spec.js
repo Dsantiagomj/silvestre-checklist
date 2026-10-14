@@ -52,7 +52,7 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator(".hero-reqs")).toHaveCount(0);
   const road = page.locator(".road.big");
   await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
-  await expect(road.locator(".road-dofus.obtained")).toHaveCount(11);
+  await expect(road.locator(".road-dofus.obtained")).toHaveCount(12);
   await page.click("#roadGo");
   await expect(page.locator("#diary")).toBeInViewport();
 });
@@ -182,11 +182,11 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
   const road = page.locator(".road");
   await expect(road).not.toHaveClass(/\bbig\b/);
-  await expect(road.locator(".road-count")).toHaveText("2/11");
+  await expect(road.locator(".road-count")).toHaveText("2/12");
   // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
   // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
   const dofus = road.locator(".road-dofus");
-  await expect(dofus).toHaveCount(11);
+  await expect(dofus).toHaveCount(12);
   await expect(dofus.nth(0)).toHaveAttribute("title", "Dofawa · paso 1");
   await expect(dofus.nth(0)).not.toHaveClass(/\bobtained\b/);
   await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
@@ -197,6 +197,8 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
   // El Ocre llega al terminar "La eterna cosecha": el logro "El fin de la eternidad" del paso 79
   await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · paso 79");
+  // La Piñata de pino se da por conseguida al completar el paso 99
+  await expect(dofus.nth(11)).toHaveAttribute("title", "Piñata de pino · paso 99");
   await expect(dofus.nth(7)).not.toHaveClass(/\bobtained\b/);
   // Mientras falta, siguen el siguiente paso y lo que necesitas
   await expect(page.locator("#heroNext")).toBeVisible();

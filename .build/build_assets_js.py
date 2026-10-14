@@ -85,7 +85,12 @@ DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa
 # "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna
 # cosecha", the long quest that gives the Dofus Ocre; DofusDB has neither its
 # objectives nor its reward.
-MISSING_DOFUS = {565: (7754, "items/23012.png", "Dofus Ocre")}
+MISSING_DOFUS = {
+    565: (7754, "items/23012.png", "Dofus Ocre"),
+    # The Piñata de pino comes from a side quest (Grunob, then Goblepino) that opens
+    # once "El secreto de los dofus: Prólogo" is done; the guide counts it there.
+    5222: (27803, "items/23035.png", "Piñata de pino"),
+}
 # The prerequisites note recommends starting it early: it shows the egg.
 OCRE_ICON = "items/23012.png"
 # Icons of the guide's marks in the step detail: a dungeon key for where to stop,

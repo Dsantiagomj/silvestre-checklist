@@ -202,3 +202,10 @@ test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
   await expect(icon("tip")).toHaveAttribute("src", /items\/25019\.png$/);
   expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", "", ""]);
 });
+
+test("el paso 99 da la Piñata de pino", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="99"] .row-main');
+  await expect(page.locator("#journal .journal-show-label")).toHaveText("Recompensa");
+  await expect(page.locator("#journal .journal-show-name")).toHaveText("Piñata de pino");
+});

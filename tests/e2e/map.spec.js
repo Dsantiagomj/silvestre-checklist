@@ -16,8 +16,9 @@ test("el mapa recorre los 100 pasos y la elección se recuerda", async ({ page }
   await expect(page.locator(".diary-window")).toHaveCount(0);
   await expect(page.locator(".map-node.done")).toHaveCount(32);
   await expect(node(page, 33)).toHaveClass(/current/);
-  // Los 11 Dofus del camino son hitos con su huevo; el Ocre, en el 79
-  await expect(page.locator(".map-node .node-egg")).toHaveCount(11);
+  // Los 12 Dofus del camino son hitos con su huevo; el Ocre en el 79 y la Piñata en el 99
+  await expect(page.locator(".map-node .node-egg")).toHaveCount(12);
+  await expect(node(page, 99).locator(".node-egg")).toHaveAttribute("src", /items\/23035\.png$/);
   await expect(node(page, 79).locator(".node-egg")).toHaveAttribute("src", /items\/23012\.png$/);
   await page.reload();
   await expect(page.locator(".map-node")).toHaveCount(100);
