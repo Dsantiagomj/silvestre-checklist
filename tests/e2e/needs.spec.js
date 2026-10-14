@@ -344,10 +344,19 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await expect(strip.locator(".needs-meter b")).toHaveText(["18/18", /^\d+\/420$/]);
   await expect(strip.locator(".needs-meter b").nth(1)).toHaveText(await page.locator("#heroItems .hero-req-count").textContent());
   await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
-  // Los objetos de "Pronto" a la vista: hasta 6 iconos y el resto en "+N"
+  // Los objetos de "Pronto" con nombre y cantidad, los que quepan en una fila y el resto en "+N"
   const soon = Number((await strip.locator(".needs-strip-title").textContent()).match(/\d+/)[0]);
-  await expect(strip.locator(".needs-strip-icons img")).toHaveCount(Math.min(6, soon));
-  if (soon > 6) await expect(strip.locator(".needs-strip-icons .more")).toHaveText(`+${soon - 6}`);
+  const chips = strip.locator(".needs-strip-peek > .soon-chip");
+  await expect(chips.first()).toHaveText(/^.+×\d+$/);
+  const shown = await chips.count();
+  expect(shown).toBeGreaterThan(3);
+  await expect(strip.locator(".needs-strip-peek > .more")).toHaveText(`+${soon - shown}`);
+  const peek = strip.locator(".needs-strip-peek");
+  expect(await peek.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    return [...el.children].filter(c => !c.classList.contains("needs-strip-ghost"))
+      .every(c => c.getBoundingClientRect().right <= box.right + 0.5);
+  })).toBe(true);
   await expect(page.locator("#tabItems")).toHaveCount(0);
   // Se recuerda
   await page.reload();
