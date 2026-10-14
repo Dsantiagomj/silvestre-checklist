@@ -287,3 +287,27 @@ test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page })
   const after = await page.evaluate(() => scrollY);
   expect(Math.abs(after - before)).toBeLessThan(4);
 });
+
+test("plegar y desplegar misiones no mueve la lista de pasos, ni con el final del diario a la vista", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.locator("#journal .q-item").first().waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(600);
+  await page.evaluate(() => { const w = document.querySelector(".diary-window"); scrollTo(0, w.getBoundingClientRect().bottom + scrollY - innerHeight + 40); });
+  await page.waitForTimeout(600);
+  const tops = await page.evaluate(async () => {
+    const box = document.querySelector(".diary-list");
+    const out = [Math.round(box.getBoundingClientRect().top)];
+    const sum = document.querySelector("#journal .q-item summary");
+    for (const _ of [0, 1]) {
+      sum.click();
+      for (let i = 0; i < 25; i++) {
+        await new Promise(r => requestAnimationFrame(r));
+        out.push(Math.round(box.getBoundingClientRect().top));
+      }
+    }
+    return out;
+  });
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+});

@@ -678,7 +678,10 @@ a:hover{ text-decoration:underline; }
 .bar-fill{ background:linear-gradient(90deg, var(--amber-2), var(--amber)); box-shadow:0 0 14px rgba(183,220,105,.45); }
 
 /* Cards */
-.needs, .diary-window{
+.needs, /* Plegar una misión no debe mover la página: sin el anclaje del navegador, que subía el
+   scroll y arrastraba la lista fija (y la ventana no encoge dentro del paso: DiaryWindow) */
+.diary-window, .diary-window *{ overflow-anchor:none; }
+.diary-window{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:16px;
