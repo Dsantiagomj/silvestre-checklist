@@ -240,6 +240,22 @@ test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
   expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", "", ""]);
 });
 
+test("cada tipo de aviso azul tiene su nombre y su icono", async ({ page }) => {
+  await openApp(page);
+  const call = (kind) => page.locator(`#journal .call.${kind}`);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  await expect(call("includes").locator("b")).toHaveText("Incluye");
+  await expect(call("includes").locator("i img")).toHaveAttribute("src", /items\/24041\.png$/);
+  await expect(page.locator("#journal .call.tip")).toHaveCount(0);
+  await page.click('.diary-row[data-n="54"] .row-main');
+  await expect(call("must").locator("b")).toHaveText("También hay que");
+  // Lo que también hay que hacer es una misión: lleva la «!» del juego
+  await expect(call("must").locator("i .quest-mark")).toHaveCount(1);
+  await page.click('.diary-row[data-n="50"] .row-main');
+  await expect(call("note").locator("b")).toHaveText("Nota");
+  await expect(call("note").locator("i img")).toHaveAttribute("src", /items\/24055\.png$/);
+});
+
 test("el paso 99 da la Piñata de pino", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="99"] .row-main');

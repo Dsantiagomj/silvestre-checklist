@@ -15,7 +15,9 @@ Writes:
   src/data/steps.js                 STEPS and PREVIOUS_STEPS blocks only
 
 Each text keeps the page's colour markers as marks: [[RED]] is where to stop
-("stop"), [[GREEN]] what gets resolved ("done") and [[BLUE]] a tip ("tip").
+("stop"), [[GREEN]] what gets resolved ("done"). [[BLUE]] mixes several things, so
+it is split by what it says (blue_kind): what the step covers ("includes"), tasks the
+guide also requires ("must"), advice ("tip") and anything else ("note").
 "complete" says the step asks for the whole achievement ("(Completo)", kept out
 of the marks). "base" is the text without them, and "closes" lists the earlier steps whose
 missions a "done" mark finishes ("se terminan las misiones de los incisos 33
@@ -60,7 +62,17 @@ def clean(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-MARK_KINDS = {"RED": "stop", "GREEN": "done", "BLUE": "tip"}
+MARK_KINDS = {"RED": "stop", "GREEN": "done", "BLUE": "note"}
+BLUE_KINDS = [
+    ("includes", re.compile(r"\bincluye\b", re.I)),
+    ("must", re.compile(r"^(?:en este punto )?se debe\b|^requiere\b", re.I)),
+    ("tip", re.compile(r"\bse recomienda\b|^se pueden?\b|\bse pueden? encadenar\b|^(?:se )?aprovecha|^recordatorio\b", re.I)),
+]
+
+
+def blue_kind(text):
+    """The first kind whose pattern the text matches; "note" when none does."""
+    return next((kind for kind, pattern in BLUE_KINDS if pattern.search(text)), "note")
 MARK = re.compile(r"\[\[(RED|GREEN|BLUE)\]\]([\s\S]*?)\[\[/\1\]\]")
 
 
@@ -99,7 +111,8 @@ def marks(raw):
     """In page order; step 43 repeats the same stop for two missions, kept once."""
     out = []
     for kind, body in MARK.findall(raw):
-        mark = [MARK_KINDS[kind], mark_text(body)]
+        text = mark_text(body)
+        mark = [blue_kind(text) if kind == "BLUE" else MARK_KINDS[kind], text]
         if mark[1] and mark not in out:
             out.append(mark)
     return out
