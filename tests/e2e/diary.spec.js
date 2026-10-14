@@ -170,3 +170,12 @@ test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de mis
   // Los 4 pasos sin icono propio no quedan en blanco
   await expect(page.locator(".diary-row .row-art .quest-mark")).toHaveCount(4);
 });
+
+test("un paso que pide el logro completo lo dice en la cabecera, no como consejo", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="18"] .row-main');
+  await expect(page.locator("#journal .journal-meta .is-complete")).toHaveText("Logro completo");
+  await expect(page.locator("#journal .call", { hasText: /^\W*Consejo\s*Completo$/ })).toHaveCount(0);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await expect(page.locator("#journal .journal-meta .is-complete")).toHaveCount(0);
+});

@@ -42,6 +42,7 @@ function Hero({ step, done, quests }) {
         <div className="journal-meta">
           <span className="badge zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><span className="dot"></span>{step.zone}</span>
           <span className="badge">{TIER_META[step.effort].label}</span>
+          {step.complete && <span className="badge is-complete" title="El paso pide el logro entero">Logro completo</span>}
           {quests.length > 0 && <span className="badge">{quests.length} {quests.length === 1 ? "misión" : "misiones"}</span>}
           {done && <span className="badge is-done">✓ Hecho</span>}
         </div>
