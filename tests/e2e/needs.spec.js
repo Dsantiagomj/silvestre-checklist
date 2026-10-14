@@ -158,6 +158,11 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
   const box = await page.locator("#bandSoon").boundingBox();
   expect(box.x + box.width).toBeLessThanOrEqual(390);
+  // Y la de prerrequisitos: ninguna tarjeta se sale por la derecha
+  await page.click("#tabPrereqs");
+  const panel = await page.locator("#prereqs").boundingBox();
+  const rights = await page.locator(".pr-card").evaluateAll(els => els.map(el => el.getBoundingClientRect().right));
+  expect(Math.max(...rights)).toBeLessThanOrEqual(panel.x + panel.width + 0.5);
   await ctx.close();
 });
 
@@ -223,4 +228,23 @@ test("en la lista el nombre largo se corta y no tapa la cantidad", async ({ brow
   const qty = await row.locator(".q").boundingBox();
   expect(name.x + name.width).toBeLessThanOrEqual(qty.x);
   await ctx.close();
+});
+
+test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos grandes", async ({ page }) => {
+  await openApp(page, { "silvestre:prereqs": { l1: true, l3: true } });
+  await expect(page.locator(".pr-group h3").first()).toContainText("2/9");
+  const otomai = page.locator('.pr-card[data-id="l4"]');
+  await expect(otomai.locator(".pr-zone")).toHaveText("Isla de Otomaï");
+  await expect(otomai.locator(".pr-title")).toHaveText('Logro "El gran Guarrok". (Completo)');
+  await expect(page.locator('.pr-card[data-id="o5"] .pr-badge')).toHaveText("Nv. 100");
+  await expect(page.locator('.pr-card[data-id="o5"] .pr-title')).toHaveText("Campesino");
+  await expect(page.locator('.pr-card[data-id="h1"] .pr-badge')).toHaveText("Obligatorio");
+  await expect(page.locator('.pr-card[data-id="h3"] .pr-badge')).toHaveText("Opcional");
+  await expect(page.locator('.pr-card[data-id="h3"] .pr-sub')).toHaveText("Útil para el paso 64");
+  const icon = await page.locator('.pr-card[data-id="l4"] .pr-icons img').boundingBox();
+  expect(icon.width).toBeGreaterThanOrEqual(36);
+  // Tres columnas en escritorio
+  const tops = await page.locator(".pr-group").first().locator(".pr-card").evaluateAll(els => els.slice(0, 4).map(el => Math.round(el.getBoundingClientRect().top)));
+  expect(tops[0]).toBe(tops[2]);
+  expect(tops[3]).toBeGreaterThan(tops[0]);
 });
