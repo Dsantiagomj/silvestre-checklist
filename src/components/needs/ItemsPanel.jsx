@@ -64,7 +64,8 @@ function SoonChips({ chips, s }) {
     <span className="band-steps">
       {chips.map(n => {
         const name = n === PREREQ_STEP ? "Prerrequisitos" : `Paso ${n}`;
-        const rows = rowsOf(n).filter(r => !r.x);
+        // Lo opcional (un prerrequisito o una misión que no hace falta) no la retiene
+        const rows = rowsOf(n).filter(r => !r.x && !/opcional/i.test(r.g || ""));
         const done = rows.length > 0 && rows.every(r => rowHave(s, r, [n]));
         const title = !rows.length ? `${name}: sin objetos que reunir` : done ? `${name}: todo reunido` : name;
         return (

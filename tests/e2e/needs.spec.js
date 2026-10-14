@@ -27,7 +27,7 @@ test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", as
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/\bdone\b/);
   await expect(page.locator("#prereqsCount")).toHaveText("1/21");
   // Los 17 objetos que piden los prerrequisitos
-  await expect(page.locator("#prereqs .slot")).toHaveCount(17);
+  await expect(page.locator("#prereqs .slot")).toHaveCount(19);
 });
 
 test("marcar todo y limpiar en prerrequisitos, con deshacer", async ({ page }) => {
@@ -64,7 +64,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
   await page.click('.needs-sort [data-sort="qty"]');
   await expect(page.locator("#bandSoon")).toHaveCount(0);
   // Sin progreso: la guía entera, una casilla por objeto
-  await expect(page.locator("#items .slot")).toHaveCount(420);
+  await expect(page.locator("#items .slot")).toHaveCount(422);
   await expect(page.locator("#items .slot").first()).toHaveAttribute("data-id", "14635");
   await page.click('.needs-sort [data-sort="az"]');
   await expect(page.locator("#items .slot .q").first()).toBeVisible();
@@ -73,7 +73,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
 test("las categorías filtran y cuentan objetos distintos", async ({ page }) => {
   await openApp(page);
   await page.click("#tabItems");
-  const counts = { todo: 420, recursos: 335, consumibles: 48, equipables: 18, almas: 9, criaturas: 9, cosmeticos: 1 };
+  const counts = { todo: 422, recursos: 335, consumibles: 48, equipables: 20, almas: 9, criaturas: 9, cosmeticos: 1 };
   for (const [cat, n] of Object.entries(counts)) {
     await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
   }
@@ -87,11 +87,11 @@ test("el buscador resalta coincidencias sin quitar casillas y entiende sin tilde
   await page.click("#tabItems");
   await page.click('.needs-sort [data-sort="az"]');
   await page.fill("#needsSearch", "bambu");
-  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 420$/);
+  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 422$/);
   const matches = page.locator("#items .slot.match");
   await expect(matches.first()).toBeVisible();
-  await expect(page.locator("#items .slot")).toHaveCount(420);
-  expect(await page.locator("#items .slot.dim").count()).toBe(420 - await matches.count());
+  await expect(page.locator("#items .slot")).toHaveCount(422);
+  expect(await page.locator("#items .slot.dim").count()).toBe(422 - await matches.count());
   // Los recuentos pasan a contar coincidencias ("bambu" también encuentra criaturas de bambú)
   await expect(page.locator('.needs-cat[data-cat="todo"] .n')).toHaveText(String(await matches.count()));
   await expect(page.locator('.needs-cat[data-cat="criaturas"] .n')).not.toHaveText("0");
@@ -308,13 +308,13 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   const needs = page.locator("#needs");
   // Franja: todo reunido, sin pestañas ni listas
   await expect(needs.locator(".needs-done-title")).toHaveText("Todo reunido");
-  await expect(needs.locator(".needs-done-chip")).toHaveText(["21 prerrequisitos", "420 objetos"]);
+  await expect(needs.locator(".needs-done-chip")).toHaveText(["21 prerrequisitos", "422 objetos"]);
   await expect(page.locator("#tabItems")).toHaveCount(0);
   await expect(page.locator(".needs-summary")).toHaveCount(0);
   // Primer nivel: el resumen de lo reunido
   await page.click("#needsShowSummary");
   const summary = page.locator(".needs-summary");
-  await expect(summary.locator(".needs-sum-total")).toHaveText("6.715"); // 6.770 de la página menos la Ortiga y la Lana repetidas en el paso 1
+  await expect(summary.locator(".needs-sum-total")).toHaveText("6.717"); // 6.770 de la página, sin la Ortiga y la Lana repetidas en el paso 1 y con el casco y las alas mejorados de Altos vuelos
   await expect(summary.locator(".needs-sum-top li")).toHaveCount(6);
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("Pepita");
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("2.202");
@@ -342,7 +342,7 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await page.click("#needsCollapse");
   const strip = page.locator("#needs .needs-strip");
   // Los objetos de los pasos 1 a 40 ya cuentan como cubiertos
-  await expect(strip.locator(".needs-meter b")).toHaveText(["21/21", /^\d+\/420$/]);
+  await expect(strip.locator(".needs-meter b")).toHaveText(["21/21", /^\d+\/422$/]);
   await expect(strip.locator(".needs-meter b").nth(1)).toHaveText(await page.locator("#heroItems .hero-req-count").textContent());
   await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
   // Los objetos de "Pronto" con nombre y cantidad, los que quepan en una fila y el resto en "+N"
@@ -493,9 +493,24 @@ test("completar un prerrequisito da por usados los objetos que pide", async ({ p
   for (const k of ["1455", "1456", "1457", "1458"]) await expect(slot(k)).toHaveClass(/owned/);
   // Los de otros prerrequisitos siguen pendientes
   await expect(slot("421")).not.toHaveClass(/owned/);
-  // Altos vuelos: el casco y las alas de madera (se mejoran para el Escaeroplano)
+  // El casco y las alas de madera son para el cañón de la isla de Moon (Pan Koko Mío)
   await page.click('#prereqs .pr-card[data-id="l10"]');
+  for (const k of ["1019", "1021"]) await expect(slot(k)).not.toHaveClass(/owned/);
+  await page.click('#prereqs .pr-card[data-id="l8"]');
   for (const k of ["1019", "1021"]) await expect(slot(k)).toHaveClass(/owned/);
+});
+
+test("lo de un prerrequisito opcional va con su aviso y cuenta como usado al completarlo", async ({ page }) => {
+  await openApp(page);
+  // Altos vuelos (opcional) pide el casco y las alas mejorados
+  const slot = id => page.locator(`#prereqs .slot[data-id^="${id}@"]`);
+  for (const id of ["8918", "8919"]) {
+    await expect(slot(id).locator(".slot-tag")).toHaveText("Opc.");
+    await expect(slot(id).locator(".slot-tip")).toContainText("Opcional · Altos vuelos");
+    await expect(slot(id)).not.toHaveClass(/owned/);
+  }
+  await page.click('#prereqs .pr-card[data-id="l10"]');
+  for (const id of ["8918", "8919"]) await expect(slot(id)).toHaveClass(/owned/);
 });
 
 test("marcar un objeto no completa su prerrequisito: se puede comprar antes", async ({ page }) => {
