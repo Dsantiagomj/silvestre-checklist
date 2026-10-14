@@ -436,3 +436,18 @@ test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async 
   await expect(ocre.locator(".step-ref")).toHaveCount(0);
   await expect(ocre.locator("img")).toHaveAttribute("src", /items\/23012\.png$/);
 });
+
+test("los prerrequisitos que son misiones llevan el símbolo de misión del juego", async ({ page }) => {
+  await openApp(page);
+  for (const id of ["l6", "l7", "l11"]) {
+    await expect(page.locator(`#prereqs .pr-card[data-id="${id}"] .pr-icons .quest-mark`)).toHaveCount(1);
+  }
+  await expect(page.locator("#prereqs")).not.toContainText("📜");
+});
+
+test("el símbolo de misión ocupa el mismo marco que los iconos de logro", async ({ page }) => {
+  await openApp(page);
+  const size = sel => page.locator(sel).evaluate(el => Math.round(el.getBoundingClientRect().width));
+  expect(await size('#prereqs .pr-card[data-id="l11"] .pr-quest'))
+    .toBe(await size('#prereqs .pr-card[data-id="l1"] .pr-icons img'));
+});

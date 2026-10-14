@@ -9,6 +9,7 @@ import {
 import Journal from "./Journal.jsx";
 import StepMap from "./StepMap.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
+import QuestMark from "./QuestMark.jsx";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -43,7 +44,9 @@ const Row = memo(function Row({ step, done, current }) {
             {closedBy && <span className="row-closed">se cierra en el {closedBy}</span>}
           </span>
         </span>
-        <span className="row-art" aria-hidden="true">{art && <img src={imgUrl(art)} alt="" loading="lazy" decoding="async" />}</span>
+        <span className="row-art" aria-hidden="true">
+          {art ? <img src={imgUrl(art)} alt="" loading="lazy" decoding="async" /> : <QuestMark />}
+        </span>
         <span className="row-effort">{TIER_META[step.effort].label}</span>
       </button>
     </li>
