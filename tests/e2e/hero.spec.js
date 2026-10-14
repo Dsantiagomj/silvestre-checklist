@@ -67,8 +67,8 @@ test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page })
   expect(await page.locator("#heroWarn .hero-req-name").evaluate(el => getComputedStyle(el).color))
     .toBe(await page.locator("#heroItems .hero-req-name").evaluate(el => getComputedStyle(el).color));
   await page.click("#heroWarn");
-  await expect(page.locator("#prereqs")).toHaveClass(/open/);
-  await expect(page.locator("#prereqs")).toBeInViewport();
+  await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#needs")).toBeInViewport();
 });
 
 test("la tarjeta de siguiente paso lleva a su detalle", async ({ page }) => {
@@ -128,16 +128,18 @@ test("los pasos van con el progreso y los requisitos van aparte", async ({ page 
 test("objetos necesarios lleva a su sección", async ({ page }) => {
   await openApp(page);
   await page.click("#heroItems");
-  await expect(page.locator("#shop")).toBeInViewport();
+  await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#needs")).toBeInViewport();
 });
 
 test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", async ({ page }) => {
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
-  await expect(page.locator("#prereqsCount")).toHaveText("18/18 completados");
-  await expect(page.locator(".prereq-item:not(.done)")).toHaveCount(0);
-  await expect(page.locator(".shop-item:not(.owned)")).toHaveCount(0);
+  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await expect(page.locator(".pr-card:not(.done)")).toHaveCount(0);
+  await page.click("#tabItems");
+  await expect(page.locator("#items .slot:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
   await expect(page.locator("#rdNPre")).toHaveText("18");
