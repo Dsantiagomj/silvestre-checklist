@@ -52,7 +52,7 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator(".hero-reqs")).toHaveCount(0);
   const road = page.locator(".road.big");
   await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
-  await expect(road.locator(".road-dofus.obtained")).toHaveCount(10);
+  await expect(road.locator(".road-dofus.obtained")).toHaveCount(11);
   await page.click("#roadGo");
   await expect(page.locator("#diary")).toBeInViewport();
 });
@@ -138,13 +138,13 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
   await page.click("#needsShowSummary");
   await page.click("#needsShowLists");
-  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
+  await expect(page.locator("#prereqsCount")).toHaveText("22/22");
   await expect(page.locator(".pr-card:not(.done)")).toHaveCount(0);
   await page.click("#tabItems");
   await expect(page.locator("#items .slot:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
-  await expect(page.locator("#rdNPre")).toHaveText("21");
+  await expect(page.locator("#rdNPre")).toHaveText("22");
 });
 
 test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {
@@ -182,11 +182,11 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
   const road = page.locator(".road");
   await expect(road).not.toHaveClass(/\bbig\b/);
-  await expect(road.locator(".road-count")).toHaveText("2/10");
+  await expect(road.locator(".road-count")).toHaveText("2/11");
   // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
   // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
   const dofus = road.locator(".road-dofus");
-  await expect(dofus).toHaveCount(10);
+  await expect(dofus).toHaveCount(11);
   await expect(dofus.nth(0)).toHaveAttribute("title", "Dofawa · paso 1");
   await expect(dofus.nth(0)).not.toHaveClass(/\bobtained\b/);
   await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
@@ -194,9 +194,10 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   // Uno pendiente dice en qué paso se consigue
   await expect(dofus.nth(3)).toHaveAttribute("title", "Domakuro · paso 49");
   await expect(dofus.nth(3).locator(".road-step")).toHaveText("49");
-  // El Dofus Ocre no sale de ningún paso: lo da "La eterna cosecha", que va aparte
   await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
-  await expect(road.locator('.road-dofus[title^="Dofus Ocre"]')).toHaveCount(0);
+  // El Ocre no sale de ningún paso ("La eterna cosecha" va aparte): es un hito antes del 79
+  await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · antes del paso 79");
+  await expect(dofus.nth(7)).not.toHaveClass(/\bobtained\b/);
   // Mientras falta, siguen el siguiente paso y lo que necesitas
   await expect(page.locator("#heroNext")).toBeVisible();
   await expect(page.locator(".hero-reqs")).toBeVisible();

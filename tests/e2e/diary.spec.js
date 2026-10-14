@@ -180,3 +180,17 @@ test("un paso que pide el logro completo lo dice en la cabecera, no como consejo
   await page.click('.diary-row[data-n="34"] .row-main');
   await expect(page.locator("#journal .journal-meta .is-complete")).toHaveCount(0);
 });
+
+test("el paso 79 avisa si falta el Dofus Ocre y deja marcarlo ahí mismo", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="79"] .row-main');
+  const call = page.locator("#journal .call.ocre");
+  await expect(call).toContainText("Dofus Ocre");
+  await expect(call).toContainText("La eterna cosecha");
+  await call.locator("button").click();
+  await expect(call).toHaveCount(0);
+  expect((await readLS(page, "silvestre:prereqs")).d1).toBe(true);
+  // Antes del 79 no hace falta avisar
+  await page.click('.diary-row[data-n="78"] .row-main');
+  await expect(page.locator("#journal .call.ocre")).toHaveCount(0);
+});
