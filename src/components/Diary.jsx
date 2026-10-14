@@ -3,10 +3,11 @@ import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter,
+  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter, setStepsView,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
+import StepMap from "./StepMap.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 
 const TABS = [
@@ -120,27 +121,43 @@ function DiaryBar({ s }) {
   );
 }
 
-/** 02 · Los 100 pasos: la lista a la izquierda y el detalle del paso a la derecha. */
+const VIEWS = [
+  ["diary", "Diario", "stepsViewDiary"],
+  ["map", "Mapa", "stepsViewMap"],
+];
+
+/** 02 · Los 100 pasos: como diario (lista y detalle) o como mapa del camino. */
 export default function Diary({ mobile }) {
   const s = useAppState();
+  const next = nextPending(s) ?? STEPS.length;
   // Sin nada elegido, el detalle abre el siguiente pendiente (en móvil vive en la hoja)
-  const current = s.selectedStep ?? (mobile ? null : nextPending(s) ?? STEPS.length);
+  const current = s.selectedStep ?? (mobile ? null : next);
+  const map = s.stepsView === "map";
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
         <h2 className="section-title" id="diaryTitle"><span className="section-num">02</span>Los 100 pasos</h2>
+        <div className="steps-view" role="group" aria-label="Vista">
+          {VIEWS.map(([key, label, id]) => (
+            <button key={key} type="button" id={id} aria-pressed={s.stepsView === key} onClick={() => setStepsView(key)}>{label}</button>
+          ))}
+        </div>
         <DiaryBar s={s} />
       </div>
       <ZoneSeals s={s} current={current} />
-      <div className="diary-window">
-        <DiaryList s={s} current={current} />
-        {!mobile && current != null && (
-          <div className="diary-detail">
-            {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
-            <Journal key={current} n={current} id="journal" />
-          </div>
-        )}
-      </div>
+      {map ? (
+        <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
+      ) : (
+        <div className="diary-window">
+          <DiaryList s={s} current={current} />
+          {!mobile && current != null && (
+            <div className="diary-detail">
+              {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
+              <Journal key={current} n={current} id="journal" />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }
