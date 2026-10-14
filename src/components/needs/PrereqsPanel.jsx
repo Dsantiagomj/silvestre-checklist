@@ -74,15 +74,18 @@ function PrereqCard({ p, done }) {
  * La recomendación de Sandglass sobre el Dofus Ocre. No es ningún paso de la guía:
  * lo da la misión "La eterna cosecha", que se hace aparte.
  */
-function OcreNote() {
+function OcreNote({ done }) {
   return (
-    <aside className="pr-ocre">
+    <aside className={"pr-ocre" + (done ? " done" : "")}>
       {OCRE_ICON && <img src={imgUrl(OCRE_ICON)} alt="" />}
       <div>
         <b>Empieza el Dofus Ocre cuanto antes</b>
         <p>{PREREQS_OCRE}</p>
         <p className="pr-ocre-step">Lo da la misión «La eterna cosecha», que no forma parte de los 100 pasos.</p>
       </div>
+      <button type="button" className="pr-ocre-check" id="ocreToggle" aria-pressed={String(done)} onClick={() => togglePrereq("d1")}>
+        {done ? "✓ Ya lo tengo" : "Ya lo tengo"}
+      </button>
     </aside>
   );
 }
@@ -92,7 +95,7 @@ export default function PrereqsPanel() {
   const s = useAppState();
   return (
     <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
-      <OcreNote />
+      <OcreNote done={isPrereqDone(s, "d1")} />
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>

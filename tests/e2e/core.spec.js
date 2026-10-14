@@ -49,7 +49,7 @@ test("los prerrequisitos tienen icono y se marcan", async ({ page }) => {
   await expect.poll(() => page.locator(".pr-icons img").count()).toBeGreaterThanOrEqual(22);
   await page.click('.pr-card[data-id="o1"]');
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/done/);
-  await expect(page.locator("#prereqsCount")).toHaveText("1/21");
+  await expect(page.locator("#prereqsCount")).toHaveText("1/22");
   expect(await readLS(page, "silvestre:prereqs")).toEqual({ o1: true });
 });
 
