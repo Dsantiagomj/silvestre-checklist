@@ -80,10 +80,42 @@ def short(url):
     return url[len(CDN):] if url and url.startswith(CDN) else url
 
 
-def dofus_road(achievements, steps, report):
+DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
+
+
+def reward_item_ids(rewards):
+    """Item ids in achievement or quest-step rewards ([id, qty] pairs or item dicts)."""
+    ids = set()
+    for r in rewards or []:
+        for x in (r.get("itemsReward") or []) + (r.get("itemsRewardIds") or []):
+            ids.add(x[0] if isinstance(x, list) else x)
+        ids |= {i["id"] for i in r.get("items") or [] if isinstance(i, dict) and i.get("id")}
+    return {i for i in ids if isinstance(i, int)}
+
+
+def item_types(ids):
+    """{id: (typeId, name, iconId)}, cached in lookup_item_types.json."""
+    cache_file = DATA / "lookup_item_types.json"
+    cache = json.loads(cache_file.read_text()) if cache_file.exists() else {}
+    missing = sorted(i for i in ids if str(i) not in cache)
+    for k in range(0, len(missing), 40):
+        query = "&".join(f"id[$in][]={x}" for x in missing[k:k + 40])
+        req = urllib.request.Request(f"https://api.dofusdb.fr/items?$limit=50&{query}",
+                                     headers={"User-Agent": "silvestre/1.0"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            for it in json.load(r)["data"]:
+                cache[str(it["id"])] = [it.get("typeId"), it["name"]["es"], it.get("iconId")]
+    if missing:
+        cache_file.write_text(json.dumps(cache, ensure_ascii=False))
+    return {int(k): tuple(v) for k, v in cache.items()}
+
+
+def dofus_road(achievements, quests, steps, report):
     """The Dofus the guide hands out before the Silvestre, in the order you get them.
 
-    A Dofus is obtained on the step that completes its achievement: the one marked
+    They come as achievement rewards or as rewards of the achievement's quests
+    (the Dofawa of step 1), so the filter is the item type, not the name.
+    A Dofus counts on the step that completes its achievement: the one marked
     "(Completo)", or the last step that mentions it. The step icon is not enough:
     step 17 shows the Dofus Esmeralda but only goes "hasta la misión 7".
     """
@@ -92,20 +124,26 @@ def dofus_road(achievements, steps, report):
     for n, entry in steps.items():
         for a in entry.get("achievements", []):
             by_ach.setdefault(a["id"], []).append(int(n))
-    road = []
+    found = {}
     for a in achievements:
         if a["id"] not in by_ach:
             continue
-        for reward in a.get("rewards") or []:
-            for item in reward.get("items") or []:
-                name = (item.get("name") or {}).get("es", "")
-                if not name.startswith("Dofus") or name == "Dofus Silvestre":
-                    continue
-                ns = sorted(set(by_ach[a["id"]]))
-                done = [n for n in ns if re.search(r"\(Completos?\)", text[n])]
-                road.append({"name": name, "img": f"items/{item['iconId']}.png",
-                             "step": (done or ns)[-1], "achievement": a["name"]["es"]})
-    return sorted(road, key=lambda d: d["step"])
+        ids = reward_item_ids(a.get("rewards"))
+        for o in filter(None, a.get("objectives") or []):
+            m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
+            for st in (quests.get(int(m.group(1)), {}).get("steps") or []) if m else []:
+                ids |= reward_item_ids((st or {}).get("rewards"))
+        ns = sorted(set(by_ach[a["id"]]))
+        done = [n for n in ns if re.search(r"\(Completos?\)", text[n])]
+        for i in ids:
+            found.setdefault(i, ((done or ns)[-1], a["name"]["es"]))
+    types = item_types(found)
+    road = []
+    for i, (step, ach) in found.items():
+        type_id, name, icon = types.get(i, (None, "", None))
+        if type_id == DOFUS_TYPE and name != "Dofus Silvestre":
+            road.append({"name": name, "img": f"items/{icon}.png", "step": step, "achievement": ach})
+    return sorted(road, key=lambda d: (d["step"], d["name"]))
 
 
 def reward_index(achievements):
@@ -219,6 +257,7 @@ def mirror(paths):
 def main():
     report = json.loads((DATA / "step_assets.json").read_text())
     achievements = json.loads((DATA / "achievements.json").read_text())
+    by_quest = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
     rewards = reward_index(achievements)
     fetch_jobs()
 
@@ -255,7 +294,7 @@ def main():
             steps[str(step["n"])] = entry
 
     prereqs = prereq_icons(read_prereqs())
-    road = dofus_road(achievements, steps, report)
+    road = dofus_road(achievements, by_quest, steps, report)
 
     paths = set()
     for v in steps.values():
