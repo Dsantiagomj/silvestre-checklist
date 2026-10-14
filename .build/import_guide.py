@@ -63,10 +63,20 @@ MARK_KINDS = {"RED": "stop", "GREEN": "done", "BLUE": "tip"}
 MARK = re.compile(r"\[\[(RED|GREEN|BLUE)\]\]([\s\S]*?)\[\[/\1\]\]")
 
 
+def closing_paren(text):
+    """Index of the ")" that closes the "(" at position 0, or -1."""
+    depth = 0
+    for i, c in enumerate(text):
+        depth += {"(": 1, ")": -1}.get(c, 0)
+        if depth == 0:
+            return i
+    return -1
+
+
 def mark_text(raw):
     """A mark on its own: no leading punctuation, no wrapping parentheses."""
     text = clean(raw).lstrip(".,; ")
-    if text.startswith("(") and text.endswith(")") and text.count("(") == 1:
+    if text.startswith("(") and closing_paren(text) == len(text) - 1:
         text = text[1:-1].strip()
     return text[:1].upper() + text[1:]
 
