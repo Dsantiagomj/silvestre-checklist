@@ -215,3 +215,18 @@ test("el paso 99 da la Piñata de pino", async ({ page }) => {
   await expect(page.locator("#journal .journal-show-label")).toHaveText("Recompensa");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Piñata de pino");
 });
+
+test("las misiones de cada paso son las de su logro, en su orden", async ({ page }) => {
+  await openApp(page);
+  const quests = n => page.click(`.diary-row[data-n="${n}"] .row-main`)
+    .then(() => page.locator("#journal .q-item").first().waitFor({ timeout: 15_000 }))
+    .then(() => page.locator("#journal .q-item summary").allInnerTexts());
+  // Un aviso que nombra otro logro no mete sus misiones
+  expect((await quests(38)).join(" ")).not.toContain("El destino de Kalisto");
+  // Una nota en medio del texto no corta las misiones citadas
+  expect((await quests(54)).join(" ")).toContain("Cuando se caldean las ánimas");
+  // El logro del Dofus Ocre es terminar «La eterna cosecha»
+  expect((await quests(79)).join(" ")).toContain("La eterna cosecha");
+  // La misión 14 de «Seis de seis» es del paso 97, no del 96
+  expect((await quests(96)).join(" ")).not.toContain("El fin... o el comienzo");
+});
