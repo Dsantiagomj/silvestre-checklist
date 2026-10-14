@@ -26,7 +26,7 @@ test("la aclaración lleva a los pasos con pausa", async ({ page }) => {
   await expect(page.locator("#notaSteps")).toHaveText("Ver los 33 pasos");
   await page.click("#notaSteps");
   await expect(page.locator("#searchInput")).toHaveValue("hasta tener que pasar");
-  await expect(page.locator("#grid")).toBeInViewport();
+  await expect(page.locator("#diary")).toBeInViewport();
 });
 
 test("la aclaración siempre está visible y no se puede cerrar", async ({ page }) => {

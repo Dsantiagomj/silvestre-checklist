@@ -30,12 +30,12 @@ test("reiniciar borra solo lo elegido y se puede deshacer", async ({ page }) => 
   await page.click("#rdConfirm");
   await expect(page.locator("#toast")).toHaveClass(/show/, { timeout: 3_000 });
   await expect(page.locator("#resetDialog")).toBeHidden();
-  await expect(page.locator(".cell.done")).toHaveCount(0);
+  await expect(page.locator(".diary-row.done")).toHaveCount(0);
   expect(await readLS(page, "silvestre:done")).toEqual({});
   expect(await readLS(page, "silvestre:prereqs")).toEqual({});
   expect(await readLS(page, "silvestre:owned")).toEqual({});
   await page.click("#toastAction");
-  await expect(page.locator(".cell.done")).toHaveCount(5);
+  await expect(page.locator(".diary-row.done")).toHaveCount(5);
   expect(Object.keys(await readLS(page, "silvestre:done"))).toHaveLength(5);
   expect(Object.keys(await readLS(page, "silvestre:owned"))).toHaveLength(2);
 });
@@ -55,7 +55,7 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   await page.uncheck('#resetDialog input[name="owned"]');
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
-  await expect(page.locator(".cell.done")).toHaveCount(0);
+  await expect(page.locator(".diary-row.done")).toHaveCount(0);
   // Lo que no se elige se conserva: también los objetos que cubrían los pasos borrados.
   // La posición del overlay nunca se toca.
   await expect(page.locator("#statOwned")).toHaveText(ownedBefore);
@@ -66,7 +66,7 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click("#rdRestore")]);
   await chooser.setFiles(file);
   await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
-  await expect(page.locator(".cell.done")).toHaveCount(5);
+  await expect(page.locator(".diary-row.done")).toHaveCount(5);
   expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
 });
 
@@ -101,7 +101,7 @@ test("soltar una copia sobre la tarjeta la restaura", async ({ page }) => {
   const copy = JSON.stringify({ app: "silvestre-checklist", version: 1, data: { done: { 5: true, 6: true }, prereqs: {}, owned: {}, questPos: {}, questObj: {} } });
   await dropFile(page, "#rdBackupCard", "copia.json", copy);
   await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
-  await expect(page.locator(".cell.done")).toHaveCount(2);
+  await expect(page.locator(".diary-row.done")).toHaveCount(2);
 });
 
 test("un archivo que no es una copia muestra el error en la tarjeta", async ({ page }) => {
@@ -111,7 +111,7 @@ test("un archivo que no es una copia muestra el error en la tarjeta", async ({ p
   await expect(page.locator("#rdBackupCard")).toHaveAttribute("data-state", "error");
   await expect(page.locator("#rdBackupMsg")).toContainText("no es una copia");
   await expect(page.locator("#resetDialog")).toBeVisible();
-  await expect(page.locator(".cell.done")).toHaveCount(5);
+  await expect(page.locator(".diary-row.done")).toHaveCount(5);
 });
 
 test("con la guía completa, reiniciar solo los pasos conserva los prerrequisitos", async ({ page }) => {
@@ -121,7 +121,7 @@ test("con la guía completa, reiniciar solo los pasos conserva los prerrequisito
   await page.locator('#resetDialog input[name="prereqs"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
-  await expect(page.locator(".cell.done")).toHaveCount(0);
+  await expect(page.locator(".diary-row.done")).toHaveCount(0);
   // Se tenían por estar la guía completa: al conservarlos quedan marcados de verdad
   await expect(page.locator("#prereqsCount")).toHaveText("18/18");
   expect(Object.keys(await readLS(page, "silvestre:prereqs"))).toHaveLength(18);
@@ -136,6 +136,6 @@ test("con la guía completa, conservar los objetos los deja marcados al reinicia
   await page.locator('#resetDialog input[name="owned"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
-  await expect(page.locator(".cell.done")).toHaveCount(0);
+  await expect(page.locator(".diary-row.done")).toHaveCount(0);
   await expect(page.locator("#heroItems .hero-req-count")).toHaveText(total);
 });

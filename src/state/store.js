@@ -89,7 +89,8 @@ function initialState() {
     needsCollapsed: localStorage.getItem(LS.needsCollapsed) === "1",
     selectedStep: null,
     sheetOpen: false,
-    filters: { zones: [], pending: false, search: "" },
+    // status: all | pending | done (las pestañas del diario)
+    filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
     shopPendingOnly: true,
     shopSort: "soon",   // soon (Pronto primero) | qty | az
@@ -174,18 +175,21 @@ export const nextPending = s => {
 };
 export const overlayStep = s => s.selectedStep ?? nextPending(s) ?? STEPS.length;
 
-export const stepMatches = (s, step) => {
-  const { zones, pending, search } = s.filters;
+/** Zona y búsqueda; el estado (pendiente/hecho) va aparte porque las pestañas lo cuentan. */
+export const stepMatchesFilters = (s, step) => {
+  const { zones, search } = s.filters;
   if (zones.length && !zones.includes(step.zone)) return false;
-  if (pending && s.done[step.n]) return false;
   const q = search.trim().toLowerCase();
   if (q && !step.text.toLowerCase().includes(q) && !String(step.n).includes(q)) return false;
   return true;
 };
+export const stepMatchesStatus = (s, step, status = s.filters.status) =>
+  status === "all" || (status === "done") === !!s.done[step.n];
+export const stepMatches = (s, step) => stepMatchesFilters(s, step) && stepMatchesStatus(s, step);
 
 export const hasActiveFilters = s => {
   const f = s.filters;
-  return f.zones.length > 0 || f.pending || f.search.trim().length > 0;
+  return f.zones.length > 0 || f.search.trim().length > 0;
 };
 
 // ============================================================================
@@ -220,14 +224,19 @@ export function toggleStep(n) {
   });
 }
 
+/** Marca varios pasos a la vez (los que cierra un mismo combate). */
+export function markSteps(ns) {
+  setState(s => ({ done: { ...s.done, ...Object.fromEntries(ns.map(n => [n, true])) }, shopEpoch: s.shopEpoch + 1 }));
+}
+
 export function goToNextPending() {
   const n = nextPending(state);
   if (n == null) return;
+  // Un paso que la pestaña o los filtros ocultan no se podría ver en la lista
+  if (!stepMatches(state, STEPS[n - 1])) setFilters({ zones: [], status: "all", search: "" });
   selectStep(n);
-  // Scroll al grid en desktop, al sheet ya está abierto en mobile
-  if (!isMobile()) {
-    document.querySelector(`.cell[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+  // En escritorio, a la vista el diario; en móvil la hoja ya está abierta
+  if (!isMobile()) document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function togglePrereq(id) {
@@ -263,8 +272,8 @@ export const toggleZone = z =>
     zones: state.filters.zones.includes(z) ? state.filters.zones.filter(x => x !== z) : [...state.filters.zones, z],
   });
 export const setSearch = v => setFilters({ search: v });
-export const setPendingFilter = b => setFilters({ pending: b });
-export const clearFilters = () => setFilters({ zones: [], pending: false, search: "" });
+export const setStatusFilter = status => setFilters({ status });
+export const clearFilters = () => setFilters({ zones: [], search: "" });
 
 // Objetos necesarios
 // Cualquier cambio de lo que se ve vuelve a la primera página de la lista

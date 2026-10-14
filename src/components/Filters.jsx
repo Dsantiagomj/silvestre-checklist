@@ -1,12 +1,12 @@
 import { ZONES, ZONE_COLOR } from "../data/steps.js";
 import {
-  clearFilters, hasActiveFilters, setPendingFilter, setSearch, toggleZone, useAppState,
+  clearFilters, hasActiveFilters, setSearch, toggleZone, useAppState,
 } from "../state/store.js";
 
 /** FILTROS */
 export default function Filters() {
   const s = useAppState();
-  const { zones, pending, search } = s.filters;
+  const { zones, search } = s.filters;
   return (
     <section className="filters" aria-label="Filtros">
       <div className="filter-row">
@@ -25,11 +25,6 @@ export default function Filters() {
       <div className="filter-row">
         <input type="search" className="search" id="searchInput" placeholder="🔎 Buscar por número o texto del paso…"
           aria-label="Buscar paso" value={search} onChange={e => setSearch(e.target.value)} />
-        <label className="toggle">
-          <input type="checkbox" id="pendingToggle" checked={pending} onChange={e => setPendingFilter(e.target.checked)} />
-          <span className="sw"></span>
-          Solo pendientes
-        </label>
         <button className={"clear-btn" + (hasActiveFilters(s) ? "" : " hidden")} id="clearBtn" onClick={clearFilters}>Limpiar filtros</button>
       </div>
     </section>

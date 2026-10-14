@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { closeSheet, useAppState } from "../state/store.js";
-import StepDetail from "./StepDetail.jsx";
+import Journal from "./Journal.jsx";
 
 /** BOTTOM SHEET (mobile) */
 export default function BottomSheet({ mobile }) {
@@ -64,7 +64,7 @@ export default function BottomSheet({ mobile }) {
       <div className={"sheet" + (s.sheetOpen ? " open" : "")} id="sheet" role="dialog" aria-modal="true" aria-label="Detalle del paso" ref={sheetRef}>
         <div className="sheet-handle" id="sheetHandle" ref={handleRef}><div className="bar"></div></div>
         <div className="sheet-content" id="sheetContent">
-          {n != null && <StepDetail key={n} n={n} />}
+          {n != null && <Journal key={n} n={n} />}
         </div>
       </div>
     </>

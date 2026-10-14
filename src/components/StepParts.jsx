@@ -1,5 +1,5 @@
 // Piezas compartidas por el detalle del paso y el overlay.
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { RES_ITEMS, rowName, rowQty, rowsOf } from "../lib/resources.js";
 import { imgUrl } from "../lib/assets.js";
 import { rowHave } from "../state/store.js";
@@ -33,16 +33,24 @@ export function CoordChip({ x, y }) {
   );
 }
 
-/** Lista de objetivos de una etapa. La comparten el overlay y el detalle. */
-export function Objectives({ objs }) {
+/**
+ * Lista de objetivos de una etapa. La comparten el overlay y el detalle.
+ * `stop` ({ index, text }) pinta la parada roja de la guía antes de ese objetivo.
+ */
+export function Objectives({ objs, stop }) {
   return (
     <ul className="obj-list">
       {objs.map((o, i) => (
-        <li key={i} className={`obj-row k-${o.k}`}>
+        <Fragment key={i}>
+        {stop?.index === i && (
+          <li className="obj-stop" role="separator"><span>{stop.text}</span></li>
+        )}
+        <li className={`obj-row k-${o.k}`}>
           <span className="obj-ic" aria-hidden="true">{OBJ_ICON[o.k] || "•"}</span>
           <span className="obj-t">{o.t}{o.a ? <>{" "}<span className="obj-a">· {o.a}</span></> : null}</span>
           <CoordChip x={o.x} y={o.y} />
         </li>
+        </Fragment>
       ))}
     </ul>
   );

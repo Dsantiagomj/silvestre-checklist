@@ -54,7 +54,7 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
   await expect(road.locator(".road-dofus.obtained")).toHaveCount(10);
   await page.click("#roadGo");
-  await expect(page.locator("#grid")).toBeInViewport();
+  await expect(page.locator("#diary")).toBeInViewport();
 });
 
 test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page }) => {
@@ -76,8 +76,8 @@ test("la tarjeta de siguiente paso lleva a su detalle", async ({ page }) => {
   await expect(page.locator("#heroNext")).toContainText("Paso 4");
   await expect(page.locator("#heroNext img")).toHaveCount(0); // el paso 4 no tiene arte: usa su número
   await page.click("#heroNextGo");
-  await expect(page.locator('.cell[data-n="4"]')).toHaveClass(/selected/);
-  await expect(page.locator("#detailContent")).toContainText("Paso 4");
+  await expect(page.locator('.diary-row[data-n="4"]')).toHaveAttribute("aria-current", "step");
+  await expect(page.locator("#journal .journal-num")).toHaveText("4");
 });
 
 test("el parallax y el ambiente respetan el movimiento reducido", async ({ browser }) => {
