@@ -13,7 +13,7 @@ const PAUSED = STEPS.filter(s => s.text.toLowerCase().includes(PHRASE)).length;
 const EXAMPLE = { paused: [43, 44], closer: 45 };
 const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
 // Cuándo se marca cada casilla (s): primero el 45 al vencer al jefe, luego hacia atrás
-const CHECK_AT = { 45: 1.8, 44: 2.15, 43: 2.45 };
+const CHECK_AT = { 45: 4.8, 44: 5.5, 43: 6.2 };
 
 function showPaused() {
   setSearch(PHRASE);

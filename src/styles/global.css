@@ -231,14 +231,14 @@ header{
   margin:30px 0 22px; padding:0 4px;
 }
 .nota-example{ margin:0; }
-.nota-track{ position:relative; display:inline-flex; align-items:center; gap:14px; }
+.nota-track{ position:relative; display:inline-flex; align-items:center; gap:26px; }
 /* El camino entre casillas */
 .nota-track::before{
   content:""; position:absolute; left:22px; right:22px; top:50%;
   border-top:2px dashed var(--line-2);
 }
 .nota-step{
-  position:relative;
+  position:relative; z-index:1;
   width:44px; height:44px; border-radius:10px;
   display:grid; place-items:center;
   background:var(--inset); border:1px solid var(--line-2);
@@ -262,33 +262,37 @@ header{
 }
 .nota-step::after{ content:"✓"; background:var(--amber); color:#142208; font-size:11px; opacity:0; transform:scale(.4); }
 .nota-boss{
-  position:relative;
+  position:relative; z-index:1;
   width:46px; height:46px; border-radius:50%;
   display:grid; place-items:center; overflow:hidden;
   background:var(--panel-2); border:2px solid color-mix(in srgb, #e0556b 70%, var(--line-2));
 }
 .nota-boss img{ width:115%; height:115%; object-fit:cover; object-position:50% 20%; }
-/* El jugador avanza por el camino: del 43 al jefe */
+/* El jugador avanza por el camino, por detrás de casillas y retrato: del 43 al jefe */
 .nota-marker{
-  position:absolute; top:50%; left:22px; z-index:1;
-  width:10px; height:10px; border-radius:50%;
+  position:absolute; top:50%; left:22px; z-index:0;
+  width:12px; height:12px; border-radius:50%;
   background:var(--amber); box-shadow:0 0 10px color-mix(in srgb, var(--amber) 70%, transparent);
   transform:translate(-50%, -50%); opacity:0;
 }
 
 /* La historia, una vez al verla: el punto llega al jefe, el jefe cae, el 45 se marca
    y la ✓ vuelve hacia atrás al 44 y al 43. --d es cuándo se marca cada casilla. */
-.nota-track.play .nota-marker{ animation:nota-travel 1.3s cubic-bezier(.45,0,.3,1) .2s forwards; }
-.nota-track.play .nota-boss{ animation:nota-hit .32s ease-in-out 1.4s, nota-defeat-ring .35s ease 1.6s forwards; }
-.nota-track.play .nota-boss img{ animation:nota-defeat .35s ease 1.6s forwards; }
-.nota-track.play .nota-step{ animation:nota-lit .3s ease var(--d) forwards; }
-.nota-track.play .nota-step::after{ animation:nota-check .3s cubic-bezier(.34,1.56,.64,1) var(--d) forwards; }
-.nota-track.play .nota-step.paused::before{ animation:nota-unpause .2s ease var(--d) forwards; }
+.nota-track.play .nota-marker{ animation:nota-travel 3.2s ease-in-out .4s forwards; }
+.nota-track.play .nota-boss{ animation:nota-hit .45s ease-in-out 3.55s, nota-defeat-ring .5s ease 4s forwards; }
+.nota-track.play .nota-boss img{ animation:nota-defeat .5s ease 4s forwards; }
+.nota-track.play .nota-step{ animation:nota-lit .4s ease var(--d) forwards; }
+.nota-track.play .nota-step::after{ animation:nota-check .4s cubic-bezier(.34,1.56,.64,1) var(--d) forwards; }
+.nota-track.play .nota-step.paused::before{ animation:nota-unpause .3s ease var(--d) forwards; }
+/* Sale del 43, pasa por detrás del 44, se detiene ante el jefe y entra.
+   Centros: 43 en 22 px, tramo antes del jefe en 127 px, jefe en 163 px. */
 @keyframes nota-travel{
   0%  { left:22px; opacity:0; }
-  12% { opacity:1; }
-  88% { opacity:1; }
-  100%{ left:139px; opacity:0; }
+  8%  { opacity:1; }
+  40% { left:127px; }
+  65% { left:127px; }
+  92% { left:163px; opacity:1; }
+  100%{ left:163px; opacity:0; }
 }
 @keyframes nota-hit{
   25%{ transform:translateX(-3px) rotate(-6deg); }
