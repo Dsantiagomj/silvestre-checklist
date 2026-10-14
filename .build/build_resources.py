@@ -58,12 +58,13 @@ REUSABLE = {"mazorrasombrero", "varita pitusa", "piedra de alma mediana",
 # The page lists what the prerequisites need without saying which one asks for it.
 # Item -> prerequisite id (PREREQS_LOGROS in steps.js), from the objectives of each
 # prerequisite's quests in DofusDB (need.generated.items). Casco and Alas de madera
-# are upgraded for "Escaeroplano de alta velocidad" (Altos vuelos), as torrentearcano's
-# guide to that quest says. Completing the prerequisite counts its items as spent.
+# are for the cannon to the island of Moon in "Ida sin vuelta" (Pan Koko Mío): it only
+# asks to carry them, so DofusDB has no objective for them; torrentearcano's guide to
+# that quest says so. Completing the prerequisite counts its items as spent.
 PREREQ_OF = {
     "399": "l4", "429": "l4", "1002": "l4", "2551": "l4",      # El gran Guarrok
     "2553": "l4", "2617": "l4", "2618": "l4", "8759": "l4",
-    "1019": "l10", "1021": "l10",                               # Altos vuelos
+    "1019": "l8", "1021": "l8",                                 # Pan Koko Mío
     "7904": "l6",                                               # El cementerio primitivo
     "421": "l11", "885": "l11",                                 # El despertar de Pandala
     "1455": "l7", "1456": "l7", "1457": "l7", "1458": "l7",     # Intrusión en el territorio wabbit
@@ -76,6 +77,14 @@ DUPLICATES = {
     # "El despertar de Pandala", already prerequisite l11. Its "Suero contra la
     # pandrista" takes 50 Ortiga and 5 Lana de jalatín negro, listed in step 0 for l11.
     "1": {"421": "prerrequisito l11", "885": "prerrequisito l11"},
+}
+# Rows the page leaves out: what an optional prerequisite asks for. Step -> [(category,
+# label shown with the item, prerequisite id, item name, qty)]. "Escaeroplano de alta
+# velocidad" (Altos vuelos, optional) takes the upgraded hat and wings (DofusDB's
+# objectives and torrentearcano's guide to that quest), not the plain ones.
+EXTRA = {
+    "0": [("Equipables", "Opcional · Altos vuelos", "l10", "Casco mejorado", 1),
+          ("Equipables", "Opcional · Altos vuelos", "l10", "Alas de madera mejoradas", 1)],
 }
 # Only needed if the alteration is gone: listed in its step, left out of totals.
 OPTIONAL = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
@@ -224,6 +233,18 @@ def main():
     for rows in steps.values():
         for row in rows:
             del row["src"], row["names"]
+    for n, extra in EXTRA.items():
+        for group, label, prereq, name, qty in extra:
+            hit = lookup(name, cache)
+            if not hit:
+                raise SystemExit(f"no está en DofusDB: {name}")
+            key = str(hit["id"])
+            items[key] = {"name": hit["name"], "img": f"items/{hit['iconId']}.png" if hit["iconId"] else None,
+                          "type": hit["type"] or "", "lvl": hit["lvl"] or 0}
+            steps[n].append({"k": f"{key}@{slug(label)}", "c": category(group)[0], "g": label,
+                             "a": [[key, qty]], "p": prereq})
+            print(f"paso {n}: con {hit['name']} ×{qty} ({label})")
+    CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
 
     results = mirror({it["img"] for it in items.values() if it["img"]})
     failed = {p for p, status in results if status not in ("ok", "cached")}
