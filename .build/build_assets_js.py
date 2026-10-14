@@ -81,6 +81,9 @@ def short(url):
 
 
 DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
+# Dofus that DofusDB lists neither as the achievement's reward nor as a reward of
+# its quests: achievement id -> item id. "Ocre de ámbar" ends in the Dofus Ocre.
+MISSING_DOFUS = {5220: 7754}
 
 
 def reward_item_ids(rewards):
@@ -129,6 +132,8 @@ def dofus_road(achievements, quests, steps, report):
         if a["id"] not in by_ach:
             continue
         ids = reward_item_ids(a.get("rewards"))
+        if a["id"] in MISSING_DOFUS:
+            ids.add(MISSING_DOFUS[a["id"]])
         for o in filter(None, a.get("objectives") or []):
             m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
             for st in (quests.get(int(m.group(1)), {}).get("steps") or []) if m else []:
