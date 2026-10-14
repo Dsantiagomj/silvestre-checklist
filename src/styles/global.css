@@ -2110,6 +2110,11 @@ header.show-progress .tb-progress{
   stroke-width:5; stroke-dasharray:2 13; stroke-linecap:round; stroke-linejoin:round;
 }
 .map-arc{ fill:none; stroke:var(--amber); stroke-width:3; stroke-dasharray:6 6; }
+/* En claro, el paisaje se lava hacia el fondo de la página en vez de oscurecerse */
+[data-theme="light"] .step-map{ background:var(--panel-2); }
+[data-theme="light"] .step-map-bg{ filter:blur(4px) saturate(.8) brightness(1.08); opacity:.5; }
+[data-theme="light"] .step-map-path polyline{ stroke:color-mix(in srgb, var(--soon-ink) 70%, transparent); }
+[data-theme="light"] .map-arc{ stroke:var(--accent-ink); }
 .map-node{
   position:absolute; transform:translate(-50%, -50%);
   display:grid; place-items:center; width:54px; height:54px; padding:0;
