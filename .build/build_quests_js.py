@@ -94,6 +94,10 @@ def map_info(rec):
 # "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna cosecha".
 MISSING_OBJECTIVES = {565: [439]}
 
+# An objective any of several quests completes (one per class in "Un ciudadano
+# modelo") is no single quest: it becomes one generic row instead of the first match.
+CLASS_QUEST = "clase"
+
 
 def achievement_quests(ach):
     """The achievement's objectives in order, as quest ids (None if not a quest).
@@ -106,8 +110,8 @@ def achievement_quests(ach):
     out = []
     objectives = [o for o in (ach.get("objectives") or []) if o]
     for o in sorted(objectives, key=lambda o: o.get("order", 0)):
-        m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
-        out.append(int(m[1]) if m else None)
+        alternatives = re.findall(r"Qf=(\d+)", o.get("criterion") or "")
+        out.append(CLASS_QUEST if len(alternatives) > 1 else int(alternatives[0]) if alternatives else None)
     return out
 
 
@@ -228,10 +232,10 @@ def main():
             last = int(align[1])
             ids += [bonta[n] for n in range(prev_align, last + 1) if n in bonta]
             prev_align = last
-        ids = [q for q in ids if q in quests]
+        ids = [q for q in ids if q in quests or q == CLASS_QUEST]
         if ids:
             step_quests[str(step["n"])] = ids
-    used = sorted({q for ids in step_quests.values() for q in ids})
+    used = sorted({q for ids in step_quests.values() for q in ids if q != CLASS_QUEST})
 
     # Collect everything that needs a name or a position.
     wanted = {k: set() for k in PLACEHOLDER_SOURCE}
@@ -311,6 +315,14 @@ def main():
             "st": start,
             "s": stages,
         }
+
+    # La misión de clase: la da el representante de tu clase tras "Consejo de clase"
+    out_quests[CLASS_QUEST] = {
+        "n": "Misión de clase",
+        "lv": 20,
+        "st": None,
+        "s": [{"n": "", "o": [{"k": "npc", "t": "Habla con el representante de tu clase: te da la misión de tu clase"}]}],
+    }
 
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
