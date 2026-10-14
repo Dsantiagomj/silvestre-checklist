@@ -1,11 +1,12 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { prefersReducedMotion, useHeightMorph } from "../lib/motion.js";
+import { memo, useLayoutEffect, useRef, useState } from "react";
+import { AnimatePresence, LazyMotion, m, useIsPresent, useReducedMotion } from "motion/react";
+import { useHeightMorph } from "../lib/motion.js";
+import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, goToNextPending, hasActiveFilters, nextPending, onBeforeViewSwitch, selectStep, setSearch,
-  setStatusFilter, setStepsView,
+  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter, setStepsView,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
@@ -58,6 +59,7 @@ const Row = memo(function Row({ step, done, current }) {
 /** La lista de pasos por capítulos, con las pestañas de estado. */
 function DiaryList({ s, current }) {
   const listRef = useRef(null);
+  const tabId = useLiveId;
   const status = s.filters.status;
   const matching = STEPS.filter(st => stepMatchesFilters(s, st));
   const count = st => matching.filter(x => stepMatchesStatus(s, x, st)).length;
@@ -78,7 +80,7 @@ function DiaryList({ s, current }) {
     <div className="diary-side">
       <div className="diary-tabs" role="group" aria-label="Mostrar">
         {TABS.map(([key, label, id]) => (
-          <button key={key} type="button" id={id} aria-pressed={status === key} onClick={() => setStatusFilter(key)}>
+          <button key={key} type="button" id={tabId(id)} aria-pressed={status === key} onClick={() => setStatusFilter(key)}>
             {label} <span className="n">{count(key)}</span>
           </button>
         ))}
@@ -131,49 +133,28 @@ const VIEWS = [
   ["map", "Mapa", "stepsViewMap"],
 ];
 
-// Lo que dura el cambio de vista; luego la instantánea de la vista que se fue desaparece
-export const SWAP_MS = 320;
+// Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual, en la línea
+// de duffus.fr (0,3 s, easeInOut). Del mapa al diario se entra (la vista que se va crece
+// y la que llega sale de más lejos); del diario al mapa se sale (al revés). `custom` es
+// la vista de destino, que AnimatePresence pasa también a la que se va.
+const ZOOM = {
+  enter: to => ({ opacity: 0, transform: to === "map" ? "scale(1.15)" : "scale(0.94)" }),
+  center: { opacity: 1, transform: "scale(1)" },
+  exit: to => ({ opacity: 0, transform: to === "map" ? "scale(0.9)" : "scale(1.15)" }),
+};
+const ZOOM_EASE = { duration: 0.3, ease: "easeInOut" };
+const loadFeatures = () => import("../lib/motionFeatures.js").then(mod => mod.default);
 
-/**
- * Cambio entre diario y mapa como un zoom sobre el sello del paso actual: del mapa al
- * diario se entra en él (zoom in) y del diario al mapa se sale (zoom out). Las dos vistas
- * no conviven en React, así que la que se va queda encima como instantánea estática
- * (sin ids, para no repetirlos) mientras entra la nueva.
- */
-function useViewZoom(stageRef, view, step) {
-  const snapshot = useRef(null);
-  const leavingRef = useRef(null);
-  // Mientras dura el zoom no se anima la altura: recalcular la página en cada fotograma
-  // era lo que lo hacía ir a saltos
-  const switching = useRef(false);
-  const [swap, setSwap] = useState(null);
-
-  useEffect(() => onBeforeViewSwitch(() => {
-    const stage = stageRef.current;
-    const current = stage?.querySelector(".steps-current");
-    if (!current || prefersReducedMotion()) return;
-    const clone = current.cloneNode(true);
-    clone.removeAttribute("class");
-    clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
-    snapshot.current = { clone, height: stage.offsetHeight };
-    switching.current = true;
-  }), [stageRef]);
-
-  useLayoutEffect(() => {
-    const shot = snapshot.current;
-    snapshot.current = null;
-    if (!shot) return;
-    const at = mapPoint(stageRef.current.clientWidth, step);
-    setSwap({ to: view, x: at.x, y: at.y, clone: shot.clone, height: shot.height });
-    const t = setTimeout(() => { switching.current = false; setSwap(null); }, SWAP_MS);
-    return () => clearTimeout(t);
-  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useLayoutEffect(() => {
-    if (swap) leavingRef.current?.replaceChildren(swap.clone);
-  }, [swap]);
-
-  return { swap, leavingRef, switching };
+/** Una de las dos vistas. La que se va queda inerte y sin ids mientras sale. */
+function ViewLayer({ ref, origin, reduce, children }) {
+  const present = useIsPresent();
+  return (
+    <m.div ref={ref} className="steps-layer" variants={ZOOM} initial="enter" animate="center" exit="exit"
+      transition={reduce ? { duration: 0 } : ZOOM_EASE}
+      style={{ transformOrigin: origin }} inert={!present} aria-hidden={!present || undefined}>
+      <LeavingContext.Provider value={!present}>{children}</LeavingContext.Provider>
+    </m.div>
+  );
 }
 
 /** 02 · Los 100 pasos: como diario (lista y detalle) o como mapa del camino. */
@@ -183,10 +164,26 @@ export default function Diary({ mobile }) {
   // Sin nada elegido, el detalle abre el siguiente pendiente (en móvil vive en la hoja)
   const current = s.selectedStep ?? (mobile ? null : next);
   const map = s.stepsView === "map";
-  // Cambiar de vista o de paso mueve lo de debajo con suavidad, sin saltos
+  // Cambiar de paso mueve lo de debajo con suavidad; el cambio de vista lo lleva el zoom
   const stageRef = useRef(null);
-  const { swap, leavingRef, switching } = useViewZoom(stageRef, s.stepsView, s.selectedStep ?? next);
+  const reduce = useReducedMotion();
+  // Mientras conviven las dos vistas la sección guarda la altura de antes (minHeight) y
+  // no se anima la altura: recalcular la página en cada fotograma daba tirones
+  const [swap, setSwap] = useState(null);
+  const switching = useRef(false);
+  const height = useRef(0);
+  const lastView = useRef(s.stepsView);
+  useLayoutEffect(() => {
+    if (lastView.current === s.stepsView) return;
+    lastView.current = s.stepsView;
+    if (reduce) return;
+    switching.current = true;
+    setSwap(height.current);
+  }, [s.stepsView]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => { if (!switching.current) height.current = stageRef.current.offsetHeight; });
   useHeightMorph(stageRef, map ? "map" : `diary-${current}`, { skip: () => switching.current });
+  const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
+  const origin = `${at.x}px ${at.y}px`;
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
@@ -199,24 +196,28 @@ export default function Diary({ mobile }) {
         <DiaryBar s={s} />
       </div>
       <ZoneSeals s={s} current={current} />
-      <div className={"steps-stage" + (swap ? ` swap to-${swap.to}` : "")} ref={stageRef}
-        style={swap ? { "--zx": `${swap.x}px`, "--zy": `${swap.y}px`, minHeight: swap.height } : undefined}>
-      {swap && <div className="steps-leaving" ref={leavingRef} aria-hidden="true" inert></div>}
-      <div className="steps-current">
-      {map ? (
-        <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
-      ) : (
-        <div className="diary-window">
-          <DiaryList s={s} current={current} />
-          {!mobile && current != null && (
-            <div className="diary-detail">
-              {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
-              <Journal key={current} n={current} id="journal" />
-            </div>
-          )}
-        </div>
-      )}
-      </div>
+      <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
+        style={swap != null ? { minHeight: swap } : undefined}>
+        <LazyMotion features={loadFeatures} strict>
+          <AnimatePresence mode="popLayout" initial={false} custom={s.stepsView}
+            onExitComplete={() => { switching.current = false; setSwap(null); }}>
+            <ViewLayer key={s.stepsView} origin={origin} reduce={reduce}>
+              {map ? (
+                <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
+              ) : (
+                <div className="diary-window">
+                  <DiaryList s={s} current={current} />
+                  {!mobile && current != null && (
+                    <div className="diary-detail">
+                      {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
+                      <Journal key={current} n={current} id="journal" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </ViewLayer>
+          </AnimatePresence>
+        </LazyMotion>
       </div>
     </section>
   );
