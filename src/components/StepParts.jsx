@@ -1,7 +1,7 @@
 // Piezas compartidas por el detalle del paso y el overlay.
 import { Fragment, useEffect, useRef, useState } from "react";
 import { RES_ITEMS, rowName, rowQty, rowsOf } from "../lib/resources.js";
-import { imgUrl } from "../lib/assets.js";
+import { OBJ_ICONS, imgUrl } from "../lib/assets.js";
 import { rowHave } from "../state/store.js";
 import { OBJ_ICON, coordLabel } from "../lib/quests.js";
 import { copyText } from "../lib/motion.js";
@@ -32,16 +32,6 @@ export function CoordChip({ x, y }) {
     </button>
   );
 }
-
-// Medallones de la ruta: un dibujo por tipo de objetivo, del color del oro del tablero
-const OBJ_SVG = {
-  npc: <path d="M4 5.5C4 4.1 5.1 3 6.5 3h11C18.9 3 20 4.1 20 5.5v7c0 1.4-1.1 2.5-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 0 1 4 12.5z" />,
-  fight: <path d="M5 3l7 7M3 5l2-2M19 3l-7 7M21 5l-2-2M8.5 13.5L4 18l2 2 4.5-4.5M15.5 13.5L20 18l-2 2-4.5-4.5M7 11l6 6M17 11l-6 6" />,
-  bring: <path d="M7 8V6.5a5 5 0 0 1 10 0V8M5 8h14l-1.2 11.2A2 2 0 0 1 15.8 21H8.2a2 2 0 0 1-2-1.8z" />,
-  map: <path d="M12 21s7-6.6 7-11.5A7 7 0 0 0 5 9.5C5 14.4 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />,
-  craft: <path d="M14 4l6 6-3 3-6-6zM11 7L3.5 14.5a2.1 2.1 0 0 0 3 3L14 10" />,
-  free: <path d="M12 3l2.6 5.6 6.1.7-4.5 4.1 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.1 6.1-.7z" />,
-};
 
 // "Entrégale a Cirle Drawde: 5 x Lana de jalató" -> a quién y qué, para la casilla
 const BRING = /^(.*?):\s*(\d+)\s*x\s*(.+)$/;
@@ -81,7 +71,7 @@ export function Objectives({ objs, stop, route = false, at = -1 }) {
           aria-current={route && i === at ? "step" : undefined}>
           {route ? (
             <span className="obj-med" aria-hidden="true">
-              <svg viewBox="0 0 24 24">{OBJ_SVG[o.k] || OBJ_SVG.free}</svg>
+              <img src={imgUrl(OBJ_ICONS[o.k] || OBJ_ICONS.free)} alt="" />
             </span>
           ) : (
             <span className="obj-ic" aria-hidden="true">{OBJ_ICON[o.k] || "•"}</span>

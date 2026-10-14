@@ -99,6 +99,11 @@ OCRE_ICON = "items/23012.png"
 # requires) uses the game's quest mark, drawn by the app.
 CALL_ICONS = {"stop": "items/84228.png", "done": "achievements/273.png", "includes": "items/24041.png",
               "tip": "items/25019.png", "note": "items/24055.png"}
+# Medallions of the quest route in the step detail, one game item per objective kind:
+# a sealed letter to talk, a sword to fight, a bag to hand over, a compass to go
+# somewhere, a hammer to craft and a magic book for anything else.
+OBJ_ICONS = {"npc": "items/24065.png", "fight": "items/6009.png", "bring": "items/141012.png",
+             "map": "items/126014.png", "craft": "items/7001.png", "free": "items/25007.png"}
 
 
 def reward_item_ids(rewards):
@@ -342,7 +347,7 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), *HERO_ICONS.values(), OCRE_ICON, *CALL_ICONS.values()}
+              *HEADER_ICONS.values(), *HERO_ICONS.values(), OCRE_ICON, *CALL_ICONS.values(), *OBJ_ICONS.values()}
     paths |= {d["img"] for d in road}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
@@ -371,6 +376,7 @@ def main():
         "HEADER_ICONS": HEADER_ICONS,
         "OCRE_ICON": OCRE_ICON,
         "CALL_ICONS": CALL_ICONS,
+        "OBJ_ICONS": OBJ_ICONS,
         "HERO_ICONS": HERO_ICONS,
         "STEP_ASSETS": steps,
         "PREREQ_ICONS": prereqs,
