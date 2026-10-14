@@ -68,6 +68,25 @@ const Row = memo(function Row({ step, done, current }) {
   );
 });
 
+/**
+ * La ventana del diario (lista y detalle). Dentro de un mismo paso no encoge: al
+ * plegar una misión con el final a la vista, la página se acortaba, el navegador
+ * subía el scroll y la lista fija, pegada al final de la ventana, saltaba con él.
+ * Guarda la altura máxima del paso como mínimo; al cambiar de paso vuelve a medir.
+ */
+function DiaryWindow({ step, children }) {
+  const ref = useRef(null);
+  const [floor, setFloor] = useState(0);
+  useLayoutEffect(() => {
+    setFloor(0);
+    const el = ref.current;
+    const ro = new ResizeObserver(() => setFloor(f => Math.max(f, el.offsetHeight)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [step]);
+  return <div className="diary-window" ref={ref} style={floor ? { minHeight: floor } : undefined}>{children}</div>;
+}
+
 /** La lista de pasos por capítulos, con las pestañas de estado. */
 function DiaryList({ s, current }) {
   const listRef = useRef(null);
@@ -278,7 +297,7 @@ export default function Diary({ mobile }) {
               {map ? (
                 <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
               ) : (
-                <div className="diary-window">
+                <DiaryWindow step={current}>
                   <DiaryList s={s} current={current} />
                   {!mobile && current != null && (
                     <div className="diary-detail">
@@ -286,7 +305,7 @@ export default function Diary({ mobile }) {
                       <Journal key={current} n={current} id="journal" />
                     </div>
                   )}
-                </div>
+                </DiaryWindow>
               )}
             </ViewLayer>
           </AnimatePresence>
