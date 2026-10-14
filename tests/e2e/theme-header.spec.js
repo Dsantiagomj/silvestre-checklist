@@ -159,3 +159,24 @@ test("el botón de copiar de los objetos se lee en los dos temas", async ({ page
     }), { timeout: 3_000 }).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+test("las cantidades de «Necesitas» se leen en los dos temas", async ({ page }) => {
+  for (const theme of ["light", "dark"]) {
+    await openApp(page, { "silvestre:theme": theme });
+    await page.click('.diary-row[data-n="34"] .row-main');
+    const q = page.locator("#journal .req-item .q").first();
+    await expect.poll(() => q.evaluate(el => {
+      const lum = c => {
+        const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+          v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+        });
+        return .2126 * r + .7152 * g + .0722 * b;
+      };
+      const st = getComputedStyle(el);
+      // Una etiqueta propia y opaca: el número no depende del icono que tenga detrás
+      if (st.backgroundColor === "rgba(0, 0, 0, 0)") return 0;
+      const [a, b] = [lum(st.color), lum(st.backgroundColor)].sort((x, y) => y - x);
+      return (a + .05) / (b + .05);
+    }), { timeout: 3_000 }).toBeGreaterThanOrEqual(4.5);
+  }
+});
