@@ -486,3 +486,28 @@ test("los objetos revisados con Torrente Arcano y DofusDB van en el paso donde s
   expect(s75).toContain("1334");
   expect((await stepData(page, 76)).needs).toEqual(expect.arrayContaining(["16496", "16494", "16499", "16492", "9935"]));
 });
+
+test("el paso 78 lleva las misiones de orden hasta la 4 y el 80 empieza por «La última piedra»", async ({ page }) => {
+  await openApp(page);
+  const s78 = await stepData(page, 78);
+  expect(s78.quests).toEqual(["Aprendizaje: Discípulo de Jiva", "Aprendizaje: Aprendiz iluminado",
+    "Aprendizaje: adepto a las escrituras", "Aprendizaje: Maestro de los Pergaminos"]);
+  // La parada de Ugah: antes de buscar la estatuilla en el templo del Gran Ugah
+  const quest = page.locator("#journal .q-item", { hasText: "Maestro de los Pergaminos" });
+  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Encuentra la estatuilla de Sumens");
+  expect((await stepData(page, 80)).quests.slice(0, 2)).toEqual(["La última piedra", "Alma máster"]);
+});
+
+test("las paradas revisadas en las guías caen en su objetivo, también cuando un paso tiene dos", async ({ page }) => {
+  await openApp(page);
+  const after = async (n, quest, text) => {
+    await stepData(page, n);
+    const q = page.locator("#journal .q-item", { has: page.locator(".q-name", { hasText: quest }) });
+    await expect(q.locator(":is(.obj-stop, .obj-resume) + .obj-row")).toContainText(text);
+  };
+  await after(25, "Los cazadores", "Registra la caverna en busca de Gerard");
+  await after(87, "El juicio de la Muerte", /Entrégale a Maestro Cuerbok.*Fuego devorador/);
+  // El 43 para en dos misiones
+  await after(43, "El sauce del paseante", /Entrégale a Surivitna.*Esporas soporíferas/);
+  await after(43, "Inmunda putrefacción", /Entrégale a Fhang.*Mildiu de Pandala/);
+});

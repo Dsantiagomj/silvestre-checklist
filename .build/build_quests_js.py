@@ -94,6 +94,12 @@ def map_info(rec):
 # "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna cosecha".
 MISSING_OBJECTIVES = {565: [439]}
 
+# Quests a step needs that its text doesn't name, put first. Step 78 is "hasta la misión
+# de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
+# previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
+# mission 1 of "Cuatro de seis", which can only start after step 79.
+STEP_EXTRA = {78: [434, 111, 121, 423], 80: [1782]}
+
 # An objective any of several quests completes (one per class in "Un ciudadano
 # modelo") is no single quest: it becomes one generic row instead of the first match.
 CLASS_QUEST = "clase"
@@ -232,6 +238,7 @@ def main():
             last = int(align[1])
             ids += [bonta[n] for n in range(prev_align, last + 1) if n in bonta]
             prev_align = last
+        ids = STEP_EXTRA.get(step["n"], []) + [q for q in ids if q not in STEP_EXTRA.get(step["n"], [])]
         ids = [q for q in ids if q in quests or q == CLASS_QUEST]
         if ids:
             step_quests[str(step["n"])] = ids
