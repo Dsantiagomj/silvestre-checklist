@@ -260,13 +260,7 @@ header{
     var(--panel-2);
   border:1px solid var(--line-2);
 }
-.nota-step::after{ content:"✓"; background:var(--amber); color:#142208; font-size:11px; opacity:0; }
-.nota-step.closer{
-  color:var(--txt);
-  background:color-mix(in srgb, var(--amber) 22%, var(--inset));
-  border-color:var(--amber);
-}
-.nota-step.closer::after{ opacity:1; }
+.nota-step::after{ content:"✓"; background:var(--amber); color:#142208; font-size:11px; opacity:0; transform:scale(.4); }
 .nota-boss{
   position:relative;
   width:46px; height:46px; border-radius:50%;
@@ -274,23 +268,40 @@ header{
   background:var(--panel-2); border:2px solid color-mix(in srgb, #e0556b 70%, var(--line-2));
 }
 .nota-boss img{ width:115%; height:115%; object-fit:cover; object-position:50% 20%; }
-/* Al llegar al 45, las casillas en pausa se terminan con él */
-.nota-step.paused{ animation:nota-wait 6s ease-in-out infinite; }
-.nota-step.paused::before{ animation:nota-pause-mark 6s ease-in-out infinite; }
-.nota-step.paused::after{ animation:nota-done-mark 6s ease-in-out infinite; }
-.nota-step.closer{ animation:nota-close 6s ease-in-out infinite; }
-@keyframes nota-wait{
-  0%, 52%{ background:var(--inset); border-color:var(--line-2); color:var(--txt-soft); }
-  60%, 92%{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
-  100%{ background:var(--inset); border-color:var(--line-2); color:var(--txt-soft); }
+/* El jugador avanza por el camino: del 43 al jefe */
+.nota-marker{
+  position:absolute; top:50%; left:22px; z-index:1;
+  width:10px; height:10px; border-radius:50%;
+  background:var(--amber); box-shadow:0 0 10px color-mix(in srgb, var(--amber) 70%, transparent);
+  transform:translate(-50%, -50%); opacity:0;
 }
-@keyframes nota-pause-mark{ 0%, 52%{ opacity:1; } 60%, 92%{ opacity:0; } 100%{ opacity:1; } }
-@keyframes nota-done-mark{ 0%, 52%{ opacity:0; transform:scale(.4); } 60%, 92%{ opacity:1; transform:none; } 100%{ opacity:0; } }
-@keyframes nota-close{
-  0%, 40%{ box-shadow:none; }
-  50%{ box-shadow:0 0 0 6px color-mix(in srgb, var(--amber) 25%, transparent); }
-  60%, 100%{ box-shadow:none; }
+
+/* La historia, una vez al verla: el punto llega al jefe, el jefe cae, el 45 se marca
+   y la ✓ vuelve hacia atrás al 44 y al 43. --d es cuándo se marca cada casilla. */
+.nota-track.play .nota-marker{ animation:nota-travel 1.3s cubic-bezier(.45,0,.3,1) .2s forwards; }
+.nota-track.play .nota-boss{ animation:nota-hit .32s ease-in-out 1.4s, nota-defeat-ring .35s ease 1.6s forwards; }
+.nota-track.play .nota-boss img{ animation:nota-defeat .35s ease 1.6s forwards; }
+.nota-track.play .nota-step{ animation:nota-lit .3s ease var(--d) forwards; }
+.nota-track.play .nota-step::after{ animation:nota-check .3s cubic-bezier(.34,1.56,.64,1) var(--d) forwards; }
+.nota-track.play .nota-step.paused::before{ animation:nota-unpause .2s ease var(--d) forwards; }
+@keyframes nota-travel{
+  0%  { left:22px; opacity:0; }
+  12% { opacity:1; }
+  88% { opacity:1; }
+  100%{ left:139px; opacity:0; }
 }
+@keyframes nota-hit{
+  25%{ transform:translateX(-3px) rotate(-6deg); }
+  50%{ transform:translateX(3px) rotate(5deg); }
+  75%{ transform:translateX(-2px); }
+}
+@keyframes nota-defeat{ to{ filter:grayscale(1) brightness(.55); } }
+@keyframes nota-defeat-ring{ to{ border-color:var(--line-2); } }
+@keyframes nota-lit{
+  to{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
+}
+@keyframes nota-check{ to{ opacity:1; transform:none; } }
+@keyframes nota-unpause{ to{ opacity:0; transform:scale(.4); } }
 .nota-example figcaption{
   max-width:260px; margin-top:12px;
   font-size:12px; line-height:1.45; color:var(--txt-mute);
@@ -307,8 +318,14 @@ header{
 @media (max-width:700px){
   .nota{ grid-template-columns:1fr; gap:16px; }
 }
+/* Sin movimiento: directamente el final de la historia */
 @media (prefers-reduced-motion:reduce){
-  .nota-step.paused, .nota-step.paused::before, .nota-step.paused::after, .nota-step.closer{ animation:none; }
+  .nota-marker{ display:none; }
+  .nota-step{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
+  .nota-step::after{ opacity:1; transform:none; }
+  .nota-step.paused::before{ opacity:0; }
+  .nota-boss{ border-color:var(--line-2); }
+  .nota-boss img{ filter:grayscale(1) brightness(.55); }
 }
 
 /* PRERREQUISITOS · acordeón "Requisitos" tipo Dofus -------------------------*/
