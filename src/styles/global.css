@@ -2435,21 +2435,19 @@ header.show-progress .tb-progress{
 .journal-reward img{ width:28px; height:28px; object-fit:contain; }
 
 /* Títulos de sección con rombos dorados, como en la ventana del juego:
-   ——— ◆ MISIONES (2) ◆ ——— (en «Necesitas» el resumen sigue plegando la lista) */
-.journal-h, .journal .req > summary{
+   ——— ◆ MISIONES (2) ◆ ——— */
+.journal-h{
   display:flex; align-items:center; justify-content:center; gap:10px; margin:22px 0 10px; padding:0;
   font:700 15px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--gw-ink);
 }
-.journal-h::before, .journal-h::after,
-.journal .req > summary::before, .journal .req > summary::after{
+.journal-h::before, .journal-h::after{
   content:""; flex:1; height:1px; background:linear-gradient(90deg, transparent, #8a7a55, transparent);
   border:0; transform:none;
 }
-.journal-h .t::before, .journal .req > summary .t::before,
-.journal-h .n::after, .journal .req > summary .n::after{ content:"◆"; color:var(--gw-gold); font-size:10px; }
-.journal-h .t::before, .journal .req > summary .t::before{ margin-right:10px; }
-.journal-h .n::after, .journal .req > summary .n::after{ margin-left:10px; }
-.journal-h .n, .journal .req > summary .n{ color:var(--gw-gold); }
+.journal-h .t::before, .journal-h .n::after{ content:"◆"; color:var(--gw-gold); font-size:10px; }
+.journal-h .t::before{ margin-right:10px; }
+.journal-h .n::after{ margin-left:10px; }
+.journal-h .n{ color:var(--gw-gold); }
 
 /* Misiones: «!» del juego, nivel dorado y la abierta resaltada */
 .journal-quests{ display:flex; flex-direction:column; gap:8px; }
@@ -2481,11 +2479,16 @@ header.show-progress .tb-progress{
 }
 .obj-stop span{ max-width:70%; text-align:center; }
 
-/* Necesitas: casillas de inventario centradas */
-.journal .req{ margin-top:6px; background:none; border:0; }
-.journal .req-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; padding:0; }
-.journal .req-item{ width:60px; height:60px; border-radius:6px; background:var(--gw-pin); border:1px solid var(--gw-pin-line); }
-.journal .req-copied{ text-align:center; margin:10px 0 0; }
+/* Necesitas: las casillas de «Objetos necesarios», centradas y con el marco del diario */
+.journal-needs{ margin:6px 0 4px; }
+.journal-needs .slots{ display:flex; flex-wrap:wrap; justify-content:center; }
+.journal-needs .slot{ width:64px; }
+.journal-needs .slot-main{ border-radius:6px; background:var(--gw-pin); border-color:var(--gw-pin-line); }
+/* Etiqueta opaca: la cantidad se lee sobre cualquier icono y en los dos temas */
+.journal-needs .slot .q{
+  right:2px; bottom:2px; min-width:16px; padding:0 4px; border-radius:6px;
+  background:rgba(18,20,16,.88); line-height:16px; text-align:center; text-shadow:none;
+}
 
 /* Barra final: anterior · Paso hecho · siguiente, botones planos del juego */
 .journal-cta{

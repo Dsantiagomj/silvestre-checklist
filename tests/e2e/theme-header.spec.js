@@ -164,7 +164,7 @@ test("las cantidades de «Necesitas» se leen en los dos temas", async ({ page }
   for (const theme of ["light", "dark"]) {
     await openApp(page, { "silvestre:theme": theme });
     await page.click('.diary-row[data-n="34"] .row-main');
-    const q = page.locator("#journal .req-item .q").first();
+    const q = page.locator("#journal .journal-needs .slot .q").first();
     await expect.poll(() => q.evaluate(el => {
       const lum = c => {
         const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
