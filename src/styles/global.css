@@ -224,41 +224,43 @@ header{
 }
 
 /* NOTA ----------------------------------------------------------------------*/
-/* Nota aclaratoria · estilo "log del juego" — sin caja, sin emoji */
+/* Nota aclaratoria · tarjeta como las del hero, con la llave de la mazmorra */
 .nota{
-  display:flex; gap:10px; align-items:flex-start;
-  padding:6px 4px 14px;
-  margin-bottom:6px;
-  font-size:13px;
-  line-height:1.6;
-  color:var(--txt-soft);
-  font-style:italic;
-  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:16px;
+  margin:18px 0 6px; padding:14px 16px;
+  border-radius:16px;
+  background:var(--panel);
+  border:1px solid var(--line-2);
+  border-left:3px solid var(--gold-ink);
 }
-.nota .ic{
-  font-style:normal;
-  color:var(--gold-ink);
-  font-family:var(--font-display);
-  font-weight:600;
-  letter-spacing:1px;
-  flex-shrink:0;
-  user-select:none;
-  /* el "ic" ahora es un prefijo tipográfico, no un emoji */
+.nota-art{
+  width:56px; height:56px; flex-shrink:0;
+  display:grid; place-items:center;
+  border-radius:12px; background:var(--inset); border:1px solid var(--line);
 }
-.nota b{ color:var(--txt); font-weight:600; font-style:normal; }
-.nota .close{
-  margin-left:auto;
-  color:var(--txt-mute);
-  font-size:16px;
-  width:22px; height:22px;
-  border-radius:4px;
-  flex-shrink:0;
-  font-style:normal;
-  line-height:1;
-  transition:color .15s ease;
+.nota-art img{ width:80%; height:80%; object-fit:contain; transform:rotate(-12deg); }
+.nota-body{ min-width:0; flex:1; }
+.nota-kicker{ margin:0; font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--gold-ink); }
+.nota-title{ margin:2px 0 4px; font-size:16px; font-weight:700; color:var(--txt); }
+.nota-text{ margin:0; max-width:760px; font-size:13.5px; line-height:1.55; color:var(--txt-soft); }
+.nota-actions{ display:flex; flex-direction:column; align-items:stretch; gap:6px; flex-shrink:0; }
+.nota-steps, .nota-ok{
+  padding:8px 14px; border-radius:999px;
+  font-size:13px; font-weight:700; white-space:nowrap; text-align:center;
+  transition:filter .15s ease, border-color .15s ease, color .15s ease;
 }
-.nota .close:hover{ color:var(--txt); }
+.nota-steps{ background:var(--amber); color:#0d0e0c; }
+.nota-steps:hover{ filter:brightness(1.08); }
+.nota-ok{ border:1px solid var(--line-2); color:var(--txt-soft); }
+.nota-ok:hover{ border-color:var(--txt-mute); color:var(--txt); }
 .nota.hidden{ display:none; }
+@media (max-width:700px){
+  .nota{ flex-wrap:wrap; align-items:flex-start; }
+  .nota-art{ width:44px; height:44px; }
+  .nota-body{ flex-basis:calc(100% - 60px); }
+  .nota-actions{ flex-direction:row; width:100%; }
+  .nota-actions > *{ flex:1; }
+}
 
 /* PRERREQUISITOS · acordeón "Requisitos" tipo Dofus -------------------------*/
 .prereqs{
