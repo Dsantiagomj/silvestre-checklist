@@ -166,14 +166,12 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
   await ctx.close();
 });
 
-test("lo que necesitas va antes del tablero de pasos", async ({ page }) => {
+test("lo que necesitas va antes de la aclaración y del tablero de pasos", async ({ page }) => {
   await openApp(page);
-  const order = await page.evaluate(() => {
-    const needs = document.getElementById("needs");
-    const board = document.querySelector(".grid-section");
-    return needs.compareDocumentPosition(board) & Node.DOCUMENT_POSITION_FOLLOWING ? "antes" : "después";
-  });
-  expect(order).toBe("antes");
+  // La aclaración explica cómo leer los pasos: va pegada al tablero, debajo de lo que necesitas
+  const order = await page.evaluate(() => ["#needs", "#nota", ".grid-section"]
+    .map(sel => document.querySelector(sel).getBoundingClientRect().top + scrollY));
+  expect(order).toEqual([...order].sort((a, b) => a - b));
   await expect(page.locator("#needs .section-num")).toHaveText("01");
   await expect(page.locator(".grid-section .section-num")).toHaveText("02");
 });

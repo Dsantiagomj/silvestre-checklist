@@ -58,8 +58,8 @@ export default function App() {
       <Header onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
       <Hero />
       <div className="wrap">
-        <Nota />
         <Needs />
+        <Nota />
         <Filters />
         {/* LAYOUT PRINCIPAL */}
         <div className="main-layout">
