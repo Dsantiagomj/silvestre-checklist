@@ -29,6 +29,9 @@ import urllib.request
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
 OUT_JSON = ROOT / "src" / "data" / "quests.json"
+# What each step asks for, as the step card draws it (small, loaded with the page)
+OUT_PLANS = ROOT / "src" / "data" / "plans.json"
+ASSETS_JSON = ROOT / "src" / "data" / "assets.json"
 API = "https://api.dofusdb.fr"
 
 KIND = {
@@ -216,6 +219,37 @@ def step_quest_ids(step, achievements, marks):
     return out
 
 
+def step_plan(step, achievements, marks, quests, images):
+    """The step card: each achievement the base text names, in order, with all its
+    objectives (quest names, None for objectives that aren't quests) and which of them
+    the step asks for: "all", "upto" (missions 1..N) or "some" (the numbered ones).
+    An alignment step ("Alineamiento Bontariano: Misión 29") is {"t": "align", "n": 29}.
+    """
+    base, _ = marks.get(step["n"], (None, []))
+    base = base or step["text"]
+    align = ALIGN_STEP.search(base)
+    if align:
+        return [{"t": "align", "n": int(align[1])}]
+    found = []
+    for a in step["assets"]:
+        if a["kind"] != "achievement" or a["id"] not in achievements:
+            continue
+        pos = base.find(a["matched_on"])
+        if pos < 0:
+            continue
+        ach = achievements[a["id"]]
+        ordered = achievement_quests(ach)
+        names = [("Misión de clase" if q == CLASS_QUEST else quests[q]["name"]["es"]) if q in quests or q == CLASS_QUEST
+                 else None for q in ordered]
+        nxt = LOGRO.search(base, pos + 1)
+        segment = base[pos:nxt.start() if nxt else len(base)]
+        wanted = missions_for(base, pos)
+        mode = "all" if wanted is None else "upto" if UNTIL.search(segment) else "some"
+        found.append((pos, {"t": "a", "id": a["id"], "name": ach["name"]["es"], "img": images.get(a["id"]),
+                            "m": names, "mode": mode, "on": wanted or []}))
+    return [entry for _, entry in sorted(found, key=lambda f: f[0])]
+
+
 # ---------------------------------------------------------------------------
 # Quest -> compact record
 # ---------------------------------------------------------------------------
@@ -228,15 +262,25 @@ def main():
     quests = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
 
     bonta = bonta_missions(quests)
+    assets = json.loads(ASSETS_JSON.read_text())["STEP_ASSETS"]
+    images = {x["id"]: x["img"] for v in assets.values() for x in v.get("achievements", [])}
+    plans = {}
     marks = read_marks()
     prev_align = 1
     step_quests = {}
     for step in report:
+        plan = step_plan(step, achievements, marks, quests, images)
+        if plan:
+            plans[str(step["n"])] = plan
         ids = step_quest_ids(step, achievements, marks)
         align = ALIGN_STEP.search(step["text"])
         if align:
             last = int(align[1])
             ids += [bonta[n] for n in range(prev_align, last + 1) if n in bonta]
+            # La tarjeta dice desde qué misión del alineamiento se sigue
+            for entry in plans.get(str(step["n"]), []):
+                if entry["t"] == "align":
+                    entry["from"] = prev_align
             prev_align = last
         ids = STEP_EXTRA.get(step["n"], []) + [q for q in ids if q not in STEP_EXTRA.get(step["n"], [])]
         ids = [q for q in ids if q in quests or q == CLASS_QUEST]
@@ -334,10 +378,12 @@ def main():
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "QUESTS": out_quests}) + "\n")
+    OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
     located = [o for o in objs if o.get("m") or o.get("x") is not None]
     print(f"quests.json      : {OUT_JSON.stat().st_size // 1024} KB")
+    print(f"plans.json       : {OUT_PLANS.stat().st_size // 1024} KB, {len(plans)} pasos con tarjeta")
     print(f"pasos con misión : {len(step_quests)}/100")
     print(f"misiones         : {len(out_quests)}")
     print(f"objetivos        : {len(objs)} ({len(located)} con ubicación)")
