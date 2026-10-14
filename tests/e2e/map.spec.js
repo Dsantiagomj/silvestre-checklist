@@ -135,3 +135,23 @@ test("nada sobresale recortado: ni el Dofus del primer paso ni el marcador de zo
   await page.waitForTimeout(300);
   expect(await room(".seal.here .seal-pin", "#zoneSeals")).toBeGreaterThanOrEqual(2);
 });
+
+test("la ficha del mapa se cierra al pulsar fuera o con Escape; otro paso la cambia", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, null, { view: null });
+  await page.waitForTimeout(500);
+  await node(page, 34).click();
+  await expect(page.locator("#mapCard")).toBeVisible();
+  // Dentro de la ficha no se cierra
+  await page.locator("#mapCard .map-card-title").click();
+  await expect(page.locator("#mapCard")).toBeVisible();
+  // Otro paso: la ficha pasa a ese paso
+  await node(page, 35).click();
+  await expect(page.locator("#mapCard .map-card-title")).toContainText("35");
+  // Fuera: se cierra
+  await page.locator("#diaryTitle").click();
+  await expect(page.locator("#mapCard")).toHaveCount(0);
+  await node(page, 34).click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#mapCard")).toHaveCount(0);
+});

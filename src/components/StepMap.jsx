@@ -1,9 +1,9 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { showcase, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
-import { useLiveId } from "../lib/leaving.js";
+import { useLeaving, useLiveId } from "../lib/leaving.js";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const ROW_H = 108;
@@ -73,6 +73,22 @@ function Card({ step, pos, width, height, done }) {
   const ref = useRef(null);
   const [cardH, setCardH] = useState(240);
   useLayoutEffect(() => setCardH(ref.current.offsetHeight), [step.n]);
+  // Se cierra al pulsar fuera o con Escape. Pulsar otro paso la cambia a ese paso (lo
+  // hace el propio sello), así que los sellos no cuentan como fuera
+  const leaving = useLeaving();
+  useEffect(() => {
+    if (leaving) return;
+    const outside = e => {
+      if (!ref.current?.contains(e.target) && !e.target.closest?.(".map-node")) clearSelection();
+    };
+    const esc = e => { if (e.key === "Escape") clearSelection(); };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [leaving]);
   const show = showcase(step.n);
   const zone = ZONE_IMG[step.zone];
   const stops = (step.marks || []).filter(m => m[0] === "stop");
