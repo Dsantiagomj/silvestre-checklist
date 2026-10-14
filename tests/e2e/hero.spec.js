@@ -52,7 +52,7 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator(".hero-reqs")).toHaveCount(0);
   const road = page.locator(".road.big");
   await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
-  await expect(road.locator(".road-dofus.obtained")).toHaveCount(11);
+  await expect(road.locator(".road-dofus.obtained")).toHaveCount(10);
   await page.click("#roadGo");
   await expect(page.locator("#diary")).toBeInViewport();
 });
@@ -182,11 +182,11 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
   const road = page.locator(".road");
   await expect(road).not.toHaveClass(/\bbig\b/);
-  await expect(road.locator(".road-count")).toHaveText("2/11");
+  await expect(road.locator(".road-count")).toHaveText("2/10");
   // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
   // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
   const dofus = road.locator(".road-dofus");
-  await expect(dofus).toHaveCount(11);
+  await expect(dofus).toHaveCount(10);
   await expect(dofus.nth(0)).toHaveAttribute("title", "Dofawa · paso 1");
   await expect(dofus.nth(0)).not.toHaveClass(/\bobtained\b/);
   await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
@@ -194,9 +194,9 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   // Uno pendiente dice en qué paso se consigue
   await expect(dofus.nth(3)).toHaveAttribute("title", "Domakuro · paso 49");
   await expect(dofus.nth(3).locator(".road-step")).toHaveText("49");
-  // DofusDB no lo da como recompensa: el Ocre llega al completar "Ocre de ámbar" (paso 55)
-  await expect(dofus.nth(4)).toHaveAttribute("title", "Dofus Ocre · paso 55");
-  await expect(dofus.nth(5)).toHaveAttribute("title", "Dorigami · paso 56");
+  // El Dofus Ocre no sale de ningún paso: lo da "La eterna cosecha", que va aparte
+  await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
+  await expect(road.locator('.road-dofus[title^="Dofus Ocre"]')).toHaveCount(0);
   // Mientras falta, siguen el siguiente paso y lo que necesitas
   await expect(page.locator("#heroNext")).toBeVisible();
   await expect(page.locator(".hero-reqs")).toBeVisible();

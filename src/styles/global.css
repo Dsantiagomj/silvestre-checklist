@@ -1503,9 +1503,9 @@ header.show-progress .tb-progress{
 }
 .road.big .road-sub{ grid-column:1; margin:2px 0 0; font-size:12.5px; color:var(--txt-soft); }
 .road.big .road-go{ grid-column:2; grid-row:1 / span 2; }
-/* 11 Dofus: filas de 6 centradas (6 + 5); en móvil, de 4 */
+/* 10 Dofus: dos filas de 5, centradas si un día cambia el número */
 .road.big .road-list{
-  --per-row:6;
+  --per-row:5;
   grid-column:1 / -1; display:flex; flex-wrap:wrap; justify-content:center; gap:14px 8px; margin-top:14px;
 }
 .road.big .road-dofus{ flex:0 0 calc((100% - (var(--per-row) - 1) * 8px) / var(--per-row)); }
@@ -1521,9 +1521,9 @@ header.show-progress .tb-progress{
 @media (max-width:600px){
   .road.big{ grid-template-columns:1fr; }
   .road.big .road-go{ grid-column:1; grid-row:auto; margin-top:14px; justify-self:start; }
-  .road.big .road-list{ --per-row:4; gap:12px 8px; }
+  .road.big .road-list{ gap:12px 8px; }
   .road.big .road-art{ width:48px; height:48px; }
-  /* La fila compacta tiene que caber entera: 11 casillas más pequeñas */
+  /* La fila compacta tiene que caber entera: 10 casillas más pequeñas */
   .road-list{ gap:3px; }
   .road-art{ width:28px; height:28px; border-radius:8px; }
   .road-step{ min-width:15px; height:13px; font-size:8px; right:-4px; bottom:-4px; }

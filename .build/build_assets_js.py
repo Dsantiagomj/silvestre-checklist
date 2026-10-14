@@ -81,9 +81,10 @@ def short(url):
 
 
 DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
-# Dofus that DofusDB lists neither as the achievement's reward nor as a reward of
-# its quests: achievement id -> item id. "Ocre de ámbar" ends in the Dofus Ocre.
-MISSING_DOFUS = {5220: 7754}
+# The Dofus Ocre comes from "La eterna cosecha", a long quest outside the guide's
+# steps (the guide asks to start it early; it is mandatory from step 79). It is
+# not on the road; the prerequisites note shows its icon.
+OCRE_ICON = "items/23012.png"
 
 
 def reward_item_ids(rewards):
@@ -132,8 +133,6 @@ def dofus_road(achievements, quests, steps, report):
         if a["id"] not in by_ach:
             continue
         ids = reward_item_ids(a.get("rewards"))
-        if a["id"] in MISSING_DOFUS:
-            ids.add(MISSING_DOFUS[a["id"]])
         for o in filter(None, a.get("objectives") or []):
             m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
             for st in (quests.get(int(m.group(1)), {}).get("steps") or []) if m else []:
@@ -309,7 +308,7 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), *HERO_ICONS.values()}
+              *HEADER_ICONS.values(), *HERO_ICONS.values(), OCRE_ICON}
     paths |= {d["img"] for d in road}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
@@ -336,6 +335,7 @@ def main():
         "THEME_ICONS": THEME_ICONS,
         "BACKUP_ICONS": BACKUP_ICONS,
         "HEADER_ICONS": HEADER_ICONS,
+        "OCRE_ICON": OCRE_ICON,
         "HERO_ICONS": HERO_ICONS,
         "STEP_ASSETS": steps,
         "PREREQ_ICONS": prereqs,
