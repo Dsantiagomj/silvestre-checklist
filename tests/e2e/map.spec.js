@@ -95,3 +95,12 @@ test("la ficha del mapa usa los mismos iconos que los avisos", async ({ page }) 
   await expect(page.locator("#mapCard .map-card-line.done img")).toHaveAttribute("src", /achievements\/273\.png$/);
   await expect(page.locator("#mapCard")).not.toContainText("⛔");
 });
+
+test("desde el detalle del diario se vuelve al mapa con ese paso abierto", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click("#journal .journal-to-map");
+  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#mapCard .map-card-title")).toContainText("34");
+  await expect(node(page, 34)).toBeInViewport();
+});

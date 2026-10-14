@@ -2326,6 +2326,16 @@ header.show-progress .tb-progress{
     linear-gradient(0deg, rgba(16,18,15,.85) 0, rgba(16,18,15,0) 50%);
 }
 .journal-head{ min-width:0; max-width:62%; }
+/* Volver al mapa con este paso: arriba a la derecha del escenario, sobre el paisaje */
+.journal-to-map{
+  position:absolute; top:12px; right:14px; z-index:2;
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; cursor:pointer;
+  background:rgba(13,14,12,.78); border:1px solid rgba(255,255,255,.18); color:#f3ecd2;
+  font:700 12.5px var(--font-body); backdrop-filter:blur(4px);
+  transition:border-color .15s ease, background .15s ease;
+}
+.journal-to-map:hover{ border-color:var(--amber); background:rgba(13,14,12,.9); }
+.journal-to-map svg{ width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linejoin:round; }
 .journal-num, .journal-title, .journal-show-name{
   font-family:'Lilita One', var(--font-display); font-weight:400;
   -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 3px 0 #121410;
