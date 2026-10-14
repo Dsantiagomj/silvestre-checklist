@@ -284,12 +284,15 @@ export default function Needs() {
         <Tab id="tabItems" tab="items" active={tab === "items"} icon={HERO_ICONS?.items} name="Objetos necesarios"
           done={ownedCount(s)} total={ALL_ROWS.length} hint="para los pasos pendientes" />
       </div>
-      <p className="needs-hint" id="needsHint">
-        {tab === "prereqs"
-          ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
-          : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
-      </p>
-      {tab === "prereqs" ? <PrereqsPanel actions={actions} /> : <ItemsPanel searchRef={searchRef} actions={actions} />}
+      <div className="needs-bar">
+        <p className="needs-hint" id="needsHint">
+          {tab === "prereqs"
+            ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
+            : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
+        </p>
+        {actions}
+      </div>
+      {tab === "prereqs" ? <PrereqsPanel /> : <ItemsPanel searchRef={searchRef} />}
     </section>
   );
 }

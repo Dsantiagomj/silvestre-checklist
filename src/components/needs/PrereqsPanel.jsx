@@ -66,11 +66,10 @@ function PrereqCard({ p, done }) {
 }
 
 /** PRERREQUISITOS · tarjetas por grupo y, debajo, los objetos que piden. */
-export default function PrereqsPanel({ actions }) {
+export default function PrereqsPanel() {
   const s = useAppState();
   return (
     <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
-      <div className="pr-top">{actions}</div>
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>

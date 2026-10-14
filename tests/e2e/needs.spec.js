@@ -367,14 +367,20 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await expect(page.locator("#tabItems")).toBeVisible();
 });
 
-test("Marcar todo y Limpiar van con la lista, no junto a Ocultar", async ({ page }) => {
+test("Marcar todo y Limpiar van junto a su explicación, no junto a Ocultar", async ({ page }) => {
   await openApp(page, MID);
   await expect(page.locator(".needs-head .needs-act")).toHaveCount(0);
   await expect(page.locator("#needsCollapse")).toHaveText(/^Ocultar/);
-  await page.click("#tabItems");
-  await expect(page.locator(".needs-toolbar #needsMarkAll")).toBeVisible();
-  await page.click("#tabPrereqs");
-  await expect(page.locator(".pr-top #needsClear")).toBeVisible();
+  // Misma fila en las dos pestañas: la explicación a la izquierda y las acciones a la derecha
+  for (const tab of ["#tabPrereqs", "#tabItems"]) {
+    await page.click(tab);
+    const [hint, mark, clear] = await Promise.all(["#needsHint", "#needsMarkAll", "#needsClear"]
+      .map(sel => page.locator(`.needs-bar ${sel}`).boundingBox()));
+    expect(hint.x + hint.width).toBeLessThanOrEqual(mark.x);
+    expect(Math.abs((mark.y + mark.height / 2) - (hint.y + hint.height / 2))).toBeLessThan(12);
+    expect(clear.x).toBeGreaterThan(mark.x);
+  }
+  await expect(page.locator(".needs-toolbar .needs-act")).toHaveCount(0);
 });
 
 test("el crédito a Sandglass va bajo el título y se ve en las dos pestañas", async ({ page }) => {
