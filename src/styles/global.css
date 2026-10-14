@@ -2139,6 +2139,46 @@ header.show-progress .tb-progress{
   background:var(--amber); color:#142208; font-size:12px; font-weight:800;
 }
 
+/* Con la guía completa: franja "Todo reunido" y, al desplegarla, el resumen */
+.needs-done{ display:flex; align-items:center; flex-wrap:wrap; gap:12px 16px; }
+.needs-done-ok{
+  display:grid; place-items:center; width:38px; height:38px; border-radius:50%; flex:none;
+  background:var(--amber); color:#142208; font-size:20px; font-weight:800;
+  box-shadow:0 0 18px color-mix(in srgb, var(--amber) 40%, transparent);
+}
+.needs-done-head .section-title{ margin:0; }
+.needs-done-title{ margin:2px 0 0; font-family:'Lilita One', var(--font-body); font-size:22px; letter-spacing:.3px; color:var(--txt); }
+.needs-done-chip{
+  display:inline-flex; align-items:center; gap:8px; padding:5px 12px 5px 6px; border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+  font-size:13px; font-weight:700; color:var(--txt-soft);
+}
+.needs-done-chip img{ width:24px; height:24px; object-fit:contain; }
+.needs-done-toggle{ padding:7px 14px; border-radius:999px; border:1px solid var(--line-2); font-size:12.5px; font-weight:700; color:var(--txt-soft); }
+.needs-done-toggle:hover{ border-color:var(--amber); color:var(--txt); }
+.needs-summary{
+  display:grid; grid-template-columns:auto minmax(0, 1fr); gap:16px 24px; align-items:center;
+  margin-top:16px; padding-top:16px; border-top:1px solid var(--line);
+}
+.needs-sum-big{ display:flex; flex-direction:column; gap:4px; }
+.needs-sum-total{ font-family:'Lilita One', var(--font-body); font-weight:400; font-size:46px; line-height:1; color:var(--accent-ink); }
+.needs-sum-big span{ font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--txt-mute); line-height:1.4; }
+.needs-sum-top{ display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:8px; margin:0; padding:0; list-style:none; }
+.needs-sum-top li{
+  display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 6px; border-radius:12px;
+  background:var(--inset); border:1px solid var(--line-2); text-align:center;
+}
+.needs-sum-top img{ width:40px; height:40px; object-fit:contain; }
+.needs-sum-top b{ font-family:'Lilita One', var(--font-body); font-weight:400; font-size:17px; color:var(--accent-ink); }
+.needs-sum-top span{ font-size:11.5px; line-height:1.25; color:var(--txt-mute); }
+.needs-sum-cats{ grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px 18px; margin:0; font-size:13px; color:var(--txt-mute); }
+.needs-sum-cats b{ color:var(--txt); }
+.needs-summary #needsShowLists{ grid-column:1 / -1; justify-self:start; }
+@media (max-width:700px){
+  .needs-summary{ grid-template-columns:1fr; }
+  .needs-sum-top{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+}
+
 /* Prerrequisitos: tarjetas por grupo */
 .pr-intro{ margin:0 0 14px; font-size:13px; line-height:1.55; color:var(--txt-soft); max-width:900px; }
 .pr-group{ margin-bottom:16px; }
