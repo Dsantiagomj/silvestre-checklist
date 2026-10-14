@@ -10,7 +10,7 @@ test("en móvil el header ocupa una línea y el detalle sube como hoja", async (
   await page.locator('.diary-row[data-n="19"] .row-main').click();
   await expect(page.locator("#sheet")).toHaveClass(/open/);
   await expect(page.locator("#sheetContent .journal-show-name")).toHaveText("Blop Multicolor Real");
-  await expect(page.locator("#sheetContent .journal-reward-name")).toHaveText("Dofus Púrpura");
+  await expect(page.locator("#sheetContent .journal-reward")).toHaveCount(0);
 });
 
 test("en móvil, «Ver en el mapa» cierra la hoja y abre el mapa", async ({ page }) => {

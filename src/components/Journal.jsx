@@ -255,7 +255,6 @@ export default function Journal({ n, id }) {
   const step = STEPS[n - 1];
   const quests = s.questsLoaded ? questsOf(n) : [];
   const a = assetsFor(n);
-  const reward = a?.icon?.from === "item" && a.bosses?.length ? a.icon : null;
 
   // Quien abre un paso quiere las misiones ya, sin esperar al reposo
   useEffect(loadQuests, []);
@@ -266,14 +265,8 @@ export default function Journal({ n, id }) {
       <div className="journal-body">
         <p className="journal-base"><RichText text={step.base} /></p>
         <Calls step={step} />
-        {(reward || a?.bosses?.length > 1) && (
+        {a?.bosses?.length > 1 && (
           <div className="journal-extras">
-            {reward && (
-              <span className="journal-reward">
-                <img src={imgUrl(reward.src)} alt="" loading="lazy" />
-                <span>Recompensa: <b className="journal-reward-name">{reward.label}</b></span>
-              </span>
-            )}
             {a.bosses.length > 1 && (
               <div className="boss-row">
                 {a.bosses.map(b => (
