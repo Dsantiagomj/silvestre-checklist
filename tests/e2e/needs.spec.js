@@ -506,7 +506,7 @@ test("lo de un prerrequisito opcional va con su aviso y cuenta como usado al com
   const slot = id => page.locator(`#prereqs .slot[data-id^="${id}@"]`);
   for (const id of ["8918", "8919"]) {
     await expect(slot(id).locator(".slot-tag")).toHaveText("Opc.");
-    await expect(slot(id).locator(".slot-tip")).toContainText("Opcional · Altos vuelos");
+    await expect(slot(id).locator(".slot-tip-when")).toHaveText("Para «Altos vuelos» (opcional)");
     await expect(slot(id)).not.toHaveClass(/owned/);
   }
   await page.click('#prereqs .pr-card[data-id="l10"]');
@@ -655,7 +655,7 @@ test("cada objeto de los prerrequisitos dice para qué prerrequisito es", async 
   await expect(tip("1457")).toHaveText("Para «Intrusión en el territorio wabbit»");
   await expect(tip("421")).toHaveText("Para «El despertar de Pandala»");
   await expect(tip("1019")).toHaveText("Para «Pan Koko Mío»");
-  await expect(tip("8918@")).toHaveText("Para «Altos vuelos»");
+  await expect(tip("8918@")).toHaveText("Para «Altos vuelos» (opcional)");
   // También en «Pronto»
   await page.click("#tabItems");
   await expect(page.locator('#bandSoon .slot[data-id="7904"] .slot-tip-when').first()).toHaveText("Para «El cementerio primitivo»");
@@ -688,4 +688,20 @@ test("en «Ya utilizados» el aviso también dice para qué prerrequisito era", 
   await page.locator("#shopPendingToggle").uncheck({ force: true });
   await expect(page.locator('#bandUsed .slot[data-id^="8918@"] .slot-tip').first()).toContainText("«Altos vuelos»");
   await expect(page.locator('#bandUsed .slot[data-id="1019"] .slot-tip')).toContainText("«Pan Koko Mío»");
+});
+
+test("el aviso de un objeto dice lo mismo en todas las secciones", async ({ page }) => {
+  // Completos El despertar de Pandala y Altos vuelos: su Ortiga y el casco mejorado
+  // salen en «Ya utilizados»; la pestaña de prerrequisitos sigue abierta
+  await openApp(page, { "silvestre:prereqs": { l11: true, l10: true } });
+  const lines = loc => loc.evaluate(el => [...el.children].map(c => `${c.className}|${c.textContent}`));
+  const prereqTip = await lines(page.locator('#prereqs .slot[data-id="421"] .slot-tip'));
+  await page.click("#tabItems");
+  await page.locator("#shopPendingToggle").uncheck({ force: true });
+  const usedTip = await lines(page.locator('#bandUsed .slot[data-id="421"] .slot-tip'));
+  expect(usedTip).toEqual(prereqTip);
+  expect(usedTip[1]).toBe("slot-tip-when|Para «El despertar de Pandala»");
+  // Lo opcional no repite el nombre en otra línea
+  const opt = await lines(page.locator('#bandUsed .slot[data-id^="8918@"] .slot-tip'));
+  expect(opt.filter(l => l.includes("Altos vuelos"))).toEqual(["slot-tip-when|Para «Altos vuelos» (opcional)"]);
 });
