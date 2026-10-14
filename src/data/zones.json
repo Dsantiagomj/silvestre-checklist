@@ -1,0 +1,87 @@
+{
+ "Misiones de Mundo": {
+  "map": 173015560,
+  "img": "zones/misiones-de-mundo.jpg",
+  "thumb": "zones/misiones-de-mundo-s.jpg"
+ },
+ "Astrub": {
+  "map": 190843396,
+  "img": "zones/astrub.jpg",
+  "thumb": "zones/astrub-s.jpg"
+ },
+ "Krosmoz": {
+  "map": 192677892,
+  "img": "zones/krosmoz.jpg",
+  "thumb": "zones/krosmoz-s.jpg"
+ },
+ "Justicieros": {
+  "map": 88212247,
+  "img": "zones/justicieros.jpg",
+  "thumb": "zones/justicieros-s.jpg"
+ },
+ "Torres de la Hermandad": {
+  "map": 188220416,
+  "img": "zones/torres-de-la-hermandad.jpg",
+  "thumb": "zones/torres-de-la-hermandad-s.jpg"
+ },
+ "Cania": {
+  "map": 126092568,
+  "img": "zones/cania.jpg",
+  "thumb": "zones/cania-s.jpg"
+ },
+ "Sidimote": {
+  "map": 216663046,
+  "img": "zones/sidimote.jpg",
+  "thumb": "zones/sidimote-s.jpg"
+ },
+ "Dimensiones Divinas": {
+  "map": 129763328,
+  "img": "zones/dimensiones-divinas.jpg",
+  "thumb": "zones/dimensiones-divinas-s.jpg"
+ },
+ "Sufokia": {
+  "map": 169082884,
+  "img": "zones/sufokia.jpg",
+  "thumb": "zones/sufokia-s.jpg"
+ },
+ "Animatopía": {
+  "map": 179307011,
+  "img": "zones/animatopia.jpg",
+  "thumb": "zones/animatopia-s.jpg"
+ },
+ "Alineamiento": {
+  "map": 188746241,
+  "img": "zones/alineamiento.jpg",
+  "thumb": "zones/alineamiento-s.jpg"
+ },
+ "Isla de Frigost": {
+  "map": 54173998,
+  "img": "zones/isla-de-frigost.jpg",
+  "thumb": "zones/isla-de-frigost-s.jpg"
+ },
+ "Reino de Amakna": {
+  "map": 88083730,
+  "img": "zones/reino-de-amakna.jpg",
+  "thumb": "zones/reino-de-amakna-s.jpg"
+ },
+ "Selocalipsis": {
+  "map": 202899464,
+  "img": "zones/selocalipsis.jpg",
+  "thumb": "zones/selocalipsis-s.jpg"
+ },
+ "Isla de Pandala": {
+  "map": 205522436,
+  "img": "zones/isla-de-pandala.jpg",
+  "thumb": "zones/isla-de-pandala-s.jpg"
+ },
+ "Archipiélago de Valonia": {
+  "map": 224790533,
+  "img": "zones/archipielago-de-valonia.jpg",
+  "thumb": "zones/archipielago-de-valonia-s.jpg"
+ },
+ "Atolón de los Poseídos": {
+  "map": 214962179,
+  "img": "zones/atolon-de-los-poseidos.jpg",
+  "thumb": "zones/atolon-de-los-poseidos-s.jpg"
+ }
+}

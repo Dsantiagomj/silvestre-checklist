@@ -2,6 +2,7 @@
 // ASSETS DEL JUEGO (DofusDB) — generados por .build/build_assets_js.py
 // ============================================================================
 import DATA from "../data/assets.json";
+import ZONES from "../data/zones.json";
 
 export const ASSETS = DATA.STEP_ASSETS || {};
 export const PREREQ_ICONS = DATA.PREREQ_ICONS || {};
@@ -16,6 +17,9 @@ export const HERO_ICONS = DATA.HERO_ICONS || null;
 export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
 
 const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
+
+/** Paisaje de cada zona (.build/fetch_zone_maps.py): { img, thumb } por nombre de zona. */
+export const ZONE_IMG = ZONES;
 
 export const assetsFor = n => ASSETS[String(n)] || null;
 
