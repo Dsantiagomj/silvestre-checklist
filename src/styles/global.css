@@ -2420,25 +2420,27 @@ header.show-progress .tb-progress{
   font:900 12px var(--font-body); cursor:help;
 }
 /* El esfuerzo: relojes de arena del juego, encendidos hasta su nivel */
-.goal-effort{ display:inline-flex; gap:1px; margin-left:10px; vertical-align:middle; -webkit-text-stroke:0; cursor:help; }
+.goal-effort{ display:inline-flex; gap:1px; margin-top:5px; cursor:help; }
 .goal-effort img{ width:18px; height:18px; object-fit:contain; filter:drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
 .goal-effort img.off{ opacity:.2; filter:grayscale(1); }
-/* «Incluye», una línea con su icono, sin panel */
-.goal-inc .call{ padding:0; background:none; border:0; box-shadow:none; grid-template-columns:28px minmax(0, 1fr); gap:8px; font-size:13.5px; color:#ece3cc; }
-.goal-inc .call::before{ display:none; }
-.goal-inc .call i{ width:28px; height:28px; border-width:1.5px; box-shadow:none; }
-.goal-inc .call i img{ width:18px; height:18px; }
-.goal-inc .call b{ display:none; }
+/* Los avisos de la guía en la cabecera: una línea por aviso, con su icono en un círculo
+   de su color y el rótulo pequeño delante; sin panel */
+.goal-calls{ display:flex; flex-direction:column; gap:7px; padding-top:10px; border-top:1px dashed #3d3322; }
+.goal-calls .call{
+  padding:0; background:none; border:0; box-shadow:none; align-items:start;
+  grid-template-columns:28px minmax(0, 1fr); gap:9px; font-size:13.5px; line-height:1.45; color:#ece3cc;
+}
+.goal-calls .call::before{ display:none; }
+.goal-calls .call i{ width:28px; height:28px; border-width:1.5px; box-shadow:none; }
+.goal-calls .call i img{ width:18px; height:18px; }
+.goal-calls .call i .quest-mark{ width:12px; height:17px; }
+.goal-calls .call b{ display:inline; margin:0 6px 0 0; font-size:10px; letter-spacing:.14em; }
+.goal-calls .call b + *{ display:inline; }
+.call.closedin{ --call:#c9a24a; }
 .goal-ach .quest-mark{ height:34px; }
 .journal-title{ margin:2px 0 0; font-size:28px; line-height:1.08; color:#f3ecd2; }
 .journal-title a{ color:inherit; text-decoration:none; }
 .journal-title a:hover{ text-decoration:underline; text-decoration-thickness:2px; }
-.goal-lines{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
-.goal-lines li{ font-size:15.5px; line-height:1.45; color:#ece3cc; }
-.goal-of{ display:inline-flex; align-items:center; gap:6px; margin-right:6px; color:#f3d98a; }
-.goal-of img{ width:22px; height:22px; object-fit:contain; }
-.goal-of a{ color:inherit; text-decoration:none; }
-.goal-of a:hover{ text-decoration:underline; }
 .journal-base{ margin:12px 0; font-size:15px; line-height:1.6; color:var(--txt); }
 /* El texto de la guía: un rótulo pequeño con el libro del juego y el texto en letra
    normal; los enlaces se distinguen por el punteado, sin flecha */
@@ -2454,10 +2456,6 @@ header.show-progress .tb-progress{
 }
 .journal-goal .guide-link::after{ content:none; }
 .journal-goal .guide-link:hover, .journal-goal .step-ref:hover{ border-bottom-style:solid; }
-/* Los pasos que lo cierran o que cierra: botones que llevan a ese paso */
-.goal-foot{ display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:10px; border-top:1px dashed #3d3322; }
-.goal-foot .badge{ cursor:pointer; background:rgba(13,14,12,.75); color:#f3d98a; border-color:rgba(243,217,138,.4); }
-.goal-foot .badge:hover{ border-color:#f3d98a; background:rgba(40,32,12,.85); }
 
 .journal-body{ padding:6px 26px 24px; }
 /* Cuerpo del detalle con el estilo de la ventana de Misiones del juego: paneles de
@@ -2640,7 +2638,6 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   background:rgba(18,20,16,.88); line-height:16px; text-align:center; text-shadow:none;
 }
 
-.goal-head .goal-line{ display:block; margin-top:4px; font-size:15px; line-height:1.4; color:#ece3cc; }
 
 /* Tema claro: el objetivo va en pergamino, con tinta oscura. El estandarte sigue igual:
    es el mapa del juego con su figura, y se lee sobre su propio fondo */
@@ -2648,21 +2645,17 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   background:linear-gradient(180deg, #f8f1de, #efe4c6) #f4ebd3; color:#3b3324; border-bottom-color:#d5c8a6;
 }
 [data-theme="light"] .journal-title{ color:#3b2a10; -webkit-text-stroke:0; text-shadow:0 1px 0 rgba(255,255,255,.6); }
-[data-theme="light"] .goal-head .goal-line, [data-theme="light"] .goal-lines li{ color:#4a3d22; }
-[data-theme="light"] .goal-of{ color:#7a5410; }
+[data-theme="light"] .goal-calls{ border-top-color:#d5c8a6; }
+[data-theme="light"] .goal-calls .call{ color:#3b3324; }
 [data-theme="light"] .goal-ach .is-complete{ border-color:#f4ebd3; }
 [data-theme="light"] .goal-effort img{ filter:none; }
 [data-theme="light"] .goal-effort img.off{ opacity:.28; }
-[data-theme="light"] .goal-inc .call{ color:#4a3d22; }
 [data-theme="light"] .goal-guide-label{ color:#8a6510; }
 [data-theme="light"] .journal-goal .journal-base{ color:#5e5240; }
 [data-theme="light"] .journal-goal .guide-link, [data-theme="light"] .journal-goal .step-ref{ color:#3b2a10; border-bottom-color:#8a6510; }
 [data-theme="light"] .journal-to-map{ background:#fffaf0; border-color:#c9b98f; color:#3b3324; backdrop-filter:none; }
 [data-theme="light"] .journal-to-map:hover{ background:#fff; border-color:#8a6510; }
-[data-theme="light"] .goal-foot{ border-top-color:#d5c8a6; }
-[data-theme="light"] .goal-foot .badge{ background:#fffaf0; color:#6b4a0c; border-color:#c9b98f; }
-[data-theme="light"] .goal-foot .badge:hover{ background:#fff; border-color:#8a6510; }
-
+[data-theme="light"] [data-theme="light"] [data-theme="light"] 
 /* Misiones de varios logros: un título por logro */
 .q-group + .q-group{ margin-top:14px; }
 .q-group-head{

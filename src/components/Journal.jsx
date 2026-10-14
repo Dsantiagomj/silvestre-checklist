@@ -24,6 +24,7 @@ const CALL = {
   must: { label: "También hay que" },
   tip: { label: "Consejo" },
   note: { label: "Nota" },
+  closedin: { label: "Se termina más adelante" },
 };
 
 const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
@@ -111,23 +112,6 @@ function Banner({ step }) {
   );
 }
 
-const listSteps = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
-
-/** Una frase con lo que pide el paso de un logro ("Misiones 1 a 7 del logro, hasta X."). */
-function goalText(e) {
-  const name = k => e.m[k - 1] || "un objetivo del logro";
-  // Cierra con punto, salvo si el nombre de la misión ya acaba en «?», «!» o «.»
-  const end = t => (/[?!.]$/.test(t) ? t : `${t}.`);
-  if (e.mode === "all") return e.m.length === 1 ? "La misión del logro." : `Las ${e.m.length} misiones del logro.`;
-  if (e.mode === "upto") {
-    const k = e.on.at(-1);
-    return end(k > 1 ? `Misiones 1 a ${k} del logro, hasta ${name(k)}` : `Misión 1 del logro: ${name(1)}`);
-  }
-  return end(e.on.length > 1
-    ? `Misiones ${listSteps(e.on)} del logro: ${listSteps(e.on.map(name))}`
-    : `Misión ${e.on[0]} del logro: ${name(e.on[0])}`);
-}
-
 const TIERS = Object.keys(TIER_META);
 
 /** El esfuerzo del paso: relojes de arena del juego, de 1 (trivial) a 5 (épico). */
@@ -150,18 +134,8 @@ function Goal({ step, done }) {
   const plan = PLANS[step.n] || [];
   const achs = plan.filter(e => e.t === "a");
   const head = achs[0];
-  const many = achs.length > 1;
   const closedIn = !done && CLOSED_BY[step.n];
-  const lineOf = e => (
-    <span className="goal-line">
-      {e.t === "align"
-        ? (e.from != null && e.from < e.n
-          ? `Misiones ${e.from} a ${e.n} del alineamiento bontariano.`
-          : `Misión ${e.n} del alineamiento bontariano.`)
-        : goalText(e)}
-    </span>
-  );
-  const includes = stepCalls(step).filter(([kind]) => kind === "includes");
+  const calls = stepCalls(step);
   return (
     <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
@@ -175,29 +149,13 @@ function Goal({ step, done }) {
         </span>
         <div>
           <h2 className="journal-title">
-            {head && achievementGuide(head.name) && !many
+            {head && achievementGuide(head.name) && achs.length === 1
               ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
               : stepTitle(step)}
-            <Effort tier={step.effort} />
           </h2>
-          {plan.length === 1 && lineOf(plan[0])}
+          <Effort tier={step.effort} />
         </div>
       </div>
-      {plan.length > 1 && (
-        <ul className="goal-lines">
-          {plan.map((e, i) => (
-            <li key={i}>
-              {many && e.t === "a" && (
-                <b className="goal-of">
-                  {e.img && <img src={imgUrl(e.img)} alt="" />}
-                  {achievementGuide(e.name) ? <a href={achievementGuide(e.name)} target="_blank" rel="noopener">{e.name}</a> : e.name}
-                </b>
-              )}
-              {lineOf(e)}
-            </li>
-          ))}
-        </ul>
-      )}
       <div className="goal-guide">
         {OBJ_ICONS.free && <img src={imgUrl(OBJ_ICONS.free)} alt="" />}
         <div>
@@ -205,23 +163,15 @@ function Goal({ step, done }) {
           <p className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></p>
         </div>
       </div>
-      {includes.length > 0 && (
-        <div className="goal-inc">
-          {includes.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
-        </div>
-      )}
-      {(closedIn || step.closes) && (
-        <div className="goal-foot">
+      {(calls.length > 0 || closedIn) && (
+        <div className="goal-calls">
+          {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
           {closedIn && (
-            <button type="button" className="badge closed-in" onClick={() => selectStep(closedIn)}>
-              Se cierra en el {closedIn} →
-            </button>
+            <Call step={step} kind="closedin">
+              Sus misiones se terminan en el paso{" "}
+              <button type="button" className="step-ref" data-n={closedIn} onClick={() => selectStep(closedIn)}>{closedIn}</button>.
+            </Call>
           )}
-          {step.closes?.map(m => (
-            <button key={m} type="button" className="badge closes" data-n={m} onClick={() => selectStep(m)}>
-              Cierra el {m} →
-            </button>
-          ))}
         </div>
       )}
     </div>
@@ -229,29 +179,19 @@ function Goal({ step, done }) {
 }
 
 /** Un aviso de la guía (rojo, verde o azul) con su medallón. */
-function Call({ step, kind, text }) {
+function Call({ step, kind, text, children }) {
   return (
     <div className={`call ${kind}`}>
       <i aria-hidden="true">
         {kind === "must" ? <QuestMark />
           : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
+          : kind === "closedin" ? <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
           : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
       </i>
       <div>
         <b>{CALL[kind].label}</b>
-        <RichText text={text} />
+        {children ?? <RichText text={text} />}
       </div>
-    </div>
-  );
-}
-
-/** Rojo, verde y azul de la guía, menos «Incluye», que va con el objetivo. */
-function Calls({ step }) {
-  const calls = stepCalls(step).filter(([kind]) => kind !== "includes");
-  if (!calls.length) return null;
-  return (
-    <div className="journal-calls">
-      {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
     </div>
   );
 }
@@ -433,7 +373,6 @@ export default function Journal({ n, id }) {
         <Goal step={step} done={!!s.done[n]} />
       </div>
       <div className="journal-body">
-        <Calls step={step} />
         <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
