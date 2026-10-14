@@ -48,8 +48,11 @@ function PrereqCard({ p, done }) {
   const icons = (PREREQ_ICONS[p.id] || []).filter(i => i.img);
   const { zone, title, sub } = prereqParts(p.text);
   const layout = icons.length >= 3 ? " quad" : icons.length === 2 ? " pair" : "";
+  // "Opcional" va como etiqueta propia; debajo queda solo para qué sirve
+  const optional = sub?.lead === "Opcional";
+  const note = optional ? sub.tail.replace(/^./, c => c.toUpperCase()) : null;
   return (
-    <button type="button" className={"pr-card" + (done ? " done" : "")} data-id={p.id}
+    <button type="button" className={"pr-card" + (done ? " done" : "") + (optional ? " optional" : "")} data-id={p.id}
       aria-pressed={String(done)} onClick={() => togglePrereq(p.id)} title={p.text}>
       <span className={"pr-icons" + layout} aria-hidden="true">
         {icons.length
@@ -59,13 +62,16 @@ function PrereqCard({ p, done }) {
       <span className="pr-body">
         {zone && <span className="pr-zone">{zone}</span>}
         <span className="pr-title">{title}</span>
-        {sub && (
+        {optional ? (
+          note && <span className="pr-sub">{note}</span>
+        ) : sub && (
           <span className="pr-sub">
-            {sub.lead && <b className={sub.lead === "Opcional" ? "soft" : ""}>{sub.lead}</b>}
+            {sub.lead && <b>{sub.lead}</b>}
             {sub.lead && sub.tail ? " · " : ""}{sub.tail}
           </span>
         )}
       </span>
+      {optional && <span className="pr-tag optional">Opcional</span>}
     </button>
   );
 }

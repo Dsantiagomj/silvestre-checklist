@@ -198,10 +198,25 @@ def fetch_jobs():
         JOB_ICON[job_id] = f"jobs/{icon}.png"
 
 
+# Achievement icons DofusDB gives a whole category (a book with an eye, a seal...).
+# A prerequisite that asks for the whole achievement shows the trophy book instead,
+# the one "Con bases sólidas" has.
+CATEGORY_ICONS = {"achievements/203.png", "achievements/458.png", "achievements/459.png"}
+ACHIEVEMENT_ICON = "achievements/273.png"
+
+
 def prereq_icons(prereq_texts):
-    """Map each prerequisite id to the icons that represent it."""
+    """Map each prerequisite id to the icons that represent it.
+
+    A prerequisite that asks for given missions ("misión 1: ...", even of an
+    achievement) is a quest: no image, the app draws the game's quest mark.
+    """
     out = {}
     for pid, text in prereq_texts.items():
+        if re.search(r"\bmisi[oó]n\b", text, re.I):
+            names = re.findall(r'"([^"]+)"', text)
+            out[pid] = [{"img": None, "label": names[0] if names else text, "quest": True}]
+            continue
         if pid in PREREQ_JOBS:
             out[pid] = [{"img": JOB_ICON[j], "label": JOB_NAMES[j]} for j in PREREQ_JOBS[pid]]
         elif pid in PREREQ_SPELLS:
@@ -213,7 +228,10 @@ def prereq_icons(prereq_texts):
             for raw in names:
                 rec, _ = lookup(raw.rstrip(". "), ACH)
                 if rec:
-                    icons.append({"img": short(rec["img"]), "label": rec["name"]["es"]})
+                    img = short(rec["img"])
+                    if img in CATEGORY_ICONS and "(Completo)" in text:
+                        img = ACHIEVEMENT_ICON
+                    icons.append({"img": img, "label": rec["name"]["es"]})
                     continue
                 rec, _ = lookup(raw.rstrip(". "), QUEST)
                 if rec:

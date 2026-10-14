@@ -1832,7 +1832,17 @@ header.show-progress .tb-progress{
 .pr-title{ font-size:14px; font-weight:600; line-height:1.35; color:var(--txt-soft); }
 .pr-sub{ font-size:12.5px; color:var(--txt-mute); }
 .pr-sub b{ font-weight:700; color:var(--accent-ink); }
-.pr-sub b.soft{ color:var(--txt-soft); }
+/* Opcional: etiqueta azul en la esquina y borde discontinuo, como lo que no es obligatorio */
+.pr-card.optional{ position:relative; border-style:dashed; }
+.pr-tag.optional{
+  position:absolute; top:8px; right:10px;
+  padding:2px 8px; border-radius:999px;
+  background:color-mix(in srgb, #5fa8e0 16%, transparent);
+  border:1px solid color-mix(in srgb, #5fa8e0 55%, transparent);
+  font:800 10.5px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:#7cbcec;
+}
+[data-theme="light"] .pr-tag.optional{ color:#1f5f94; background:color-mix(in srgb, #5fa8e0 14%, #fff); }
+.pr-card.optional .pr-body{ padding-right:72px; }
 .pr-card.done{
   border-color:color-mix(in srgb, var(--amber) 60%, transparent);
   background:linear-gradient(180deg, color-mix(in srgb, var(--amber) 12%, var(--inset)), var(--inset));
