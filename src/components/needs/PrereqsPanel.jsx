@@ -1,7 +1,7 @@
-import { PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
+import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
-import { isPrereqDone, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
+import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
 
@@ -76,22 +76,28 @@ function PrereqCard({ p, done }) {
   );
 }
 
+function showStep(n) {
+  openInDiary(n);
+  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 /**
- * La recomendación de Sandglass sobre el Dofus Ocre. No es ningún paso de la guía:
- * lo da la misión "La eterna cosecha", que se hace aparte.
+ * La recomendación de Sandglass sobre el Dofus Ocre: lo da la misión "La eterna
+ * cosecha", larga, que la guía termina en el paso 79 ("El fin de la eternidad").
  */
-function OcreNote({ done }) {
+function OcreNote() {
   return (
-    <aside className={"pr-ocre" + (done ? " done" : "")}>
+    <aside className="pr-ocre">
       {OCRE_ICON && <img src={imgUrl(OCRE_ICON)} alt="" />}
       <div>
         <b>Empieza el Dofus Ocre cuanto antes</b>
         <p>{PREREQS_OCRE}</p>
-        <p className="pr-ocre-step">Lo da la misión «La eterna cosecha», que no forma parte de los 100 pasos.</p>
+        <p className="pr-ocre-step">
+          Lo da la misión «La eterna cosecha», que la guía termina en el{" "}
+          <button type="button" className="step-ref" data-n={OCRE_STEP} onClick={() => showStep(OCRE_STEP)}>paso {OCRE_STEP}</button>{" "}
+          con el logro «El fin de la eternidad».
+        </p>
       </div>
-      <button type="button" className="pr-ocre-check" id="ocreToggle" aria-pressed={String(done)} onClick={() => togglePrereq("d1")}>
-        {done ? "✓ Ya lo tengo" : "Ya lo tengo"}
-      </button>
     </aside>
   );
 }
@@ -101,7 +107,7 @@ export default function PrereqsPanel() {
   const s = useAppState();
   return (
     <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
-      <OcreNote done={isPrereqDone(s, "d1")} />
+      <OcreNote />
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>

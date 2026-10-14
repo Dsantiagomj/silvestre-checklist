@@ -3,7 +3,7 @@ import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const ALL_PREREQS = Object.fromEntries(
-  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3", "d1"].map(id => [id, true]));
+  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3"].map(id => [id, true]));
 // Pasos 1 a 40 hechos y prerrequisitos completos: lo siguiente son los pasos 41 a 45
 const MID = { "silvestre:done": range(1, 40), "silvestre:prereqs": ALL_PREREQS };
 
@@ -13,7 +13,7 @@ test("una sección con dos pestañas: prerrequisitos y objetos", async ({ page }
   await expect(needs.locator(".section-title")).toContainText("Lo que necesitas");
   // Con prerrequisitos pendientes se abre en esa pestaña
   await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#prereqsCount")).toHaveText("0/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("0/21");
   await page.click("#tabItems");
   await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#items")).toBeVisible();
@@ -25,7 +25,7 @@ test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", as
   await expect(page.locator("#prereqs .pr-card")).toHaveCount(21);
   await page.click('.pr-card[data-id="o1"]');
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/\bdone\b/);
-  await expect(page.locator("#prereqsCount")).toHaveText("1/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("1/21");
   // Los 17 objetos que piden los prerrequisitos
   await expect(page.locator("#prereqs .slot")).toHaveCount(17);
 });
@@ -33,11 +33,11 @@ test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", as
 test("marcar todo y limpiar en prerrequisitos, con deshacer", async ({ page }) => {
   await openApp(page);
   await page.click("#needsMarkAll");
-  await expect(page.locator("#prereqsCount")).toHaveText("22/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await page.click("#needsClear");
-  await expect(page.locator("#prereqsCount")).toHaveText("0/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("0/21");
   await page.click("#toastAction");
-  await expect(page.locator("#prereqsCount")).toHaveText("22/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
 });
 
 test("Pronto reúne lo de los próximos 5 pasos y reparte las cantidades", async ({ page }) => {
@@ -191,7 +191,7 @@ test("el buscador es ancho y los controles van juntos a la izquierda", async ({ 
 
 test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async ({ page }) => {
   await openApp(page);
-  await expect(page.locator("#needsHint")).toContainText("22 prerrequisitos");
+  await expect(page.locator("#needsHint")).toContainText("21 prerrequisitos");
   await page.click("#tabItems");
   await expect(page.locator("#needsHint")).toContainText("lo que ves");
   await expect(page.locator("#needsHint")).toContainText("solo quita lo que marcaste a mano");
@@ -308,7 +308,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   const needs = page.locator("#needs");
   // Franja: todo reunido, sin pestañas ni listas
   await expect(needs.locator(".needs-done-title")).toHaveText("Todo reunido");
-  await expect(needs.locator(".needs-done-chip")).toHaveText(["22 prerrequisitos", "420 objetos"]);
+  await expect(needs.locator(".needs-done-chip")).toHaveText(["21 prerrequisitos", "420 objetos"]);
   await expect(page.locator("#tabItems")).toHaveCount(0);
   await expect(page.locator(".needs-summary")).toHaveCount(0);
   // Primer nivel: el resumen de lo reunido
@@ -323,7 +323,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   // Segundo nivel: las listas completas, y se puede volver a contraer
   await page.click("#needsShowLists");
   await expect(page.locator("#tabPrereqs")).toBeVisible();
-  await expect(page.locator("#prereqsCount")).toHaveText("22/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await page.click("#needsCollapse");
   await expect(page.locator("#tabItems")).toHaveCount(0);
   await expect(needs.locator(".needs-done-title")).toBeVisible();
@@ -342,7 +342,7 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await page.click("#needsCollapse");
   const strip = page.locator("#needs .needs-strip");
   // Los objetos de los pasos 1 a 40 ya cuentan como cubiertos
-  await expect(strip.locator(".needs-meter b")).toHaveText(["22/22", /^\d+\/420$/]);
+  await expect(strip.locator(".needs-meter b")).toHaveText(["21/21", /^\d+\/420$/]);
   await expect(strip.locator(".needs-meter b").nth(1)).toHaveText(await page.locator("#heroItems .hero-req-count").textContent());
   await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
   // Los objetos de "Pronto" con nombre y cantidad, los que quepan en una fila y el resto en "+N"
@@ -433,9 +433,9 @@ test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async 
   const ocre = page.locator("#prereqs .pr-ocre");
   await expect(ocre).toContainText("Dofus Ocre");
   await expect(ocre).toContainText("paso 79");
-  // Lo da la misión "La eterna cosecha", que no es ningún paso de la guía
+  // Lo da la misión "La eterna cosecha", que la guía termina en el paso 79
   await expect(ocre).toContainText("La eterna cosecha");
-  await expect(ocre.locator(".step-ref")).toHaveCount(0);
+  await expect(ocre).toContainText("El fin de la eternidad");
   await expect(ocre.locator("img")).toHaveAttribute("src", /items\/23012\.png$/);
 });
 
@@ -455,17 +455,12 @@ test("el símbolo de misión ocupa el mismo marco que los iconos de logro", asyn
     .toBe(await size('#prereqs .pr-card[data-id="l1"] .pr-icons img'));
 });
 
-test("el Dofus Ocre se marca desde su aviso y cuenta como prerrequisito", async ({ page }) => {
+test("el aviso del Dofus Ocre lleva al paso 79, donde se consigue", async ({ page }) => {
   await openApp(page);
-  const toggle = page.locator("#ocreToggle");
-  await expect(toggle).toHaveAttribute("aria-pressed", "false");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".pr-ocre")).toHaveClass(/done/);
-  await expect(page.locator("#prereqsCount")).toHaveText("1/22");
-  expect(await readLS(page, "silvestre:prereqs")).toEqual({ d1: true });
-  // En el camino del hero el Ocre pasa a conseguido
-  await expect(page.locator('.road-dofus[title^="Dofus Ocre"]')).toHaveClass(/obtained/);
+  const ocre = page.locator("#prereqs .pr-ocre");
+  await expect(page.locator("#ocreToggle")).toHaveCount(0);
+  await ocre.locator('.step-ref[data-n="79"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("79");
 });
 
 test("cada prerrequisito lleva el icono de lo que pide: misión o logro completo", async ({ page }) => {
