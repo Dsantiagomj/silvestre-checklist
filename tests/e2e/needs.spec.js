@@ -377,6 +377,23 @@ test("Marcar todo y Limpiar van con la lista, no junto a Ocultar", async ({ page
   await expect(page.locator(".pr-top #needsClear")).toBeVisible();
 });
 
+test("el crédito a Sandglass va bajo el título y se ve en las dos pestañas", async ({ page }) => {
+  await openApp(page, MID);
+  const intro = page.locator("#needsIntro");
+  await expect(intro).toHaveText(/^Esta guía está hecha por Sandglass.*nivel 150/);
+  const order = await page.evaluate(() => {
+    const ids = ["needsTitle", "needsIntro", "tabPrereqs"];
+    return ids.map(id => document.getElementById(id).getBoundingClientRect().top);
+  });
+  expect(order[0]).toBeLessThan(order[1]);
+  expect(order[1]).toBeLessThan(order[2]);
+  await page.click("#tabItems");
+  await expect(intro).toBeVisible();
+  await page.click("#tabPrereqs");
+  await expect(intro).toBeVisible();
+  await expect(page.locator(".pr-intro")).toHaveCount(0);
+});
+
 test("las tarjetas del hero y el atajo / despliegan la sección contraída", async ({ page }) => {
   await openApp(page, MID);
   await page.click("#needsCollapse");

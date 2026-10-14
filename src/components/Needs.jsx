@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ALL_PREREQS } from "../data/steps.js";
+import { ALL_PREREQS, PREREQS_INTRO } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS, CATEGORIES, RES_ITEMS, STEPS_WITH_ITEMS, aggregate, rowName } from "../lib/resources.js";
 import {
@@ -277,6 +277,7 @@ export default function Needs() {
         <button type="button" className="needs-hide" id="needsCollapse" aria-expanded="true"
           onClick={() => (complete ? setDoneLevel("strip") : setNeedsCollapsed(true))}>Ocultar <i aria-hidden="true">▴</i></button>
       </div>
+      <p className="needs-intro" id="needsIntro">{PREREQS_INTRO}</p>
       <div className="needs-tabs" role="tablist" aria-label="Lo que necesitas">
         <Tab id="tabPrereqs" tab="prereqs" active={tab === "prereqs"} icon={HERO_ICONS?.prereqs} name="Prerrequisitos"
           done={preDone} total={ALL_PREREQS.length} hint="antes de empezar" />
