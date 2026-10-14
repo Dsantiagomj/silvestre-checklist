@@ -55,20 +55,23 @@ function ObjText({ o, route }) {
 
 /**
  * Lista de objetivos de una etapa. La comparten el overlay y el detalle.
- * `stop` ({ index, text }) pinta la parada roja de la guía antes de ese objetivo.
+ * `stop` ({ index, text, resume }) o `stops` (varias) pintan la parada roja de la guía,
+ * o la verde donde se retoma, antes de ese objetivo.
  * Con `route` (el detalle) es una ruta de medallones: `at` es el objetivo actual de
  * la etapa; los de antes salen hechos (más allá del final, todos). Con `onPick(k)`
  * cada medallón es un botón: deja el avance en `k` (pulsar uno pendiente lo da por
  * hecho, `k` = el siguiente; uno hecho vuelve a él).
  */
-export function Objectives({ objs, stop, route = false, at = -1, onPick }) {
+export function Objectives({ objs, stop, stops, route = false, at = -1, onPick }) {
+  // Una o varias líneas (una misión puede retomarse en verde y volver a parar en rojo)
+  const lines = stops || (stop ? [stop] : []);
   return (
     <ul className={"obj-list" + (route ? " route" : "")}>
       {objs.map((o, i) => (
         <Fragment key={i}>
-        {stop?.index === i && (
-          <li className={stop.resume ? "obj-resume" : "obj-stop"} role="separator"><span>{stop.text}</span></li>
-        )}
+        {lines.filter(l => l.index === i).map((l, k) => (
+          <li key={k} className={l.resume ? "obj-resume" : "obj-stop"} role="separator"><span>{l.text}</span></li>
+        ))}
         <li className={`obj-row k-${o.k}` + (route && i < at ? " done" : route && i === at ? " now" : "")}
           aria-current={route && i === at ? "step" : undefined}>
           {route ? (
