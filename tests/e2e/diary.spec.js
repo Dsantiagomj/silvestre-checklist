@@ -437,10 +437,12 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
   // El 22 dice qué cierra y lleva de vuelta
   await row(page, 22).locator(".row-closes").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
-  // En el detalle, como botones de verdad
-  await page.locator("#journal .badge.closed-in").click();
+  // En el detalle, sin botones repetidos: el 5 dice en una línea dónde se termina, y el
+  // 22 lleva al 5 desde la ficha de su aviso verde
+  await expect(page.locator("#journal .badge.closed-in, #journal .badge.closes")).toHaveCount(0);
+  await page.locator('#journal .call.closedin .step-ref[data-n="22"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("22");
-  await page.locator('#journal .badge.closes[data-n="5"]').click();
+  await page.locator('#journal .call.done .step-ref[data-n="5"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
 });
 
@@ -596,17 +598,16 @@ test("la cabecera es corta: esfuerzo con relojes de arena, «Incluye» en una l�
   await stepData(page, 1);
   const goal = page.locator("#journal .journal-goal");
   // Sin etiquetas: el esfuerzo son relojes de arena junto al título (largo: 4 de 5)
-  await expect(goal.locator(".journal-meta, .badge:not(.closes):not(.closed-in)")).toHaveCount(0);
+  await expect(goal.locator(".journal-meta, .badge")).toHaveCount(0);
   const effort = goal.locator(".goal-effort");
   await expect(effort).toHaveAttribute("title", "Esfuerzo: Largo");
   await expect(effort.locator("img")).toHaveCount(5);
   await expect(effort.locator("img.off")).toHaveCount(1);
-  // «Incluye», una línea bajo la cita
-  await expect(goal.locator(".goal-inc .call.includes b")).toHaveText("Incluye");
+  // «Incluye», una línea bajo el texto de la guía
+  await expect(goal.locator(".goal-calls .call.includes b")).toHaveText("Incluye");
   // «Necesitas» vuelve al cuerpo, antes de las misiones
   await expect(goal.locator(".journal-needs")).toHaveCount(0);
   await expect(page.locator("#journal .journal-body .journal-needs .slot")).toHaveCount(3);
-  await expect(page.locator("#journal .goal-head .goal-line")).toHaveText("Las 5 misiones del logro.");
   // La cabecera mide igual con muchos objetos: el 50 pide 21
   const h1 = await page.locator("#journal .journal-top").evaluate(el => el.offsetHeight);
   await stepData(page, 50);
@@ -678,34 +679,29 @@ test("el texto de la guía va con su rótulo, sin cita en cursiva ni flechas", a
   expect(await base.evaluate(el => getComputedStyle(el).fontStyle)).toBe("normal");
   expect(await base.evaluate(el => getComputedStyle(el).borderLeftStyle)).toBe("none");
   expect(await base.evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);
-  expect(await base.locator(".guide-link").first().evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);  // Un nombre que ya acaba en «?» no lleva punto detrás
-  await stepData(page, 34);
-  await expect(page.locator("#journal .goal-head .goal-line")).toHaveText("Misiones 1 a 2 del logro, hasta Arak-hais, ¿dónde vais?");
+  expect(await base.locator(".guide-link").first().evaluate(el => getComputedStyle(el, "::after").content)).toMatch(/^(none|normal)$/);
 });
 
-test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
+test("el detalle del paso es el estandarte y su objetivo, con el texto de la guía una sola vez", async ({ page }) => {
   await openApp(page);
   await stepData(page, 17);
   const goal = page.locator("#journal .journal-goal");
   await expect(goal.locator(".journal-title")).toHaveText("Verde esmeralda");
   await expect(goal.locator(".goal-ach img")).toHaveAttribute("src", /achievements\//);
-  await expect(goal.locator(".goal-line")).toHaveText("Misiones 1 a 7 del logro, hasta Draconantropía.");
-  await expect(goal.locator(".journal-base.is-source")).toContainText("Verde esmeralda");
+  // Lo que pide el paso se dice una vez: el texto de la guía, sin una frase que lo repita
+  await expect(goal.locator(".goal-line, .goal-lines")).toHaveCount(0);
+  await expect(goal.locator(".journal-base.is-source")).toContainText("hasta llegar a la misión 7");
   await expect(page.locator("#journal .step-line, #journal .tier-diamonds")).toHaveCount(0);
+  // El esfuerzo, en su propia línea bajo el título
+  expect(await goal.locator(".goal-effort").evaluate(el => el.closest(".journal-title"))).toBeNull();
   // El número y la zona, en el estandarte
   await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
   await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");
-  // El pie enlaza los pasos que cierra o donde se cierra
-  await expect(goal.locator('.goal-foot .badge.closes[data-n="10"]')).toHaveCount(1);
-  await stepData(page, 5);
-  await goal.locator(".goal-foot .badge.closed-in").click();
-  await expect(page.locator("#journal .journal-num")).toHaveText("22");
-  // Alineamiento: de la misión en la que se quedó a la que pide
-  await stepData(page, 20);
-  await expect(goal.locator(".goal-line")).toHaveText("Misiones 1 a 19 del alineamiento bontariano.");
-  // Dos logros: un objetivo por cada uno
-  await stepData(page, 3);
-  await expect(goal.locator(".goal-line")).toHaveCount(2);
+  // Los avisos van en la cabecera, como líneas; en el cuerpo solo «Necesitas» y las misiones
+  await expect(goal.locator(".goal-calls .call.done")).toHaveCount(1);
+  await expect(page.locator("#journal .journal-body .call")).toHaveCount(0);
+  await stepData(page, 28);
+  await expect(goal.locator(".goal-calls .call")).toHaveClass([/tip/, /done/, /must/]);
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
