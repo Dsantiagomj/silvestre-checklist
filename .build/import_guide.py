@@ -14,6 +14,12 @@ Writes:
   .build/lists/torrentearcano.json  snapshot of the three structures, versioned
   src/data/steps.js                 STEPS and PREVIOUS_STEPS blocks only
 
+Each text keeps the page's colour markers as marks: [[RED]] is where to stop
+("stop"), [[GREEN]] what gets resolved ("done") and [[BLUE]] a tip ("tip").
+"base" is the text without them, and "closes" lists the earlier steps whose
+missions a "done" mark finishes ("se terminan las misiones de los incisos 33
+y 34"); steps it only updates ("se actualiza") are left out.
+
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
 split out of an old one use SPLIT_TIERS.
@@ -53,6 +59,47 @@ def clean(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+MARK_KINDS = {"RED": "stop", "GREEN": "done", "BLUE": "tip"}
+MARK = re.compile(r"\[\[(RED|GREEN|BLUE)\]\]([\s\S]*?)\[\[/\1\]\]")
+
+
+def mark_text(raw):
+    """A mark on its own: no leading punctuation, no wrapping parentheses."""
+    text = clean(raw).lstrip(".,; ")
+    if text.startswith("(") and text.endswith(")") and text.count("(") == 1:
+        text = text[1:-1].strip()
+    return text[:1].upper() + text[1:]
+
+
+def marks(raw):
+    """In page order; step 43 repeats the same stop for two missions, kept once."""
+    out = []
+    for kind, body in MARK.findall(raw):
+        mark = [MARK_KINDS[kind], mark_text(body)]
+        if mark not in out:
+            out.append(mark)
+    return out
+
+
+def base(raw):
+    text = clean(MARK.sub(" ", raw))
+    return re.sub(r"\s+([.,;:])", r"\1", text).strip()
+
+
+def closes(n, raw):
+    """Earlier steps finished by this step's "done" marks."""
+    found = []
+    for kind, body in MARK.findall(raw):
+        if kind != "GREEN":
+            continue
+        for clause in re.split(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)", clean(body)):
+            if re.search(r"termin|complet", clause) and not re.search(r"actualiza", clause):
+                after = re.search(r"incisos?\s+(.*)", clause)
+                if after:
+                    found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
+    return sorted(set(found))
+
+
 def read_old_steps():
     body = STEPS_JS.read_text().split("export const STEPS = [", 1)[1].split("\n];", 1)[0]
     pattern = re.compile(r'\{ n: (\d+), zone: "(.*?)", effort: "(\w+)", text: ')
@@ -62,14 +109,15 @@ def read_old_steps():
 
 def main(page):
     html = pathlib.Path(page).read_text(encoding="utf-8")
-    texts = [clean(t) for t in js_template_array(html, "steps")]
+    raws = js_template_array(html, "steps")
+    texts = [clean(t) for t in raws]
     resources = js_value(html, "resourcesData")
     previous = js_value(html, "previousStepsByNewStep")
     assert len(texts) == 100 and len(previous) == 100, (len(texts), len(previous))
 
     SNAPSHOT.write_text(json.dumps({
         "source": "https://www.torrentearcano.com/checklist-silvestre",
-        "steps": texts,
+        "steps": raws,
         "resources": resources,
         "previousStepsByNewStep": previous,
     }, ensure_ascii=False, indent=1) + "\n")
@@ -83,7 +131,7 @@ def main(page):
             split_from.setdefault(p, []).append(n)
 
     lines = []
-    for n, (text, prev) in enumerate(zip(texts, previous), 1):
+    for n, (text, raw, prev) in enumerate(zip(texts, raws, previous), 1):
         if imported:
             zone, effort = old[n]["zone"], old[n]["effort"]
         elif n in SPLIT_TIERS:
@@ -93,8 +141,14 @@ def main(page):
         else:
             zone = old[prev[0]]["zone"]
             effort = max((old[p]["effort"] for p in prev), key=TIER_ORDER.index)
+        extra = ""
+        if marks(raw):
+            extra += f", base: {json.dumps(base(raw), ensure_ascii=False)}"
+            extra += f", marks: {json.dumps(marks(raw), ensure_ascii=False)}"
+        if closes(n, raw):
+            extra += f", closes: {json.dumps(closes(n, raw))}"
         lines.append(f"  {{ n: {n}, zone: {json.dumps(zone, ensure_ascii=False)}, "
-                     f"effort: \"{effort}\", text: {json.dumps(text, ensure_ascii=False)} }},")
+                     f"effort: \"{effort}\", text: {json.dumps(text, ensure_ascii=False)}{extra} }},")
 
     src = STEPS_JS.read_text()
     head, rest = src.split("export const STEPS = [\n", 1)
