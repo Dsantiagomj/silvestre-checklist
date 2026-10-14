@@ -6,6 +6,7 @@ import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
 import { loadQuests, markSteps, selectStep, showOnMap, toggleStep, useAppState } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
+import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 
 // Los tres resaltados de la guía (rojo, verde, azul en torrentearcano); el icono es
@@ -133,6 +134,8 @@ function Quests({ step, quests, loaded }) {
  */
 function Actions({ step, s }) {
   const n = step.n;
+  // En la vista que se va (zoom hacia el mapa) los botones no llevan id
+  const live = !useLeaving();
   const done = !!s.done[n];
   const next = done ? null : nextPendingAfter({ ...s.done, [n]: true }, n);
   const closes = (step.closes || []).filter(c => !s.done[c]);
@@ -142,22 +145,22 @@ function Actions({ step, s }) {
   }
   return (
     <div className="journal-cta">
-      <button type="button" className="gbtn" id="prevBtn" disabled={n === 1} aria-label={`Paso ${n - 1}`}
+      <button type="button" className="gbtn" id={live ? "prevBtn" : undefined} disabled={n === 1} aria-label={`Paso ${n - 1}`}
         onClick={() => selectStep(n - 1)}>◀ {n > 1 ? n - 1 : ""}</button>
       <div className="journal-cta-main">
-        <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id="toggleBtn"
+        <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={live ? "toggleBtn" : undefined}
           title={done ? undefined : next != null ? `Marca el paso y abre el ${next}` : "Marca el paso"}
           onClick={done ? () => toggleStep(n) : finish}>
           {done ? "Desmarcar" : "✓ Paso hecho"}
         </button>
         {closes.length > 0 && (
-          <button type="button" className="gbtn" id="closesBtn" title={`Este paso también cierra el ${list(closes)}`}
+          <button type="button" className="gbtn" id={live ? "closesBtn" : undefined} title={`Este paso también cierra el ${list(closes)}`}
             onClick={() => markSteps(closes)}>
             Marcar el {list(closes)} también
           </button>
         )}
       </div>
-      <button type="button" className="gbtn" id="nextBtn" disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
+      <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
         onClick={() => selectStep(n + 1)}>{n < STEPS.length ? n + 1 : ""} ▶</button>
     </div>
   );
@@ -166,6 +169,7 @@ function Actions({ step, s }) {
 /** Detalle de un paso en el diario. Lo usan el panel (escritorio) y la hoja (móvil). */
 export default function Journal({ n, id }) {
   const s = useAppState();
+  const leaving = useLeaving();
   const step = STEPS[n - 1];
   const quests = s.questsLoaded ? questsOf(n) : [];
   const a = assetsFor(n);
@@ -175,7 +179,7 @@ export default function Journal({ n, id }) {
   useEffect(loadQuests, []);
 
   return (
-    <article className="journal" id={id} aria-label={`Paso ${n}`}>
+    <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <Hero step={step} done={!!s.done[n]} quests={quests} />
       <div className="journal-body">
         <p className="journal-base"><RichText text={step.base} /></p>

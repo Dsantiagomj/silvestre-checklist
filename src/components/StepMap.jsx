@@ -3,6 +3,7 @@ import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { showcase, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
+import { useLiveId } from "../lib/leaving.js";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const ROW_H = 108;
@@ -76,7 +77,7 @@ function Card({ step, pos, width, height, done }) {
   const stops = (step.marks || []).filter(m => m[0] === "stop");
   const { left, top } = placeCard(pos, step.n, cardH, width, height);
   return (
-    <div className="map-card" id="mapCard" ref={ref} style={{ left, top, width: CARD_W }}>
+    <div className="map-card" id={useLiveId("mapCard")} ref={ref} style={{ left, top, width: CARD_W }}>
       <div className="map-card-hd" style={zone ? { backgroundImage: `url(${imgUrl(zone.img)})` } : undefined}>
         {show && <img src={imgUrl(show.img)} alt="" />}
         <button type="button" className="map-card-x" aria-label="Cerrar" onClick={clearSelection}>×</button>

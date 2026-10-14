@@ -123,34 +123,36 @@ test("las secciones entran al hacer scroll", async ({ page }) => {
 const names = (page, sel) => page.evaluate(s => document.getAnimations()
   .filter(a => a.effect?.target?.matches?.(s)).map(a => a.animationName), sel);
 
+/**
+ * Estado del cambio de vista justo después del clic: las capas que conviven (la que se
+ * va y la que llega, gestionadas por AnimatePresence), su origen y sus ids.
+ */
+const swapState = (page, click) => page.evaluate(async click => {
+  document.querySelector(click).click();
+  await new Promise(r => requestAnimationFrame(r));
+  const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+  return {
+    layers: layers.length,
+    leaving: layers.filter(l => l.hasAttribute("inert")).length,
+    origins: layers.map(l => l.style.transformOrigin),
+    journals: document.querySelectorAll("#journal").length,
+    mapCards: document.querySelectorAll("#mapCard").length,
+  };
+}, click);
+
 test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) => {
   await openApp(page);
   await page.waitForTimeout(500);
-  // Todo se lee de una vez tras el clic: el zoom dura 0,3 s y cada ida y vuelta cuenta
-  const seen = await page.evaluate(async () => {
-    document.getElementById("stepsViewMap").click();
-    await new Promise(r => requestAnimationFrame(r));
-    const anim = sel => document.getAnimations().filter(a => a.effect?.target?.matches?.(sel)).map(a => a.animationName);
-    const stage = document.querySelector(".steps-stage");
-    const node = document.querySelector('.map-node[data-n="1"]');
-    return {
-      leaving: document.querySelectorAll(".steps-leaving").length,
-      leavingAnims: anim(".steps-leaving"),
-      currentAnims: anim(".steps-current"),
-      origin: [stage.style.getPropertyValue("--zx"), stage.style.getPropertyValue("--zy")],
-      node: [node.style.left, node.style.top],
-      journals: document.querySelectorAll("#journal").length,
-    };
-  });
-  // La vista que se va queda encima, como instantánea, mientras entra la nueva
+  const seen = await swapState(page, "#stepsViewMap");
+  // Las dos vistas conviven: la que se va, inerte, encima de la que llega
+  expect(seen.layers).toBe(2);
   expect(seen.leaving).toBe(1);
-  expect(seen.leavingAnims).toContain("zoom-away-small");
-  expect(seen.currentAnims).toContain("zoom-from-near");
   // Centro del zoom: el sello del paso actual (el 1)
-  expect(seen.origin).toEqual(seen.node);
-  // La instantánea no repite ids y se va al terminar
+  const node = await page.locator('.map-node[data-n="1"]').evaluate(el => `${el.style.left} ${el.style.top}`);
+  expect(seen.origins).toEqual([node, node]);
+  // La que se va no repite ids
   expect(seen.journals).toBe(0);
-  await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
 });
 
 test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
@@ -158,23 +160,20 @@ test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
   await page.click("#stepsViewMap");
   await page.waitForTimeout(800);
   await page.click('.map-node[data-n="34"]');
-  const seen = await page.evaluate(async () => {
-    document.querySelector("#mapCard .map-card-open").click();
-    await new Promise(r => requestAnimationFrame(r));
-    const anim = sel => document.getAnimations().filter(a => a.effect?.target?.matches?.(sel)).map(a => a.animationName);
-    return { leaving: anim(".steps-leaving"), current: anim(".steps-current"), journals: document.querySelectorAll("#journal").length };
-  });
-  expect(seen.leaving).toContain("zoom-into");
-  expect(seen.current).toContain("zoom-from-far");
+  const seen = await swapState(page, "#mapCard .map-card-open");
+  expect(seen.layers).toBe(2);
+  expect(seen.leaving).toBe(1);
   expect(seen.journals).toBe(1);
-  await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
+  expect(seen.mapCards).toBe(0);
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
 });
 
-test("con movimiento reducido el cambio de vista no deja instantánea", async ({ page }) => {
+test("con movimiento reducido el cambio de vista es inmediato", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openApp(page);
   await page.click("#stepsViewMap");
-  await expect(page.locator(".steps-leaving")).toHaveCount(0);
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 150 });
+  await expect(page.locator(".steps-stage .steps-layer")).not.toHaveClass(/swap/);
 });
 
 test("durante el zoom solo se mueven las dos capas: ni la altura ni lo de dentro", async ({ page }) => {
@@ -183,7 +182,7 @@ test("durante el zoom solo se mueven las dos capas: ni la altura ni lo de dentro
   await page.click("#stepsViewMap");
   const busy = await page.evaluate(() => {
     const stage = document.querySelector(".steps-stage");
-    const layers = [...stage.querySelectorAll(":scope > .steps-leaving, :scope > .steps-current")];
+    const layers = [...stage.querySelectorAll(":scope > .steps-layer")];
     return document.getAnimations().filter(a => {
       const t = a.effect?.target;
       return t && stage.contains(t) && !layers.includes(t) && a.effect.getTiming().iterations !== Infinity;

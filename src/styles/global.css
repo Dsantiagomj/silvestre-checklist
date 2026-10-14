@@ -2577,32 +2577,18 @@ header.show-progress .tb-progress{
 @keyframes boss-pop{ from{ opacity:0; transform:translateY(14px) scale(.85); } }
 @keyframes check-pop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.3); } 100%{ transform:scale(1); } }
 @keyframes card-in{ from{ opacity:0; transform:translateY(8px) scale(.97); } }
-/* Sutil, en la línea de duffus.fr: un fundido con profundidad más que un efecto */
-@keyframes zoom-into{ to{ opacity:0; transform:scale(1.15); } }
-@keyframes zoom-from-far{ from{ opacity:0; transform:scale(.94); } }
-@keyframes zoom-away-small{ to{ opacity:0; transform:scale(.9); } }
-@keyframes zoom-from-near{ from{ opacity:0; transform:scale(1.15); } }
+/* El zoom entre diario y mapa lo anima AnimatePresence (Diary.jsx); la vista que se va
+   queda en position:absolute (mode="popLayout") dentro de la sección */
 .steps-stage{ position:relative; }
-.steps-leaving{ position:absolute; top:0; left:0; right:0; z-index:2; pointer-events:none; }
 @keyframes node-here{
   0%, 100%{ box-shadow:0 0 0 8px color-mix(in srgb, var(--amber) 20%, transparent), 0 0 34px color-mix(in srgb, var(--amber) 65%, transparent); }
   50%{ box-shadow:0 0 0 14px color-mix(in srgb, var(--amber) 8%, transparent), 0 0 46px color-mix(in srgb, var(--amber) 80%, transparent); }
 }
 @media (prefers-reduced-motion:no-preference){
-  /* Diario y mapa: zoom sobre el sello del paso actual (--zx, --zy). Del mapa al diario
-     el mapa se acerca hasta desvanecerse y el diario sale de ahí; del diario al mapa el
-     diario se encoge hacia el sello y el mapa llega desde muy cerca */
+  /* Mientras dura el zoom entre diario y mapa solo se mueven las dos capas */
   .steps-stage.swap{ overflow:clip; }
-  .steps-stage.swap .steps-leaving, .steps-stage.swap .steps-current{
-    transform-origin:var(--zx) var(--zy);
-    will-change:transform, opacity; backface-visibility:hidden;
-  }
-  /* Mientras dura el zoom, nada más se mueve dentro: solo las dos capas */
-  .steps-stage.swap .steps-current *, .steps-leaving *{ animation:none !important; transition:none !important; }
-  .steps-stage.to-diary .steps-leaving{ animation:zoom-into .3s cubic-bezier(.42,0,.58,1) both; }
-  .steps-stage.to-diary .steps-current{ animation:zoom-from-far .3s cubic-bezier(.42,0,.58,1) both; }
-  .steps-stage.to-map .steps-leaving{ animation:zoom-away-small .3s cubic-bezier(.42,0,.58,1) both; }
-  .steps-stage.to-map .steps-current{ animation:zoom-from-near .3s cubic-bezier(.42,0,.58,1) both; }
+  .steps-stage.swap .steps-layer{ will-change:transform, opacity; backface-visibility:hidden; }
+  .steps-stage.swap .steps-layer *{ animation:none !important; transition:none !important; }
   /* Otro paso: el paisaje se asienta, el jefe aparece de un salto y el texto sube */
   .journal-bg{ animation:hero-bg-in .55s cubic-bezier(.2,.8,.2,1) both; }
   .journal-show{ animation:boss-pop .45s cubic-bezier(.3,1.4,.5,1) .08s both; }
