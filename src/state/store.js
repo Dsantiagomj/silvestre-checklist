@@ -233,15 +233,30 @@ export function setStepsView(view) {
  * Desde el diario: vuelve al mapa con ese paso abierto (en móvil cierra la hoja) y lo
  * deja a la vista, centrado, cuando el mapa ya está pintado.
  */
+let mapFocus = null;
+/** El paso que el mapa debe dejar a la vista cuando termine de llegar (lo usa Diary). */
+export function takeMapFocus() {
+  const n = mapFocus;
+  mapFocus = null;
+  return n;
+}
+/** Deja a la vista el sello del paso n, solo si no lo está ya. */
+export function revealMapNode(n) {
+  const node = document.querySelector(`.map-node[data-n="${n}"]`);
+  const r = node?.getBoundingClientRect();
+  if (r && (r.top < 80 || r.bottom > innerHeight)) {
+    node.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
+  }
+}
+
 export function showOnMap(n) {
+  const already = state.stepsView === "map";
   setState({ selectedStep: n, sheetOpen: false });
+  if (already) return requestAnimationFrame(() => revealMapNode(n));
+  // Se desplaza cuando el mapa ya llegó (Diary, al terminar el cambio): desplazar
+  // mientras se escala daba tirones y dejaba el paso fuera de sitio
+  mapFocus = n;
   setStepsView("map");
-  // Después del zoom y solo si hace falta: desplazar y escalar a la vez daba tirones
-  setTimeout(() => {
-    const node = document.querySelector(`.map-node[data-n="${n}"]`);
-    const r = node?.getBoundingClientRect();
-    if (r && (r.top < 80 || r.bottom > innerHeight)) node.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, prefersReducedMotion() ? 0 : 340);
 }
 
 /** Desde el mapa: abre el paso en el diario. */

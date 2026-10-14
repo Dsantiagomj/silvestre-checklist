@@ -2577,9 +2577,11 @@ header.show-progress .tb-progress{
 @keyframes boss-pop{ from{ opacity:0; transform:translateY(14px) scale(.85); } }
 @keyframes check-pop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.3); } 100%{ transform:scale(1); } }
 @keyframes card-in{ from{ opacity:0; transform:translateY(8px) scale(.97); } }
-/* El zoom entre diario y mapa lo anima AnimatePresence (Diary.jsx); la vista que se va
-   queda en position:absolute (mode="popLayout") dentro de la sección */
+/* El zoom entre diario y mapa (Diary.jsx): la vista que se va queda en position:absolute
+   (AnimatePresence, mode="popLayout"); la que llega va encima, invisible hasta estar
+   lista, y se cruzan */
 .steps-stage{ position:relative; }
+.steps-layer:not([inert]){ position:relative; z-index:1; }
 @keyframes node-here{
   0%, 100%{ box-shadow:0 0 0 8px color-mix(in srgb, var(--amber) 20%, transparent), 0 0 34px color-mix(in srgb, var(--amber) 65%, transparent); }
   50%{ box-shadow:0 0 0 14px color-mix(in srgb, var(--amber) 8%, transparent), 0 0 46px color-mix(in srgb, var(--amber) 80%, transparent); }
