@@ -2541,3 +2541,15 @@ header.show-progress .tb-progress{
 .pr-ocre b{ display:block; font-size:14.5px; color:var(--soon-ink); }
 .pr-ocre p{ margin:4px 0 0; font-size:13.5px; line-height:1.55; color:var(--txt-soft); }
 .pr-ocre .pr-ocre-step{ color:var(--txt); }
+
+/* MOVIMIENTO ------------------------------------------------------------------
+   Lo que aparece entra con un desplazamiento corto y un fundido: así se entiende
+   qué ha cambiado. Las alturas las anima useHeightMorph (lib/motion.js). */
+:root{ interpolate-size:allow-keywords; }
+@keyframes enter-up{ from{ opacity:0; transform:translateY(8px); } }
+@keyframes enter-fade{ from{ opacity:0; } }
+.needs > *, .needs-panel{ animation:enter-up .32s cubic-bezier(.2,.8,.2,1) both; }
+.needs > .needs-head{ animation-name:enter-fade; }
+@media (prefers-reduced-motion:reduce){
+  .needs > *, .needs-panel{ animation:none; }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useHeightMorph } from "../lib/motion.js";
 import { ALL_PREREQS, PREREQS_INTRO } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS, CATEGORIES, RES_ITEMS, STEPS_WITH_ITEMS, aggregate, rowName } from "../lib/resources.js";
@@ -195,6 +196,7 @@ function ProgressStrip({ s }) {
 export default function Needs() {
   const s = useAppState();
   const searchRef = useRef(null);
+  const sectionRef = useRef(null);
   // Con la guía completa: strip (franja) | summary (resumen) | lists (como siempre)
   const [doneLevel, setDoneLevel] = useState("strip");
   const complete = guideComplete(s);
@@ -202,6 +204,9 @@ export default function Needs() {
   const items = tab === "items" ? itemsView(s) : null;
   const toMark = tab === "items" ? items.visible.filter(r => !rowHave(s, r)) : null;
   const toClear = tab === "items" ? items.visible.filter(r => rowHave(s, r)) : null;
+  // Ocultar, mostrar y cambiar de pestaña: la sección pasa de una altura a otra
+  const mode = !complete && s.needsCollapsed ? "collapsed" : complete && doneLevel !== "lists" ? doneLevel : `open-${tab}`;
+  useHeightMorph(sectionRef, mode);
 
   // "/" lleva al buscador de objetos desde cualquier parte de la página
   useEffect(() => {
@@ -255,7 +260,7 @@ export default function Needs() {
 
   if (!complete && s.needsCollapsed) {
     return (
-      <section className="needs done" id="needs" aria-labelledby="needsTitle">
+      <section className="needs done" id="needs" aria-labelledby="needsTitle" ref={sectionRef}>
         <ProgressStrip s={s} />
       </section>
     );
@@ -263,14 +268,14 @@ export default function Needs() {
 
   if (complete && doneLevel !== "lists") {
     return (
-      <section className="needs done" id="needs" aria-labelledby="needsTitle">
+      <section className="needs done" id="needs" aria-labelledby="needsTitle" ref={sectionRef}>
         <DoneStrip level={doneLevel} setLevel={setDoneLevel} />
       </section>
     );
   }
 
   return (
-    <section className="needs" id="needs" aria-labelledby="needsTitle">
+    <section className="needs" id="needs" aria-labelledby="needsTitle" ref={sectionRef}>
       <div className="needs-head">
         <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
         <div className="spacer"></div>
