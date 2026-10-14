@@ -2158,11 +2158,10 @@ header.show-progress .tb-progress{
 .lg-egg{ background:var(--soon); }
 .lg-boss{ border:2px solid var(--soon); background:#121411; }
 .map-card{
-  position:absolute; z-index:5; width:350px; overflow:hidden;
+  position:absolute; z-index:5; overflow:hidden;
   border-radius:14px; border:1px solid var(--line-warm); background:#151813; color:#eef1e8;
   box-shadow:0 16px 34px rgba(0,0,0,.7);
 }
-.map-card.above{ transform:translateY(-100%); }
 .map-card-hd{ position:relative; height:84px; background:#222 center / cover; }
 .map-card-hd::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, #151813, rgba(21,24,19,0)); }
 .map-card-hd img{ position:absolute; right:10px; bottom:-14px; z-index:1; width:88px; height:88px; object-fit:contain; filter:drop-shadow(0 6px 8px #000); }

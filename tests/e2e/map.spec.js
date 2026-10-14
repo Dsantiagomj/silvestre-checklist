@@ -68,3 +68,20 @@ test("en el tema claro el mapa tiene fondo claro", async ({ page }) => {
   const filter = await page.locator(".step-map-bg").evaluate(el => getComputedStyle(el).filter);
   expect(Number(filter.match(/brightness\(([\d.]+)\)/)[1])).toBeGreaterThanOrEqual(1);
 });
+
+test("la ficha nunca tapa el paso anterior ni el siguiente", async ({ page }) => {
+  await openMap(page);
+  const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  // 24 y 12 giran el camino hacia abajo; 30 está en medio de una fila; 100 es el último
+  for (const n of [24, 12, 30, 37, 100]) {
+    await node(page, n).click();
+    const card = await page.locator("#mapCard").boundingBox();
+    for (const m of [n - 1, n + 1].filter(m => m >= 1 && m <= 100)) {
+      expect(overlaps(card, await node(page, m).boundingBox()), `paso ${n}: la ficha tapa el ${m}`).toBe(false);
+    }
+  }
+  // Y se puede seguir al siguiente con un clic
+  await node(page, 24).click();
+  await node(page, 25).click();
+  await expect(page.locator("#mapCard .map-card-title")).toContainText("25");
+});
