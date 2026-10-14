@@ -128,9 +128,10 @@ function DiaryBar({ s }) {
   );
 }
 
+// El mapa es la vista por defecto: se recorre el camino y se entra al diario de un paso
 const VIEWS = [
-  ["diary", "Diario", "stepsViewDiary"],
   ["map", "Mapa", "stepsViewMap"],
+  ["diary", "Diario", "stepsViewDiary"],
 ];
 
 // Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual, en la línea

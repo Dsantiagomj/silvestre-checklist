@@ -104,3 +104,11 @@ test("desde el detalle del diario se vuelve al mapa con ese paso abierto", async
   await expect(page.locator("#mapCard .map-card-title")).toContainText("34");
   await expect(node(page, 34)).toBeInViewport();
 });
+
+test("sin nada guardado, los pasos se abren en el mapa y el selector va primero", async ({ page }) => {
+  await openApp(page, null, { view: null });
+  await expect(page.locator(".map-node")).toHaveCount(100);
+  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-pressed", "true");
+  const order = await page.locator(".steps-view button").evaluateAll(bs => bs.map(b => b.id));
+  expect(order).toEqual(["stepsViewMap", "stepsViewDiary"]);
+});
