@@ -18,6 +18,7 @@ function forSteps(steps, prereq) {
   const nums = steps.filter(n => n !== PREREQ_STEP);
   const parts = steps.includes(PREREQ_STEP) ? [PREREQ_NAME[prereq] ? `«${PREREQ_NAME[prereq]}»` : "los prerrequisitos"] : [];
   if (nums.length === 1) parts.push(`el paso ${nums[0]}`);
+  else if (nums.length > 4) parts.push(`los pasos ${nums.slice(0, 3).join(", ")} y ${nums.length - 3} más`);
   else if (nums.length) parts.push(`los pasos ${nums.slice(0, -1).join(", ")} y ${nums.at(-1)}`);
   return parts.join(" y ");
 }
@@ -75,6 +76,8 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   const badge = band === "soon" ? (first === PREREQ_STEP ? "Pre" : first) : null;
   // A medias (unas partes cogidas y otras no): se ve lo que falta, no el total
   const partial = !have && rowPartial(row);
+  // Lo opcional de un prerrequisito ("Opcional · Altos vuelos"): el "Para" ya lo nombra
+  const optional = !!row.p && /^opcional/i.test(row.g || "");
   const qty = partial ? row.left[0] : row.a[0][1];
   const qtyText = partial ? `${rowLeft(row)} de ${rowQty(row)}` : rowQty(row);
   const cls = "slot" + (list ? " list" : "") + (have ? " owned" : "") + (dim ? " dim" : "") + (match ? " match" : "") +
@@ -137,11 +140,9 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
       {copyButton}
       <span className="slot-tip" role="tooltip">
         <b>{rowName(row)} ×{partial ? qtyText : rowQty(row)}</b>
-        {band === "soon" || band === "prereq"
-          ? <span className="slot-tip-when">Para {forSteps(row.steps, row.p)}</span>
-          : <span>{laterSteps(row.steps, row.p)}</span>}
+        <span className="slot-tip-when">Para {forSteps(row.steps, row.p)}{optional ? " (opcional)" : ""}</span>
         {later > 0 && <span>Y {later.toLocaleString("es")} más adelante</span>}
-        {row.g && <span className="slot-tip-when">{row.g}</span>}
+        {row.g && !optional && <span className="slot-tip-when">{row.g}</span>}
         {(row.n || typeLine(row)) && <span>{row.n || typeLine(row)}</span>}
       </span>
     </div>
