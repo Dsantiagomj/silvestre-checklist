@@ -435,3 +435,14 @@ test("las coordenadas llevan la brújula del juego, no un símbolo", async ({ pa
   await expect(chip.locator("img")).toHaveAttribute("src", /items\/126014\.png$/, { timeout: 15_000 });
   await expect(chip).not.toContainText("⌖");
 });
+
+test("la parada de Maxilubo (paso 10) cae antes del hueso que se consigue venciéndolo", async ({ page }) => {
+  await openApp(page);
+  await row(page, 10).locator(".row-main").click();
+  const quest = page.locator("#journal .q-item", { hasText: "Encender la mecha" });
+  await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
+  await expect(quest.locator(".obj-stop")).toContainText("Hasta tener que pasar Maxilubo");
+  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Consigue un hueso de hierro");
+  // La misión con la parada va abierta
+  await expect(quest).toHaveAttribute("open", "");
+});

@@ -68,7 +68,22 @@ const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase
  * antes del primer objetivo que nombra a X. Devuelve { quest, index, text } con el
  * índice sobre los objetivos aplanados de la misión, o null.
  */
+// Paradas que el texto no permite situar: ningún objetivo nombra al jefe o la zona.
+// Paso -> [misión, comienzo del objetivo que va justo después de la parada], sacado de
+// la guía de esa misión en Torrente Arcano
+export const STOP_AT = {
+  // "El hueso de hierro se consigue venciendo al Maxilubo en su mazmorra"
+  10: ["Encender la mecha", "Consigue un hueso de hierro"],
+};
+
 export function stopPoint(step, quests) {
+  const at = STOP_AT[step.n];
+  const stopText = step.marks?.find(m => m[0] === "stop")?.[1];
+  if (at && stopText) {
+    const q = quests.find(x => x.n === at[0]);
+    const index = q ? q.s.flatMap(stg => stg.o).findIndex(o => o.t.startsWith(at[1])) : -1;
+    if (index >= 0) return { quest: q.id, index, text: stopText };
+  }
   for (const [kind, text] of step.marks || []) {
     if (kind !== "stop") continue;
     // "Hasta tener que pasar X": el objetivo que nombra al jefe. "Hasta que puedas entrar
