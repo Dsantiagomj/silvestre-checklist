@@ -389,6 +389,18 @@ export function moveQuest(delta) {
   setState(s => ({ questPos: { ...s.questPos, [n]: i } }));
 }
 
+/**
+ * Desde el diario: deja la misión `qi` del paso `n` en su objetivo `k` (los de antes,
+ * hechos). Pasado el último (`k` = `total`), la misión queda terminada y el paso sigue
+ * con su siguiente misión. Es el mismo avance que lleva el overlay.
+ */
+export function setObjective(n, qi, qid, k, total, count) {
+  setState(s => ({
+    questPos: { ...s.questPos, [n]: k >= total && qi + 1 < count ? qi + 1 : qi },
+    questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
+  }));
+}
+
 export function moveObjective(delta) {
   const cur = currentQuest(overlayStep(state), state.questPos, state.questObj);
   if (!cur) return;

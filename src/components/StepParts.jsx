@@ -57,9 +57,11 @@ function ObjText({ o, route }) {
  * Lista de objetivos de una etapa. La comparten el overlay y el detalle.
  * `stop` ({ index, text }) pinta la parada roja de la guía antes de ese objetivo.
  * Con `route` (el detalle) es una ruta de medallones: `at` es el objetivo actual de
- * la etapa; los de antes salen hechos (más allá del final, todos).
+ * la etapa; los de antes salen hechos (más allá del final, todos). Con `onPick(k)`
+ * cada medallón es un botón: deja el avance en `k` (pulsar uno pendiente lo da por
+ * hecho, `k` = el siguiente; uno hecho vuelve a él).
  */
-export function Objectives({ objs, stop, route = false, at = -1 }) {
+export function Objectives({ objs, stop, route = false, at = -1, onPick }) {
   return (
     <ul className={"obj-list" + (route ? " route" : "")}>
       {objs.map((o, i) => (
@@ -70,9 +72,11 @@ export function Objectives({ objs, stop, route = false, at = -1 }) {
         <li className={`obj-row k-${o.k}` + (route && i < at ? " done" : route && i === at ? " now" : "")}
           aria-current={route && i === at ? "step" : undefined}>
           {route ? (
-            <span className="obj-med" aria-hidden="true">
+            <button type="button" className="obj-med" disabled={!onPick}
+              aria-label={`${i < at ? "Desmarcar" : "Marcar como hecho"}: ${o.t}`}
+              onClick={() => onPick(i < at ? i : i + 1)}>
               <img src={imgUrl(OBJ_ICONS[o.k] || OBJ_ICONS.free)} alt="" />
-            </span>
+            </button>
           ) : (
             <span className="obj-ic" aria-hidden="true">{OBJ_ICON[o.k] || "•"}</span>
           )}

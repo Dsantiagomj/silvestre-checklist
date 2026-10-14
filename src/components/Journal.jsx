@@ -6,7 +6,7 @@ import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  loadQuests, markSteps, rowHave, selectStep, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -125,7 +125,8 @@ function progressOf(s, n, quests, i, q) {
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
   if (i < pos) return total;
   if (i > pos) return -1;
-  return Math.min(s.questObj[q.id] || 0, total - 1);
+  // Hasta `total`: la última misión del paso, terminada, sale toda hecha
+  return Math.min(s.questObj[q.id] || 0, total);
 }
 
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
@@ -133,14 +134,20 @@ function Quests({ step, quests, loaded, s }) {
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
   const stop = stopPoint(step, quests);
+  // La misión en curso (la del avance del overlay o del diario) va abierta
+  const pos = Math.min(s.questPos[step.n] || 0, quests.length - 1);
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
       {quests.map((q, i) => {
         let offset = 0;
         const at = progressOf(s, step.n, quests, i, q);
+        const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
+        // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él
+        const pick = s.done[step.n] ? null : k => setObjective(step.n, i, q.id, k, total, quests.length);
         return (
-          <details className="q-item" key={q.id} open={stop?.quest === q.id || quests.length === 1}>
+          <details className="q-item" key={q.id}
+            open={stop?.quest === q.id || quests.length === 1 || (!s.done[step.n] && i === pos)}>
             <summary>
               <QuestMark className="q-mark" />
               <span className="q-name">{q.n}</span>
@@ -161,7 +168,7 @@ function Quests({ step, quests, loaded, s }) {
               return (
                 <Fragment key={j}>
                   {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-                  <Objectives route objs={stg.o} at={at - from}
+                  <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
                     stop={here ? { index: stop.index - from, text: stop.text } : null} />
                 </Fragment>
               );
