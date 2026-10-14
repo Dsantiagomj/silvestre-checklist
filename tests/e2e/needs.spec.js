@@ -201,9 +201,10 @@ test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async
 
 test("la vista de lista muestra lo mismo que la cuadrícula, con nombre y pasos a la vista", async ({ page }) => {
   await openApp(page, MID);
-  const grid = await page.locator("#items .slot").count();
+  // "Pronto" no se pagina: la lista enseña los mismos objetos que la cuadrícula
+  const grid = await page.locator("#bandSoon .slot").count();
   await page.click('.needs-view [data-view="list"]');
-  await expect(page.locator("#items .slot.list")).toHaveCount(grid);
+  await expect(page.locator("#bandSoon .slot.list")).toHaveCount(grid);
   const pepita = page.locator('#bandSoon .slot.list[data-id="14635"]');
   await expect(pepita).toContainText("Pepita");
   await expect(pepita).toContainText("Paso 42");
@@ -255,4 +256,44 @@ test("el contador de objetos usa el mismo total que la lista", async ({ page }) 
   const total = await page.locator('.needs-cat[data-cat="todo"] .n').textContent();
   await expect(page.locator("#itemsCount")).toHaveText(`0/${total}`);
   await expect(page.locator("#heroItems .hero-req-count")).toHaveText(`0/${total}`);
+});
+
+test("la lista se pagina: 25 por defecto, se puede cambiar y se recuerda", async ({ page }) => {
+  await openApp(page, { "silvestre:itemsView": "list" });
+  await page.click("#tabItems");
+  const later = page.locator("#bandLater .slot.list");
+  const pager = page.locator("#bandLater .pager");
+  const total = Number((await pager.locator(".pager-range").textContent()).match(/de (\d+)/)[1]);
+  expect(total).toBeGreaterThan(100);
+  await expect(later).toHaveCount(25);
+  await expect(pager.locator(".pager-range")).toHaveText(`1–25 de ${total}`);
+  await pager.locator('[data-page="next"]').click();
+  await expect(pager.locator(".pager-range")).toHaveText(`26–50 de ${total}`);
+  await expect(later).toHaveCount(25);
+  await pager.locator('.pager-size [data-size="10"]').click();
+  await expect(later).toHaveCount(10);
+  await expect(pager.locator(".pager-range")).toHaveText(`1–10 de ${total}`);
+  await pager.locator('.pager-size [data-size="all"]').click();
+  await expect(later).toHaveCount(total);
+  // La cuadrícula no se pagina
+  await page.click('.needs-view [data-view="grid"]');
+  await expect(page.locator(".pager")).toHaveCount(0);
+  await page.click('.needs-view [data-view="list"]');
+  // El tamaño elegido se recuerda; cambiar de categoría vuelve a la página 1
+  await pager.locator('.pager-size [data-size="10"]').click();
+  await pager.locator('[data-page="next"]').click();
+  await page.reload();
+  await page.click("#tabItems");
+  await expect(later).toHaveCount(10);
+  await expect(pager.locator(".pager-range")).toHaveText(`1–10 de ${total}`);
+});
+
+test("en la lista la búsqueda filtra en vez de atenuar", async ({ page }) => {
+  await openApp(page, { "silvestre:itemsView": "list" });
+  await page.click("#tabItems");
+  await page.fill("#needsSearch", "bambu");
+  await expect(page.locator("#items .slot.list.dim")).toHaveCount(0);
+  const n = await page.locator("#items .slot.list").count();
+  expect(n).toBeGreaterThan(0);
+  await expect(page.locator("#items .slot.list:not(.match)")).toHaveCount(0);
 });

@@ -1,6 +1,7 @@
 import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName } from "../../lib/resources.js";
 import {
-  pendingItemSteps, rowHave, setShopPendingOnly, setShopQuery, setShopSort, setShopTab, setShopView, soonSteps,
+  PAGE_SIZES, pendingItemSteps, rowHave, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
+  setShopTab, setShopView, soonSteps,
   toggleRowOwned, useAppState,
 } from "../../state/store.js";
 import Slot from "./Slot.jsx";
@@ -58,6 +59,59 @@ const VIEWS = [
   ["list", "Lista", <svg key="l" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" /></svg>],
 ];
 
+/** Trozo de filas de la página actual; "all" las devuelve todas. */
+function paginate(rows, page, size) {
+  if (size === "all") return { rows, page: 0, pages: 1, from: rows.length ? 1 : 0, to: rows.length };
+  const pages = Math.max(1, Math.ceil(rows.length / size));
+  const p = Math.min(page, pages - 1);
+  return { rows: rows.slice(p * size, (p + 1) * size), page: p, pages, from: rows.length ? p * size + 1 : 0,
+    to: Math.min(rows.length, (p + 1) * size) };
+}
+
+/** 1 … 4 5 6 … 12: siempre la primera, la última y las vecinas de la actual. */
+function pageNumbers(page, pages) {
+  const keep = new Set([0, pages - 1, page - 1, page, page + 1].filter(n => n >= 0 && n < pages));
+  const out = [];
+  [...keep].sort((a, b) => a - b).forEach((n, i, arr) => {
+    if (i && n - arr[i - 1] > 1) out.push("gap" + n);
+    out.push(n);
+  });
+  return out;
+}
+
+function Pager({ id, total, view, size }) {
+  const go = page => {
+    setShopPage(page);
+    // Si la cabecera de la lista quedó arriba, se vuelve a ella
+    const top = document.getElementById(id);
+    if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <nav className="pager" aria-label="Páginas de la lista">
+      <span className="pager-range">{view.from}–{view.to} de {total}</span>
+      {view.pages > 1 && (
+        <div className="pager-pages">
+          <button type="button" data-page="prev" aria-label="Página anterior" disabled={view.page === 0}
+            onClick={() => go(view.page - 1)}>‹</button>
+          {pageNumbers(view.page, view.pages).map(n => typeof n === "string"
+            ? <span key={n} className="pager-gap">…</span>
+            : <button key={n} type="button" data-page={n} aria-current={n === view.page ? "page" : undefined}
+                onClick={() => go(n)}>{n + 1}</button>)}
+          <button type="button" data-page="next" aria-label="Página siguiente" disabled={view.page >= view.pages - 1}
+            onClick={() => go(view.page + 1)}>›</button>
+        </div>
+      )}
+      <div className="pager-size" role="group" aria-label="Objetos por página">
+        <span>Por página</span>
+        {PAGE_SIZES.map(n => (
+          <button key={n} type="button" data-size={n} aria-pressed={String(size === n)}
+            onClick={() => setShopPageSize(n)}>{n === "all" ? "Todo" : n}</button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 function Slots({ rows, band, s, q, later }) {
   const list = s.shopView === "list";
   return (
@@ -81,7 +135,17 @@ export default function ItemsPanel({ searchRef }) {
   const later = bands.find(b => b.id === "later");
   // Lo que queda de cada objeto después de los próximos pasos
   const laterQty = later && new Map(later.rows.map(r => [r.k, r.a[0][1]]));
-  const empty = bands.every(b => !b.rows.length);
+  // En la lista, la búsqueda filtra (atenuar filas repartidas en páginas no sirve) y se pagina
+  const list = s.shopView === "list";
+  const shown = b => (b ? (list && q ? b.rows.filter(r => rowMatches(r, q)) : b.rows) : []);
+  const soonRows = shown(soon);
+  const laterRows = shown(later);
+  const all = bands.find(b => b.id === "all");
+  const allRows = shown(all);
+  const page = rows => (list ? paginate(rows, s.shopPage, s.shopPageSize) : { rows });
+  const laterView = page(laterRows);
+  const allView = page(allRows);
+  const empty = !soonRows.length && !laterRows.length && !allRows.length;
 
   return (
     <div className="needs-panel items-panel" id="items" role="tabpanel" aria-labelledby="tabItems">
@@ -133,29 +197,35 @@ export default function ItemsPanel({ searchRef }) {
         </div>
 
         <div className="needs-main" key={s.shopEpoch}>
-          {empty && <p className="needs-empty">Nada pendiente en esta categoría.</p>}
+          {empty && (
+            <p className="needs-empty">{list && q ? `Nada coincide con «${s.shopQuery.trim()}».` : "Nada pendiente en esta categoría."}</p>
+          )}
 
-          {soon && soon.rows.length > 0 && (
+          {soonRows.length > 0 && (
             <section className="band soon" id="bandSoon" aria-labelledby="bandSoonTitle">
               <div className="band-h">
                 <span className="band-pill">Pronto</span>
                 <b id="bandSoonTitle">Tus próximos pasos</b>
-                <em>· {soon.rows.length} objetos</em>
+                <em>· {soonRows.length} objetos</em>
                 <SoonChips chips={soon.chips} />
               </div>
-              <Slots rows={soon.rows} band="soon" s={s} q={q} later={laterQty} />
+              <Slots rows={soonRows} band="soon" s={s} q={q} later={laterQty} />
             </section>
           )}
 
-          {later && later.rows.length > 0 && (
+          {laterRows.length > 0 && (
             <section className="band later" id="bandLater" aria-label="Más adelante">
-              <p className="later-h">Más adelante · {later.rows.length} objetos</p>
-              <Slots rows={later.rows} band="later" s={s} q={q} />
+              <p className="later-h">Más adelante · {laterRows.length} objetos</p>
+              <Slots rows={laterView.rows} band="later" s={s} q={q} />
+              {list && <Pager id="bandLater" total={laterRows.length} view={laterView} size={s.shopPageSize} />}
             </section>
           )}
 
-          {bands[0].id === "all" && bands[0].rows.length > 0 && (
-            <Slots rows={bands[0].rows} band="all" s={s} q={q} />
+          {allRows.length > 0 && (
+            <section className="band all" id="bandAll" aria-label="Objetos">
+              <Slots rows={allView.rows} band="all" s={s} q={q} />
+              {list && <Pager id="bandAll" total={allRows.length} view={allView} size={s.shopPageSize} />}
+            </section>
           )}
         </div>
       </div>
