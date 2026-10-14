@@ -80,6 +80,11 @@ DUPLICATES = {
     # "El despertar de Pandala", already prerequisite l11. Its "Suero contra la
     # pandrista" takes 50 Ortiga and 5 Lana de jalatín negro, listed in step 0 for l11.
     "1": {"421": "prerrequisito l11", "885": "prerrequisito l11"},
+    # The page's split of the old step 75 copied its items into the new 75 as well as
+    # the 76, where "Empieza a hacer viento" (the boards, 4 × 4 per Tabla valepató in
+    # DofusDB) and "Aviso de tormenta" (the rope, per its guide) use them.
+    "75": {"16496": "paso 76", "16494": "paso 76", "16499": "paso 76", "16492": "paso 76",
+           "9935": "paso 76"},
 }
 # Rows the page puts one step early. Step -> (step they belong to, {item: why}).
 MOVED = {
@@ -89,6 +94,14 @@ MOVED = {
     # la 7.ª compañía?" (the key). The page lists step 5 with nothing.
     "4": ("5", {"384": "Las primeras impresiones son engañosas",
                 "12073": "¿Dónde se ha ido la 7.ª compañía?"}),
+    # Step 19 stops at mission 4 of "Púrpura profundo"; missions 5 and 6, done in step
+    # 21, use these: "Remordimientos de eternala" (Tallo de bambuto, DofusDB objective)
+    # and "El anillo de Tot" (Calavera and the ring's key, per its guide).
+    "19": ("21", {"15444": "El anillo de Tot", "15477": "El anillo de Tot",
+                  "7290": "Remordimientos de eternala"}),
+    # Step 34 stops at "Arak-hais, ¿dónde vais?"; the glands are handed over in the
+    # next mission, "Munster descubre el misterio" (step 35), per its guide.
+    "34": ("35", {"16215": "Munster descubre el misterio"}),
 }
 # Rows the page leaves out: what an optional prerequisite asks for. Step -> [(category,
 # label shown with the item, prerequisite id, item name, qty)]. "Escaeroplano de alta

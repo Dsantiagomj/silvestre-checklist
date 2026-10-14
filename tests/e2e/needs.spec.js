@@ -314,7 +314,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   // Primer nivel: el resumen de lo reunido
   await page.click("#needsShowSummary");
   const summary = page.locator(".needs-summary");
-  await expect(summary.locator(".needs-sum-total")).toHaveText("6.717"); // 6.770 de la página, sin la Ortiga y la Lana repetidas en el paso 1 y con el casco y las alas mejorados de Altos vuelos
+  await expect(summary.locator(".needs-sum-total")).toHaveText("6.652"); // 6.770 de la página, sin lo repetido (Ortiga y Lana del paso 1, tablas y cuerda del 75) y con el casco y las alas mejorados de Altos vuelos
   await expect(summary.locator(".needs-sum-top li")).toHaveCount(6);
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("Pepita");
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("2.202");
