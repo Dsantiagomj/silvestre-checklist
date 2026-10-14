@@ -10,6 +10,9 @@ const APP_URL = process.env.APP_URL || `http://127.0.0.1:${TEST_PORT}/`;
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 45_000,
+  // Con la máquina cargada, cambiar de paso (zoom, misiones en diferido) puede pasar de
+  // los 5 s por defecto: los fallos eran de espera, no de comportamiento
+  expect: { timeout: 10_000 },
   fullyParallel: true,
   reporter: [["list"]],
   use: {
