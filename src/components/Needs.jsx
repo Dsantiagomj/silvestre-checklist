@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ALL_PREREQS } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
-import { REQUIRED_ROWS } from "../lib/resources.js";
+import { ALL_ROWS } from "../lib/resources.js";
 import {
   getState, ownedCount, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setNeedsTab, setRowsOwned, showToast,
   useAppState,
@@ -95,7 +95,7 @@ export default function Needs() {
         <Tab id="tabPrereqs" tab="prereqs" active={tab === "prereqs"} icon={HERO_ICONS?.prereqs} name="Prerrequisitos"
           done={preDone} total={ALL_PREREQS.length} hint="antes de empezar" />
         <Tab id="tabItems" tab="items" active={tab === "items"} icon={HERO_ICONS?.items} name="Objetos necesarios"
-          done={ownedCount(s)} total={REQUIRED_ROWS.length} hint="para los pasos pendientes" />
+          done={ownedCount(s)} total={ALL_ROWS.length} hint="para los pasos pendientes" />
       </div>
       {tab === "prereqs" ? <PrereqsPanel /> : <ItemsPanel searchRef={searchRef} />}
     </section>

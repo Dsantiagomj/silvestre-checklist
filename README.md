@@ -107,8 +107,8 @@ comprueba contra `.build/lists/compilado.txt` (420 de 420 filas iguales):
   Calzoncillo de repuesto de capitán chafer) cuenta una vez aunque lo pidan dos pasos.
 - El Elixir de los barquerontes sale en su paso pero no suma: solo hace falta si se perdió
   la alteración.
-- Los objetos de una misión opcional o de una sola orden de alineamiento llevan etiqueta y
-  no cuentan en el total del hero.
+- Los objetos de una misión opcional o de una sola orden de alineamiento llevan etiqueta.
+  Cuentan en el total como los demás: van ligados a sus pasos, así que completarlos los cubre.
 
 La lista de la página trae un error, corregido en `CORRECTIONS`: pide "Hoja de kalipto", que
 no existe; es la Flor de kalipto. Tres nombres no existen en DofusDB y salen sin imagen:

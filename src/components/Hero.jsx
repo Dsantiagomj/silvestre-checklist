@@ -5,7 +5,7 @@ import {
   openNeeds, useAppState,
 } from "../state/store.js";
 import { BRAND_ICON, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
-import { REQUIRED_ROWS } from "../lib/resources.js";
+import { ALL_ROWS } from "../lib/resources.js";
 import DofusRoad from "./DofusRoad.jsx";
 import { prefersReducedMotion } from "../lib/motion.js";
 
@@ -45,7 +45,7 @@ export default function Hero() {
   const done = doneCount(s);
   const pendingPrereqs = prereqsPending(s);
   const owned = ownedCount(s);
-  const totalItems = REQUIRED_ROWS.length;
+  const totalItems = ALL_ROWS.length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
   const nextIcon = next ? assetsFor(next)?.icon : null;
