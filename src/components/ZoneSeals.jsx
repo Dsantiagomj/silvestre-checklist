@@ -12,6 +12,12 @@ function Seal({ zone, label, img, done, total, active, here, onClick }) {
       title={`${label}: ${done} de ${total} pasos`}
       style={{ "--zone-color": zone ? ZONE_COLOR[zone] : "var(--amber)", "--seal-p": `${(done / total) * 100}%` }}>
       <span className="seal-ring">
+        {/* Zona del paso abierto: marcador de ubicación encima; el anillo es del filtro */}
+        {here && (
+          <span className="seal-pin" title="Zona del paso abierto" aria-hidden="true">
+            <svg viewBox="0 0 16 20"><path d="M8 19s6-6.2 6-11A6 6 0 0 0 2 8c0 4.8 6 11 6 11z" /><circle cx="8" cy="8" r="2.4" /></svg>
+          </span>
+        )}
         <span className="seal-img" style={img ? { backgroundImage: `url(${imgUrl(img)})` } : undefined}></span>
         {full && <span className="seal-ok" aria-hidden="true">✓</span>}
       </span>
