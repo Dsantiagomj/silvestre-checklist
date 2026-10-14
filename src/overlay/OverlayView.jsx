@@ -19,7 +19,7 @@ function MapFigure({ loc, where }) {
   );
 }
 
-function QuestView({ n, a, cur, owned }) {
+function QuestView({ n, a, cur, s }) {
   const { list, i, q, objs, k } = cur;
   const now = objs[k];
   const upcoming = objs.slice(k + 1, k + 4);
@@ -45,7 +45,7 @@ function QuestView({ n, a, cur, owned }) {
         <span>Misión <b>{i + 1}</b> / {list.length} <span className="muted">· Paso {n}</span></span>
         <button data-q="1" disabled={!(i < list.length - 1)} aria-label="Misión siguiente" onClick={() => moveQuest(1)}>›</button>
       </div>
-      <ReqBlock n={n} open={false} owned={owned} />
+      <ReqBlock n={n} open={false} s={s} />
       {/* key: una imagen nueva vuelve a intentarlo aunque la anterior fallara */}
       {loc && <MapFigure key={loc.m} loc={loc} where={where} />}
       {now && (
@@ -92,7 +92,7 @@ export default function OverlayView() {
         <div className="bar-outer"><div className="bar-fill" style={{ width: `${pct}%` }}></div></div>
         <b>{pct}%</b>
       </div>
-      {cur ? <QuestView n={n} a={a} cur={cur} owned={s.owned} /> : (
+      {cur ? <QuestView n={n} a={a} cur={cur} s={s} /> : (
         <>
           <div className="ov-card ov-qhead">
             <div className="ov-icon">{a.icon ? <img src={imgUrl(a.icon.src)} alt="" /> : <b>{n}</b>}</div>
@@ -101,7 +101,7 @@ export default function OverlayView() {
               {a.icon?.from === "item" && <div className="ov-chips"><span className="ov-chip">{`🎁 ${a.icon.label}`}</span></div>}
             </div>
           </div>
-          <ReqBlock n={n} open={false} owned={s.owned} />
+          <ReqBlock n={n} open={false} s={s} />
         </>
       )}
       <details className="ov-card ov-guide" open={!cur}>

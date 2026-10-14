@@ -1,6 +1,8 @@
 // Piezas compartidas por el detalle del paso y el overlay.
 import { useEffect, useRef, useState } from "react";
-import { ITEMS, assetsFor, imgUrl, mergeItems } from "../lib/assets.js";
+import { RES_ITEMS, rowName, rowQty, rowsOf } from "../lib/resources.js";
+import { imgUrl } from "../lib/assets.js";
+import { rowHave } from "../state/store.js";
 import { OBJ_ICON, coordLabel } from "../lib/quests.js";
 import { copyText } from "../lib/motion.js";
 
@@ -46,23 +48,26 @@ export function Objectives({ objs }) {
   );
 }
 
-/** Desplegable "Objetos necesarios (N)" de un paso. Lo usan el detalle y el overlay. */
-export function ReqBlock({ n, open, owned }) {
-  const a = assetsFor(n);
-  const list = mergeItems(a?.items || []);
-  if (!list.length) return null;
+/**
+ * Desplegable "Objetos necesarios (N)" de un paso, según la lista de torrentearcano.
+ * Lo usan el detalle, el overlay y los prerrequisitos (paso 0).
+ */
+export function ReqBlock({ n, open, s, title = "Objetos necesarios" }) {
+  const rows = rowsOf(n);
+  if (!rows.length) return null;
   return (
     <details className="req" open={open}>
-      <summary>Objetos necesarios <span className="n">({list.length})</span></summary>
-      {a.partial && <p className="req-note">Incluye todo el logro: este paso solo cubre una parte.</p>}
+      <summary>{title} <span className="n">({rows.length})</span></summary>
       <div className="req-grid">
-        {list.map(([id, q]) => {
-          const it = ITEMS[id];
-          const tip = `${q}× ${it.name} · ${it.type} nv. ${it.lvl}`;
+        {rows.map(row => {
+          const tip = [`${rowQty(row)} × ${rowName(row)}`, row.g, row.n].filter(Boolean).join(" · ");
           return (
-            <div key={id} className={"req-item" + (owned[id] ? " owned" : "")} title={tip}>
-              {it.img && <img src={imgUrl(it.img)} alt={it.name} loading="lazy" />}
-              <span className="q">{q}</span>
+            <div key={row.k} className={"req-item" + (rowHave(s, row, [n]) ? " owned" : "") + (row.a.length > 1 ? " alt" : "")}
+              title={tip}>
+              {row.a.map(([id]) => RES_ITEMS[id].img
+                ? <img key={id} src={imgUrl(RES_ITEMS[id].img)} alt={RES_ITEMS[id].name} loading="lazy" />
+                : <span key={id} className="item-unknown" role="img" aria-label={RES_ITEMS[id].name}>?</span>)}
+              <span className="q">{row.a[0][1]}</span>
             </div>
           );
         })}

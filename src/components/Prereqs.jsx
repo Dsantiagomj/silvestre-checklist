@@ -3,6 +3,8 @@ import {
 } from "../data/steps.js";
 import { isPrereqDone, prereqsDone, setPrereqsOpen, togglePrereq, useAppState } from "../state/store.js";
 import { PREREQ_ICONS, imgUrl } from "../lib/assets.js";
+import { PREREQ_STEP } from "../lib/resources.js";
+import { ReqBlock } from "./StepParts.jsx";
 
 const GROUPS = [
   { id: "prereqsLogros", title: "Logros previos requeridos", items: PREREQS_LOGROS },
@@ -51,6 +53,7 @@ export default function Prereqs() {
               </div>
             </div>
           ))}
+          <ReqBlock n={PREREQ_STEP} open s={s} title="Objetos para los prerrequisitos" />
         </div>
       </div>
     </div>

@@ -4,7 +4,8 @@ import {
   doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
   setPrereqsOpen, useAppState,
 } from "../state/store.js";
-import { BRAND_ICON, HERO_BG, HERO_ICONS, ITEMS, assetsFor, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
+import { REQUIRED_ROWS } from "../lib/resources.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
@@ -56,7 +57,7 @@ export default function Hero() {
   const done = doneCount(s);
   const pendingPrereqs = prereqsPending(s);
   const owned = ownedCount(s);
-  const totalItems = Object.keys(ITEMS).length;
+  const totalItems = REQUIRED_ROWS.length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
   const nextIcon = next ? assetsFor(next)?.icon : null;

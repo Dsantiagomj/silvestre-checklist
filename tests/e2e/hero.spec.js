@@ -20,7 +20,8 @@ test("el fondo del hero es un mapa distinto en cada tema", async ({ page }) => {
 const SEED = {
   "silvestre:done": { 1: true, 2: true, 3: true },
   "silvestre:prereqs": { l1: true },
-  "silvestre:owned": { 421: true, 306: true },
+  // Pepita y Reflejo onírico; el paso 1 además es el único que pide otros dos objetos
+  "silvestre:owned": { 14635: true, 32079: true },
 };
 
 test("el hero ocupa todo el ancho y casi toda la pantalla", async ({ page }) => {
@@ -60,7 +61,7 @@ test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page })
   await openApp(page, SEED);
   await expect(page.locator("#statDone")).toHaveText("3");
   await expect(page.locator("#statPre")).toHaveText("1");
-  await expect(page.locator("#statOwned")).toHaveText("2");
+  await expect(page.locator("#statOwned")).toHaveText("4");
   // Con prerrequisitos pendientes el contador avisa y abre su sección
   await expect(page.locator("#heroWarn")).toHaveClass(/warn/);
   await page.click("#heroWarn");
@@ -119,7 +120,7 @@ test("los pasos van con el progreso y los requisitos van aparte", async ({ page 
   const reqs = page.locator(".hero-reqs");
   await expect(reqs).toContainText("Lo que necesitas");
   await expect(reqs.locator("#statPre")).toHaveText("1");
-  await expect(reqs.locator("#statOwned")).toHaveText("2");
+  await expect(reqs.locator("#statOwned")).toHaveText("4");
 });
 
 test("objetos necesarios lleva a su sección", async ({ page }) => {

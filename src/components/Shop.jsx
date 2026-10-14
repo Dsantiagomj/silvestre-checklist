@@ -1,36 +1,44 @@
 import { useEffect, useRef, useState } from "react";
-import { STEPS } from "../data/steps.js";
-import { ITEMS, assetsFor, imgUrl, mergeItems } from "../lib/assets.js";
-import { ownedMap, setShopPendingOnly, setShopTab, toggleOwned, useAppState } from "../state/store.js";
+import { imgUrl } from "../lib/assets.js";
+import {
+  ALL_ROWS, CATEGORIES, RES_ITEMS, STEPS_WITH_ITEMS, aggregate, rowName, rowQty,
+} from "../lib/resources.js";
+import { rowHave, setShopPendingOnly, setShopTab, stepCovered, toggleOwned, useAppState } from "../state/store.js";
 
 // ============================================================================
-// OBJETOS NECESARIOS · lista agregada de todo lo que piden los pasos
+// OBJETOS NECESARIOS · la lista de torrentearcano, sumada sobre los pasos
 // ============================================================================
-const SHOP_TABS = [
-  ["todo", "Todo"], ["recursos", "Recursos"], ["consumibles", "Consumibles"],
-  ["equipables", "Equipables"], ["otros", "Otros"],
-];
-const CAT_ORDER = { recursos: 0, consumibles: 1, equipables: 2, otros: 3 };
+const SHOP_TABS = [["todo", "Todo"], ...CATEGORIES];
 
+/** Lo que piden los pasos aún sin hacer (prerrequisitos incluidos), o la guía entera. */
 function shopRows(s) {
-  const rows = [];
-  for (const st of STEPS) {
-    if (s.shopPendingOnly && s.done[st.n]) continue;
-    rows.push(...(assetsFor(st.n)?.items || []));
-  }
-  return mergeItems(rows)
-    .map(([id, q]) => ({ id, q, ...ITEMS[id] }))
-    .sort((a, b) => (CAT_ORDER[a.cat] - CAT_ORDER[b.cat]) || a.name.localeCompare(b.name, "es"));
+  if (!s.shopPendingOnly) return ALL_ROWS;
+  return aggregate(STEPS_WITH_ITEMS.filter(n => !stepCovered(s, n)));
+}
+
+/** Icono de un objeto; los que DofusDB no tiene llevan un hueco con interrogación. */
+export function ItemArt({ id }) {
+  const it = RES_ITEMS[id];
+  return it.img
+    ? <img src={imgUrl(it.img)} alt="" loading="lazy" />
+    : <span className="item-unknown" aria-hidden="true">?</span>;
+}
+
+/** "Recurso · nv. 20" si es un objeto conocido; nada para alternativas o desconocidos. */
+function rowType(row) {
+  if (row.a.length > 1) return "Cualquiera de los dos";
+  const it = RES_ITEMS[row.a[0][0]];
+  return it.type ? `${it.type} · nv. ${it.lvl}` : "";
 }
 
 export default function Shop() {
   const s = useAppState();
-  const have = ownedMap(s);
   const all = shopRows(s);
   const counts = { todo: all.length };
-  all.forEach(r => { counts[r.cat] = (counts[r.cat] || 0) + 1; });
-  const list = all.filter(r => s.shopTab === "todo" || r.cat === s.shopTab);
-  const owned = list.filter(r => have[r.id]).length;
+  all.forEach(r => { counts[r.c] = (counts[r.c] || 0) + 1; });
+  const list = all.filter(r => s.shopTab === "todo" || r.c === s.shopTab);
+  const have = r => rowHave(s, r);
+  const owned = list.filter(have).length;
   const scope = s.shopPendingOnly ? "los pasos pendientes" : "los 100 pasos";
 
   const [copyLabel, setCopyLabel] = useState(null);
@@ -38,7 +46,7 @@ export default function Shop() {
   useEffect(() => () => clearTimeout(copyTimer.current), []);
 
   async function copyList() {
-    const lines = list.filter(r => !have[r.id]).map(r => `${r.q}x ${r.name}`);
+    const lines = list.filter(r => !have(r)).map(r => `${rowQty(r)} x ${rowName(r)}`);
     const text = lines.join("\n");
     let label = "Copiar lista";
     try {
@@ -78,22 +86,27 @@ export default function Shop() {
       </div>
       <p className="shop-sub" id="shopSub">
         {list.length
-          ? `${list.length} objetos · ${owned} conseguidos · toca uno para marcarlo. Sale de los logros y misiones de ${scope}.`
+          ? `${list.length} objetos · ${owned} conseguidos · toca uno para marcarlo. Es la lista de torrentearcano para ${scope}.`
           : ""}
       </p>
       {/* key: se remonta (y repite la animación de entrada) solo cuando la versión
           vanilla repintaba la lista entera; marcar un objeto no la repite. */}
       <div className="shop-grid" id="shopGrid" key={s.shopEpoch}>
         {list.length ? list.map((r, i) => (
-          <button key={r.id} className={"shop-item" + (have[r.id] ? " owned" : "")} data-id={r.id}
-            style={{ "--i": Math.min(i, 40) }} aria-pressed={String(!!have[r.id])}
-            onClick={() => toggleOwned(String(r.id))}>
-            {r.img && <img src={imgUrl(r.img)} alt="" loading="lazy" />}
-            <span className="meta">
-              <span className="name">{r.name}</span>
-              <span className="type">{`${r.type} · nv. ${r.lvl}`}</span>
+          <button key={r.k} className={"shop-item" + (have(r) ? " owned" : "")} data-id={r.k}
+            style={{ "--i": Math.min(i, 40) }} aria-pressed={String(have(r))}
+            onClick={() => toggleOwned(r.k)}>
+            <span className={"art" + (r.a.length > 1 ? " alt" : "")}>
+              {r.a.map(([id]) => <ItemArt key={id} id={id} />)}
             </span>
-            <span className="q">{`×${r.q}`}</span>
+            <span className="meta">
+              <span className="name">{rowName(r)}</span>
+              <span className="type">
+                {/* Una línea: la etiqueta de grupo manda; si no, la nota o el tipo */}
+                {r.g ? <span className="tag">{r.g}</span> : r.n ? <span className="note">{r.n}</span> : rowType(r)}
+              </span>
+            </span>
+            <span className="q">{`×${rowQty(r)}`}</span>
           </button>
         )) : <p className="shop-empty">Nada pendiente en esta categoría.</p>}
       </div>

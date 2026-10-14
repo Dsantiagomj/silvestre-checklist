@@ -1,9 +1,10 @@
 import { Fragment, useEffect } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { assetsFor, imgUrl, mergeItems } from "../lib/assets.js";
+import { assetsFor, imgUrl } from "../lib/assets.js";
+import { rowsOf } from "../lib/resources.js";
 import { questsOf } from "../lib/quests.js";
 import {
-  clearSelection, closeSheet, goToNextPending, isMobile, loadQuests, ownedMap, selectStep, toggleStep, useAppState,
+  clearSelection, closeSheet, goToNextPending, isMobile, loadQuests, selectStep, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
 
@@ -44,7 +45,7 @@ function QuestsBlock({ n, loaded }) {
 }
 
 /** Bloque de assets del paso: recompensa destacada + jefes + mazmorras/misiones. */
-function AssetBlock({ n, owned, questsLoaded }) {
+function AssetBlock({ n, s, questsLoaded }) {
   const a = assetsFor(n);
   if (!a) return null;
   const ach = a.achievements?.[0];
@@ -54,7 +55,7 @@ function AssetBlock({ n, owned, questsLoaded }) {
   ];
   // Igual que la versión vanilla: la nota sale solo si el bloque muestra algo.
   const hasContent = !!a.icon || a.bosses?.length > 0 || chips.length > 0 ||
-    mergeItems(a.items || []).length > 0 || !questsLoaded || questsOf(n).length > 0;
+    rowsOf(n).length > 0 || !questsLoaded || questsOf(n).length > 0;
 
   return (
     <>
@@ -85,7 +86,7 @@ function AssetBlock({ n, owned, questsLoaded }) {
           {chips.map((c, i) => <span key={i} className="badge">{c}</span>)}
         </div>
       )}
-      <ReqBlock n={n} open owned={owned} />
+      <ReqBlock n={n} open s={s} />
       <QuestsBlock n={n} loaded={questsLoaded} />
       {hasContent ? <p className="asset-note">Assets vía DofusDB · emparejados automáticamente</p> : null}
     </>
@@ -121,7 +122,7 @@ export default function StepDetail({ n }) {
         <div className="detail-badges">
           <span className="badge zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><span className="dot"></span>{step.zone}</span>
         </div>
-        <AssetBlock n={n} owned={ownedMap(s)} questsLoaded={s.questsLoaded} />
+        <AssetBlock n={n} s={s} questsLoaded={s.questsLoaded} />
         <div className="detail-text">{step.text}</div>
         <div className="detail-cta">
           <button className={"btn-primary" + (done ? " is-done" : "")} id="toggleBtn" onClick={() => toggleStep(n)}>
