@@ -128,8 +128,6 @@ export const progressPct = s => (TOTAL_PTS ? Math.round((donePts(s) / TOTAL_PTS)
 export const guideComplete = s => doneCount(s) === STEPS.length;
 export const isPrereqDone = (s, id) => guideComplete(s) || !!s.prereqs[id];
 export const prereqsDone = s => ALL_PREREQS.filter(p => isPrereqDone(s, p.id)).length;
-/** Prerrequisitos marcados a mano: lo que borra un reinicio. */
-export const prereqsMarked = s => ALL_PREREQS.filter(p => s.prereqs[p.id]).length;
 /** Un paso ya no pide nada si está hecho; el "paso 0" son los prerrequisitos. */
 export const stepCovered = (s, n) =>
   n === PREREQ_STEP ? ALL_PREREQS.every(p => isPrereqDone(s, p.id)) : !!s.done[n];
