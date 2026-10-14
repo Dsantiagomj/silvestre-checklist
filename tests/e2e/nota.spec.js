@@ -47,13 +47,24 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
   await page.locator("#nota").scrollIntoViewIfNeeded();
   await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
   await expect(page.locator(".nota-marker")).toHaveCount(1);
-  // Al terminar: los tres pasos con ✓ y el jefe vencido, y se queda así
-  await expect.poll(() => exampleState(page), { timeout: 6_000 })
-    .toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
-  // Pasar el ratón la repite
+  // El punto va por el camino, por detrás de las casillas y del retrato
+  const z = await page.locator(".nota-track").evaluate(t => ({
+    marker: Number(getComputedStyle(t.querySelector(".nota-marker")).zIndex) || 0,
+    step: Number(getComputedStyle(t.querySelector(".nota-step")).zIndex) || 0,
+    boss: Number(getComputedStyle(t.querySelector(".nota-boss")).zIndex) || 0,
+  }));
+  expect(z.marker).toBeLessThan(z.step);
+  expect(z.marker).toBeLessThan(z.boss);
+  // Pasar el ratón la repite desde el principio
   const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
   await page.locator(".nota-example").hover();
   await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
+  // Da tiempo a seguirla: a los 2 s todavía no ha caído el jefe
+  await page.waitForTimeout(2_000);
+  expect((await exampleState(page)).boss).not.toContain("grayscale(1)");
+  // Al terminar: los tres pasos con ✓ y el jefe vencido, y se queda así
+  await expect.poll(() => exampleState(page), { timeout: 10_000 })
+    .toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
 });
 
 test("con movimiento reducido el ejemplo muestra directamente el final", async ({ browser }) => {
