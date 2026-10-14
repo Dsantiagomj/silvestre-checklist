@@ -122,3 +122,16 @@ test("sin nada guardado, los pasos se abren en el mapa y el selector va primero"
   const order = await page.locator(".steps-view button").evaluateAll(bs => bs.map(b => b.id));
   expect(order).toEqual(["stepsViewMap", "stepsViewDiary"]);
 });
+
+test("nada sobresale recortado: ni el Dofus del primer paso ni el marcador de zona", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, null, { view: null });
+  await page.waitForTimeout(800);
+  // Lo que asoma por arriba (huevo, halo del paso actual, marcador) cabe en su contenedor
+  const room = (inner, outer) => page.evaluate(([i, o]) =>
+    Math.round(document.querySelector(i).getBoundingClientRect().top - document.querySelector(o).getBoundingClientRect().top), [inner, outer]);
+  expect(await room('.map-node[data-n="1"] .node-egg', ".step-map")).toBeGreaterThanOrEqual(6);
+  await page.locator(".seal.here").hover();
+  await page.waitForTimeout(300);
+  expect(await room(".seal.here .seal-pin", "#zoneSeals")).toBeGreaterThanOrEqual(2);
+});
