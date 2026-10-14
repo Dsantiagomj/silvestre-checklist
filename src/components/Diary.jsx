@@ -5,8 +5,8 @@ import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS, TIER_META } from "../data/steps.js";
-import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
+import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
+import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import {
   clearFilters, goToNextPending, hasActiveFilters, nextPending, revealMapNode, selectStep, setSearch, setStatusFilter,
   setStepsView, takeMapFocus,
@@ -15,7 +15,6 @@ import {
 import Journal from "./Journal.jsx";
 import StepMap, { mapPoint } from "./StepMap.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
-import QuestMark from "./QuestMark.jsx";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -24,11 +23,14 @@ const TABS = [
 ];
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 
-/** Lo que identifica al paso en la lista: el Dofus que da, su jefe o su icono. */
+/**
+ * Lo que se gana en el paso: el Dofus que da o, si no, el jefe que resuelve. Si no hay
+ * ninguno, nada: un icono de relleno no diría nada del paso.
+ */
 function rowArt(n) {
-  if (ROAD_AT[n]) return ROAD_AT[n].img;
-  const a = assetsFor(n);
-  return a?.bosses?.[0]?.img || a?.icon?.src || null;
+  if (ROAD_AT[n]) return { img: ROAD_AT[n].img, name: ROAD_AT[n].name };
+  const boss = resolvedBoss(n);
+  return boss ? { img: boss.img, name: boss.name } : null;
 }
 
 const Row = memo(function Row({ step, done, current }) {
@@ -60,7 +62,7 @@ const Row = memo(function Row({ step, done, current }) {
           </span>
         </span>
         <span className="row-art" aria-hidden="true">
-          {art ? <img src={imgUrl(art)} alt="" loading="lazy" decoding="async" /> : <QuestMark />}
+          {art && <img src={imgUrl(art.img)} alt={art.name} title={art.name} loading="lazy" decoding="async" />}
         </span>
         <span className="row-effort">{TIER_META[step.effort].label}</span>
       </button>
@@ -116,23 +118,11 @@ function DiaryList({ s, current }) {
             {hasActiveFilters(s) && <button type="button" className="btn-secondary" onClick={clearFilters}>Quitar filtros</button>}
           </div>
         )}
-        {CHAPTERS.map(ch => {
-          const steps = STEPS.slice(ch.from - 1, ch.to);
-          const shown = steps.filter(st => visible.has(st.n));
-          if (!shown.length) return null;
-          return (
-            <section className="diary-group" key={ch.to} aria-label={`Hacia el ${ch.name}`}>
-              <h3 className="diary-group-head">
-                <img src={imgUrl(ch.img)} alt="" loading="lazy" />
-                <span>Hacia el {ch.name}</span>
-                <small>{steps.filter(st => s.done[st.n]).length}/{steps.length}</small>
-              </h3>
-              <ol className="diary-rows">
-                {shown.map(st => <Row key={st.n} step={st} done={!!s.done[st.n]} current={st.n === current} />)}
-              </ol>
-            </section>
-          );
-        })}
+        <ol className="diary-rows">
+          {STEPS.filter(st => visible.has(st.n)).map(st => (
+            <Row key={st.n} step={st} done={!!s.done[st.n]} current={st.n === current} />
+          ))}
+        </ol>
       </div>
     </div>
   );

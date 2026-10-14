@@ -2289,14 +2289,6 @@ header.show-progress .tb-progress{
 .diary-list{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding-bottom:10px; }
 .diary-empty{ padding:28px 16px; text-align:center; color:var(--txt-mute); }
 
-.diary-group-head{
-  position:sticky; top:0; z-index:1;
-  display:flex; align-items:center; gap:10px; margin:0; padding:10px 14px 8px;
-  background:var(--bg-2);
-  font-family:'Lilita One', var(--font-display); font-weight:400; font-size:15px; letter-spacing:.2px; color:var(--txt);
-}
-.diary-group-head img{ width:26px; height:26px; object-fit:contain; }
-.diary-group-head small{ margin-left:auto; font:800 12px var(--font-display); color:var(--txt-mute); }
 .diary-rows{ list-style:none; margin:0; padding:0; }
 
 .diary-row{ display:flex; align-items:center; gap:2px; padding-left:12px; border-left:3px solid transparent; }
@@ -2619,7 +2611,6 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   .diary-side{ border-right:0; }
   .diary-detail{ overflow:visible; }
   .diary-list{ overflow:visible; }
-  .diary-group-head{ top:var(--header-h); }
 }
 @media (max-width:600px){
   .row-main{ grid-template-columns:30px 22px minmax(0, 1fr) 26px; gap:8px; }

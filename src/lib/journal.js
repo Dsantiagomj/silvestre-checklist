@@ -2,7 +2,7 @@
 // Diario de pasos: lo que la lista y el detalle derivan de la guía
 // ---------------------------------------------------------------------------
 import { STEPS } from "../data/steps.js";
-import { BRAND_ICON, DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
+import { DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
 
 /**
  * Título corto del paso: el logro que persigue o, si no hay, el texto base sin
@@ -42,15 +42,19 @@ export function followUpStop(step) {
   return m ? `Hasta tener que pasar ${m[1]}` : null;
 }
 export const resolvesHere = step => !!step.marks?.some(m => m[0] === "done");
+/**
+ * El jefe que el paso resuelve: el que nombra su verde ("Se pasa Nelwynn…"), sin
+ * contar el que deja pendiente ("…hasta tener que pasar Kodámade"). O null.
+ */
+export function resolvedBoss(n) {
+  const done = STEPS[n - 1]?.marks?.find(m => m[0] === "done")?.[1];
+  if (!done) return null;
+  const text = norm(done.replace(/hasta tener que pasar .*$/i, ""));
+  return assetsFor(n)?.bosses?.find(b => text.includes(norm(b.name))) || null;
+}
 /** Lo que se resuelve: el jefe que se pasa; sin jefe, la espada del juego. */
-export const doneIcon = n => assetsFor(n)?.bosses?.[0]?.img || OBJ_ICONS.fight;
+export const doneIcon = n => resolvedBoss(n)?.img || OBJ_ICONS.fight;
 
-/** Capítulos de la lista: cada uno termina en el paso que da un Dofus; el último, en el Silvestre. */
-export const CHAPTERS = (() => {
-  const ends = [...DOFUS_ROAD.map(d => ({ name: d.name, img: d.img, to: d.step }))];
-  if (ends.at(-1)?.to !== STEPS.length) ends.push({ name: "Dofus Silvestre", img: BRAND_ICON, to: STEPS.length });
-  return ends.map((c, i) => ({ ...c, from: i ? ends[i - 1].to + 1 : 1 }));
-})();
 
 /** Paso -> paso posterior cuyo combate termina sus misiones (el verde de la guía). */
 export const CLOSED_BY = (() => {
