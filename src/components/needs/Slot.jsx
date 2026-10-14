@@ -34,6 +34,17 @@ function laterSteps(steps, prereq) {
   return `Pasos ${shown.join(", ")}${more ? ` y ${more} más` : ""}`;
 }
 
+/**
+ * Para qué misión es en cada paso: "«Arak-hais, ¿dónde vais?»" o, si lo piden varios,
+ * "Paso 41: «…»" por paso (tres como mucho). Los prerrequisitos ya dicen el suyo.
+ */
+function questLines(row) {
+  const why = row.why || { [row.steps[0]]: row.m };
+  const lines = row.steps.filter(n => n !== PREREQ_STEP && why[n]?.length)
+    .map(n => (row.steps.length > 1 ? `Paso ${n}: ` : "") + why[n].map(m => `«${m}»`).join(", "));
+  return lines.length > 3 ? [...lines.slice(0, 3), `y ${lines.length - 3} pasos más`] : lines;
+}
+
 function typeLine(row) {
   if (row.a.length > 1) return "Cualquiera de los dos";
   const it = RES_ITEMS[row.a[0][0]];
@@ -141,6 +152,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
       <span className="slot-tip" role="tooltip">
         <b>{rowName(row)} ×{partial ? qtyText : rowQty(row)}</b>
         <span className="slot-tip-when">Para {forSteps(row.steps, row.p)}{optional ? " (opcional)" : ""}</span>
+        {questLines(row).map((line, i) => <span key={i} className="slot-tip-quest">{line}</span>)}
         {later > 0 && <span>Y {later.toLocaleString("es")} más adelante</span>}
         {row.g && !optional && <span className="slot-tip-when">{row.g}</span>}
         {(row.n || typeLine(row)) && <span>{row.n || typeLine(row)}</span>}

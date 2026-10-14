@@ -2069,6 +2069,7 @@ header.show-progress .tb-progress{
 .slot-tip b{ display:block; color:var(--txt); font-size:12.5px; }
 .slot-tip span{ display:block; }
 .slot-tip-when{ color:var(--soon-ink); }
+.slot-tip-quest{ color:var(--txt-soft); }
 .slot-main:hover ~ .slot-tip, .slot-main:focus-visible ~ .slot-tip{ display:block; animation:slot-tip-in .15s ease .25s backwards; }
 @keyframes slot-tip-in{ from{ opacity:0; } }
 

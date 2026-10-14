@@ -40,13 +40,15 @@ export function aggregate(steps, had, skip) {
       const cur = rows.get(row.k);
       const left = had && row.a.map(([, q]) => (had(row.k, n) ? 0 : q));
       if (!cur) {
-        rows.set(row.k, { ...row, steps: [n], ...(had && { left }) });
+        // why: para qué misiones es en cada paso (row.m, de build_resources.py)
+        rows.set(row.k, { ...row, steps: [n], why: { [n]: row.m }, ...(had && { left }) });
         continue;
       }
       const add = (q, more) => (row.r ? Math.max(q, more) : q + more);
       cur.a = cur.a.map(([id, q], i) => [id, add(q, row.a[i][1])]);
       if (had) cur.left = cur.left.map((q, i) => add(q, left[i]));
       cur.steps.push(n);
+      cur.why[n] = row.m;
     }
   }
   return [...rows.values()].sort((a, b) =>
