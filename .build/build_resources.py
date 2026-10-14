@@ -16,6 +16,7 @@ resources.json:
     c  category: recursos | consumibles | equipables | almas | criaturas | cosmeticos
     g  group label for rows only some players need, or null
     a  alternatives: [[item key, qty], ...]; usually just one
+    p  in step 0 only: the prerequisite (steps.js id) the item is spent on
 """
 import json
 import pathlib
@@ -54,6 +55,19 @@ NOTE = re.compile(r"\s*\(([^)]*)\)\s*")
 # after use, so two steps asking for one still need just one.
 REUSABLE = {"mazorrasombrero", "varita pitusa", "piedra de alma mediana",
             "calzoncillo de repuesto de capitan chafer"}
+# The page lists what the prerequisites need without saying which one asks for it.
+# Item -> prerequisite id (PREREQS_LOGROS in steps.js), from the objectives of each
+# prerequisite's quests in DofusDB (need.generated.items). Casco and Alas de madera
+# are upgraded for "Escaeroplano de alta velocidad" (Altos vuelos), as torrentearcano's
+# guide to that quest says. Completing the prerequisite counts its items as spent.
+PREREQ_OF = {
+    "399": "l4", "429": "l4", "1002": "l4", "2551": "l4",      # El gran Guarrok
+    "2553": "l4", "2617": "l4", "2618": "l4", "8759": "l4",
+    "1019": "l10", "1021": "l10",                               # Altos vuelos
+    "7904": "l6",                                               # El cementerio primitivo
+    "421": "l11", "885": "l11",                                 # El despertar de Pandala
+    "1455": "l7", "1456": "l7", "1457": "l7", "1458": "l7",     # Intrusión en el territorio wabbit
+}
 # Only needed if the alteration is gone: listed in its step, left out of totals.
 OPTIONAL = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
 
@@ -185,6 +199,10 @@ def main():
                     row["r"] = 1
                 if OPTIONAL.search(text):
                     row["x"] = 1
+                if n == "0":
+                    row["p"] = PREREQ_OF.get(alts[0][0])
+                    if not row["p"]:
+                        print(f"aviso: {names[0]} no tiene prerrequisito en PREREQ_OF")
                 rows.append(row)
         steps[n] = rows
     CACHE.parent.mkdir(parents=True, exist_ok=True)
