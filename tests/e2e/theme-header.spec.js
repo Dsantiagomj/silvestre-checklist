@@ -129,3 +129,12 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
   await settles(() => style(".hero-eyebrow", "color"), pageBg);
   await settles(() => style(".section-num", "color"), pageBg);
 });
+
+test("con la barra de progreso a la vista solo hay un Dofus Silvestre en el header", async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => window.scrollTo(0, 1600));
+  await expect(page.locator("header")).toHaveClass(/show-progress/);
+  // El del logo; la barra se entiende con el porcentaje y los pasos
+  await expect(page.locator('header img[src*="items/23036.png"]')).toHaveCount(1);
+  await expect(page.locator(".brand img")).toBeVisible();
+});

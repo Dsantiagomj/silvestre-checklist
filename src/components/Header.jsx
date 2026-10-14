@@ -59,7 +59,6 @@ export default function Header({ onOverlay, onReset }) {
           </div>
           {/* Barra de experiencia: aparece centrada al dejar atrás el hero */}
           <div className="tb-progress" aria-hidden="true">
-            {BRAND_ICON && <img className="tb-egg" src={imgUrl(BRAND_ICON)} alt="" />}
             <span className="tb-bar"><span className="tb-bar-fill" id="sbFill" style={{ width: pct + "%" }}></span></span>
             <b className="tb-pct" id="sbPct">{pct}%</b>
             <span className="tb-done"><b id="sbDone">{doneCount(s)}</b>/100</span>

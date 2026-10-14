@@ -1492,7 +1492,6 @@ header.show-progress .tb-progress{
   transform:translate(-50%, -50%);
   transition:opacity .3s ease, transform .3s ease, visibility 0s;
 }
-.tb-egg{ width:24px; height:24px; object-fit:contain; flex-shrink:0; }
 .tb-bar{
   position:relative; flex-shrink:0;
   width:clamp(160px, 22vw, 300px); height:12px; border-radius:999px;
@@ -1538,7 +1537,6 @@ header.show-progress .tb-progress{
 /* En móvil la marca se queda en el huevo mientras se ve la barra */
 @media (max-width:600px){
   header.show-progress .brand .logo{ display:none; }
-  header.show-progress .tb-egg{ display:none; }
   header.show-progress .tb-progress{ margin:0 8px; padding-left:10px; }
 }
 @media (prefers-reduced-motion:reduce){ .tb-progress, .tb-bar-fill{ transition:none; } }
