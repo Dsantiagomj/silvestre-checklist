@@ -3,7 +3,7 @@ import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
-import { CLOSED_BY, doneIcon, nextPendingAfter, resolvesHere, showcase, stepCalls, stepTitle, stopPoint } from "../lib/journal.js";
+import { CLOSED_BY, doneIcon, nextPendingAfter, resolvesHere, showcase, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -144,13 +144,6 @@ function progressOf(s, n, quests, i, q) {
 
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
 function Quests({ step, quests, loaded, s }) {
-  if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
-  if (!quests.length) return null;
-  // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
-  // línea verde con lo que se resuelve, en vez de la roja de parar
-  const found = stopPoint(step, quests);
-  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1];
-  const stop = found && (done ? { ...found, text: done, resume: true } : found);
   // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
   // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso)
   const [opened, setOpened] = useState(() => new Set());
@@ -160,6 +153,12 @@ function Quests({ step, quests, loaded, s }) {
     if (on) next.add(id); else next.delete(id);
     return next;
   });
+  if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
+  if (!quests.length) return null;
+  // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
+  // línea verde con lo que se resuelve, en vez de la roja de parar
+  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1];
+  const stops = stopPoints(step, quests).map(p => (done ? { ...p, text: done, resume: true } : p));
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
@@ -191,12 +190,12 @@ function Quests({ step, quests, loaded, s }) {
             {q.s.map((stg, j) => {
               const from = offset;
               offset += stg.o.length;
-              const here = stop?.quest === q.id && stop.index >= from && stop.index < offset;
+              const stop = stops.find(p => p.quest === q.id && p.index >= from && p.index < offset);
               return (
                 <Fragment key={j}>
                   {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
                   <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
-                    stop={here ? { index: stop.index - from, text: stop.text, resume: stop.resume } : null} />
+                    stop={stop ? { index: stop.index - from, text: stop.text, resume: stop.resume } : null} />
                 </Fragment>
               );
             })}
