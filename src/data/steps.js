@@ -133,12 +133,9 @@ export const PREREQS_LOGROS = [
 ];
 
 // Recomendación de Sandglass que acompaña a los prerrequisitos en torrentearcano
-// El Dofus Ocre no sale de ningún paso: se marca aparte, como prerrequisito, y desde
-// el paso OCRE_BY_STEP es obligatorio tenerlo
-export const PREREQS_DOFUS = [
-  { id: "d1", text: "Dofus Ocre: misión \"La eterna cosecha\"." },
-];
-export const OCRE_BY_STEP = 79;
+// El Dofus Ocre lo da "La eterna cosecha"; la guía la termina en este paso, con el
+// logro "El fin de la eternidad", y Sandglass recomienda empezarla cuanto antes
+export const OCRE_STEP = 79;
 export const PREREQS_OCRE = "Se recomienda mucho empezar haciendo el Dofus Ocre lo antes posible ya que es una misión larga e independiente de la mayoría de las etapas de la checklist. Cuanto antes se complete, mejor. A partir del paso 79 es OBLIGATORIO tener el Dofus ocre terminado para seguir las etapas de manera optimizada y eficiente.";
 
 export const PREREQS_OFICIOS = [
@@ -165,7 +162,7 @@ export const TIER_META = {
   epico:   { label: "Épico",   icon: "👑", cls: "t-epico" },
 };
 
-export const ALL_PREREQS = [...PREREQS_LOGROS, ...PREREQS_OFICIOS, ...PREREQS_HECHIZOS, ...PREREQS_DOFUS];
+export const ALL_PREREQS = [...PREREQS_LOGROS, ...PREREQS_OFICIOS, ...PREREQS_HECHIZOS];
 export const TOTAL_PTS = STEPS.reduce((a, s) => a + TIER_POINTS[s.effort], 0);
 export const ZONES = [...new Set(STEPS.map(s => s.zone))];
 

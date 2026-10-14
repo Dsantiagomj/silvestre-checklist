@@ -138,13 +138,13 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
   await page.click("#needsShowSummary");
   await page.click("#needsShowLists");
-  await expect(page.locator("#prereqsCount")).toHaveText("22/22");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await expect(page.locator(".pr-card:not(.done)")).toHaveCount(0);
   await page.click("#tabItems");
   await expect(page.locator("#items .slot:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
-  await expect(page.locator("#rdNPre")).toHaveText("22");
+  await expect(page.locator("#rdNPre")).toHaveText("21");
 });
 
 test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {
@@ -195,8 +195,8 @@ test("los Dofus del camino se van consiguiendo al completar su logro", async ({ 
   await expect(dofus.nth(3)).toHaveAttribute("title", "Domakuro · paso 49");
   await expect(dofus.nth(3).locator(".road-step")).toHaveText("49");
   await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
-  // El Ocre no sale de ningún paso ("La eterna cosecha" va aparte): es un hito antes del 79
-  await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · antes del paso 79");
+  // El Ocre llega al terminar "La eterna cosecha": el logro "El fin de la eternidad" del paso 79
+  await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · paso 79");
   await expect(dofus.nth(7)).not.toHaveClass(/\bobtained\b/);
   // Mientras falta, siguen el siguiente paso y lo que necesitas
   await expect(page.locator("#heroNext")).toBeVisible();

@@ -1,10 +1,10 @@
 import { Fragment, useEffect } from "react";
-import { OCRE_BY_STEP, STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { OCRE_ICON, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
+import { ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
-import { isPrereqDone, loadQuests, markSteps, selectStep, togglePrereq, toggleStep, useAppState } from "../state/store.js";
+import { loadQuests, markSteps, selectStep, toggleStep, useAppState } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
 import QuestMark from "./QuestMark.jsx";
 
@@ -60,28 +60,12 @@ function Hero({ step, done, quests }) {
   );
 }
 
-/** Desde el paso 79 hace falta el Dofus Ocre, que no sale de ningún paso: se avisa ahí. */
-function OcreCall() {
-  return (
-    <div className="call stop ocre">
-      <i aria-hidden="true">{OCRE_ICON ? <img src={imgUrl(OCRE_ICON)} alt="" /> : "⛔"}</i>
-      <div>
-        <b>Necesitas el Dofus Ocre</b>
-        Desde este paso es obligatorio tenerlo terminado. Lo da la misión «La eterna cosecha», aparte de los 100 pasos.
-        <button type="button" className="gbtn" onClick={() => togglePrereq("d1")}>Ya lo tengo</button>
-      </div>
-    </div>
-  );
-}
-
 /** Rojo, verde y azul de la guía; el verde enlaza los pasos que cierra. */
-function Calls({ step, s }) {
-  const ocre = step.n === OCRE_BY_STEP && !isPrereqDone(s, "d1");
-  if (!step.marks && !ocre) return null;
+function Calls({ step }) {
+  if (!step.marks) return null;
   return (
     <div className="journal-calls">
-      {ocre && <OcreCall />}
-      {(step.marks || []).map(([kind, text], i) => (
+      {step.marks.map(([kind, text], i) => (
         <div key={i} className={`call ${kind}`}>
           <i aria-hidden="true">{CALL[kind].icon}</i>
           <div>
@@ -190,7 +174,7 @@ export default function Journal({ n, id }) {
       <Hero step={step} done={!!s.done[n]} quests={quests} />
       <div className="journal-body">
         <p className="journal-base"><RichText text={step.base} /></p>
-        <Calls step={step} s={s} />
+        <Calls step={step} />
         {(reward || a?.bosses?.length > 1) && (
           <div className="journal-extras">
             {reward && (

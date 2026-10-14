@@ -81,9 +81,12 @@ def short(url):
 
 
 DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
-# The Dofus Ocre comes from "La eterna cosecha", a long quest outside the guide's
-# steps (the guide asks to start it early; it is mandatory from step 79). It is
-# not on the road; the prerequisites note shows its icon.
+# Dofus DofusDB lists as no reward at all: achievement id -> (item id, icon, name).
+# "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna
+# cosecha", the long quest that gives the Dofus Ocre; DofusDB has neither its
+# objectives nor its reward.
+MISSING_DOFUS = {565: (7754, "items/23012.png", "Dofus Ocre")}
+# The prerequisites note recommends starting it early: it shows the egg.
 OCRE_ICON = "items/23012.png"
 
 
@@ -133,6 +136,8 @@ def dofus_road(achievements, quests, steps, report):
         if a["id"] not in by_ach:
             continue
         ids = reward_item_ids(a.get("rewards"))
+        if a["id"] in MISSING_DOFUS:
+            ids.add(MISSING_DOFUS[a["id"]][0])
         for o in filter(None, a.get("objectives") or []):
             m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
             for st in (quests.get(int(m.group(1)), {}).get("steps") or []) if m else []:
@@ -151,7 +156,7 @@ def dofus_road(achievements, quests, steps, report):
 
 
 def reward_index(achievements):
-    index = {}
+    index = {aid: {"name": name, "img": img} for aid, (_, img, name) in MISSING_DOFUS.items()}
     for a in achievements:
         for reward in a.get("rewards") or []:
             for item in reward.get("items") or []:
