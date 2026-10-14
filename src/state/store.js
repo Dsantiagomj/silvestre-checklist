@@ -236,6 +236,18 @@ export function setStepsView(view) {
   localStorage.setItem(LS.stepsView, view);
   setState({ stepsView: view });
 }
+/**
+ * Desde el diario: vuelve al mapa con ese paso abierto (en móvil cierra la hoja) y lo
+ * deja a la vista, centrado, cuando el mapa ya está pintado.
+ */
+export function showOnMap(n) {
+  setState({ selectedStep: n, sheetOpen: false });
+  setStepsView("map");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelector(`.map-node[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }));
+}
+
 /** Desde el mapa: abre el paso en el diario. */
 export function openInDiary(n) {
   setStepsView("diary");

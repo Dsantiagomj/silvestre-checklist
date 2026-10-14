@@ -4,7 +4,7 @@ import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
-import { loadQuests, markSteps, selectStep, toggleStep, useAppState } from "../state/store.js";
+import { loadQuests, markSteps, selectStep, showOnMap, toggleStep, useAppState } from "../state/store.js";
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
 import QuestMark from "./QuestMark.jsx";
 
@@ -37,6 +37,10 @@ function Hero({ step, done, quests }) {
   return (
     <div className="journal-hero">
       {zone && <div className="journal-bg" style={{ backgroundImage: `url(${imgUrl(zone.img)})` }}></div>}
+      <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z" /><path d="M7 3v12M13 5v12" /></svg>
+        Ver en el mapa
+      </button>
       <div className="journal-head">
         <span className="journal-num">{step.n}</span>
         <h2 className="journal-title">{stepTitle(step)}</h2>

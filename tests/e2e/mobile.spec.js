@@ -12,3 +12,13 @@ test("en móvil el header ocupa una línea y el detalle sube como hoja", async (
   await expect(page.locator("#sheetContent .journal-show-name")).toHaveText("Blop Multicolor Real");
   await expect(page.locator("#sheetContent .journal-reward-name")).toHaveText("Dofus Púrpura");
 });
+
+test("en móvil, «Ver en el mapa» cierra la hoja y abre el mapa", async ({ page }) => {
+  await openApp(page);
+  await page.locator('.diary-row[data-n="34"] .row-main').click();
+  await expect(page.locator("#sheet")).toHaveClass(/open/);
+  await page.locator("#sheetContent .journal-to-map").click();
+  await expect(page.locator("#sheet")).not.toHaveClass(/open/);
+  await expect(page.locator(".map-node")).toHaveCount(100);
+  await expect(page.locator('.map-node[data-n="34"]')).toBeInViewport();
+});
