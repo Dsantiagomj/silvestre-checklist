@@ -15,7 +15,9 @@ const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
 // Cuándo pasa el punto por cada casilla en pausa y la deja marcada (s)
 const PAUSE_AT = { 43: 0.5, 44: 1.2 };
 // Cuándo se marca cada casilla (s): primero el 45 al vencer al jefe, luego hacia atrás
-const CHECK_AT = { 45: 4.8, 44: 5.5, 43: 6.2 };
+const CHECK_AT = { 45: 3.6, 44: 4.3, 43: 5.0 };
+// Lo que tarda el rebobinado antes de repetir (ms); igual que en el CSS
+const REWIND_MS = 450;
 
 function showPaused() {
   setSearch(PHRASE);
@@ -29,7 +31,12 @@ function showPaused() {
 export default function Nota() {
   // run: 0 = aún sin ver; cada valor nuevo remonta la pista y repite la animación
   const [run, setRun] = useState(0);
+  // La historia terminó (se puede repetir) o se está rebobinando para repetirla
+  const [ended, setEnded] = useState(false);
+  const [rewinding, setRewinding] = useState(false);
   const figRef = useRef(null);
+  const rewindTimer = useRef(0);
+  useEffect(() => () => clearTimeout(rewindTimer.current), []);
 
   // Se cuenta una vez al entrar en pantalla
   useEffect(() => {
@@ -41,16 +48,31 @@ export default function Nota() {
     return () => io.disconnect();
   }, []);
 
-  const replay = () => { if (!prefersReducedMotion()) setRun(r => r + 1); };
+  // Solo se repite al terminar, y primero se rebobina para no saltar de golpe al principio
+  const replay = () => {
+    if (prefersReducedMotion() || !ended || rewinding) return;
+    setRewinding(true);
+    rewindTimer.current = setTimeout(() => {
+      setRewinding(false);
+      setEnded(false);
+      setRun(r => r + 1);
+    }, REWIND_MS);
+  };
+  // La última ✓ (la del 43) cierra la historia
+  const onAnimationEnd = e => {
+    if (e.animationName === "nota-check" && e.target.dataset.last) setEnded(true);
+  };
 
   return (
     <aside className="nota" id="nota" aria-labelledby="notaTitle">
       <figure className="nota-example" ref={figRef} onMouseEnter={replay}>
         {/* Solo ilustra: el pie de foto lo cuenta para quien no lo ve */}
-        <div key={run} className={"nota-track" + (run ? " play" : "")} data-run={run} aria-hidden="true">
+        <div key={run} className={"nota-track" + (rewinding ? " rewind" : run ? " play" : "")} data-run={run}
+          aria-hidden="true" onAnimationEnd={onAnimationEnd}>
           <span className="nota-marker"></span>
           {EXAMPLE.paused.map(n => (
-            <span key={n} className="nota-step paused" style={{ "--pause-at": `${PAUSE_AT[n]}s`, "--check-at": `${CHECK_AT[n]}s` }}>{n}</span>
+            <span key={n} className="nota-step paused" data-last={n === EXAMPLE.paused[0] ? "1" : undefined}
+              style={{ "--pause-at": `${PAUSE_AT[n]}s`, "--check-at": `${CHECK_AT[n]}s` }}>{n}</span>
           ))}
           <span className="nota-boss">{BOSS && <img src={imgUrl(BOSS.img)} alt="" />}</span>
           <span className="nota-step closer" style={{ "--check-at": `${CHECK_AT[EXAMPLE.closer]}s` }}>{EXAMPLE.closer}</span>

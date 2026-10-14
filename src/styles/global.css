@@ -279,9 +279,9 @@ header{
 
 /* La historia, una vez al verla: el punto llega al jefe, el jefe cae, el 45 se marca
    y la ✓ vuelve hacia atrás al 44 y al 43. --check-at es cuándo se marca cada casilla. */
-.nota-track.play .nota-marker{ animation:nota-travel 3.2s ease-in-out .4s forwards; }
-.nota-track.play .nota-boss{ animation:nota-hit .45s ease-in-out 3.55s, nota-defeat-ring .5s ease 4s forwards; }
-.nota-track.play .nota-boss img{ animation:nota-defeat .5s ease 4s forwards; }
+.nota-track.play .nota-marker{ animation:nota-travel 2.6s ease-in-out .4s forwards; }
+.nota-track.play .nota-boss{ animation:nota-hit .4s ease-in-out 2.65s, nota-defeat-ring .4s ease 3s forwards; }
+.nota-track.play .nota-boss img{ animation:nota-defeat .4s ease 3s forwards; }
 .nota-track.play .nota-step{ animation:nota-lit .4s ease var(--check-at) forwards; }
 .nota-track.play .nota-step::after{ animation:nota-check .4s cubic-bezier(.34,1.56,.64,1) var(--check-at) forwards; }
 /* La pausa la deja el punto al pasar (--pause-at) y se va cuando el paso se termina (--check-at) */
@@ -293,11 +293,24 @@ header{
 @keyframes nota-travel{
   0%  { left:22px; opacity:0; }
   8%  { opacity:1; }
-  40% { left:127px; }
-  65% { left:127px; }
-  92% { left:163px; opacity:1; }
+  45% { left:127px; }
+  60% { left:127px; }
+  85% { left:163px; opacity:1; }
   100%{ left:163px; opacity:0; }
 }
+/* Rebobinado antes de repetir: del final al principio en 0,45 s, sin saltos.
+   Con nombres propios: reusar los de la historia con "reverse" no crea animaciones
+   nuevas, solo invierte las ya terminadas y salta directo al principio. */
+.nota-track.rewind .nota-step{ animation:nota-unlit .45s ease both; }
+.nota-track.rewind .nota-step::after{ animation:nota-uncheck .45s ease both; }
+.nota-track.rewind .nota-boss{ animation:nota-revive-ring .45s ease both; }
+.nota-track.rewind .nota-boss img{ animation:nota-revive .45s ease both; }
+@keyframes nota-unlit{
+  from{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
+}
+@keyframes nota-uncheck{ from{ opacity:1; transform:none; } to{ opacity:0; transform:scale(.4); } }
+@keyframes nota-revive{ from{ filter:grayscale(1) brightness(.55); } }
+@keyframes nota-revive-ring{ from{ border-color:var(--line-2); } }
 @keyframes nota-hit{
   25%{ transform:translateX(-3px) rotate(-6deg); }
   50%{ transform:translateX(3px) rotate(5deg); }
