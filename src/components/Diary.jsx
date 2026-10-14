@@ -216,6 +216,16 @@ export default function Diary({ mobile }) {
   const [swap, setSwap] = useState(null);
   const switching = useRef(false);
   const height = useRef(0);
+  // El paso a dejar a la vista al volver al mapa. Se mira cuando la página ya tiene su
+  // altura final: un fotograma antes la vista nueva sigue debajo de la que se fue, el
+  // paso parece fuera de la pantalla y el desplazamiento acababa demasiado abajo
+  const focus = useRef(null);
+  const [settled, setSettled] = useState(0);
+  useEffect(() => {
+    const n = focus.current;
+    focus.current = null;
+    if (n != null) revealMapNode(n);
+  }, [settled]);
   // El cambio en curso se decide al renderizar, para que la vista nueva lo vea al montarse
   const lastView = useRef(s.stepsView);
   const swapInfo = useRef({ current: null, channel: makeChannel() }).current;
@@ -252,8 +262,8 @@ export default function Diary({ mobile }) {
             onExitComplete={() => {
               switching.current = false;
               setSwap(null);
-              const n = takeMapFocus();
-              if (n != null) requestAnimationFrame(() => revealMapNode(n));
+              focus.current = takeMapFocus();
+              setSettled(c => c + 1);
             }}>
             <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
               {map ? (

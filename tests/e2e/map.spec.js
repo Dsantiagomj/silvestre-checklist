@@ -105,6 +105,16 @@ test("desde el detalle del diario se vuelve al mapa con ese paso abierto", async
   await expect(node(page, 34)).toBeInViewport();
 });
 
+test("al volver al mapa con un paso lejano, lo desplaza hasta dejarlo a la vista", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView());
+  await page.click('.diary-row[data-n="97"] .row-main');
+  await page.click("#journal .journal-to-map");
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
+  await expect(node(page, 97)).toBeInViewport({ timeout: 3000 });
+});
+
 test("sin nada guardado, los pasos se abren en el mapa y el selector va primero", async ({ page }) => {
   await openApp(page, null, { view: null });
   await expect(page.locator(".map-node")).toHaveCount(100);
