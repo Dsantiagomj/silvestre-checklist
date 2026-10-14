@@ -58,7 +58,7 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Filtros**: chips por zona, chips por tier, toggle "solo pendientes", búsqueda por texto o número.
 - ✅ **Navegación por teclado**: ←/→ entre pasos, espacio para marcar, Esc para cerrar.
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
-- ✅ **Nota aclaratoria** de Sandglass sobre "Hasta tener que pasar X jefe".
+- ✅ **Nota aclaratoria** de Sandglass sobre "Hasta tener que pasar X jefe", en una tarjeta con la llave de la mazmorra y un botón que filtra los 33 pasos que usan esa instrucción.
 - ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
 - ✅ **Objetos necesarios**: la lista de torrentearcano, paso a paso. Cada paso muestra lo que pide, los prerrequisitos muestran lo suyo y una sección aparte lo suma por categoría (recursos, consumibles, equipables, almas, criaturas, cosméticos). Un objeto deja de hacer falta al completar todos los pasos que lo piden, o al marcarlo como conseguido. La lista se copia como texto.
 - ✅ **Overlay**: una ventana compacta que se queda encima del juego y te lleva objetivo a objetivo por las misiones del paso, con mapa y coordenadas. Ver abajo.
