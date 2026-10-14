@@ -362,9 +362,9 @@ export default function Journal({ n, id }) {
       <div className="journal-body">
         <Calls step={step} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
-        <Actions step={step} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
       </div>
+      <Actions step={step} s={s} />
     </article>
   );
 }

@@ -609,6 +609,27 @@ test("lo que hay que preparar va junto al objetivo: «Incluye» y «Necesitas» 
   await expect(page.locator("#journal .goal-prep")).toHaveCount(0);
 });
 
+test("en escritorio solo se desplazan avisos y misiones; la barra de pasos queda fija abajo", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
+  const detail = page.locator(".diary-detail");
+  const body = page.locator("#journal .journal-body");
+  // El panel no se desplaza entero: lo hace solo el cuerpo
+  expect(await detail.evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+  expect(await body.evaluate(el => el.scrollHeight > el.clientHeight + 50)).toBe(true);
+  // La barra va fuera del cuerpo, pegada al fondo del panel, y no se mueve al desplazar
+  await expect(page.locator("#journal .journal-body .journal-cta")).toHaveCount(0);
+  const bottom = () => page.locator("#journal .journal-cta").evaluate(el => Math.round(el.getBoundingClientRect().bottom));
+  const panelBottom = await detail.evaluate(el => Math.round(el.getBoundingClientRect().bottom));
+  const before = await bottom();
+  expect(Math.abs(before - panelBottom)).toBeLessThanOrEqual(2);
+  await body.evaluate(el => el.scrollTo(0, el.scrollHeight));
+  expect(await bottom()).toBe(before);
+  // La cabecera (estandarte y objetivo) tampoco se mueve
+  await expect(page.locator("#journal .journal-banner")).toBeInViewport();
+});
+
 test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
   await openApp(page);
   await stepData(page, 17);
