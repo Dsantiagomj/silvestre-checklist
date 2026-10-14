@@ -694,6 +694,10 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
     const gap = await page.locator("#journal .q-optional").evaluate(el =>
       el.getBoundingClientRect().left - el.previousElementSibling.getBoundingClientRect().right);
     expect(gap).toBeLessThan(20);
+    // Es una etiqueta (con borde), y el nivel sigue en su sitio: alineado con las demás filas
+    expect(await page.locator("#journal .q-optional").evaluate(el => getComputedStyle(el).borderTopStyle)).toBe("solid");
+    const rights = await page.locator("#journal .q-item .q-lv").evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().right)));
+    expect(Math.max(...rights) - Math.min(...rights)).toBeLessThanOrEqual(1);
   }
 });
 
