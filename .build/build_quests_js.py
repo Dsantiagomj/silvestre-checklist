@@ -90,20 +90,31 @@ def map_info(rec):
 # ---------------------------------------------------------------------------
 # Step -> quests
 # ---------------------------------------------------------------------------
+# Achievements DofusDB has no objectives for: achievement id -> its quests in order.
+# "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna cosecha".
+MISSING_OBJECTIVES = {565: [439]}
+
+
 def achievement_quests(ach):
-    """The achievement's quests in mission order (1-based numbering = order + 1)."""
+    """The achievement's objectives in order, as quest ids (None if not a quest).
+
+    Sandglass numbers missions by their place among all the objectives: in "Seis de
+    seis" the first eleven are other achievements, so "misión 13" is the 13th objective.
+    """
+    if ach["id"] in MISSING_OBJECTIVES:
+        return list(MISSING_OBJECTIVES[ach["id"]])
     out = []
     objectives = [o for o in (ach.get("objectives") or []) if o]
     for o in sorted(objectives, key=lambda o: o.get("order", 0)):
         m = re.search(r"Qf=(\d+)", o.get("criterion") or "")
-        if m:
-            out.append(int(m[1]))
+        out.append(int(m[1]) if m else None)
     return out
 
 
 UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
 NUMBERED = re.compile(r"misi[oó]n(?:es)?\s+(\d+)", re.I)
 LOGRO = re.compile(r"\blogro\b", re.I)
+INCLUDES = re.compile(r"\bincluye\b", re.I)
 
 
 def missions_for(text, start):
@@ -138,20 +149,54 @@ def bonta_missions(quests):
     return out
 
 
-def step_quest_ids(step, achievements):
-    text = step["text"]
-    ids = []
+def read_marks():
+    """Each step's base text and marks (steps.js, written by import_guide.py)."""
+    src = (ROOT / "src" / "data" / "steps.js").read_text()
+    out = {}
+    for line in src.split("export const STEPS = [", 1)[1].split("\n];", 1)[0].splitlines():
+        n = re.search(r"\{ n: (\d+),", line)
+        if not n:
+            continue
+        base = re.search(r', base: ("(?:[^"\\]|\\.)*")', line)
+        marks = re.search(r", marks: (\[.*?\]\])", line)
+        out[int(n[1])] = (json.loads(base[1]) if base else None, json.loads(marks[1]) if marks else [])
+    return out
+
+
+def step_quest_ids(step, achievements, marks):
+    """The step's quests in the guide's order: the achievement it is about (from the
+    base text, never from a note), then missions a note names by number ("Logro X,
+    misión 2"), then quests matched by name."""
+    base, notes = marks.get(step["n"], (None, []))
+    base = base or step["text"]
+    main, extra, named = [], [], []
     for a in step["assets"]:
         if a["kind"] == "quest":
-            ids.append(a["id"])
+            named.append(a["id"])
         elif a["kind"] == "achievement" and a["id"] in achievements:
             ordered = achievement_quests(achievements[a["id"]])
-            pos = text.find(a["matched_on"])
-            wanted = missions_for(text, max(pos, 0))
-            if wanted is None:
-                ids += ordered
-            else:
-                ids += [ordered[n - 1] for n in wanted if 0 < n <= len(ordered)]
+            pick = lambda wanted: [ordered[n - 1] for n in wanted if 0 < n <= len(ordered)]
+            pos = base.find(a["matched_on"])
+            if pos >= 0:
+                wanted = missions_for(base, pos)
+                main.append((pos, ordered if wanted is None else pick(wanted)))
+                continue
+            # Only in a note: the missions it names, or the whole achievement when the
+            # note says the step includes it ("Este paso incluye también el logro X").
+            # Otherwise it is context ("necesaria para el logro Cuatro de seis", "antes
+            # de hacer el logro…") and not part of the step.
+            for _, note in notes:
+                at = note.find(a["matched_on"])
+                if at < 0:
+                    continue
+                wanted = missions_for(note, at)
+                if wanted:
+                    extra += pick(wanted)
+                elif INCLUDES.search(note[:at]):
+                    extra += ordered
+    # Varios logros en un paso: en el orden en que los nombra la guía
+    main = [q for _, qs in sorted(main, key=lambda m: m[0]) for q in qs]
+    ids = [q for q in main + extra + named if q]
     seen, out = set(), []
     for q in ids:  # keep order, drop repeats
         if q not in seen:
@@ -172,10 +217,11 @@ def main():
     quests = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
 
     bonta = bonta_missions(quests)
+    marks = read_marks()
     prev_align = 1
     step_quests = {}
     for step in report:
-        ids = step_quest_ids(step, achievements)
+        ids = step_quest_ids(step, achievements, marks)
         align = ALIGN_STEP.search(step["text"])
         if align:
             last = int(align[1])
