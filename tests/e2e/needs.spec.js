@@ -483,3 +483,25 @@ test("lo opcional se distingue con su propia etiqueta", async ({ page }) => {
   await expect(tags).toHaveCount(3);
   await expect(page.locator("#prereqs .pr-card.optional")).toHaveCount(3);
 });
+
+test("completar un prerrequisito da por usados los objetos que pide", async ({ page }) => {
+  await openApp(page);
+  const slot = k => page.locator(`#prereqs .slot[data-id="${k}"]`);
+  // Intrusión en el territorio wabbit pide las cuatro alas de escarahoja
+  for (const k of ["1455", "1456", "1457", "1458"]) await expect(slot(k)).not.toHaveClass(/owned/);
+  await page.click('#prereqs .pr-card[data-id="l7"]');
+  for (const k of ["1455", "1456", "1457", "1458"]) await expect(slot(k)).toHaveClass(/owned/);
+  // Los de otros prerrequisitos siguen pendientes
+  await expect(slot("421")).not.toHaveClass(/owned/);
+  // Altos vuelos: el casco y las alas de madera (se mejoran para el Escaeroplano)
+  await page.click('#prereqs .pr-card[data-id="l10"]');
+  for (const k of ["1019", "1021"]) await expect(slot(k)).toHaveClass(/owned/);
+});
+
+test("marcar un objeto no completa su prerrequisito: se puede comprar antes", async ({ page }) => {
+  await openApp(page);
+  await page.locator('#prereqs .slot[data-id="421"] .slot-main').click();
+  await expect(page.locator('#prereqs .slot[data-id="421"]')).toHaveClass(/owned/);
+  await expect(page.locator('#prereqs .pr-card[data-id="l11"]')).not.toHaveClass(/done/);
+  await expect(page.locator("#prereqsCount")).toHaveText("0/21");
+});

@@ -7,6 +7,8 @@ import DATA from "../data/resources.json";
 export const RES_ITEMS = DATA.items;
 const RES_STEPS = DATA.steps;
 export const PREREQ_STEP = 0;
+/** Fila de los prerrequisitos -> el prerrequisito en el que se gasta (build_resources.py). */
+export const PREREQ_OF_ROW = Object.fromEntries((DATA.steps[String(PREREQ_STEP)] || []).map(r => [r.k, r.p]));
 
 export const CATEGORIES = [
   ["recursos", "Recursos"], ["consumibles", "Consumibles"], ["equipables", "Equipables"],

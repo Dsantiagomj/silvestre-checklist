@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from "react";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
-import { ALL_ROWS, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
+import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -153,7 +153,14 @@ export const stepCovered = (s, n) =>
  * pasos que lo piden. Así el contador avanza solo al completar pasos.
  */
 export const rowHave = (s, row, steps = row.steps) =>
-  guideComplete(s) || steps.every(n => stepCovered(s, n) || stepOwned(s, row.k, n));
+  guideComplete(s) || steps.every(n => rowCovered(s, row.k, n) || stepOwned(s, row.k, n));
+/**
+ * Un objeto de los prerrequisitos está gastado cuando se completa el prerrequisito
+ * que lo pide (no hace falta completarlos todos). Al revés no: tener el objeto no
+ * completa el prerrequisito, se puede comprar antes.
+ */
+const rowCovered = (s, k, n) =>
+  n === PREREQ_STEP && PREREQ_OF_ROW[k] ? isPrereqDone(s, PREREQ_OF_ROW[k]) : stepCovered(s, n);
 /** Conseguido a mano para ese paso: el objeto entero (clave sola) o solo esa parte ("clave#paso"). */
 const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`];
 
