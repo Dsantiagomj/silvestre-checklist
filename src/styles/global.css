@@ -2460,11 +2460,6 @@ header.show-progress .tb-progress{
 
 .journal-extras{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0 6px; }
 .journal-extras .boss-row{ margin:0; }
-.journal-reward{
-  display:inline-flex; align-items:center; gap:8px; padding:4px 12px 4px 4px; border-radius:6px;
-  background:var(--gw-panel); border:1px solid var(--gw-line); font-size:13.5px; color:var(--gw-ink);
-}
-.journal-reward img{ width:28px; height:28px; object-fit:contain; }
 
 /* Títulos de sección con rombos dorados, como en la ventana del juego:
    ——— ◆ MISIONES (2) ◆ ——— */
