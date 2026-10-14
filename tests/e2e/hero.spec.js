@@ -47,13 +47,13 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator("#heroPct")).toHaveText("100%");
   await expect(page.locator(".hero-egg")).toHaveClass(/obtained/);
   await expect(page.locator(".egg-pct small")).toContainText("¡Obtenido!");
-  // La tarjeta del siguiente paso se vuelve un trofeo con el propio Dofus
-  const card = page.locator("#heroNext");
-  await expect(card).toHaveClass(/\bdone\b/);
-  await expect(card.locator(".hero-next-name")).toHaveText("¡El Dofus Silvestre es tuyo!");
-  await expect(card).toContainText("100 pasos");
-  await expect(card.locator(".hero-next-art img")).toHaveAttribute("src", /items\/23036\.png$/);
-  await page.click("#heroNextGo");
+  // Sin siguiente paso ni nada que reunir: el sitio lo ocupa la colección del camino
+  await expect(page.locator("#heroNext")).toHaveCount(0);
+  await expect(page.locator(".hero-reqs")).toHaveCount(0);
+  const road = page.locator(".road.big");
+  await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
+  await expect(road.locator(".road-dofus.obtained")).toHaveCount(7);
+  await page.click("#roadGo");
   await expect(page.locator("#grid")).toBeInViewport();
 });
 
@@ -135,12 +135,7 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
-  const [pre, preTotal] = (await page.locator("#heroWarn .hero-req-count").textContent()).split("/");
-  expect(pre).toBe(preTotal);
-  const [own, ownTotal] = (await page.locator("#heroItems .hero-req-count").textContent()).split("/");
-  expect(own).toBe(ownTotal);
-  await expect(page.locator("#heroWarn")).toHaveClass(/\bcomplete\b/);
-  await expect(page.locator("#heroItems")).toHaveClass(/\bcomplete\b/);
+  await expect(page.locator("#prereqsCount")).toHaveText("18/18 completados");
   await expect(page.locator(".prereq-item:not(.done)")).toHaveCount(0);
   await expect(page.locator(".shop-item:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
@@ -176,4 +171,23 @@ test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async (
   };
   await page.waitForTimeout(400); // el brillo entra con una transición
   expect(await edgeJump()).toBeLessThan(8);
+});
+
+test("los Dofus del camino se van consiguiendo al completar su logro", async ({ page }) => {
+  // Esmeralda (paso 18) y Púrpura (21); el 17 solo lleva "Verde esmeralda" hasta la misión 7
+  await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
+  const road = page.locator(".road");
+  await expect(road).not.toHaveClass(/\bbig\b/);
+  await expect(road.locator(".road-count")).toHaveText("2/7");
+  const dofus = road.locator(".road-dofus");
+  await expect(dofus).toHaveCount(7);
+  await expect(dofus.nth(0)).toHaveClass(/\bobtained\b/);
+  await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
+  await expect(dofus.nth(2)).not.toHaveClass(/\bobtained\b/);
+  // Uno pendiente dice en qué paso se consigue
+  await expect(dofus.nth(2)).toHaveAttribute("title", "Dofus Turquesa · paso 62");
+  await expect(dofus.nth(2).locator(".road-step")).toHaveText("62");
+  // Mientras falta, siguen el siguiente paso y lo que necesitas
+  await expect(page.locator("#heroNext")).toBeVisible();
+  await expect(page.locator(".hero-reqs")).toBeVisible();
 });

@@ -58,6 +58,7 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Filtros**: chips por zona, chips por tier, toggle "solo pendientes", búsqueda por texto o número.
 - ✅ **Navegación por teclado**: ←/→ entre pasos, espacio para marcar, Esc para cerrar.
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
+- ✅ **Dofus del camino**: los 7 Dofus que da la guía antes del Silvestre (Esmeralda, Púrpura, Turquesa, Moteado, Marfil, Ébano y Pesadilla), cada uno en el paso que completa su logro. Mientras avanzas se ven en una fila del hero, oscuros y con su paso hasta conseguirlos; con la guía terminada ocupan el sitio del siguiente paso y de "Lo que necesitas", que ya no hacen falta.
 - ✅ **Nota aclaratoria** sobre "Hasta tener que pasar X jefe": explica la pausa con un ejemplo real dibujado con casillas del tablero (los pasos 43 y 44 se detienen ante Kodámade y el 45 los termina) y lleva a los 33 pasos que usan esa instrucción.
 - ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
 - ✅ **Objetos necesarios**: la lista de torrentearcano, paso a paso. Cada paso muestra lo que pide, los prerrequisitos muestran lo suyo y una sección aparte lo suma por categoría (recursos, consumibles, equipables, almas, criaturas, cosméticos). Un objeto deja de hacer falta al completar todos los pasos que lo piden, o al marcarlo como conseguido. La lista se copia como texto.

@@ -2042,34 +2042,64 @@ header.show-progress .tb-progress{
   transition:filter .15s ease, transform .15s ease;
 }
 .hero-next-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
-/* Guía completada: la tarjeta se vuelve un trofeo con un borde de luz que gira */
-@property --trophy-a{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
-.hero-next.done{
-  position:relative; isolation:isolate;
-  border-color:transparent;
-  background:
-    linear-gradient(color-mix(in srgb, var(--bg) 82%, transparent), color-mix(in srgb, var(--bg) 82%, transparent)) padding-box,
-    conic-gradient(from var(--trophy-a), #f6d77a, #b7dc69, #4f8a22, #b7dc69, #f6d77a) border-box;
-  border:1.5px solid transparent;
-  box-shadow:0 14px 34px rgba(0,0,0,.25), 0 0 28px rgba(183,220,105,.22);
-  animation:trophy-spin 6s linear infinite;
+/* Dofus del camino: fila compacta mientras avanzas, tarjeta grande con la guía terminada */
+.road{ margin-top:16px; max-width:540px; }
+.road-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+.road-title{
+  margin:0; font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;
+  color:var(--txt-mute);
 }
-@keyframes trophy-spin{ to{ --trophy-a:360deg; } }
-.hero-next.done .hero-next-art{
-  background:radial-gradient(circle at 50% 45%, rgba(246,215,122,.35), transparent 70%), var(--inset);
-  border-color:rgba(246,215,122,.45);
+.road-count{ font-size:12px; font-weight:700; color:var(--accent-ink); font-variant-numeric:tabular-nums; }
+.road-list{ display:flex; gap:8px; margin:0; padding:0; list-style:none; }
+.road-dofus{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+.road-art{
+  position:relative; display:grid; place-items:center;
+  width:40px; height:40px; border-radius:10px;
+  background:color-mix(in srgb, var(--bg) 66%, transparent); border:1px solid var(--line-2);
+  backdrop-filter:blur(6px);
 }
-.hero-next.done .hero-next-art img{
-  filter:drop-shadow(0 0 8px rgba(183,220,105,.7));
-  animation:trophy-float 3.2s ease-in-out infinite;
+.road-art img{ width:78%; height:78%; object-fit:contain; filter:grayscale(1) brightness(.35); opacity:.75; }
+.road-step{
+  position:absolute; right:-5px; bottom:-5px;
+  min-width:18px; height:16px; padding:0 4px; border-radius:999px;
+  display:grid; place-items:center;
+  background:var(--panel-2); border:1px solid var(--line-2);
+  font-size:9.5px; font-weight:800; color:var(--txt-soft); font-variant-numeric:tabular-nums;
 }
-@keyframes trophy-float{ 50%{ transform:translateY(-3px) rotate(-4deg); } }
-.hero-next.done .hero-next-kicker{ color:var(--gold-ink); }
-.hero-next.done .hero-next-name{
-  font-family:'Lilita One', var(--font-body); font-weight:400; font-size:21px; letter-spacing:.3px;
+.road-dofus.obtained .road-art{ border-color:color-mix(in srgb, var(--gold-ink) 60%, transparent); }
+.road-dofus.obtained .road-art img{ filter:drop-shadow(0 0 6px rgba(246,215,122,.45)); opacity:1; }
+
+.road.big{
+  margin-top:18px; padding:16px 18px 18px;
+  border-radius:16px;
+  background:color-mix(in srgb, var(--bg) 72%, transparent);
+  border:1.5px solid color-mix(in srgb, var(--accent-ink) 70%, transparent);
+  backdrop-filter:blur(8px);
+  box-shadow:0 14px 34px rgba(0,0,0,.25), 0 0 28px rgba(183,220,105,.15);
+  display:grid; grid-template-columns:1fr auto; align-items:center; column-gap:12px;
 }
-@media (prefers-reduced-motion: reduce){
-  .hero-next.done, .hero-next.done .hero-next-art img{ animation:none; }
+.road.big .road-head{ margin:0; }
+.road.big .road-title{
+  font-family:'Lilita One', var(--font-body); font-weight:400;
+  font-size:21px; letter-spacing:.3px; text-transform:none; color:var(--txt);
+}
+.road.big .road-sub{ grid-column:1; margin:2px 0 0; font-size:12.5px; color:var(--txt-soft); }
+.road.big .road-go{ grid-column:2; grid-row:1 / span 2; }
+.road.big .road-list{ grid-column:1 / -1; justify-content:space-between; margin-top:14px; }
+.road.big .road-art{ width:58px; height:58px; border-radius:14px; }
+.road-name{ font-size:11px; font-weight:700; color:var(--txt-soft); }
+.road-go{
+  padding:10px 18px; border-radius:999px;
+  background:var(--amber); color:#0d0e0c;
+  font-size:14px; font-weight:800; white-space:nowrap;
+  transition:filter .15s ease, transform .15s ease;
+}
+.road-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
+@media (max-width:600px){
+  .road.big{ grid-template-columns:1fr; }
+  .road.big .road-go{ grid-column:1; grid-row:auto; margin-top:14px; justify-self:start; }
+  .road.big .road-list{ display:grid; grid-template-columns:repeat(4, 1fr); gap:14px 6px; }
+  .road.big .road-art{ width:52px; height:52px; }
 }
 
 /* Obtención: el Dofus se llena de color desde abajo dentro de un anillo de 10 tramos */

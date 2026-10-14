@@ -12,6 +12,8 @@ export const THEME_ICONS = DATA.THEME_ICONS || null;
 export const BACKUP_ICONS = DATA.BACKUP_ICONS || null;
 export const HEADER_ICONS = DATA.HEADER_ICONS || null;
 export const HERO_ICONS = DATA.HERO_ICONS || null;
+/** Los Dofus que da la guía antes del Silvestre: { name, img, step, achievement }. */
+export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
 
 const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
 
