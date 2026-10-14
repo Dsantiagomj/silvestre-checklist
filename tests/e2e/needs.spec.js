@@ -660,3 +660,32 @@ test("cada objeto de los prerrequisitos dice para qué prerrequisito es", async 
   await page.click("#tabItems");
   await expect(page.locator('#bandSoon .slot[data-id="7904"] .slot-tip-when').first()).toHaveText("Para «El cementerio primitivo»");
 });
+
+test("el aviso de un objeto queda por encima de la sección siguiente", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  // La última fila de objetos de los prerrequisitos: su aviso cae sobre la nota de abajo
+  const slot = page.locator("#prereqs .slot").last();
+  await slot.scrollIntoViewIfNeeded();
+  await page.evaluate(() => scrollBy(0, 200));
+  await slot.locator(".slot-main").hover();
+  const tip = slot.locator(".slot-tip");
+  await expect(tip).toBeVisible();
+  await page.waitForTimeout(500);
+  const onTop = await tip.evaluate(el => {
+    // El aviso no recibe el ratón (pointer-events: none) y elementFromPoint lo saltaría
+    el.style.pointerEvents = "auto";
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.bottom - 6);
+    return el.contains(hit);
+  });
+  expect(onTop).toBe(true);
+});
+
+test("en «Ya utilizados» el aviso también dice para qué prerrequisito era", async ({ page }) => {
+  await openApp(page, { "silvestre:prereqs": ALL_PREREQS });
+  await page.click("#tabItems");
+  await page.locator("#shopPendingToggle").uncheck({ force: true });
+  await expect(page.locator('#bandUsed .slot[data-id^="8918@"] .slot-tip').first()).toContainText("«Altos vuelos»");
+  await expect(page.locator('#bandUsed .slot[data-id="1019"] .slot-tip')).toContainText("«Pan Koko Mío»");
+});
