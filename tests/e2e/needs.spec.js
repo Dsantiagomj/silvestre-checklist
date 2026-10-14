@@ -248,3 +248,11 @@ test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos g
   expect(tops[0]).toBe(tops[2]);
   expect(tops[3]).toBeGreaterThan(tops[0]);
 });
+
+test("el contador de objetos usa el mismo total que la lista", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  const total = await page.locator('.needs-cat[data-cat="todo"] .n').textContent();
+  await expect(page.locator("#itemsCount")).toHaveText(`0/${total}`);
+  await expect(page.locator("#heroItems .hero-req-count")).toHaveText(`0/${total}`);
+});

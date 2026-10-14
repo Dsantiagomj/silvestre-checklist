@@ -46,9 +46,11 @@ export function aggregate(steps) {
 
 /** Todos los pasos que piden algo, prerrequisitos incluidos. */
 export const STEPS_WITH_ITEMS = Object.keys(RES_STEPS).map(Number);
-/** Lo que pide la guía entera. Las filas con grupo (misión opcional, una orden) no son para todos. */
+/**
+ * Lo que pide la guía entera, también lo de misiones opcionales y de cada orden: van
+ * ligados a sus pasos, así que completarlos los cubre aunque no se marquen.
+ */
 export const ALL_ROWS = aggregate(STEPS_WITH_ITEMS);
-export const REQUIRED_ROWS = ALL_ROWS.filter(r => !r.g);
 /** Cada objeto con todos los pasos que lo piden. */
 export const ROW_BY_KEY = new Map(ALL_ROWS.map(r => [r.k, r]));
 

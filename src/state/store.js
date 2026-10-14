@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from "react";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
-import { PREREQ_STEP, REQUIRED_ROWS, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
+import { ALL_ROWS, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -153,7 +153,7 @@ export function soonSteps(s, count = 5) {
   return out;
 }
 export const pendingItemSteps = s => STEPS_WITH_ITEMS.filter(n => !stepCovered(s, n));
-export const ownedCount = s => REQUIRED_ROWS.filter(r => rowHave(s, r)).length;
+export const ownedCount = s => ALL_ROWS.filter(r => rowHave(s, r)).length;
 export const prereqsPending = s => ALL_PREREQS.length - prereqsDone(s);
 export const nextPending = s => {
   const st = STEPS.find(x => !s.done[x.n]);
