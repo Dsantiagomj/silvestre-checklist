@@ -80,6 +80,34 @@ def short(url):
     return url[len(CDN):] if url and url.startswith(CDN) else url
 
 
+def dofus_road(achievements, steps, report):
+    """The Dofus the guide hands out before the Silvestre, in the order you get them.
+
+    A Dofus is obtained on the step that completes its achievement: the one marked
+    "(Completo)", or the last step that mentions it. The step icon is not enough:
+    step 17 shows the Dofus Esmeralda but only goes "hasta la misión 7".
+    """
+    text = {s["n"]: s["text"] for s in report}
+    by_ach = {}
+    for n, entry in steps.items():
+        for a in entry.get("achievements", []):
+            by_ach.setdefault(a["id"], []).append(int(n))
+    road = []
+    for a in achievements:
+        if a["id"] not in by_ach:
+            continue
+        for reward in a.get("rewards") or []:
+            for item in reward.get("items") or []:
+                name = (item.get("name") or {}).get("es", "")
+                if not name.startswith("Dofus") or name == "Dofus Silvestre":
+                    continue
+                ns = sorted(set(by_ach[a["id"]]))
+                done = [n for n in ns if re.search(r"\(Completos?\)", text[n])]
+                road.append({"name": name, "img": f"items/{item['iconId']}.png",
+                             "step": (done or ns)[-1], "achievement": a["name"]["es"]})
+    return sorted(road, key=lambda d: d["step"])
+
+
 def reward_index(achievements):
     index = {}
     for a in achievements:
@@ -227,6 +255,7 @@ def main():
             steps[str(step["n"])] = entry
 
     prereqs = prereq_icons(read_prereqs())
+    road = dofus_road(achievements, steps, report)
 
     paths = set()
     for v in steps.values():
@@ -237,6 +266,7 @@ def main():
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
               *HEADER_ICONS.values(), *HERO_ICONS.values()}
+    paths |= {d["img"] for d in road}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
     fresh = {p for p, status in results if status == "ok"}
@@ -265,12 +295,14 @@ def main():
         "HERO_ICONS": HERO_ICONS,
         "STEP_ASSETS": steps,
         "PREREQ_ICONS": prereqs,
+        "DOFUS_ROAD": road,
     }) + "\n")
 
     size = sum((IMG / p).stat().st_size for p in paths if (IMG / p).exists())
     print(f"assets.json     : {OUT_JSON.stat().st_size // 1024} KB")
     print(f"pasos con icono : {sum(1 for v in steps.values() if 'icon' in v)}/100")
     print(f"prerrequisitos  : {len(prereqs)} con icono")
+    print("dofus del camino: " + ", ".join(f"{d['name']} ({d['step']})" for d in road))
     print(f"imágenes        : {len(paths)} en public/img/ ({size // 1024} KB), fallidas {len(failed)}")
     for p, why in failed:
         print(f"   FALLA {p} {why}")

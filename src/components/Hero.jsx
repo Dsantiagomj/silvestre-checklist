@@ -6,6 +6,7 @@ import {
 } from "../state/store.js";
 import { BRAND_ICON, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { REQUIRED_ROWS } from "../lib/resources.js";
+import DofusRoad from "./DofusRoad.jsx";
 import { prefersReducedMotion } from "../lib/motion.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
@@ -38,10 +39,6 @@ function openPrereqs() {
 
 function openShop() {
   document.getElementById("shop")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function showBoard() {
-  document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function goToStep(n) {
@@ -101,9 +98,11 @@ export default function Hero() {
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
           <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
 
-          <div className={"hero-next" + (nextStep ? "" : " done")} id="heroNext">
-            {nextStep ? (
-              <>
+          {/* Con la guía terminada ya no hay siguiente paso ni nada que reunir:
+              ese sitio lo ocupa la colección de Dofus del camino */}
+          {nextStep ? (
+            <>
+              <div className="hero-next" id="heroNext">
                 <div className="hero-next-art">
                   {nextIcon ? <img src={imgUrl(nextIcon.src)} alt="" /> : <b>{next}</b>}
                 </div>
@@ -113,48 +112,38 @@ export default function Hero() {
                   <p className="hero-next-sub">{[nextStep.zone, stepScope(nextStep)].filter(Boolean).join(" · ")}</p>
                 </div>
                 <button className="hero-next-go" id="heroNextGo" onClick={() => goToStep(next)}>Continuar →</button>
-              </>
-            ) : (
-              <>
-                <div className="hero-next-art">
-                  {BRAND_ICON ? <img src={imgUrl(BRAND_ICON)} alt="" /> : <b>✓</b>}
-                </div>
-                <div className="hero-next-meta">
-                  <p className="hero-next-kicker">Guía completada</p>
-                  <p className="hero-next-name">¡El Dofus Silvestre es tuyo!</p>
-                  <p className="hero-next-sub">Recorriste los 100 pasos de Sandglass.</p>
-                </div>
-                <button className="hero-next-go" id="heroNextGo" onClick={showBoard}>Ver el tablero</button>
-              </>
-            )}
-          </div>
+              </div>
 
-          {/* Requisitos del Dofus: van aparte de los pasos, que son el progreso */}
-          <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
-            <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
-            <div className="hero-reqs-grid">
-              <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={openPrereqs}
-                aria-label={pendingPrereqs > 0
-                  ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
-                  : "Prerrequisitos completos. Ver prerrequisitos"}>
-                {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}
-                <span className="hero-req-meta">
-                  <span className="hero-req-name">Prerrequisitos</span>
-                  <span className="hero-req-count"><b id="statPre">{prereqsDone(s)}</b>/{ALL_PREREQS.length}</span>
-                </span>
-                <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
-              </button>
-              <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={openShop}
-                aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
-                {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
-                <span className="hero-req-meta">
-                  <span className="hero-req-name">Objetos necesarios</span>
-                  <span className="hero-req-count"><b id="statOwned">{owned}</b>/{totalItems}</span>
-                </span>
-                <span className="hero-req-bar"><i style={{ width: `${(owned / totalItems) * 100}%` }}></i></span>
-              </button>
-            </div>
-          </div>
+              {/* Requisitos del Dofus: van aparte de los pasos, que son el progreso */}
+              <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
+                <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
+                <div className="hero-reqs-grid">
+                  <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={openPrereqs}
+                    aria-label={pendingPrereqs > 0
+                      ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
+                      : "Prerrequisitos completos. Ver prerrequisitos"}>
+                    {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}
+                    <span className="hero-req-meta">
+                      <span className="hero-req-name">Prerrequisitos</span>
+                      <span className="hero-req-count"><b id="statPre">{prereqsDone(s)}</b>/{ALL_PREREQS.length}</span>
+                    </span>
+                    <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
+                  </button>
+                  <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={openShop}
+                    aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
+                    {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
+                    <span className="hero-req-meta">
+                      <span className="hero-req-name">Objetos necesarios</span>
+                      <span className="hero-req-count"><b id="statOwned">{owned}</b>/{totalItems}</span>
+                    </span>
+                    <span className="hero-req-bar"><i style={{ width: `${(owned / totalItems) * 100}%` }}></i></span>
+                  </button>
+                </div>
+              </div>
+
+              <DofusRoad />
+            </>
+          ) : <DofusRoad big />}
         </div>
 
         <div className="hero-visual">

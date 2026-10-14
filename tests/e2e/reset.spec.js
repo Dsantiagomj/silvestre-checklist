@@ -131,8 +131,8 @@ test("con la guía completa, conservar los objetos los deja marcados al reinicia
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   await page.click("#resetBtn");
-  const total = await page.locator("#heroItems .hero-req-count").textContent();
-  await expect(page.locator("#rdNOwned")).toHaveText(total.split("/")[1]);
+  const n = await page.locator("#rdNOwned").textContent();
+  const total = `${n}/${n}`;
   await page.locator('#resetDialog input[name="owned"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
