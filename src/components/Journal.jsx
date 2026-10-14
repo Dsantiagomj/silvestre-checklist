@@ -3,7 +3,7 @@ import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
-import { CLOSED_BY, nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
+import { CLOSED_BY, doneIcon, nextPendingAfter, resolvesHere, showcase, stepCalls, stepTitle, stopPoint } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -86,13 +86,16 @@ function Hero({ step, done, quests }) {
 
 /** Rojo, verde y azul de la guía; el verde enlaza los pasos que cierra. */
 function Calls({ step }) {
-  if (!step.marks) return null;
+  const calls = stepCalls(step);
+  if (!calls.length) return null;
   return (
     <div className="journal-calls">
-      {step.marks.map(([kind, text], i) => (
+      {calls.map(([kind, text], i) => (
         <div key={i} className={`call ${kind}`}>
           <i aria-hidden="true">
-            {kind === "must" ? <QuestMark /> : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
+            {kind === "must" ? <QuestMark />
+              : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
+              : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
           </i>
           <div>
             <b>{CALL[kind].label}</b>
@@ -143,7 +146,11 @@ function progressOf(s, n, quests, i, q) {
 function Quests({ step, quests, loaded, s }) {
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
-  const stop = stopPoint(step, quests);
+  // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
+  // línea verde con lo que se resuelve, en vez de la roja de parar
+  const found = stopPoint(step, quests);
+  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1];
+  const stop = found && (done ? { ...found, text: done, resume: true } : found);
   // La misión en curso (la del avance del overlay o del diario) va abierta
   const pos = Math.min(s.questPos[step.n] || 0, quests.length - 1);
   return (
@@ -179,7 +186,7 @@ function Quests({ step, quests, loaded, s }) {
                 <Fragment key={j}>
                   {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
                   <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
-                    stop={here ? { index: stop.index - from, text: stop.text } : null} />
+                    stop={here ? { index: stop.index - from, text: stop.text, resume: stop.resume } : null} />
                 </Fragment>
               );
             })}

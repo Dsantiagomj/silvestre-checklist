@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { showcase, stepTitle } from "../lib/journal.js";
+import { doneIcon, resolvesHere, showcase, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
 import { useLeaving, useLiveId } from "../lib/leaving.js";
 
@@ -91,7 +91,8 @@ function Card({ step, pos, width, height, done }) {
   }, [leaving]);
   const show = showcase(step.n);
   const zone = ZONE_IMG[step.zone];
-  const stops = (step.marks || []).filter(m => m[0] === "stop");
+  // Si el paso se resuelve solo, no hay dónde parar
+  const stops = resolvesHere(step) ? [] : (step.marks || []).filter(m => m[0] === "stop");
   const { left, top } = placeCard(pos, step.n, cardH, width, height);
   return (
     <div className="map-card" id={useLiveId("mapCard")} ref={ref} style={{ left, top, width: CARD_W }}>
@@ -106,7 +107,7 @@ function Card({ step, pos, width, height, done }) {
           <p key={i} className="map-card-line stop"><img src={imgUrl(CALL_ICONS.stop)} alt="" />{text}</p>
         ))}
         {step.closes && (
-          <p className="map-card-line done"><img src={imgUrl(CALL_ICONS.done)} alt="" />Cierra también el {step.closes.join(", ")}</p>
+          <p className="map-card-line done"><img src={imgUrl(doneIcon(step.n))} alt="" />Cierra también el {step.closes.join(", ")}</p>
         )}
         <div className="map-card-cta">
           <button type="button" className="map-card-done" onClick={() => toggleStep(step.n)}>{done ? "Desmarcar" : "✓ Hecho"}</button>
