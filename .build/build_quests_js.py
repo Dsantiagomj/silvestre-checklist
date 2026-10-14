@@ -100,8 +100,9 @@ MISSING_OBJECTIVES = {565: [439]}
 # Quests a step needs that its text doesn't name, put first. Step 78 is "hasta la misión
 # de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
 # previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
-# mission 1 of "Cuatro de seis", which can only start after step 79.
-STEP_EXTRA = {78: [434, 111, 121, 423], 80: [1782]}
+# mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
+# order quest 5 of the same line, which requires the 4th (need.quests).
+STEP_EXTRA = {78: [434, 111, 121, 423], 80: [1782], 89: [1917]}
 
 # An objective any of several quests completes (one per class in "Un ciudadano
 # modelo") is no single quest: it becomes one generic row instead of the first match.

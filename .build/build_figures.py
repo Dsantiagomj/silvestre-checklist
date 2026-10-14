@@ -2,7 +2,7 @@
 
 The figure, in order of preference (the Dofus egg a step gives is chosen in the app,
 from DOFUS_ROAD, before any of these):
-  1. A curated figure for the achievement: the primordial dragon of its Dofus, the
+  1. A curated figure for the step (STEP_FIGURE) or its achievement: the primordial dragon of its Dofus, the
      Selocalipsis horseman or Draconiros, Silvosse for the Silvestre line.
      The primordial lines that Meriana starts keep Meriana: she is the face of those.
   2. The NPC that starts the step's first quest (rendered from its look).
@@ -48,6 +48,12 @@ CURATED = {
     "Selocalipsis: Reminiscencia": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
     "Futuro abierto": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
     "El árbol que esconde el bosque": ("silvosse", "Silvosse", "Dofus Silvestre", "{6626|||130}"),
+}
+
+# Step -> figure, for steps whose achievement has no curated figure and no start NPC:
+# 64 is "Un sueño con claroscuros", the dream of Imagirorukam.
+STEP_FIGURE = {
+    "64": ("imagirorukam", "Imagirorukam", "Un sueño con claroscuros", "{5997|||80}"),
 }
 
 
@@ -113,8 +119,11 @@ def main():
         sp = starts.get(n)
         npc = sp and sp.get("npcId")
         figure = None
+        if n in STEP_FIGURE:
+            key, name, label, look = STEP_FIGURE[n]
+            figure = {"img": render(key, look), "name": name, "as": label}
         for entry in plans.get(n, []):
-            pick = entry["t"] == "a" and CURATED.get(entry["name"])
+            pick = not figure and entry["t"] == "a" and CURATED.get(entry["name"])
             if pick and not (pick[2] == DRAGON and npc == MERIANA):
                 key, name, label, look = pick
                 figure = {"img": render(key, look), "name": name, "as": label}
