@@ -15,6 +15,7 @@ function forSteps(steps) {
 
 /** "Paso 57", "Pasos 57, 63, 70 y 6 más" */
 function laterSteps(steps) {
+  if (steps.length === 1 && steps[0] === PREREQ_STEP) return "Prerrequisitos";
   const list = steps.map(n => (n === PREREQ_STEP ? "prerrequisitos" : n));
   if (list.length === 1) return `Paso ${list[0]}`;
   const shown = list.slice(0, 3);
@@ -33,7 +34,7 @@ function typeLine(row) {
  * Pulsarla lo marca como conseguido; el icono de la esquina copia el nombre para
  * buscarlo en el mercadillo. En pantallas táctiles, mantenerla pulsada lo copia.
  */
-export default function Slot({ row, band, have, dim, match, later, onToggle }) {
+export default function Slot({ row, band, have, dim, match, later, list = false, onToggle }) {
   const [copied, setCopied] = useState(false);
   const pressTimer = useRef(0);
   const copiedTimer = useRef(0);
@@ -63,30 +64,64 @@ export default function Slot({ row, band, have, dim, match, later, onToggle }) {
   const first = Math.min(...row.steps);
   const badge = band === "soon" ? (first === PREREQ_STEP ? "Pre" : first) : null;
   const qty = row.a[0][1];
-  const cls = "slot" + (have ? " owned" : "") + (dim ? " dim" : "") + (match ? " match" : "") + (copied ? " copied" : "");
+  const cls = "slot" + (list ? " list" : "") + (have ? " owned" : "") + (dim ? " dim" : "") + (match ? " match" : "") +
+    (copied ? " copied" : "");
+  const art = (
+    <span className={"slot-art" + (row.a.length > 1 ? " alt" : "")} aria-hidden="true">
+      {row.a.map(([id]) => RES_ITEMS[id].img
+        ? <img key={id} src={imgUrl(RES_ITEMS[id].img)} alt="" loading="lazy" />
+        : <span key={id} className="item-unknown">?</span>)}
+    </span>
+  );
+  const pressHandlers = {
+    onClick, onPointerDown, onPointerUp: cancelPress, onPointerLeave: cancelPress, onPointerCancel: cancelPress,
+    onContextMenu: e => { if (skipClick.current) e.preventDefault(); },
+  };
+  const copyButton = (
+    <button type="button" className="slot-copy" onClick={copy} aria-label={`Copiar el nombre: ${name}`}>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <rect x="5" y="5" width="8.5" height="9" rx="1.6" />
+        <path d="M3.5 10.5V3.6c0-.9.7-1.6 1.6-1.6h5.4" />
+      </svg>
+    </button>
+  );
+
+  // Fila de la vista de lista: todo a la vista, sin tooltip
+  if (list) {
+    const extra = [row.g, row.n || typeLine(row)].filter(Boolean).join(" · ");
+    return (
+      <div className={cls} data-id={row.k}>
+        <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}>
+          <span className="slot-check" aria-hidden="true"></span>
+          {art}
+          <span className="slot-info">
+            <span className="slot-name">{rowName(row)}</span>
+            {(extra || later > 0) && (
+              <span className="slot-sub">
+                {extra}{extra && later > 0 ? " · " : ""}{later > 0 ? `${later.toLocaleString("es")} más adelante` : ""}
+              </span>
+            )}
+          </span>
+          <span className={"slot-when" + (band === "soon" || band === "prereq" ? " soon" : "")}>{laterSteps(row.steps)}</span>
+          <span className="q">×{rowQty(row)}</span>
+          {copied && <span className="slot-copied" role="status">Copiado</span>}
+        </button>
+        {copyButton}
+      </div>
+    );
+  }
 
   return (
     <div className={cls} data-id={row.k}>
-      <button type="button" className="slot-main" aria-pressed={String(have)} onClick={onClick}
-        onPointerDown={onPointerDown} onPointerUp={cancelPress} onPointerLeave={cancelPress} onPointerCancel={cancelPress}
-        onContextMenu={e => { if (skipClick.current) e.preventDefault(); }}
+      <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}
         aria-label={`${rowName(row)}, ${rowQty(row)}${have ? ", conseguido" : ""}`}>
-        <span className={"slot-art" + (row.a.length > 1 ? " alt" : "")} aria-hidden="true">
-          {row.a.map(([id]) => RES_ITEMS[id].img
-            ? <img key={id} src={imgUrl(RES_ITEMS[id].img)} alt="" loading="lazy" />
-            : <span key={id} className="item-unknown">?</span>)}
-        </span>
+        {art}
         {badge != null && <span className="st" aria-hidden="true">{badge}</span>}
         {row.g && <span className="slot-tag" aria-hidden="true">{row.g.startsWith("Orden") ? "Orden" : "Opc."}</span>}
         <span className="q" aria-hidden="true">{qty}</span>
         {copied && <span className="slot-copied" role="status">Copiado</span>}
       </button>
-      <button type="button" className="slot-copy" onClick={copy} aria-label={`Copiar el nombre: ${name}`}>
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <rect x="5" y="5" width="8.5" height="9" rx="1.6" />
-          <path d="M3.5 10.5V3.6c0-.9.7-1.6 1.6-1.6h5.4" />
-        </svg>
-      </button>
+      {copyButton}
       <span className="slot-tip" role="tooltip">
         <b>{rowName(row)} ×{rowQty(row)}</b>
         {band === "soon" || band === "prereq"

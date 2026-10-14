@@ -193,3 +193,34 @@ test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async
   await expect(page.locator("#needsHint")).toContainText("lo que ves");
   await expect(page.locator("#needsHint")).toContainText("solo quita lo que marcaste a mano");
 });
+
+test("la vista de lista muestra lo mismo que la cuadrícula, con nombre y pasos a la vista", async ({ page }) => {
+  await openApp(page, MID);
+  const grid = await page.locator("#items .slot").count();
+  await page.click('.needs-view [data-view="list"]');
+  await expect(page.locator("#items .slot.list")).toHaveCount(grid);
+  const pepita = page.locator('#bandSoon .slot.list[data-id="14635"]');
+  await expect(pepita).toContainText("Pepita");
+  await expect(pepita).toContainText("Paso 42");
+  await expect(pepita.locator(".q")).toHaveText("×100");
+  await expect(pepita.locator(".slot-copy")).toBeVisible();
+  await pepita.locator(".slot-main").click();
+  await expect(pepita).toHaveClass(/\bowned\b/);
+  // La vista elegida se recuerda
+  await page.reload();
+  await page.click("#tabItems");
+  await expect(page.locator('.needs-view [data-view="list"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#items .slot.list").first()).toBeVisible();
+});
+
+test("en la lista el nombre largo se corta y no tapa la cantidad", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await openApp(page, { ...MID, "silvestre:itemsView": "list" });
+  await page.click("#tabItems");
+  const row = page.locator("#items .slot.list", { hasText: "Artefacto pandawushu de madera" }).first();
+  const name = await row.locator(".slot-name").boundingBox();
+  const qty = await row.locator(".q").boundingBox();
+  expect(name.x + name.width).toBeLessThanOrEqual(qty.x);
+  await ctx.close();
+});
