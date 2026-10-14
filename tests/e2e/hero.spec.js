@@ -138,13 +138,13 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   // Sin haber marcado nada a mano: terminar la guía implica tenerlo todo
   await page.click("#needsShowSummary");
   await page.click("#needsShowLists");
-  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await expect(page.locator(".pr-card:not(.done)")).toHaveCount(0);
   await page.click("#tabItems");
   await expect(page.locator("#items .slot:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
-  await expect(page.locator("#rdNPre")).toHaveText("18");
+  await expect(page.locator("#rdNPre")).toHaveText("21");
 });
 
 test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {

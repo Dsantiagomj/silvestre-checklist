@@ -1,7 +1,7 @@
-import { PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OFICIOS } from "../../data/steps.js";
-import { PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
+import { PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
+import { DOFUS_ROAD, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
-import { isPrereqDone, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
+import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 
 const GROUPS = [
@@ -22,7 +22,11 @@ export function prereqParts(text) {
   let title = text.trim().replace(/\.$/, "");
   let zone = null, lead = null, rest = [];
   const paren = title.match(/^(.*?)\s*\(([^)]*)\)$/);
-  if (paren && /obligatorio|etc\./i.test(paren[2])) {
+  if (paren && /^opcional(es)? pero útil(es)?$/i.test(paren[2])) {
+    title = paren[1].replace(/\.$/, "");
+    lead = "Opcional";
+    rest = ["útil"];
+  } else if (paren && /obligatorio|etc\./i.test(paren[2])) {
     title = paren[1];
     const [kind, ...more] = paren[2].split(/,\s*/);
     if (/^no obligatorio$/i.test(kind)) lead = "Opcional";
@@ -65,11 +69,38 @@ function PrereqCard({ p, done }) {
   );
 }
 
+const OCRE = DOFUS_ROAD.find(d => d.name === "Dofus Ocre");
+
+function showStep(n) {
+  openInDiary(n);
+  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** La recomendación de Sandglass sobre el Dofus Ocre, con el paso donde lo da la guía. */
+function OcreNote() {
+  return (
+    <aside className="pr-ocre">
+      {OCRE && <img src={imgUrl(OCRE.img)} alt="" />}
+      <div>
+        <b>Empieza el Dofus Ocre cuanto antes</b>
+        <p>{PREREQS_OCRE}</p>
+        {OCRE && (
+          <p className="pr-ocre-step">
+            En esta guía se completa en el{" "}
+            <button type="button" className="step-ref" data-n={OCRE.step} onClick={() => showStep(OCRE.step)}>paso {OCRE.step}</button>.
+          </p>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 /** PRERREQUISITOS · tarjetas por grupo y, debajo, los objetos que piden. */
 export default function PrereqsPanel() {
   const s = useAppState();
   return (
     <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
+      <OcreNote />
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>

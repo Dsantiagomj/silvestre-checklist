@@ -3,7 +3,7 @@ import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const ALL_PREREQS = Object.fromEntries(
-  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3"].map(id => [id, true]));
+  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3"].map(id => [id, true]));
 // Pasos 1 a 40 hechos y prerrequisitos completos: lo siguiente son los pasos 41 a 45
 const MID = { "silvestre:done": range(1, 40), "silvestre:prereqs": ALL_PREREQS };
 
@@ -13,7 +13,7 @@ test("una sección con dos pestañas: prerrequisitos y objetos", async ({ page }
   await expect(needs.locator(".section-title")).toContainText("Lo que necesitas");
   // Con prerrequisitos pendientes se abre en esa pestaña
   await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#prereqsCount")).toHaveText("0/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("0/21");
   await page.click("#tabItems");
   await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#items")).toBeVisible();
@@ -22,10 +22,10 @@ test("una sección con dos pestañas: prerrequisitos y objetos", async ({ page }
 
 test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", async ({ page }) => {
   await openApp(page);
-  await expect(page.locator("#prereqs .pr-card")).toHaveCount(18);
+  await expect(page.locator("#prereqs .pr-card")).toHaveCount(21);
   await page.click('.pr-card[data-id="o1"]');
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/\bdone\b/);
-  await expect(page.locator("#prereqsCount")).toHaveText("1/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("1/21");
   // Los 17 objetos que piden los prerrequisitos
   await expect(page.locator("#prereqs .slot")).toHaveCount(17);
 });
@@ -33,11 +33,11 @@ test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", as
 test("marcar todo y limpiar en prerrequisitos, con deshacer", async ({ page }) => {
   await openApp(page);
   await page.click("#needsMarkAll");
-  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await page.click("#needsClear");
-  await expect(page.locator("#prereqsCount")).toHaveText("0/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("0/21");
   await page.click("#toastAction");
-  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
 });
 
 test("Pronto reúne lo de los próximos 5 pasos y reparte las cantidades", async ({ page }) => {
@@ -191,7 +191,7 @@ test("el buscador es ancho y los controles van juntos a la izquierda", async ({ 
 
 test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async ({ page }) => {
   await openApp(page);
-  await expect(page.locator("#needsHint")).toContainText("18 prerrequisitos");
+  await expect(page.locator("#needsHint")).toContainText("21 prerrequisitos");
   await page.click("#tabItems");
   await expect(page.locator("#needsHint")).toContainText("lo que ves");
   await expect(page.locator("#needsHint")).toContainText("solo quita lo que marcaste a mano");
@@ -231,7 +231,7 @@ test("en la lista el nombre largo se corta y no tapa la cantidad", async ({ brow
 
 test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos grandes", async ({ page }) => {
   await openApp(page, { "silvestre:prereqs": { l1: true, l3: true } });
-  await expect(page.locator(".pr-group h3").first()).toContainText("2/9");
+  await expect(page.locator(".pr-group h3").first()).toContainText("2/12");
   const otomai = page.locator('.pr-card[data-id="l4"]');
   await expect(otomai.locator(".pr-zone")).toHaveText("Isla de Otomaï");
   await expect(otomai.locator(".pr-title")).toHaveText('Logro "El gran Guarrok". (Completo)');
@@ -307,7 +307,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   const needs = page.locator("#needs");
   // Franja: todo reunido, sin pestañas ni listas
   await expect(needs.locator(".needs-done-title")).toHaveText("Todo reunido");
-  await expect(needs.locator(".needs-done-chip")).toHaveText(["18 prerrequisitos", "420 objetos"]);
+  await expect(needs.locator(".needs-done-chip")).toHaveText(["21 prerrequisitos", "420 objetos"]);
   await expect(page.locator("#tabItems")).toHaveCount(0);
   await expect(page.locator(".needs-summary")).toHaveCount(0);
   // Primer nivel: el resumen de lo reunido
@@ -322,7 +322,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   // Segundo nivel: las listas completas, y se puede volver a contraer
   await page.click("#needsShowLists");
   await expect(page.locator("#tabPrereqs")).toBeVisible();
-  await expect(page.locator("#prereqsCount")).toHaveText("18/18");
+  await expect(page.locator("#prereqsCount")).toHaveText("21/21");
   await page.click("#needsCollapse");
   await expect(page.locator("#tabItems")).toHaveCount(0);
   await expect(needs.locator(".needs-done-title")).toBeVisible();
@@ -341,7 +341,7 @@ test("la sección se puede contraer siempre, con lo esencial a la vista, y se re
   await page.click("#needsCollapse");
   const strip = page.locator("#needs .needs-strip");
   // Los objetos de los pasos 1 a 40 ya cuentan como cubiertos
-  await expect(strip.locator(".needs-meter b")).toHaveText(["18/18", /^\d+\/420$/]);
+  await expect(strip.locator(".needs-meter b")).toHaveText(["21/21", /^\d+\/420$/]);
   await expect(strip.locator(".needs-meter b").nth(1)).toHaveText(await page.locator("#heroItems .hero-req-count").textContent());
   await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
   // Los objetos de "Pronto" con nombre y cantidad, los que quepan en una fila y el resto en "+N"
@@ -409,4 +409,28 @@ test("las tarjetas del hero y el atajo / despliegan la sección contraída", asy
   await page.click("#needsCollapse");
   await page.locator("body").press("/");
   await expect(page.locator("#needsSearch")).toBeFocused();
+});
+
+test("los prerrequisitos siguen la lista actual de Torrente Arcano", async ({ page }) => {
+  await openApp(page);
+  const card = id => page.locator(`#prereqs .pr-card[data-id="${id}"]`);
+  await expect(card("l10")).toContainText("Altos vuelos");
+  await expect(card("l10").locator(".pr-sub")).toHaveText("Opcional · útil");
+  await expect(card("l10")).not.toContainText("(Opcional");
+  // La guía escribe "El despetar"; la misión del juego es "El despertar de Pandala"
+  await expect(card("l11")).toContainText("El despertar de Pandala");
+  await expect(card("l12")).toContainText("Ángeles y demonios");
+  await expect(card("l12").locator(".pr-sub")).toHaveText("Opcional · útil");
+  // Van en el mismo orden que en la guía
+  const ids = await page.locator("#prereqs .pr-group").first().locator(".pr-card").evaluateAll(els => els.map(e => e.dataset.id));
+  expect(ids).toEqual(["l1", "l2", "l3", "l4", "l5", "l10", "l6", "l11", "l7", "l8", "l9", "l12"]);
+});
+
+test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async ({ page }) => {
+  await openApp(page);
+  const ocre = page.locator("#prereqs .pr-ocre");
+  await expect(ocre).toContainText("Dofus Ocre");
+  await expect(ocre).toContainText("paso 79");
+  await ocre.locator(".step-ref").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("55");
 });
