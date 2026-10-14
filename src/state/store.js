@@ -3,6 +3,7 @@
 // ya no hace falta acordarse de llamar a renderX() tras cada cambio.
 // ============================================================================
 import { useSyncExternalStore } from "react";
+import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
@@ -243,9 +244,12 @@ export function setStepsView(view) {
 export function showOnMap(n) {
   setState({ selectedStep: n, sheetOpen: false });
   setStepsView("map");
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.querySelector(`.map-node[data-n="${n}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }));
+  // Después del zoom y solo si hace falta: desplazar y escalar a la vez daba tirones
+  setTimeout(() => {
+    const node = document.querySelector(`.map-node[data-n="${n}"]`);
+    const r = node?.getBoundingClientRect();
+    if (r && (r.top < 80 || r.bottom > innerHeight)) node.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, prefersReducedMotion() ? 0 : 540);
 }
 
 /** Desde el mapa: abre el paso en el diario. */

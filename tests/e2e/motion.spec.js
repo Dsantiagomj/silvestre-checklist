@@ -158,3 +158,18 @@ test("con movimiento reducido el cambio de vista no deja instantánea", async ({
   await page.click("#stepsViewMap");
   await expect(page.locator(".steps-leaving")).toHaveCount(0);
 });
+
+test("durante el zoom solo se mueven las dos capas: ni la altura ni lo de dentro", async ({ page }) => {
+  await openApp(page);
+  await page.waitForTimeout(500);
+  await page.click("#stepsViewMap");
+  const busy = await page.evaluate(() => {
+    const stage = document.querySelector(".steps-stage");
+    const layers = [...stage.querySelectorAll(":scope > .steps-leaving, :scope > .steps-current")];
+    return document.getAnimations().filter(a => {
+      const t = a.effect?.target;
+      return t && stage.contains(t) && !layers.includes(t) && a.effect.getTiming().iterations !== Infinity;
+    }).length + stage.getAnimations().length;
+  });
+  expect(busy).toBe(0);
+});

@@ -132,7 +132,7 @@ const VIEWS = [
 ];
 
 // Lo que dura el cambio de vista; luego la instantánea de la vista que se fue desaparece
-const SWAP_MS = 560;
+export const SWAP_MS = 520;
 
 /**
  * Cambio entre diario y mapa como un zoom sobre el sello del paso actual: del mapa al
@@ -143,24 +143,29 @@ const SWAP_MS = 560;
 function useViewZoom(stageRef, view, step) {
   const snapshot = useRef(null);
   const leavingRef = useRef(null);
+  // Mientras dura el zoom no se anima la altura: recalcular la página en cada fotograma
+  // era lo que lo hacía ir a saltos
+  const switching = useRef(false);
   const [swap, setSwap] = useState(null);
 
   useEffect(() => onBeforeViewSwitch(() => {
-    const current = stageRef.current?.querySelector(".steps-current");
+    const stage = stageRef.current;
+    const current = stage?.querySelector(".steps-current");
     if (!current || prefersReducedMotion()) return;
     const clone = current.cloneNode(true);
     clone.removeAttribute("class");
     clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
-    snapshot.current = clone;
+    snapshot.current = { clone, height: stage.offsetHeight };
+    switching.current = true;
   }), [stageRef]);
 
   useLayoutEffect(() => {
-    const clone = snapshot.current;
+    const shot = snapshot.current;
     snapshot.current = null;
-    if (!clone) return;
+    if (!shot) return;
     const at = mapPoint(stageRef.current.clientWidth, step);
-    setSwap({ to: view, x: at.x, y: at.y, clone });
-    const t = setTimeout(() => setSwap(null), SWAP_MS);
+    setSwap({ to: view, x: at.x, y: at.y, clone: shot.clone, height: shot.height });
+    const t = setTimeout(() => { switching.current = false; setSwap(null); }, SWAP_MS);
     return () => clearTimeout(t);
   }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -168,7 +173,7 @@ function useViewZoom(stageRef, view, step) {
     if (swap) leavingRef.current?.replaceChildren(swap.clone);
   }, [swap]);
 
-  return { swap, leavingRef };
+  return { swap, leavingRef, switching };
 }
 
 /** 02 · Los 100 pasos: como diario (lista y detalle) o como mapa del camino. */
@@ -180,8 +185,8 @@ export default function Diary({ mobile }) {
   const map = s.stepsView === "map";
   // Cambiar de vista o de paso mueve lo de debajo con suavidad, sin saltos
   const stageRef = useRef(null);
-  useHeightMorph(stageRef, map ? "map" : `diary-${current}`);
-  const { swap, leavingRef } = useViewZoom(stageRef, s.stepsView, s.selectedStep ?? next);
+  const { swap, leavingRef, switching } = useViewZoom(stageRef, s.stepsView, s.selectedStep ?? next);
+  useHeightMorph(stageRef, map ? "map" : `diary-${current}`, { skip: () => switching.current });
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
@@ -195,7 +200,7 @@ export default function Diary({ mobile }) {
       </div>
       <ZoneSeals s={s} current={current} />
       <div className={"steps-stage" + (swap ? ` swap to-${swap.to}` : "")} ref={stageRef}
-        style={swap ? { "--zx": `${swap.x}px`, "--zy": `${swap.y}px` } : undefined}>
+        style={swap ? { "--zx": `${swap.x}px`, "--zy": `${swap.y}px`, minHeight: swap.height } : undefined}>
       {swap && <div className="steps-leaving" ref={leavingRef} aria-hidden="true" inert></div>}
       <div className="steps-current">
       {map ? (
