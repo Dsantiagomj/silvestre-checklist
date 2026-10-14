@@ -705,3 +705,19 @@ test("el aviso de un objeto dice lo mismo en todas las secciones", async ({ page
   const opt = await lines(page.locator('#bandUsed .slot[data-id^="8918@"] .slot-tip'));
   expect(opt.filter(l => l.includes("Altos vuelos"))).toEqual(["slot-tip-when|Para «Altos vuelos» (opcional)"]);
 });
+
+test("al buscar, las coincidencias suben al principio de su franja", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  await page.fill("#needsSearch", "bambu");
+  // En cada franja, primero lo que coincide y después lo atenuado
+  for (const band of ["#bandSoon", "#bandLater"]) {
+    const kinds = await page.locator(`${band} .slot`).evaluateAll(els => els.map(el => (el.classList.contains("match") ? "m" : "d")));
+    expect(kinds.join("")).toMatch(/^m*d*$/);
+  }
+  expect(await page.locator("#bandLater .slot").first().getAttribute("class")).toContain("match");
+  // Al borrar la búsqueda vuelve el orden de siempre
+  const before = await page.locator("#bandLater .slot").first().getAttribute("data-id");
+  await page.click("#needsSearchClear");
+  await expect(page.locator("#bandLater .slot").first()).not.toHaveAttribute("data-id", before);
+});
