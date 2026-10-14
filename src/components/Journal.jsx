@@ -4,7 +4,7 @@ import { CALL_ICONS, HEADER_ICONS, OBJ_ICONS, ZONE_IMG, assetsFor, imgUrl } from
 import { MAP_IMG, groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, bannerFigure, doneIcon, nextPendingAfter, resolvesHere, startMap, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, bannerFigure, doneIcon, nextPendingAfter, optionalMissions, resolvesHere, startMap, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -251,6 +251,8 @@ function Quests({ step, quests, loaded, s }) {
     .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
+  // Las misiones que la guía da por opcionales llevan su etiqueta
+  const optional = new Set(optionalMissions(step).map(o => o.name.toLowerCase()));
   const items = quests.map((q, i) => {
     let offset = 0;
     const at = progressOf(s, step.n, quests, i, q);
@@ -266,6 +268,7 @@ function Quests({ step, quests, loaded, s }) {
         <summary>
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
+          {optional.has(q.n.toLowerCase()) && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
