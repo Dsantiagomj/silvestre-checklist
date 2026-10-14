@@ -229,4 +229,10 @@ test("las misiones de cada paso son las de su logro, en su orden", async ({ page
   expect((await quests(79)).join(" ")).toContain("La eterna cosecha");
   // La misión 14 de «Seis de seis» es del paso 97, no del 96
   expect((await quests(96)).join(" ")).not.toContain("El fin... o el comienzo");
+  // Lo que el paso «incluye» son sus requisitos: va antes, en el orden de la guía
+  const first = await quests(1);
+  const at = name => first.findIndex(t => t.includes(name));
+  expect(at("Respuestas para todo")).toBe(0);
+  expect(at("Destino Astrub")).toBeLessThan(at("Archi y sus principios"));
+  expect(at("Paseo por el bosque")).toBeLessThan(at("El receptáculo de los dofus"));
 });
