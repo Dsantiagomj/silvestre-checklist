@@ -2414,6 +2414,10 @@ header.show-progress .tb-progress{
 .call::before{ content:""; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--call); }
 .call.stop{ --call:#e05a4f; }
 .call.tip{ --call:#6fb2e6; }
+.call.includes{ --call:#d9b45a; }
+.call.must{ --call:#e8923c; }
+.call.note{ --call:#a99c84; }
+.call i .quest-mark{ width:20px; height:27px; }
 .call i{
   display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
   background:radial-gradient(circle at 35% 30%, var(--gw-pin-line), var(--gw-panel-2));

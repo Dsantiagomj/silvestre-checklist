@@ -94,8 +94,11 @@ MISSING_DOFUS = {
 # The prerequisites note recommends starting it early: it shows the egg.
 OCRE_ICON = "items/23012.png"
 # Icons of the guide's marks in the step detail: a dungeon key for where to stop,
-# the trophy book for what gets done, a legend book for tips.
-CALL_ICONS = {"stop": "items/84228.png", "done": "achievements/273.png", "tip": "items/25019.png"}
+# the trophy book for what gets done, a list for what the step includes, a legend
+# book for tips and a handwritten note for the rest. "must" (a quest the guide also
+# requires) uses the game's quest mark, drawn by the app.
+CALL_ICONS = {"stop": "items/84228.png", "done": "achievements/273.png", "includes": "items/24041.png",
+              "tip": "items/25019.png", "note": "items/24055.png"}
 
 
 def reward_item_ids(rewards):

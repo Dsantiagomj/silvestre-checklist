@@ -13,12 +13,16 @@ import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 
-// Los tres resaltados de la guía (rojo, verde, azul en torrentearcano); el icono es
-// un objeto del juego: llave de mazmorra, librito con trofeo y libro de leyendas
+// Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
+// que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
+// también hay que hacer es una misión y lleva la «!» del juego
 const CALL = {
   stop: { label: "Hasta dónde llegar" },
   done: { label: "Lo que se resuelve" },
+  includes: { label: "Incluye" },
+  must: { label: "También hay que" },
   tip: { label: "Consejo" },
+  note: { label: "Nota" },
 };
 
 const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
@@ -77,7 +81,9 @@ function Calls({ step }) {
     <div className="journal-calls">
       {step.marks.map(([kind, text], i) => (
         <div key={i} className={`call ${kind}`}>
-          <i aria-hidden="true">{CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}</i>
+          <i aria-hidden="true">
+            {kind === "must" ? <QuestMark /> : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
+          </i>
           <div>
             <b>{CALL[kind].label}</b>
             <RichText text={text} />
