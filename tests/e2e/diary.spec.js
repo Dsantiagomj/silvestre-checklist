@@ -232,10 +232,10 @@ test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de mis
 test("un paso que pide el logro completo lo dice en la cabecera, no como consejo", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="18"] .row-main');
-  await expect(page.locator("#journal .journal-meta .is-complete")).toHaveText("Logro completo");
+  await expect(page.locator("#journal .goal-ach .is-complete")).toHaveAttribute("title", "Logro completo");
   await expect(page.locator("#journal .call", { hasText: /^\W*Consejo\s*Completo$/ })).toHaveCount(0);
   await page.click('.diary-row[data-n="34"] .row-main');
-  await expect(page.locator("#journal .journal-meta .is-complete")).toHaveCount(0);
+  await expect(page.locator("#journal .goal-ach .is-complete")).toHaveCount(0);
 });
 
 test("el paso 79 da el Dofus Ocre", async ({ page }) => {
@@ -591,22 +591,59 @@ test("una misión que da el PNJ de cada clase lo dice, y el paso no pone a uno c
   await expect(page.locator("#journal .q-item", { hasText: "De la mano" }).locator(".q-start")).toContainText("Pandawelo");
 });
 
-test("lo que hay que preparar va junto al objetivo: «Incluye» y «Necesitas» en dos tarjetas", async ({ page }) => {
+test("la cabecera es corta: esfuerzo con relojes de arena, «Incluye» en una línea y «Necesitas» en el cuerpo", async ({ page }) => {
   await openApp(page);
   await stepData(page, 1);
-  const prep = page.locator("#journal .journal-goal .goal-prep");
-  await expect(prep.locator(".prep-card")).toHaveCount(2);
-  await expect(prep.locator(".call.includes b")).toHaveText("Incluye");
-  await expect(prep.locator(".journal-needs .journal-h")).toContainText("Necesitas (3)");
-  await expect(prep.locator(".journal-needs .slot")).toHaveCount(3);
-  // Ya no se repiten abajo; los demás avisos y las misiones siguen en el cuerpo
-  await expect(page.locator("#journal .journal-body .call.includes, #journal .journal-body .journal-needs")).toHaveCount(0);
-  await expect(page.locator("#journal .journal-body .q-item").first()).toBeVisible();
-  // La frase del objetivo, bajo el título
+  const goal = page.locator("#journal .journal-goal");
+  // Sin etiquetas: el esfuerzo son relojes de arena junto al título (largo: 4 de 5)
+  await expect(goal.locator(".journal-meta, .badge:not(.closes):not(.closed-in)")).toHaveCount(0);
+  const effort = goal.locator(".goal-effort");
+  await expect(effort).toHaveAttribute("title", "Esfuerzo: Largo");
+  await expect(effort.locator("img")).toHaveCount(5);
+  await expect(effort.locator("img.off")).toHaveCount(1);
+  // «Incluye», una línea bajo la cita
+  await expect(goal.locator(".goal-inc .call.includes b")).toHaveText("Incluye");
+  // «Necesitas» vuelve al cuerpo, antes de las misiones
+  await expect(goal.locator(".journal-needs")).toHaveCount(0);
+  await expect(page.locator("#journal .journal-body .journal-needs .slot")).toHaveCount(3);
   await expect(page.locator("#journal .goal-head .goal-line")).toHaveText("Las 5 misiones del logro.");
-  // Un paso sin nada que preparar no deja tarjetas vacías
-  await stepData(page, 2);
-  await expect(page.locator("#journal .goal-prep")).toHaveCount(0);
+  // La cabecera mide igual con muchos objetos: el 50 pide 21
+  const h1 = await page.locator("#journal .journal-top").evaluate(el => el.offsetHeight);
+  await stepData(page, 50);
+  const h50 = await page.locator("#journal .journal-top").evaluate(el => el.offsetHeight);
+  expect(Math.abs(h50 - h1)).toBeLessThanOrEqual(40);
+});
+
+test("las misiones de un paso con varios logros van agrupadas por logro", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 1);
+  const groups = page.locator("#journal .q-group");
+  await expect(groups.locator(".q-group-name")).toHaveText(["En marcha hacia la aventura", "Un ciudadano modelo", "¿Pero dónde están los dofus?"]);
+  await expect(groups.locator(".q-item")).toHaveCount(16);
+  expect(await groups.evaluateAll(gs => gs.map(g => g.querySelectorAll(".q-item").length))).toEqual([5, 6, 5]);
+  // Un paso de un solo logro, sin títulos
+  await stepData(page, 17);
+  await expect(page.locator("#journal .q-group-name")).toHaveCount(0);
+});
+
+test("el marco dorado del estandarte sigue también la punta", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 17);
+  const banner = page.locator("#journal .journal-banner");
+  const frame = banner.locator("svg.banner-frame path");
+  await expect(frame).toHaveCount(2);
+  // La línea llega a la punta: su punto más bajo está en el centro, cerca del borde de abajo
+  const ok = await banner.evaluate(b => {
+    const r = b.getBoundingClientRect();
+    return [...b.querySelectorAll("svg.banner-frame path")].map(p => {
+      const box = p.getBoundingClientRect();
+      const len = p.getTotalLength(); let low = { x: 0, y: -1 };
+      for (let i = 0; i <= 200; i++) { const pt = p.getPointAtLength(len * i / 200); if (pt.y > low.y) low = pt; }
+      const svg = p.ownerSVGElement.getBoundingClientRect();
+      return Math.abs(svg.left + low.x - (r.left + r.width / 2)) < 3 && r.bottom - (svg.top + low.y) < 12 && box.width > r.width - 16;
+    });
+  });
+  expect(ok).toEqual([true, true]);
 });
 
 test("en escritorio solo se desplazan avisos y misiones; la barra de pasos queda fija abajo", async ({ page }) => {

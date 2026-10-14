@@ -1,7 +1,7 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { MAP_IMG, questsOf } from "../lib/quests.js";
+import { CALL_ICONS, HEADER_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { MAP_IMG, groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import { CLOSED_BY, bannerFigure, doneIcon, nextPendingAfter, resolvesHere, startMap, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
@@ -40,6 +40,48 @@ function RichText({ text }) {
     ));
 }
 
+// La punta del pendón: lo que baja el centro respecto de los lados (igual que el clip-path)
+const TIP = 26;
+
+/** Ancho y alto de un elemento, al día con sus cambios de tamaño. */
+function useSize() {
+  const ref = useRef(null);
+  const [size, setSize] = useState(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const measure = () => setSize(prev => {
+      const w = el.offsetWidth, h = el.offsetHeight;
+      return prev && prev.w === w && prev.h === h ? prev : { w, h };
+    });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, size];
+}
+
+/**
+ * El marco dorado del pendón, con la punta incluida: el borde de fuera y el filete de
+ * dentro. Va en SVG porque un borde de CSS no sigue las diagonales del clip-path.
+ */
+function BannerFrame({ w, h }) {
+  // El contorno metido `d` px hacia dentro: los lados y el techo, d; las diagonales de
+  // la punta bajan con pendiente TIP / (w/2) y, desplazadas d en su normal, suben d/cos
+  const outline = d => {
+    const slope = TIP / (w / 2);
+    const up = d * Math.hypot(1, slope);
+    const side = h - TIP + d * slope - up;
+    return `M${d} ${d} H${w - d} V${side} L${w / 2} ${h - up} L${d} ${side} Z`;
+  };
+  return (
+    <svg className="banner-frame" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+      <path className="frame-out" d={outline(1)} />
+      <path className="frame-in" d={outline(6)} />
+    </svg>
+  );
+}
+
 /**
  * El estandarte (izquierda): sobre el mapa del juego donde empieza el paso, su número,
  * su zona y lo que lo representa (bannerFigure). Sin mapa, el paisaje de la zona.
@@ -49,9 +91,11 @@ function Banner({ step }) {
   const map = startMap(step.n);
   const zone = ZONE_IMG[step.zone];
   const bg = [map && `url(${MAP_IMG}${map}.jpg)`, zone && `url(${imgUrl(zone.img)})`].filter(Boolean).join(", ");
+  const [ref, size] = useSize();
   return (
-    <aside className="journal-banner" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
+    <aside className="journal-banner" ref={ref} style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
       {bg && <div className="journal-bg" style={{ backgroundImage: bg }}></div>}
+      {size && <BannerFrame {...size} />}
       <span className="journal-num">{step.n}</span>
       <span className="banner-zone">{step.zone}</span>
       {fig && (
@@ -82,11 +126,25 @@ function goalText(e) {
     : `Misión ${e.on[0]} del logro: ${name(e.on[0])}.`;
 }
 
+const TIERS = Object.keys(TIER_META);
+
+/** El esfuerzo del paso: relojes de arena del juego, de 1 (trivial) a 5 (épico). */
+function Effort({ tier }) {
+  const level = TIERS.indexOf(tier) + 1;
+  if (!level || !HEADER_ICONS?.reset) return null;
+  const label = TIER_META[tier].label;
+  return (
+    <span className="goal-effort" title={`Esfuerzo: ${label}`} aria-label={`Esfuerzo: ${label}`} role="img">
+      {TIERS.map((t, i) => <img key={t} src={imgUrl(HEADER_ICONS.reset)} alt="" className={i < level ? undefined : "off"} />)}
+    </span>
+  );
+}
+
 /**
  * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
  * Sandglass y, al pie, los pasos que cierra o donde se cierra.
  */
-function Goal({ step, done, s }) {
+function Goal({ step, done }) {
   const plan = PLANS[step.n] || [];
   const achs = plan.filter(e => e.t === "a");
   const head = achs[0];
@@ -102,7 +160,6 @@ function Goal({ step, done, s }) {
     </span>
   );
   const includes = stepCalls(step).filter(([kind]) => kind === "includes");
-  const needs = rowsOf(step.n).length > 0;
   return (
     <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
@@ -110,13 +167,16 @@ function Goal({ step, done, s }) {
         Ver en el mapa
       </button>
       <div className="goal-head">
-        <span className="goal-ach">{head?.img ? <img src={imgUrl(head.img)} alt="" /> : <QuestMark />}</span>
+        <span className="goal-ach">
+          {head?.img ? <img src={imgUrl(head.img)} alt="" /> : <QuestMark />}
+          {step.complete && <span className="is-complete" title="Logro completo">✓</span>}
+        </span>
         <div>
-          <small className="goal-kind">{head ? `Logro · ${step.zone}` : step.zone}</small>
           <h2 className="journal-title">
             {head && achievementGuide(head.name) && !many
               ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
               : stepTitle(step)}
+            <Effort tier={step.effort} />
           </h2>
           {plan.length === 1 && lineOf(plan[0])}
         </div>
@@ -136,20 +196,10 @@ function Goal({ step, done, s }) {
           ))}
         </ul>
       )}
-      <div className="journal-meta">
-        <span className="badge">{TIER_META[step.effort].label}</span>
-        {step.complete && <span className="badge is-complete" title="El paso pide el logro entero">Logro completo</span>}
-        {done && <span className="badge is-done">✓ Hecho</span>}
-      </div>
       <blockquote className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></blockquote>
-      {(includes.length > 0 || needs) && (
-        <div className="goal-prep">
-          {includes.length > 0 && (
-            <div className="prep-card">
-              {includes.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
-            </div>
-          )}
-          {needs && <div className="prep-card"><Needs n={step.n} s={s} /></div>}
+      {includes.length > 0 && (
+        <div className="goal-inc">
+          {includes.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
         </div>
       )}
       {(closedIn || step.closes) && (
@@ -253,52 +303,67 @@ function Quests({ step, quests, loaded, s }) {
     .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
+  const items = quests.map((q, i) => {
+    let offset = 0;
+    const at = progressOf(s, step.n, quests, i, q);
+    const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
+    // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él
+    const pick = s.done[step.n] ? null : k => {
+      setObjective(step.n, i, q.id, k, total, quests.length);
+      if (k >= total && quests[i + 1]) setOpen(quests[i + 1].id, true);
+    };
+    return (
+      <details className="q-item" key={q.id} open={opened.has(q.id)}
+        onToggle={e => setOpen(q.id, e.currentTarget.open)}>
+        <summary>
+          <QuestMark className="q-mark" />
+          <span className="q-name">{q.n}</span>
+          <span className="q-lv">{`Niv. ${q.lv}`}</span>
+          {missionGuide(q.n) && (
+            <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
+          )}
+        </summary>
+        {q.st?.cls && (
+          <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>
+        )}
+        {q.st && !q.st.cls && (
+          <p className="q-start">
+            Empieza con <b>{q.st.npc || "un PNJ"}</b>{q.st.a ? ` en ${q.st.a}` : ""} <CoordChip x={q.st.x} y={q.st.y} />
+          </p>
+        )}
+        {q.s.map((stg, j) => {
+          const from = offset;
+          offset += stg.o.length;
+          const here = stops.filter(p => p.quest === q.id && p.index >= from && p.index < offset);
+          return (
+            <Fragment key={j}>
+              {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
+              <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
+                stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
+            </Fragment>
+          );
+        })}
+      </details>
+    );
+  });
+  // Si el paso mezcla misiones de varios logros, van bajo un título por logro
+  const groups = groupsOf(step.n);
+  const grouped = groups && groups.reduce((a, g) => a + g[2], 0) === quests.length ? groups : null;
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
-      {quests.map((q, i) => {
-        let offset = 0;
-        const at = progressOf(s, step.n, quests, i, q);
-        const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
-        // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él
-        const pick = s.done[step.n] ? null : k => {
-          setObjective(step.n, i, q.id, k, total, quests.length);
-          if (k >= total && quests[i + 1]) setOpen(quests[i + 1].id, true);
-        };
+      {grouped ? grouped.map(([name, img, count], g) => {
+        const from = grouped.slice(0, g).reduce((a, x) => a + x[2], 0);
         return (
-          <details className="q-item" key={q.id} open={opened.has(q.id)}
-            onToggle={e => setOpen(q.id, e.currentTarget.open)}>
-            <summary>
-              <QuestMark className="q-mark" />
-              <span className="q-name">{q.n}</span>
-              <span className="q-lv">{`Niv. ${q.lv}`}</span>
-              {missionGuide(q.n) && (
-                <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
-              )}
-            </summary>
-            {q.st?.cls && (
-              <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>
-            )}
-            {q.st && !q.st.cls && (
-              <p className="q-start">
-                Empieza con <b>{q.st.npc || "un PNJ"}</b>{q.st.a ? ` en ${q.st.a}` : ""} <CoordChip x={q.st.x} y={q.st.y} />
-              </p>
-            )}
-            {q.s.map((stg, j) => {
-              const from = offset;
-              offset += stg.o.length;
-              const here = stops.filter(p => p.quest === q.id && p.index >= from && p.index < offset);
-              return (
-                <Fragment key={j}>
-                  {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-                  <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
-                    stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
-                </Fragment>
-              );
-            })}
-          </details>
+          <div className="q-group" key={name}>
+            <h4 className="q-group-head">
+              {img && <img src={imgUrl(img)} alt="" />}
+              <span className="q-group-name">{name}</span> <span className="q-group-n">· {count}</span>
+            </h4>
+            {items.slice(from, from + count)}
+          </div>
         );
-      })}
+      }) : items}
     </section>
   );
 }
@@ -357,10 +422,11 @@ export default function Journal({ n, id }) {
     <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <div className="journal-top">
         <Banner step={step} />
-        <Goal step={step} done={!!s.done[n]} s={s} />
+        <Goal step={step} done={!!s.done[n]} />
       </div>
       <div className="journal-body">
         <Calls step={step} />
+        <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
       </div>

@@ -251,6 +251,41 @@ def step_plan(step, achievements, marks, quests, images):
     return [entry for _, entry in sorted(found, key=lambda f: f[0])]
 
 
+def quest_groups(step_quests, achievements, images):
+    """Steps whose quests come from more than one achievement -> [[name, img, count], ...]
+    in quest order. Each quest goes to the achievement holding the most quests of the
+    step; a quest in none (or the class quest) joins the group before it (or after it,
+    if it comes first). Steps with a single group are left out.
+    """
+    holders = {}
+    for ach in achievements.values():
+        for q in achievement_quests(ach):
+            if q is not None and q != CLASS_QUEST:
+                holders.setdefault(q, []).append(ach)
+    out = {}
+    for n, ids in step_quests.items():
+        weight = {}
+        for q in ids:
+            for ach in holders.get(q, []):
+                weight[ach["id"]] = weight.get(ach["id"], 0) + 1
+        owner = [max(holders[q], key=lambda a: weight[a["id"]]) if q in holders else None for q in ids]
+        for i in range(len(owner)):  # orphans join the previous group...
+            if owner[i] is None and i and owner[i - 1]:
+                owner[i] = owner[i - 1]
+        for i in reversed(range(len(owner))):  # ...or the next one
+            if owner[i] is None and i + 1 < len(owner):
+                owner[i] = owner[i + 1]
+        groups = []
+        for ach in owner:
+            if groups and ach is not None and groups[-1][3] == ach["id"]:
+                groups[-1][2] += 1
+            elif ach is not None:
+                groups.append([ach["name"]["es"], images.get(ach["id"]), 1, ach["id"]])
+        if len(groups) > 1:
+            out[n] = [g[:3] for g in groups]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Quest -> compact record
 # ---------------------------------------------------------------------------
@@ -288,6 +323,7 @@ def main():
         if ids:
             step_quests[str(step["n"])] = ids
     used = sorted({q for ids in step_quests.values() for q in ids if q != CLASS_QUEST})
+    step_groups = quest_groups(step_quests, achievements, images)
 
     # Collect everything that needs a name or a position.
     wanted = {k: set() for k in PLACEHOLDER_SOURCE}
@@ -387,7 +423,7 @@ def main():
 
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "QUESTS": out_quests}) + "\n")
+    OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups, "QUESTS": out_quests}) + "\n")
     OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
@@ -395,6 +431,7 @@ def main():
     print(f"quests.json      : {OUT_JSON.stat().st_size // 1024} KB")
     print(f"plans.json       : {OUT_PLANS.stat().st_size // 1024} KB, {len(plans)} pasos con tarjeta")
     print(f"pasos con misión : {len(step_quests)}/100")
+    print(f"pasos agrupados  : {len(step_groups)} (misiones de varios logros)")
     print(f"misiones         : {len(out_quests)}")
     print(f"objetivos        : {len(objs)} ({len(located)} con ubicación)")
     print(f"con NPC inicial  : {sum(1 for q in out_quests.values() if q['st'] and q['st'].get('npc'))}")
