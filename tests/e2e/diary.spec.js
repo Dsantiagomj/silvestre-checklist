@@ -165,13 +165,44 @@ test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => 
   await expect(page.locator("#journal .journal-num")).toHaveText("78");
 });
 
-test("pulsar un objeto de «Necesitas» copia su nombre para el mercadillo", async ({ page, context }) => {
+test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el mercadillo", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-main');
-  await page.locator("#journal .req-item").first().click();
-  await expect(page.locator("#journal .req-copied")).toContainText("Glándula de arak-hai");
+  const slot = page.locator("#journal .journal-needs .slot").first();
+  await slot.hover();
+  await slot.locator(".slot-copy").click();
+  await expect(slot.locator(".slot-copied")).toHaveText("Copiado");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Glándula de arak-hai");
+  // Copiar no lo marca como cogido
+  await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("en el detalle, los objetos van antes que las misiones y se marcan como en «Lo que necesitas»", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  const j = page.locator("#journal");
+  await expect(j.locator(".journal-quests")).toBeVisible({ timeout: 15_000 });
+  const before = await j.evaluate(el => {
+    const needs = el.querySelector(".journal-needs"), quests = el.querySelector(".journal-quests");
+    return !!(needs.compareDocumentPosition(quests) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  expect(before).toBe(true);
+  await expect(j.locator(".journal-needs .journal-h")).toContainText("(5)");
+
+  // Pulsar el objeto lo marca como cogido y «Lo que necesitas» lo refleja (uno que solo
+  // pide este paso: los compartidos salen sumados allí y marcar una parte no los completa)
+  const k = "2268";
+  const slot = j.locator(`.journal-needs .slot[data-id="${k}"]`);
+  await slot.locator(".slot-main").click();
+  await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "true");
+  await page.click("#tabItems");
+  const there = page.locator(`#items .band.soon .slot[data-id="${k}"] .slot-main`);
+  await expect(there).toHaveAttribute("aria-pressed", "true");
+
+  // Y al revés: desmarcarlo allí lo desmarca en el detalle
+  await there.click();
+  await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
 });
 
 test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de misión", async ({ page }) => {

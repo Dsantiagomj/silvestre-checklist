@@ -4,8 +4,12 @@ import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
-import { loadQuests, markSteps, selectStep, showOnMap, toggleStep, useAppState } from "../state/store.js";
-import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
+import { rowsOf } from "../lib/resources.js";
+import {
+  loadQuests, markSteps, rowHave, selectStep, showOnMap, toggleRowOwned, toggleStep, useAppState,
+} from "../state/store.js";
+import { CoordChip, Objectives } from "./StepParts.jsx";
+import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 
@@ -81,6 +85,26 @@ function Calls({ step }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Lo que hay que reunir para el paso, antes de sus misiones: las mismas casillas que
+ * «Objetos necesarios». Pulsar una la marca como cogida para este paso (y allí se ve);
+ * el icono de la esquina copia el nombre para el mercadillo.
+ */
+function Needs({ n, s }) {
+  const rows = rowsOf(n).map(row => ({ ...row, steps: [n] }));
+  if (!rows.length) return null;
+  return (
+    <section className="journal-needs">
+      <h3 className="journal-h"><span className="t">Necesitas</span> <span className="n">({rows.length})</span></h3>
+      <div className="slots">
+        {rows.map(row => (
+          <Slot key={row.k} row={row} have={rowHave(s, row, [n])} onToggle={toggleRowOwned} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -203,8 +227,8 @@ export default function Journal({ n, id }) {
             )}
           </div>
         )}
+        <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} />
-        <ReqBlock n={n} open s={s} title={<span className="t">Necesitas</span>} />
         <Actions step={step} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
       </div>
