@@ -1,6 +1,6 @@
 import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName } from "../../lib/resources.js";
 import {
-  pendingItemSteps, rowHave, setShopPendingOnly, setShopQuery, setShopSort, setShopTab, soonSteps,
+  pendingItemSteps, rowHave, setShopPendingOnly, setShopQuery, setShopSort, setShopTab, setShopView, soonSteps,
   toggleRowOwned, useAppState,
 } from "../../state/store.js";
 import Slot from "./Slot.jsx";
@@ -53,14 +53,20 @@ function SoonChips({ chips }) {
   );
 }
 
+const VIEWS = [
+  ["grid", "Cuadrícula", <svg key="g" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" /></svg>],
+  ["list", "Lista", <svg key="l" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" /></svg>],
+];
+
 function Slots({ rows, band, s, q, later }) {
+  const list = s.shopView === "list";
   return (
-    <div className="slots">
+    <div className={"slots" + (list ? " list" : "")}>
       {rows.map(r => {
         const hit = q && rowMatches(r, q);
         return (
           <Slot key={r.k} row={r} band={band} have={rowHave(s, r)} dim={!!q && !hit} match={!!hit}
-            later={later?.get(r.k) || 0} onToggle={toggleRowOwned} />
+            later={later?.get(r.k) || 0} list={list} onToggle={toggleRowOwned} />
         );
       })}
     </div>
@@ -100,6 +106,12 @@ export default function ItemsPanel({ searchRef }) {
           {SORTS.map(([k, label]) => (
             <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
               onClick={() => setShopSort(k)}>{label}</button>
+          ))}
+        </div>
+        <div className="needs-view" role="group" aria-label="Vista">
+          {VIEWS.map(([k, label, icon]) => (
+            <button key={k} type="button" data-view={k} aria-pressed={String(s.shopView === k)}
+              onClick={() => setShopView(k)}>{icon}{label}</button>
           ))}
         </div>
         <label className="toggle">

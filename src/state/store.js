@@ -15,6 +15,7 @@ export const LS = {
   questPos: "silvestre:questPos",
   questObj: "silvestre:questObjective",
   guide: "silvestre:guide",
+  itemsView: "silvestre:itemsView",
 };
 
 // Versión de la guía de Sandglass con la que se numeran los pasos guardados
@@ -81,6 +82,7 @@ function initialState() {
     shopTab: "todo",
     shopPendingOnly: true,
     shopSort: "soon",   // soon (Pronto primero) | qty | az
+    shopView: localStorage.getItem(LS.itemsView) === "list" ? "list" : "grid",
     shopQuery: "",
     // Cada vez que la versión vanilla repintaba la lista entera se repetía la
     // animación de entrada; este contador remonta la rejilla en esos mismos casos.
@@ -251,6 +253,10 @@ export const setShopTab = tab => setState(s => ({ shopTab: tab, shopEpoch: s.sho
 export const setShopPendingOnly = b => setState(s => ({ shopPendingOnly: b, shopEpoch: s.shopEpoch + 1 }));
 export const setShopSort = sort => setState(s => ({ shopSort: sort, shopEpoch: s.shopEpoch + 1 }));
 export const setShopQuery = q => setState({ shopQuery: q });
+export function setShopView(view) {
+  localStorage.setItem(LS.itemsView, view);
+  setState({ shopView: view });
+}
 
 /**
  * Marca o desmarca filas de objetos para sus pasos (row.steps). Una fila de "Pronto"
