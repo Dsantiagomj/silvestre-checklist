@@ -164,12 +164,13 @@ def read_marks():
 
 
 def step_quest_ids(step, achievements, marks):
-    """The step's quests in the guide's order: the achievement it is about (from the
-    base text, never from a note), then missions a note names by number ("Logro X,
+    """The step's quests in play order: achievements a note says the step includes
+    (they are its requirements, so they come first), the achievement it is about (from
+    the base text, never from a note), then missions a note names by number ("Logro X,
     misión 2"), then quests matched by name."""
     base, notes = marks.get(step["n"], (None, []))
     base = base or step["text"]
-    main, extra, named = [], [], []
+    included, main, extra, named = [], [], [], []
     for a in step["assets"]:
         if a["kind"] == "quest":
             named.append(a["id"])
@@ -193,10 +194,10 @@ def step_quest_ids(step, achievements, marks):
                 if wanted:
                     extra += pick(wanted)
                 elif INCLUDES.search(note[:at]):
-                    extra += ordered
+                    included.append((at, ordered))
     # Varios logros en un paso: en el orden en que los nombra la guía
-    main = [q for _, qs in sorted(main, key=lambda m: m[0]) for q in qs]
-    ids = [q for q in main + extra + named if q]
+    in_order = lambda found: [q for _, qs in sorted(found, key=lambda m: m[0]) for q in qs]
+    ids = [q for q in in_order(included) + in_order(main) + extra + named if q]
     seen, out = set(), []
     for q in ids:  # keep order, drop repeats
         if q not in seen:
