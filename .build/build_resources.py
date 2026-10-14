@@ -78,6 +78,15 @@ DUPLICATES = {
     # pandrista" takes 50 Ortiga and 5 Lana de jalatín negro, listed in step 0 for l11.
     "1": {"421": "prerrequisito l11", "885": "prerrequisito l11"},
 }
+# Rows the page puts one step early. Step -> (step they belong to, {item: why}).
+MOVED = {
+    # "Barnabé en el espacio" (step 4) only asks for a fight. Both items are the first
+    # objective of step 5's quests, in DofusDB and in their guides on torrentearcano:
+    # "Las primeras impresiones son engañosas" (5 Lana de jalató) and "¿Dónde se ha ido
+    # la 7.ª compañía?" (the key). The page lists step 5 with nothing.
+    "4": ("5", {"384": "Las primeras impresiones son engañosas",
+                "12073": "¿Dónde se ha ido la 7.ª compañía?"}),
+}
 # Rows the page leaves out: what an optional prerequisite asks for. Step -> [(category,
 # label shown with the item, prerequisite id, item name, qty)]. "Escaeroplano de alta
 # velocidad" (Altos vuelos, optional) takes the upgraded hat and wings (DofusDB's
@@ -227,6 +236,11 @@ def main():
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
 
     check_against_compiled(steps, items)
+    for n, (to, move) in MOVED.items():
+        steps.setdefault(to, []).extend(row for row in steps[n] if row["k"] in move)
+        steps[n] = [row for row in steps[n] if row["k"] not in move]
+        print(f"paso {n} → {to}: {', '.join(items[k]['name'] for k in move)}")
+    steps = {n: rows for n, rows in steps.items() if rows}
     for n, drop in DUPLICATES.items():
         steps[n] = [row for row in steps[n] if row["k"] not in drop]
         print(f"paso {n}: sin {', '.join(f'{items[k]["name"]} ({why})' for k, why in drop.items())}")
