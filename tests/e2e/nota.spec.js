@@ -35,3 +35,32 @@ test("la aclaración siempre está visible y no se puede cerrar", async ({ page 
   await expect(page.locator("#nota")).toBeVisible();
   await expect(page.locator("#notaClose")).toHaveCount(0);
 });
+
+/** Opacidad de la ✓ de cada casilla del ejemplo y filtro del retrato del jefe. */
+const exampleState = page => page.locator(".nota-track").evaluate(track => ({
+  checks: [...track.querySelectorAll(".nota-step")].map(el => Number(getComputedStyle(el, "::after").opacity)),
+  boss: getComputedStyle(track.querySelector(".nota-boss img")).filter,
+}));
+
+test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia atrás", async ({ page }) => {
+  await openApp(page);
+  await page.locator("#nota").scrollIntoViewIfNeeded();
+  await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
+  await expect(page.locator(".nota-marker")).toHaveCount(1);
+  // Al terminar: los tres pasos con ✓ y el jefe vencido, y se queda así
+  await expect.poll(() => exampleState(page), { timeout: 6_000 })
+    .toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
+  // Pasar el ratón la repite
+  const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
+  await page.locator(".nota-example").hover();
+  await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
+});
+
+test("con movimiento reducido el ejemplo muestra directamente el final", async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await openApp(page);
+  expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
+  await expect(page.locator(".nota-marker")).toBeHidden();
+  await ctx.close();
+});
