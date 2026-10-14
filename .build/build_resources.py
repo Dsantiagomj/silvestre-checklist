@@ -37,6 +37,11 @@ API = "https://api.dofusdb.fr/"
 
 CATEGORY = {"Recursos": "recursos", "Consumibles": "consumibles", "Equipables": "equipables",
             "Almas": "almas", "Criaturas": "criaturas", "Cosméticos": "cosmeticos"}
+# Mistakes in the page's lists, confirmed by players. Applied to the per-step data
+# and to the compiled list alike, so the check still compares like with like.
+CORRECTIONS = {
+    "Hoja de kalipto": "Flor de kalipto",   # no such leaf exists; the guide means the flower
+}
 # Names that differ from DofusDB's Spanish name
 ALIASES = {
     "jalabola dedicada a bonta": 26059,     # "Jalabola dedicada de Bonta"
@@ -78,7 +83,8 @@ def parse_entry(text):
         m = LINE.match(part.strip())
         if not m:
             raise SystemExit(f"línea no reconocida: {text}")
-        alts.append((int(m.group(1)), m.group(2).strip()))
+        name = m.group(2).strip()
+        alts.append((int(m.group(1)), CORRECTIONS.get(name, name)))
     return alts
 
 
