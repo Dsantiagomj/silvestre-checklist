@@ -28,7 +28,7 @@ export function CoordChip({ x, y }) {
 
   return (
     <button className={"coord-chip" + (copied ? " ok" : "")} data-travel={label} title={`Copiar /travel ${label}`} onClick={copyTravel}>
-      {copied ? "Copiado" : `⌖ [${label}]`}
+      {copied ? "Copiado" : <><img src={imgUrl(OBJ_ICONS.map)} alt="" />[{label}]</>}
     </button>
   );
 }

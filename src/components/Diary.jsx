@@ -36,6 +36,10 @@ const Row = memo(function Row({ step, done, current }) {
   const art = rowArt(n);
   const thumb = ZONE_IMG[step.zone]?.thumb;
   const closedBy = !done && CLOSED_BY[n];
+  const closes = !done && step.closes;
+  // Dentro del botón de la fila: un clic lleva a ese paso sin abrir este (con teclado,
+  // los mismos enlaces están en el detalle)
+  const go = m => e => { e.stopPropagation(); selectStep(m); };
   return (
     <li className={"diary-row" + (done ? " done" : "") + (current ? " current" : "")} data-n={n} aria-current={current ? "step" : undefined}>
       <button type="button" className="row-check" aria-pressed={done} aria-label={`${done ? "Desmarcar" : "Marcar"} paso ${n}`}
@@ -47,7 +51,12 @@ const Row = memo(function Row({ step, done, current }) {
           <span className="row-title">{stepTitle(step)}</span>
           <span className="row-sub">
             <span className="row-zone">{step.zone}</span>
-            {closedBy && <span className="row-closed">se cierra en el {closedBy}</span>}
+            {closedBy && <span className="row-closed" title={`Ir al paso ${closedBy}`} onClick={go(closedBy)}>se cierra en el {closedBy}</span>}
+            {closes && (
+              <span className="row-closes" title={`Ir al paso ${closes[0]}`} onClick={go(closes[0])}>
+                cierra el {closes.join(", ")}
+              </span>
+            )}
           </span>
         </span>
         <span className="row-art" aria-hidden="true">

@@ -388,3 +388,31 @@ test("«hasta que puedas entrar a la mazmorra» pone la parada antes de entrar e
   await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Bodega del albergue");
 });
+
+test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openApp(page);
+  const badge = row(page, 5).locator(".row-closed");
+  await expect(badge).toHaveText("se cierra en el 22");
+  // No se corta: cabe entero en su línea
+  const fits = await badge.evaluate(el => el.getBoundingClientRect().right <= el.parentElement.getBoundingClientRect().right + 0.5);
+  expect(fits).toBe(true);
+  await badge.click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("22");
+  // El 22 dice qué cierra y lleva de vuelta
+  await row(page, 22).locator(".row-closes").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("5");
+  // En el detalle, como botones de verdad
+  await page.locator("#journal .badge.closed-in").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("22");
+  await page.locator('#journal .badge.closes[data-n="5"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("5");
+});
+
+test("las coordenadas llevan la brújula del juego, no un símbolo", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const chip = page.locator("#journal .coord-chip").first();
+  await expect(chip.locator("img")).toHaveAttribute("src", /items\/126014\.png$/, { timeout: 15_000 });
+  await expect(chip).not.toContainText("⌖");
+});
