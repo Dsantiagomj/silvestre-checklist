@@ -126,17 +126,30 @@ const names = (page, sel) => page.evaluate(s => document.getAnimations()
 test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) => {
   await openApp(page);
   await page.waitForTimeout(500);
-  await page.click("#stepsViewMap");
+  // Todo se lee de una vez tras el clic: el zoom dura 0,3 s y cada ida y vuelta cuenta
+  const seen = await page.evaluate(async () => {
+    document.getElementById("stepsViewMap").click();
+    await new Promise(r => requestAnimationFrame(r));
+    const anim = sel => document.getAnimations().filter(a => a.effect?.target?.matches?.(sel)).map(a => a.animationName);
+    const stage = document.querySelector(".steps-stage");
+    const node = document.querySelector('.map-node[data-n="1"]');
+    return {
+      leaving: document.querySelectorAll(".steps-leaving").length,
+      leavingAnims: anim(".steps-leaving"),
+      currentAnims: anim(".steps-current"),
+      origin: [stage.style.getPropertyValue("--zx"), stage.style.getPropertyValue("--zy")],
+      node: [node.style.left, node.style.top],
+      journals: document.querySelectorAll("#journal").length,
+    };
+  });
   // La vista que se va queda encima, como instantánea, mientras entra la nueva
-  await expect(page.locator(".steps-leaving")).toHaveCount(1);
-  expect(await names(page, ".steps-leaving")).toContain("zoom-away-small");
-  expect(await names(page, ".steps-current")).toContain("zoom-from-near");
+  expect(seen.leaving).toBe(1);
+  expect(seen.leavingAnims).toContain("zoom-away-small");
+  expect(seen.currentAnims).toContain("zoom-from-near");
   // Centro del zoom: el sello del paso actual (el 1)
-  const origin = await page.locator(".steps-stage").evaluate(el => [el.style.getPropertyValue("--zx"), el.style.getPropertyValue("--zy")]);
-  const node = await page.locator('.map-node[data-n="1"]').evaluate(el => [el.style.left, el.style.top]);
-  expect(origin).toEqual(node);
+  expect(seen.origin).toEqual(seen.node);
   // La instantánea no repite ids y se va al terminar
-  await expect(page.locator("#journal")).toHaveCount(0);
+  expect(seen.journals).toBe(0);
   await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
 });
 
@@ -145,10 +158,15 @@ test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
   await page.click("#stepsViewMap");
   await page.waitForTimeout(800);
   await page.click('.map-node[data-n="34"]');
-  await page.click("#mapCard .map-card-open");
-  expect(await names(page, ".steps-leaving")).toContain("zoom-into");
-  expect(await names(page, ".steps-current")).toContain("zoom-from-far");
-  await expect(page.locator("#journal")).toHaveCount(1);
+  const seen = await page.evaluate(async () => {
+    document.querySelector("#mapCard .map-card-open").click();
+    await new Promise(r => requestAnimationFrame(r));
+    const anim = sel => document.getAnimations().filter(a => a.effect?.target?.matches?.(sel)).map(a => a.animationName);
+    return { leaving: anim(".steps-leaving"), current: anim(".steps-current"), journals: document.querySelectorAll("#journal").length };
+  });
+  expect(seen.leaving).toContain("zoom-into");
+  expect(seen.current).toContain("zoom-from-far");
+  expect(seen.journals).toBe(1);
   await expect(page.locator(".steps-leaving")).toHaveCount(0, { timeout: 2000 });
 });
 
