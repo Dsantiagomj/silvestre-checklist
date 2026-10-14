@@ -357,83 +357,6 @@ header{
   .nota-boss img{ filter:grayscale(1) brightness(.55); }
 }
 
-/* FILTROS -------------------------------------------------------------------*/
-.filters{
-  display:flex; flex-direction:column; gap:8px;
-  margin-bottom:14px;
-}
-.filter-row{
-  display:flex; flex-wrap:wrap; align-items:center;
-  gap:8px;
-}
-.filter-row .lbl{
-  font-family:var(--font-display);
-  font-size:11px; font-weight:700;
-  letter-spacing:1.5px; text-transform:uppercase;
-  color:var(--txt-mute);
-  margin-right:2px;
-}
-.chip{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--radius-sm);
-  padding:5px 11px;
-  font-size:12px; font-weight:500;
-  color:var(--txt-soft);
-  display:inline-flex; align-items:center; gap:6px;
-  cursor:pointer;
-  transition:all .15s ease;
-  user-select:none;
-  white-space:nowrap;
-  font-family:var(--font-body);
-}
-.chip:hover{
-  color:var(--txt);
-  border-color:var(--line-2);
-}
-.chip.active{
-  background:rgba(183,220,105,.12);
-  border-color:var(--amber);
-  color:var(--txt);
-}
-.chip[data-type="zone"].active{
-  background:color-mix(in srgb, var(--zone-color, var(--amber)) 22%, var(--panel));
-  border-color:var(--zone-color, var(--amber));
-}
-.chip .dot{
-  width:8px; height:8px; border-radius:50%;
-  background:var(--zone-color, var(--gold));
-  flex-shrink:0;
-}
-.chip .ico{ font-size:13px; line-height:1; }
-.chips-scroll{
-  display:flex; gap:6px;
-  flex-wrap:wrap;
-  scrollbar-width:thin;
-}
-@media (max-width:700px){
-  .chips-scroll{
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    padding-bottom:6px;
-  }
-}
-.search{
-  flex:1; min-width:180px;
-  background:var(--inset);
-  border:1px solid var(--line);
-  border-radius:var(--radius-sm);
-  padding:7px 12px;
-  color:var(--txt);
-  font-size:13px;
-  transition:all .15s ease;
-}
-.search::placeholder{color:var(--txt-mute)}
-.search:focus{
-  outline:none;
-  border-color:var(--amber);
-  background:var(--bg-2);
-}
 .toggle{
   display:inline-flex; align-items:center; gap:8px;
   cursor:pointer;
@@ -461,18 +384,6 @@ header{
 }
 .toggle input:checked + .sw{ background:rgba(183,220,105,.5); }
 .toggle input:checked + .sw::after{ left:16px; background:var(--gold); }
-.clear-btn{
-  background:transparent;
-  border:1px solid var(--line);
-  border-radius:var(--radius-sm);
-  padding:5px 10px;
-  font-size:11.5px; font-weight:600;
-  color:var(--txt-mute);
-  letter-spacing:.5px;
-  transition:all .15s ease;
-}
-.clear-btn:hover{ border-color:var(--danger); color:var(--danger); }
-.clear-btn.hidden{ display:none; }
 
 .section-title{
   display:flex; align-items:center; gap:8px;
@@ -2153,6 +2064,56 @@ header.show-progress .tb-progress{
    Diario: la lista por capítulos a la izquierda y, a la derecha, el paso con su
    escenario (paisaje de la zona y jefe), los avisos de la guía y las misiones. */
 .diary{ margin-bottom:24px; scroll-margin-top:calc(var(--header-h) + 12px); }
+.diary-head{ display:flex; align-items:center; gap:12px 18px; flex-wrap:wrap; margin-bottom:14px; }
+.diary-head .section-title{ margin:0; }
+.diary-bar{ flex:1; display:flex; gap:10px; min-width:min(100%, 420px); }
+.diary-search{
+  flex:1; min-width:0; padding:9px 12px; border-radius:10px;
+  background:var(--inset); border:1px solid var(--line-2); color:var(--txt); font:inherit; font-size:14px;
+}
+.diary-search::placeholder{ color:var(--txt-mute); }
+.diary-search:focus{ outline:none; border-color:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+.diary-next{
+  flex:none; padding:9px 16px; border-radius:999px; border:0; cursor:pointer;
+  background:var(--amber); color:#142208; font:700 14px var(--font-body);
+}
+.diary-next:disabled{ opacity:.6; cursor:default; }
+@media (max-width:600px){
+  .diary-next .long{ display:none; }
+}
+
+/* Sellos de zona: paisaje en un medallón con anillo de avance */
+.seals{ display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; padding:4px 2px 6px; scrollbar-width:thin; }
+.seal{
+  flex:1 1 0; min-width:62px; display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:0; border:0; background:none; color:inherit; font:inherit; text-align:center; cursor:pointer;
+}
+.seal-ring{
+  position:relative; width:56px; height:56px; padding:3px; border-radius:50%;
+  background:conic-gradient(var(--zone-color) var(--p), var(--line-2) 0);
+  box-shadow:0 4px 10px rgba(0,0,0,.35);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.seal:hover .seal-ring{ transform:translateY(-2px); }
+.seal-img{
+  display:block; width:100%; height:100%; border-radius:50%; border:3px solid var(--bg);
+  background:var(--panel-2) center / 260% auto;
+}
+.seal[data-zone=""] .seal-img, .seal:not([data-zone]) .seal-img{ background-size:70%; background-repeat:no-repeat; }
+.seal.full .seal-img{ filter:saturate(.45) brightness(.8); }
+.seal-ok{
+  position:absolute; top:-2px; right:-2px; display:grid; place-items:center; width:18px; height:18px; border-radius:50%;
+  background:var(--amber); color:#142208; font-size:11px; font-weight:900;
+}
+.seal-name{ min-height:2.2em; font-size:10.5px; font-weight:700; line-height:1.1; color:var(--txt-soft); }
+.seal-count{ font:800 11px var(--font-display); color:var(--txt-mute); }
+.seal[aria-pressed="true"] .seal-ring{ box-shadow:0 0 0 3px var(--soon), 0 0 16px color-mix(in srgb, var(--soon) 55%, transparent); }
+.seal[aria-pressed="true"] .seal-name{ color:var(--txt); }
+.seal.here .seal-ring::after{
+  content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%);
+  width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 6px var(--amber);
+}
+
 .diary-window{ display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip; }
 
 .diary-side{

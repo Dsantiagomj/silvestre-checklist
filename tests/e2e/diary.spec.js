@@ -94,3 +94,42 @@ test("las pestañas filtran pendientes, hechos y todos", async ({ page }) => {
   await page.click("#diaryTabAll");
   await expect(page.locator(".diary-row")).toHaveCount(100);
 });
+
+test("los sellos de zona muestran su avance y filtran la lista", async ({ page }) => {
+  // Astrub son los pasos 2 y 3
+  await openApp(page, { "silvestre:done": range(1, 3) });
+  const seals = page.locator("#zoneSeals .seal");
+  await expect(seals).toHaveCount(18);
+  await expect(seals.first()).toContainText("Todas");
+  await expect(seals.first()).toHaveAttribute("aria-pressed", "true");
+  const astrub = page.locator('#zoneSeals .seal[data-zone="Astrub"]');
+  await expect(astrub.locator(".seal-count")).toHaveText("2/2");
+  await expect(astrub).toHaveClass(/full/);
+  const frigost = page.locator('#zoneSeals .seal[data-zone="Isla de Frigost"]');
+  await frigost.click();
+  await expect(frigost).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".diary-row")).toHaveCount(16);
+  await expect(page.locator(".diary-row .row-zone").first()).toHaveText("Isla de Frigost");
+  // Otra zona sustituye a la anterior; «Todas» vuelve a la lista entera
+  await astrub.click();
+  await expect(page.locator(".diary-row")).toHaveCount(2);
+  await seals.first().click();
+  await expect(page.locator(".diary-row")).toHaveCount(100);
+});
+
+test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await expect(page.locator('#zoneSeals .seal[data-zone="Reino de Amakna"]')).toHaveClass(/here/);
+  await expect(page.locator("#zoneSeals .seal.here")).toHaveCount(1);
+});
+
+test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 32) });
+  await expect(page.locator("#diaryNext")).toContainText("33");
+  await page.click('.diary-row[data-n="60"] .row-main');
+  await page.click("#diaryNext");
+  await expect(page.locator("#journal .journal-num")).toHaveText("33");
+  await page.fill("#searchInput", "Lasoberaña");
+  await expect.poll(() => page.locator(".diary-row").count()).toBeLessThan(6);
+});

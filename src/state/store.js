@@ -267,10 +267,8 @@ export function openNeeds(tab) {
 
 // Filtros
 const setFilters = patch => setState(s => ({ filters: { ...s.filters, ...patch } }));
-export const toggleZone = z =>
-  setFilters({
-    zones: state.filters.zones.includes(z) ? state.filters.zones.filter(x => x !== z) : [...state.filters.zones, z],
-  });
+/** Los sellos eligen una zona o ninguna (null = todas); volver a pulsar la misma la quita. */
+export const setZone = z => setFilters({ zones: z == null || state.filters.zones[0] === z ? [] : [z] });
 export const setSearch = v => setFilters({ search: v });
 export const setStatusFilter = status => setFilters({ status });
 export const clearFilters = () => setFilters({ zones: [], search: "" });

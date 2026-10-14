@@ -3,10 +3,11 @@ import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, hasActiveFilters, nextPending, selectStep, setStatusFilter, stepMatchesFilters, stepMatchesStatus,
-  toggleStep, useAppState,
+  clearFilters, goToNextPending, hasActiveFilters, nextPending, selectStep, setSearch, setStatusFilter,
+  stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
+import ZoneSeals from "./ZoneSeals.jsx";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -105,6 +106,20 @@ function DiaryList({ s, current }) {
   );
 }
 
+/** Buscador y acceso al siguiente pendiente, junto al título de la sección. */
+function DiaryBar({ s }) {
+  const next = nextPending(s);
+  return (
+    <div className="diary-bar">
+      <input type="search" className="diary-search" id="searchInput" placeholder="Buscar por número o texto…"
+        aria-label="Buscar paso" value={s.filters.search} onChange={e => setSearch(e.target.value)} />
+      <button type="button" className="diary-next" id="diaryNext" disabled={next == null} onClick={goToNextPending}>
+        {next != null ? <>Siguiente<span className="long"> pendiente</span>: <b>{next}</b></> : "Guía completa"}
+      </button>
+    </div>
+  );
+}
+
 /** 02 · Los 100 pasos: la lista a la izquierda y el detalle del paso a la derecha. */
 export default function Diary({ mobile }) {
   const s = useAppState();
@@ -112,7 +127,11 @@ export default function Diary({ mobile }) {
   const current = s.selectedStep ?? (mobile ? null : nextPending(s) ?? STEPS.length);
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
-      <h2 className="section-title" id="diaryTitle"><span className="section-num">02</span>Los 100 pasos</h2>
+      <div className="diary-head">
+        <h2 className="section-title" id="diaryTitle"><span className="section-num">02</span>Los 100 pasos</h2>
+        <DiaryBar s={s} />
+      </div>
+      <ZoneSeals s={s} current={current} />
       <div className="diary-window">
         <DiaryList s={s} current={current} />
         {!mobile && current != null && (
