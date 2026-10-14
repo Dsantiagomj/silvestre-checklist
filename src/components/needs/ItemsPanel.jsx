@@ -128,7 +128,7 @@ function Slots({ rows, band, s, q, later }) {
 }
 
 /** OBJETOS NECESARIOS · inventario con buscador, categorías y la franja "Pronto". */
-export default function ItemsPanel({ searchRef, actions }) {
+export default function ItemsPanel({ searchRef }) {
   const s = useAppState();
   const { q, bands, counts, total, matches } = itemsView(s);
   const soon = bands.find(b => b.id === "soon");
@@ -166,9 +166,6 @@ export default function ItemsPanel({ searchRef, actions }) {
             ) : <kbd title="Atajo para buscar">/</kbd>}
           </span>
         </div>
-        {actions}
-        {/* Buscador y acciones arriba; orden, vista y filtro debajo, todos a la izquierda */}
-        <span className="needs-break" aria-hidden="true"></span>
         <div className="needs-sort" role="group" aria-label="Ordenar">
           {SORTS.map(([k, label]) => (
             <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}

@@ -2120,7 +2120,6 @@ header.show-progress .tb-progress{
 .needs-hide:hover{ border-color:var(--amber); color:var(--txt); }
 .needs-hide i{ font-style:normal; font-size:10px; }
 .needs-intro{ margin:-4px 0 16px; font-size:13.5px; line-height:1.55; color:var(--txt-soft); max-width:900px; }
-.pr-top{ display:flex; justify-content:flex-end; margin-bottom:14px; }
 
 .needs-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
 .needs-tab{
@@ -2270,10 +2269,10 @@ header.show-progress .tb-progress{
 }
 
 /* Objetos: barra a lo ancho (buscador, orden, vista, filtro) y debajo categorías e inventario */
-.needs-hint{ margin:-6px 0 14px; font-size:12.5px; line-height:1.5; color:var(--txt-mute); }
+.needs-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; margin:-4px 0 16px; }
+.needs-hint{ flex:1 1 280px; margin:0; font-size:12.5px; line-height:1.5; color:var(--txt-mute); }
 .items-body{ display:grid; grid-template-columns:190px minmax(0, 1fr); gap:16px; align-items:start; }
 .needs-find{ position:relative; flex:1 1 320px; }
-.needs-break{ flex-basis:100%; height:0; }
 .needs-find input{
   width:100%; box-sizing:border-box;
   padding:10px 120px 10px 36px; border-radius:10px;
