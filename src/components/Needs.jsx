@@ -77,7 +77,7 @@ export default function Needs() {
   return (
     <section className="needs" id="needs" aria-labelledby="needsTitle">
       <div className="needs-head">
-        <h2 className="section-title" id="needsTitle"><span className="section-num">02</span>Lo que necesitas</h2>
+        <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
         <div className="spacer"></div>
         <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
           ✓ Marcar todo

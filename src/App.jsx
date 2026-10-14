@@ -59,16 +59,16 @@ export default function App() {
       <Hero />
       <div className="wrap">
         <Nota />
+        <Needs />
         <Filters />
         {/* LAYOUT PRINCIPAL */}
         <div className="main-layout">
           <section className="grid-section" aria-label="Tablero de pasos">
-            <h2 className="section-title"><span className="section-num">01</span>Tablero · 100 pasos</h2>
+            <h2 className="section-title"><span className="section-num">02</span>Tablero · 100 pasos</h2>
             <Grid />
           </section>
           <DetailPanel mobile={mobile} />
         </div>
-        <Needs />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />
