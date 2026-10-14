@@ -320,3 +320,32 @@ test("los objetos del paso 5 van en el 5, no en el 4 (Barnabé solo pide un comb
   await expect(needs.locator(".slot")).toHaveCount(2);
   for (const k of ["384", "12073"]) await expect(needs.locator(`.slot[data-id="${k}"]`)).toHaveCount(1);
 });
+
+test("los objetivos de una misión son una ruta de medallones con su avance", async ({ page }) => {
+  // Paso 5, primera misión («Las primeras impresiones son engañosas», 894): vas por el 4.º objetivo
+  await openApp(page, { "silvestre:questPos": { 5: 0 }, "silvestre:questObjective": { 894: 3 } });
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const quest = page.locator("#journal .q-item", { hasText: "Las primeras impresiones" });
+  await quest.locator("summary").click();
+  const rows = quest.locator(".obj-list.route > .obj-row");
+  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+  // Medallón con icono dibujado, sin emojis
+  await expect(rows.first().locator(".obj-med svg")).toHaveCount(1);
+  expect((await rows.first().locator(".obj-med").innerText()).trim()).toBe("");
+  // Avance: los tres primeros hechos, el cuarto es el actual
+  const states = await rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")));
+  expect(states.join("")).toMatch(/^dddn-+$/);
+  // Lo que se entrega va como casilla con el icono del objeto
+  const bring = rows.filter({ hasText: "Lana de jalató" });
+  await expect(bring.locator(".obj-item img")).toHaveAttribute("src", /items\/57056\.png$/);
+  await expect(bring.locator(".obj-item")).toContainText("5 × Lana de jalató");
+});
+
+test("con el paso hecho, todos sus objetivos salen hechos", async ({ page }) => {
+  await openApp(page, { "silvestre:done": { 4: true, 5: true } });
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
+  await page.locator("#journal .q-item summary").first().click();
+  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+  expect(await rows.evaluateAll(els => els.every(el => el.classList.contains("done")))).toBe(true);
+});

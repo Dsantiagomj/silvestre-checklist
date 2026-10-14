@@ -114,8 +114,22 @@ function Needs({ n, s }) {
   );
 }
 
+/**
+ * Hasta dónde vas en cada misión, con el avance que guarda el overlay: las misiones
+ * antes de la actual, hechas; en la actual, los objetivos antes del que toca. Con el
+ * paso hecho, todo. Devuelve el índice (en la lista aplanada) del objetivo actual.
+ */
+function progressOf(s, n, quests, i, q) {
+  const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
+  if (s.done[n]) return total;
+  const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
+  if (i < pos) return total;
+  if (i > pos) return -1;
+  return Math.min(s.questObj[q.id] || 0, total - 1);
+}
+
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
-function Quests({ step, quests, loaded }) {
+function Quests({ step, quests, loaded, s }) {
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
   const stop = stopPoint(step, quests);
@@ -124,6 +138,7 @@ function Quests({ step, quests, loaded }) {
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
       {quests.map((q, i) => {
         let offset = 0;
+        const at = progressOf(s, step.n, quests, i, q);
         return (
           <details className="q-item" key={q.id} open={stop?.quest === q.id || quests.length === 1}>
             <summary>
@@ -146,7 +161,8 @@ function Quests({ step, quests, loaded }) {
               return (
                 <Fragment key={j}>
                   {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-                  <Objectives objs={stg.o} stop={here ? { index: stop.index - from, text: stop.text } : null} />
+                  <Objectives route objs={stg.o} at={at - from}
+                    stop={here ? { index: stop.index - from, text: stop.text } : null} />
                 </Fragment>
               );
             })}
@@ -234,7 +250,7 @@ export default function Journal({ n, id }) {
           </div>
         )}
         <Needs n={n} s={s} />
-        <Quests step={step} quests={quests} loaded={s.questsLoaded} />
+        <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
         <Actions step={step} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
       </div>
