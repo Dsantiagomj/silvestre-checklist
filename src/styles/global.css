@@ -1961,7 +1961,7 @@ header.show-progress .tb-progress{
 .slot-copy{
   position:absolute; top:4px; right:4px; z-index:2;
   display:grid; place-items:center; width:24px; height:24px; border-radius:7px;
-  background:rgba(13,14,12,.85); border:1px solid var(--line-2);
+  background:var(--panel); border:1px solid var(--line-2); box-shadow:0 2px 6px rgba(0,0,0,.25);
   opacity:0; transition:opacity .15s ease;
 }
 .slot-copy svg{ width:13px; height:13px; fill:none; stroke:var(--txt); stroke-width:1.6; stroke-linecap:round; }

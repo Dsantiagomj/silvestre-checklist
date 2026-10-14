@@ -138,3 +138,24 @@ test("con la barra de progreso a la vista solo hay un Dofus Silvestre en el head
   await expect(page.locator('header img[src*="items/23036.png"]')).toHaveCount(1);
   await expect(page.locator(".brand img")).toBeVisible();
 });
+
+test("el botón de copiar de los objetos se lee en los dos temas", async ({ page }) => {
+  for (const theme of ["light", "dark"]) {
+    await openApp(page, { "silvestre:theme": theme });
+    await page.click("#tabItems");
+    const btn = page.locator("#items .slot-copy").first();
+    await btn.focus();
+    // El icono (trazo) contra el fondo del botón: al menos 4.5
+    await expect.poll(() => btn.evaluate(el => {
+      const lum = c => {
+        const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+          v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+        });
+        return .2126 * r + .7152 * g + .0722 * b;
+      };
+      const [a, b] = [lum(getComputedStyle(el.querySelector("svg")).stroke), lum(getComputedStyle(el).backgroundColor)]
+        .sort((x, y) => y - x);
+      return (a + .05) / (b + .05);
+    }), { timeout: 3_000 }).toBeGreaterThanOrEqual(4.5);
+  }
+});
