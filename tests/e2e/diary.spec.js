@@ -496,6 +496,9 @@ test("el paso 78 lleva las misiones de orden hasta la 4 y el 80 empieza por «La
   const quest = page.locator("#journal .q-item", { hasText: "Maestro de los Pergaminos" });
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Encuentra la estatuilla de Sumens");
   expect((await stepData(page, 80)).quests.slice(0, 2)).toEqual(["La última piedra", "Alma máster"]);
+  // El 89, la misión de orden 5, que da Elviana Tirips
+  expect((await stepData(page, 89)).quests).toEqual(["Aprendizaje: Guardián del conocimiento"]);
+  expect(await figure(page)).toBe("Inicia el paso:Elviana Tirips");
 });
 
 test("las paradas revisadas en las guías caen en su objetivo, también cuando un paso tiene dos", async ({ page }) => {
@@ -567,7 +570,7 @@ test("el estandarte lleva lo más representativo del paso sobre el mapa donde em
     .toHaveAttribute("style", /maps\/0\.5\/122421248\.jpg/);
   // Figuras elegidas: el dragón de su Dofus, los jinetes, Draconiros y Silvosse
   for (const [n, want] of [[39, "Dragón primordial:Aguabrial"], [74, "Jinete del Selocalipsis:Guerra"],
-    [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"]]) {
+    [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"], [64, "Un sueño con claroscuros:Imagirorukam"]]) {
     await stepData(page, n);
     expect(await figure(page)).toBe(want);
   }
