@@ -331,3 +331,26 @@ test("con el final del diario a la vista, desplegar y plegar misiones no mueve l
   const tops = await listTops(page, [2, 2, 0, 0]);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
+
+test("al final de la página, desplegar una misión no mueve nada ni cambia el tamaño de la lista", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 820 });
+  await openApp(page);
+  await page.click('.diary-row[data-n="11"] .row-main');
+  await page.locator("#journal .q-item").nth(2).waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(600);
+  const frames = await page.evaluate(async () => {
+    const side = document.querySelector(".diary-side");
+    const sum = document.querySelectorAll("#journal .q-item summary")[1];
+    const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top),
+      top: Math.round(side.getBoundingClientRect().top), h: Math.round(side.offsetHeight) });
+    const out = [snap()];
+    sum.click();
+    for (let i = 0; i < 30; i++) { await new Promise(r => requestAnimationFrame(r)); out.push(snap()); }
+    return out;
+  });
+  const spread = k => Math.max(...frames.map(f => f[k])) - Math.min(...frames.map(f => f[k]));
+  // Ni la página, ni la misión pulsada, ni la lista se mueven; la lista no cambia de altura
+  expect([spread("y"), spread("sum"), spread("top"), spread("h")].every(d => d <= 1)).toBe(true);
+});
