@@ -10,7 +10,7 @@ function Seal({ zone, label, img, done, total, active, here, onClick }) {
     <button type="button" className={"seal" + (full ? " full" : "") + (here ? " here" : "")}
       data-zone={zone} aria-pressed={active} onClick={onClick}
       title={`${label}: ${done} de ${total} pasos`}
-      style={{ "--zone-color": zone ? ZONE_COLOR[zone] : "var(--amber)", "--p": `${(done / total) * 100}%` }}>
+      style={{ "--zone-color": zone ? ZONE_COLOR[zone] : "var(--amber)", "--seal-p": `${(done / total) * 100}%` }}>
       <span className="seal-ring">
         <span className="seal-img" style={img ? { backgroundImage: `url(${imgUrl(img)})` } : undefined}></span>
         {full && <span className="seal-ok" aria-hidden="true">✓</span>}

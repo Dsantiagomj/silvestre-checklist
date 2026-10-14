@@ -2210,7 +2210,7 @@ header.show-progress .tb-progress{
 }
 .seal-ring{
   position:relative; width:56px; height:56px; padding:3px; border-radius:50%;
-  background:conic-gradient(var(--zone-color) var(--p), var(--line-2) 0);
+  background:conic-gradient(var(--zone-color) var(--seal-p), var(--line-2) 0);
   box-shadow:0 4px 10px rgba(0,0,0,.35);
   transition:transform .15s ease, box-shadow .15s ease;
 }
@@ -2552,4 +2552,39 @@ header.show-progress .tb-progress{
 .needs > .needs-head{ animation-name:enter-fade; }
 @media (prefers-reduced-motion:reduce){
   .needs > *, .needs-panel{ animation:none; }
+}
+
+/* Los 100 pasos. Todo dentro de no-preference: con movimiento reducido no hay nada */
+@property --seal-p{ syntax:"<percentage>"; inherits:true; initial-value:0%; }
+@keyframes hero-bg-in{ from{ opacity:0; transform:scale(1.06); } }
+@keyframes boss-pop{ from{ opacity:0; transform:translateY(14px) scale(.85); } }
+@keyframes check-pop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.3); } 100%{ transform:scale(1); } }
+@keyframes card-in{ from{ opacity:0; transform:translateY(8px) scale(.97); } }
+@keyframes node-here{
+  0%, 100%{ box-shadow:0 0 0 8px color-mix(in srgb, var(--amber) 20%, transparent), 0 0 34px color-mix(in srgb, var(--amber) 65%, transparent); }
+  50%{ box-shadow:0 0 0 14px color-mix(in srgb, var(--amber) 8%, transparent), 0 0 46px color-mix(in srgb, var(--amber) 80%, transparent); }
+}
+@media (prefers-reduced-motion:no-preference){
+  /* Otra vista (diario o mapa) entra desde abajo */
+  .steps-stage > *{ animation:enter-up .32s cubic-bezier(.2,.8,.2,1) both; }
+  /* Otro paso: el paisaje se asienta, el jefe aparece de un salto y el texto sube */
+  .journal-bg{ animation:hero-bg-in .55s cubic-bezier(.2,.8,.2,1) both; }
+  .journal-show{ animation:boss-pop .45s cubic-bezier(.3,1.4,.5,1) .08s both; }
+  .journal-head{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .04s both; }
+  .journal-body{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .1s both; }
+  /* Las filas que aparecen al filtrar */
+  .diary-row{ animation:enter-fade .25s ease both; }
+  /* La ✓ al marcar, en la lista y en el mapa */
+  .row-check[aria-pressed="true"]::after, .map-node.done::after{ animation:check-pop .35s cubic-bezier(.3,1.6,.5,1) both; }
+  /* Mapa: la ficha sale del paso y el paso actual late, "estás aquí" */
+  .map-card{ animation:card-in .25s cubic-bezier(.2,.8,.2,1) both; }
+  .map-node.current{ animation:node-here 2.4s ease-in-out infinite; }
+  /* Los sellos llenan su anillo poco a poco */
+  .seal{ transition:--seal-p .6s cubic-bezier(.2,.8,.2,1); }
+  /* Misiones y «Necesitas» se abren y se cierran con su altura */
+  .q-item::details-content, .req::details-content{
+    block-size:0; overflow-y:clip;
+    transition:block-size .3s cubic-bezier(.2,.8,.2,1), content-visibility .3s allow-discrete;
+  }
+  .q-item[open]::details-content, .req[open]::details-content{ block-size:auto; }
 }
