@@ -1,10 +1,10 @@
 import { Fragment, useEffect, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { questsOf } from "../lib/quests.js";
+import { MAP_IMG, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, doneIcon, nextPendingAfter, resolvedBoss, resolvesHere, showcase, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, bannerFigure, doneIcon, nextPendingAfter, resolvesHere, startMap, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -40,29 +40,107 @@ function RichText({ text }) {
     ));
 }
 
-/** Cabecera de escenario: el paisaje de la zona, el paso y su jefe o su icono. */
-function Hero({ step, done, quests }) {
-  const show = showcase(step.n);
+/**
+ * El estandarte (izquierda): sobre el mapa del juego donde empieza el paso, su número,
+ * su zona y lo que lo representa (bannerFigure). Sin mapa, el paisaje de la zona.
+ */
+function Banner({ step }) {
+  const fig = bannerFigure(step.n);
+  const map = startMap(step.n);
   const zone = ZONE_IMG[step.zone];
+  const bg = [map && `url(${MAP_IMG}${map}.jpg)`, zone && `url(${imgUrl(zone.img)})`].filter(Boolean).join(", ");
   return (
-    <div className="journal-hero">
-      {zone && <div className="journal-bg" style={{ backgroundImage: `url(${imgUrl(zone.img)})` }}></div>}
+    <aside className="journal-banner" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
+      {bg && <div className="journal-bg" style={{ backgroundImage: bg }}></div>}
+      <span className="journal-num">{step.n}</span>
+      <span className="banner-zone">{step.zone}</span>
+      {fig && (
+        <figure className="journal-show" data-kind={fig.kind}>
+          <img src={imgUrl(fig.img)} alt="" decoding="async" />
+          <figcaption>
+            <small className="journal-show-label">{fig.as}</small>
+            <b className="journal-show-name">{fig.name}</b>
+          </figcaption>
+        </figure>
+      )}
+    </aside>
+  );
+}
+
+const listSteps = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
+
+/** Una frase con lo que pide el paso de un logro ("Misiones 1 a 7 del logro, hasta X."). */
+function goalText(e) {
+  const name = k => e.m[k - 1] || "un objetivo del logro";
+  if (e.mode === "all") return e.m.length === 1 ? "La misión del logro." : `Las ${e.m.length} misiones del logro.`;
+  if (e.mode === "upto") {
+    const k = e.on.at(-1);
+    return k > 1 ? `Misiones 1 a ${k} del logro, hasta ${name(k)}.` : `Misión 1 del logro: ${name(1)}.`;
+  }
+  return e.on.length > 1
+    ? `Misiones ${listSteps(e.on)} del logro: ${listSteps(e.on.map(name))}.`
+    : `Misión ${e.on[0]} del logro: ${name(e.on[0])}.`;
+}
+
+/**
+ * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
+ * Sandglass y, al pie, los pasos que cierra o donde se cierra.
+ */
+function Goal({ step, done }) {
+  const plan = PLANS[step.n] || [];
+  const achs = plan.filter(e => e.t === "a");
+  const head = achs[0];
+  const many = achs.length > 1;
+  const closedIn = !done && CLOSED_BY[step.n];
+  return (
+    <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z" /><path d="M7 3v12M13 5v12" /></svg>
         Ver en el mapa
       </button>
-      <div className="journal-head">
-        <span className="journal-num">{step.n}</span>
-        <h2 className="journal-title">{stepTitle(step)}</h2>
-        <div className="journal-meta">
-          <span className="badge zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><span className="dot"></span>{step.zone}</span>
-          <span className="badge">{TIER_META[step.effort].label}</span>
-          {step.complete && <span className="badge is-complete" title="El paso pide el logro entero">Logro completo</span>}
-          {quests.length > 0 && <span className="badge">{quests.length} {quests.length === 1 ? "misión" : "misiones"}</span>}
-          {done && <span className="badge is-done">✓ Hecho</span>}
-          {!done && CLOSED_BY[step.n] && (
-            <button type="button" className="badge closed-in" onClick={() => selectStep(CLOSED_BY[step.n])}>
-              Se cierra en el {CLOSED_BY[step.n]} →
+      <div className="goal-head">
+        <span className="goal-ach">{head?.img ? <img src={imgUrl(head.img)} alt="" /> : <QuestMark />}</span>
+        <div>
+          <small className="goal-kind">{head ? `Logro · ${step.zone}` : step.zone}</small>
+          <h2 className="journal-title">
+            {head && achievementGuide(head.name) && !many
+              ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
+              : stepTitle(step)}
+          </h2>
+        </div>
+      </div>
+      {plan.length > 0 && (
+        <ul className="goal-lines">
+          {plan.map((e, i) => (
+            <li key={i}>
+              {many && e.t === "a" && (
+                <b className="goal-of">
+                  {e.img && <img src={imgUrl(e.img)} alt="" />}
+                  {achievementGuide(e.name) ? <a href={achievementGuide(e.name)} target="_blank" rel="noopener">{e.name}</a> : e.name}
+                </b>
+              )}
+              <span className="goal-line">
+                {e.t === "align"
+                  ? (e.from != null && e.from < e.n
+                    ? `Misiones ${e.from} a ${e.n} del alineamiento bontariano.`
+                    : `Misión ${e.n} del alineamiento bontariano.`)
+                  : goalText(e)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="journal-meta">
+        <span className="badge">{TIER_META[step.effort].label}</span>
+        {step.complete && <span className="badge is-complete" title="El paso pide el logro entero">Logro completo</span>}
+        {done && <span className="badge is-done">✓ Hecho</span>}
+      </div>
+      <blockquote className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></blockquote>
+      {(closedIn || step.closes) && (
+        <div className="goal-foot">
+          {closedIn && (
+            <button type="button" className="badge closed-in" onClick={() => selectStep(closedIn)}>
+              Se cierra en el {closedIn} →
             </button>
           )}
           {step.closes?.map(m => (
@@ -71,89 +149,7 @@ function Hero({ step, done, quests }) {
             </button>
           ))}
         </div>
-      </div>
-      {show && (
-        <figure className="journal-show">
-          <img src={imgUrl(show.img)} alt="" decoding="async" />
-          <figcaption>
-            <small className="journal-show-label">{show.label}</small>
-            <b className="journal-show-name">{show.name}</b>
-          </figcaption>
-        </figure>
       )}
-    </div>
-  );
-}
-
-const listSteps = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
-
-/** El medallón de las misiones ("1–7", "2 · 5", "Todas") y lo que dice debajo. */
-function missionsNode(e) {
-  const name = k => e.m[k - 1] || "objetivo del logro";
-  const many = ns => (ns.length > 1 ? `Misiones ${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : `Misión ${ns[0]}`);
-  if (e.mode === "all") {
-    return { num: "Todas", label: "Logro completo", caption: `${e.m.length} ${e.m.length === 1 ? "misión" : "misiones"}`,
-      title: e.m.filter(Boolean).join(" · ") };
-  }
-  if (e.mode === "upto") {
-    const k = e.on.at(-1);
-    return { num: k > 1 ? `1–${k}` : "1", label: k > 1 ? `Misiones 1 a ${k}` : "Misión 1", caption: `hasta ${name(k)}`,
-      title: e.m.slice(0, k).map((m, i) => `${i + 1}. ${m || "objetivo"}`).join(" · ") };
-  }
-  return { num: e.on.join(" · "), label: many(e.on), caption: e.on.map(name).join(" · "),
-    title: e.on.map(k => `${k}. ${name(k)}`).join(" · ") };
-}
-
-/**
- * Lo que pide el paso como una línea (opción B), igual que el camino del mapa: de dónde
- * se parte (el logro), qué misiones, dónde parar o qué jefe se pasa y qué pasos cierra.
- * El texto de Sandglass queda debajo, como cita.
- */
-function StepLine({ step, done }) {
-  const plan = PLANS[step.n] || [];
-  const nodes = [];
-  for (const e of plan) {
-    if (e.t === "align") {
-      nodes.push({ kind: "align", label: "Alineamiento", caption: "bontariano", icon: <QuestMark /> });
-      const range = e.from != null && e.from < e.n;
-      nodes.push({ kind: "missions", num: range ? `${e.from}–${e.n}` : String(e.n),
-        label: range ? `Misiones ${e.from} a ${e.n}` : `Misión ${e.n}`, caption: "del alineamiento" });
-      continue;
-    }
-    const guide = achievementGuide(e.name);
-    nodes.push({ kind: "ach", label: e.name, href: guide, caption: `Logro · ${step.zone}`,
-      icon: e.img ? <img src={imgUrl(e.img)} alt="" /> : <QuestMark /> });
-    nodes.push({ kind: "missions", ...missionsNode(e) });
-  }
-  const stop = stepCalls(step).find(c => c[0] === "stop");
-  if (stop) nodes.push({ kind: "stop", label: "Hasta aquí", caption: stop[1], icon: <img src={imgUrl(CALL_ICONS.stop)} alt="" /> });
-  const boss = resolvedBoss(step.n);
-  if (boss) nodes.push({ kind: "boss", label: boss.name, caption: "se pasa aquí", icon: <img src={imgUrl(boss.img)} alt="" /> });
-  if (step.closes) nodes.push({ kind: "closes", label: `Cierra el ${listSteps(step.closes)}`, caption: "sus misiones terminan", go: step.closes });
-  if (!done && CLOSED_BY[step.n]) nodes.push({ kind: "closedin", label: `Se cierra en el ${CLOSED_BY[step.n]}`, caption: "allí se termina", go: [CLOSED_BY[step.n]] });
-
-  const text = <p className={"journal-base" + (nodes.length ? " is-source" : "")}><RichText text={step.base} /></p>;
-  if (!nodes.length) return text;
-  return (
-    <div className="step-line-wrap">
-      <ol className="step-line" style={{ "--n": nodes.length }}>
-        {nodes.map((nd, i) => (
-          <li key={i} className="line-node" data-kind={nd.kind}>
-            {nd.go ? (
-              <span className="line-med">
-                {nd.go.map(m => (
-                  <button key={m} type="button" onClick={() => selectStep(m)} title={`Ir al paso ${m}`}>{m}</button>
-                ))}
-              </span>
-            ) : (
-              <span className="line-med" title={nd.title}>{nd.icon || <span className="line-num">{nd.num}</span>}</span>
-            )}
-            <b className="line-label">{nd.href ? <a href={nd.href} target="_blank" rel="noopener">{nd.label}</a> : nd.label}</b>
-            <small className="line-caption">{nd.caption}</small>
-          </li>
-        ))}
-      </ol>
-      {text}
     </div>
   );
 }
@@ -335,9 +331,11 @@ export default function Journal({ n, id }) {
 
   return (
     <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
-      <Hero step={step} done={!!s.done[n]} quests={quests} />
+      <div className="journal-top">
+        <Banner step={step} />
+        <Goal step={step} done={!!s.done[n]} />
+      </div>
       <div className="journal-body">
-        <StepLine step={step} done={!!s.done[n]} />
         <Calls step={step} />
         <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />

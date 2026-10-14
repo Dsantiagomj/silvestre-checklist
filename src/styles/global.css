@@ -2337,50 +2337,51 @@ header.show-progress .tb-progress{
 
 /* Detalle: el escenario va siempre en oscuro, como un estandarte, en los dos temas */
 .diary-detail{ min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-.journal-hero{
-  position:relative; isolation:isolate; overflow:hidden;
-  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
-  min-height:230px; padding:22px 26px 18px;
-  background:#141712; color:#f3ecd2;
+/* Arriba, el estandarte (opción D): a la izquierda, un pendón vertical sobre el mapa del
+   juego donde empieza el paso, con su número, su zona y su figura; a la derecha, el
+   objetivo: el logro, una frase por lo que pide, la cita de Sandglass y los pasos que
+   cierra. Va en oscuro en los dos temas, como el escenario del juego */
+.journal-top{
+  display:grid; grid-template-columns:230px minmax(0,1fr); gap:20px;
+  padding:20px 26px 18px; background:#141712; color:#f3ecd2;
+  border-bottom:1px solid #2c2f26;
 }
-.journal-bg{ position:absolute; inset:0; z-index:-2; background:center 45% / cover; }
-.journal-hero::before{
+.journal-banner{
+  position:relative; isolation:isolate; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center;
+  min-height:330px; padding:16px 12px 38px; text-align:center;
+  /* La punta del pendón */
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 26px), 50% 100%, 0 calc(100% - 26px));
+  background:#1d2017;
+  box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--zone-color, #b8963f) 70%, #e3c565);
+}
+.journal-bg{ position:absolute; inset:0; z-index:-2; background:center / cover; }
+.journal-banner::before{
   content:""; position:absolute; inset:0; z-index:-1;
   background:
-    linear-gradient(90deg, rgba(16,18,15,.94) 0, rgba(16,18,15,.66) 45%, rgba(16,18,15,0) 80%),
-    linear-gradient(0deg, rgba(16,18,15,.85) 0, rgba(16,18,15,0) 50%);
+    linear-gradient(180deg, rgba(16,18,15,.88) 0, rgba(16,18,15,.25) 38%, rgba(16,18,15,.25) 60%, rgba(16,18,15,.92) 100%);
 }
-.journal-head{ min-width:0; max-width:62%; }
-/* Volver al mapa con este paso: arriba a la derecha del escenario, sobre el paisaje */
-.journal-to-map{
-  position:absolute; top:12px; right:14px; z-index:2;
-  display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; cursor:pointer;
-  background:rgba(13,14,12,.78); border:1px solid rgba(255,255,255,.18); color:#f3ecd2;
-  font:700 12.5px var(--font-body); backdrop-filter:blur(4px);
-  transition:border-color .15s ease, background .15s ease;
+.journal-banner::after{
+  /* El ribete dorado del pendón, siguiendo la punta */
+  content:""; position:absolute; inset:5px 5px 0; z-index:-1; pointer-events:none;
+  clip-path:inherit; border:1.5px solid rgba(227,197,101,.55); border-bottom:0;
 }
-.journal-to-map:hover{ border-color:var(--amber); background:rgba(13,14,12,.9); }
-.journal-to-map svg{ width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linejoin:round; }
 .journal-num, .journal-title, .journal-show-name{
   font-family:'Lilita One', var(--font-display); font-weight:400;
   -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 3px 0 #121410;
 }
-.journal-num{ display:block; font-size:52px; line-height:1; color:#cbee8f; }
-.journal-title{ margin:6px 0 10px; font-size:28px; line-height:1.08; color:#f3ecd2; }
-.journal-meta{ display:flex; flex-wrap:wrap; gap:6px; }
-.journal-meta .badge{ background:rgba(13,14,12,.75); border-color:rgba(255,255,255,.14); color:#dfe4d6; }
-.journal-meta .badge.is-done{ color:#cbee8f; }
-/* Los pasos que lo cierran o que cierra: botones que llevan a ese paso */
-.journal-meta button.badge{ cursor:pointer; color:#f3d98a; border-color:rgba(243,217,138,.4); }
-.journal-meta button.badge:hover{ border-color:#f3d98a; background:rgba(40,32,12,.85); }
-.journal-meta .badge.is-complete{ color:#f3d58a; border-color:rgba(227,197,101,.45); }
+.journal-num{ display:block; font-size:54px; line-height:1; color:#cbee8f; }
+.banner-zone{
+  margin-top:4px; padding:2px 10px; border-radius:999px;
+  background:rgba(13,14,12,.72); border:1px solid color-mix(in srgb, var(--zone-color, #e3c565) 60%, transparent);
+  font:800 10.5px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:#f3d98a;
+}
 .journal-show{
-  position:relative; flex:none; align-self:flex-end;
+  position:relative; margin:auto 0 0; padding-top:10px;
   display:flex; flex-direction:column; align-items:center;
-  width:190px; margin:0; text-align:center;
 }
 .journal-show::before{
-  content:""; position:absolute; bottom:46px; width:140px; height:24px; border-radius:50%;
+  content:""; position:absolute; bottom:42px; width:130px; height:22px; border-radius:50%;
   background:radial-gradient(rgba(227,197,101,.45), transparent 70%);
 }
 .journal-show img{
@@ -2388,49 +2389,58 @@ header.show-progress .tb-progress{
   filter:drop-shadow(0 14px 14px rgba(0,0,0,.7));
   animation:journal-float 3.2s ease-in-out infinite;
 }
+.journal-show[data-kind="egg"] img{ width:110px; height:110px; margin:20px 0; }
 .journal-show figcaption small{
-  display:block; font:800 11px var(--font-display); letter-spacing:.18em; text-transform:uppercase; color:#e3c565;
+  display:block; font:800 10.5px var(--font-display); letter-spacing:.16em; text-transform:uppercase; color:#e3c565;
 }
-.journal-show-name{ display:block; font-size:20px; line-height:1.1; color:#f3ecd2; -webkit-text-stroke-width:1.5px; }
+.journal-show-name{ display:block; font-size:19px; line-height:1.1; color:#f3ecd2; -webkit-text-stroke-width:1.5px; }
 @keyframes journal-float{ 50%{ transform:translateY(-8px); } }
+/* Volver al mapa con este paso: arriba a la derecha del objetivo */
+.journal-to-map{
+  position:absolute; top:0; right:0; z-index:2; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; cursor:pointer;
+  background:rgba(13,14,12,.82); border:1px solid rgba(255,255,255,.18); color:#f3ecd2;
+  font:700 12px var(--font-body); backdrop-filter:blur(4px);
+  transition:border-color .15s ease, background .15s ease;
+}
+.journal-to-map:hover{ border-color:var(--amber); background:rgba(13,14,12,.92); }
+.journal-to-map svg{ width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linejoin:round; }
+
+.journal-goal{ position:relative; min-width:0; display:flex; flex-direction:column; gap:12px; padding-top:4px; }
+.goal-head{ display:flex; align-items:center; gap:14px; padding-right:140px; }
+.goal-ach{
+  flex:none; width:64px; height:64px; border-radius:12px; display:grid; place-items:center;
+  background:radial-gradient(circle at 40% 30%, #4a3e24, #221c12); border:2px solid #b8963f;
+}
+.goal-ach img{ width:46px; height:46px; object-fit:contain; }
+.goal-ach .quest-mark{ height:34px; }
+.goal-kind{ display:block; font:800 10.5px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:#e3c565; }
+.journal-title{ margin:2px 0 0; font-size:28px; line-height:1.08; color:#f3ecd2; }
+.journal-title a{ color:inherit; text-decoration:none; }
+.journal-title a:hover{ text-decoration:underline; text-decoration-thickness:2px; }
+.goal-lines{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.goal-lines li{ font-size:15.5px; line-height:1.45; color:#ece3cc; }
+.goal-of{ display:inline-flex; align-items:center; gap:6px; margin-right:6px; color:#f3d98a; }
+.goal-of img{ width:22px; height:22px; object-fit:contain; }
+.goal-of a{ color:inherit; text-decoration:none; }
+.goal-of a:hover{ text-decoration:underline; }
+.journal-meta{ display:flex; flex-wrap:wrap; gap:6px; }
+.journal-meta .badge{ background:rgba(13,14,12,.75); border-color:rgba(255,255,255,.14); color:#dfe4d6; }
+.journal-meta .badge.is-done{ color:#cbee8f; }
+.journal-meta .badge.is-complete{ color:#f3d58a; border-color:rgba(227,197,101,.45); }
+.journal-base{ margin:12px 0; font-size:15px; line-height:1.6; color:var(--txt); }
+.journal-goal .journal-base{
+  margin:0; padding:8px 0 8px 14px; border-left:3px solid #6a5a3a;
+  font-size:13px; line-height:1.55; font-style:italic; color:#a99d80;
+}
+.journal-goal .journal-base::after{ content:" — Sandglass"; font-style:normal; color:#7d7360; }
+.journal-goal .guide-link, .journal-goal .step-ref{ color:#d9c58c; }
+/* Los pasos que lo cierran o que cierra: botones que llevan a ese paso */
+.goal-foot{ display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:10px; border-top:1px dashed #3d3322; }
+.goal-foot .badge{ cursor:pointer; background:rgba(13,14,12,.75); color:#f3d98a; border-color:rgba(243,217,138,.4); }
+.goal-foot .badge:hover{ border-color:#f3d98a; background:rgba(40,32,12,.85); }
 
 .journal-body{ padding:6px 26px 24px; }
-.journal-base{ margin:12px 0; font-size:15px; line-height:1.6; color:var(--txt); }
-/* La línea del paso (opción B): medallones unidos por un camino punteado, como el mapa;
-   el texto de la guía va debajo, pequeño, como cita */
-.step-line-wrap{ margin:12px 0 14px; padding:14px 12px 12px; border-radius:10px; background:var(--gw-panel); border:1px solid var(--gw-line); }
-.step-line{ position:relative; list-style:none; margin:0 0 12px; padding:0; display:flex; align-items:flex-start; overflow-x:auto; }
-.step-line::before{
-  /* Del centro del primer medallón al del último (--n: cuántos hay) */
-  content:""; position:absolute; left:calc(100% / var(--n) / 2); right:calc(100% / var(--n) / 2); top:27px;
-  border-top:3px dotted color-mix(in srgb, var(--gw-gold) 55%, transparent);
-}
-.line-node{ flex:1 1 0; min-width:104px; display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; padding:0 4px; }
-.line-med{
-  position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:2px;
-  min-width:56px; height:56px; padding:0 6px; border-radius:999px;
-  background:radial-gradient(circle at 35% 30%, var(--gw-pin-line), var(--gw-panel-2));
-  border:2px solid var(--gw-gold); box-shadow:0 2px 8px rgba(0,0,0,.35);
-}
-.line-med img{ width:38px; height:38px; object-fit:contain; }
-.line-med .quest-mark{ height:30px; }
-.line-num{ font:900 15px var(--font-body); color:var(--gw-gold); white-space:nowrap; }
-.line-med button{
-  padding:0 3px; border:0; background:none; cursor:pointer;
-  font:900 15px var(--font-body); color:var(--gw-gold);
-}
-.line-med button:hover{ text-decoration:underline; }
-.line-node[data-kind="stop"] .line-med{ border-color:#e05a4f; }
-.line-node[data-kind="boss"] .line-med, .line-node[data-kind="closes"] .line-med{ border-color:#7ea83a; }
-.line-node[data-kind="boss"] .line-med img{ border-radius:50%; }
-.line-label{ font-size:13.5px; font-weight:700; color:var(--gw-ink); line-height:1.25; }
-.line-label a{ color:inherit; text-decoration:none; }
-.line-label a:hover{ text-decoration:underline; }
-.line-caption{
-  max-width:150px; font-size:11.5px; line-height:1.3; color:var(--gw-soft);
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-}
-.journal-base.is-source{ margin:0; padding-left:12px; border-left:3px solid var(--gw-line); font-size:13px; font-style:italic; color:var(--gw-soft); }
 /* Cuerpo del detalle con el estilo de la ventana de Misiones del juego: paneles de
    madera (pergamino en el tema claro), medallones, rombos dorados y botones planos */
 .journal-body{
@@ -2645,13 +2655,17 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 @media (max-width:600px){
   .row-main{ grid-template-columns:30px 22px minmax(0, 1fr) 26px; gap:8px; }
   .row-effort{ display:none; }
-  .journal-hero{ min-height:190px; padding:16px; }
-  .journal-head{ max-width:64%; }
+  .journal-top{ grid-template-columns:132px minmax(0,1fr); gap:14px; padding:14px 16px; }
+  .journal-banner{ min-height:240px; padding:12px 8px 34px; }
   .journal-num{ font-size:40px; }
   .journal-title{ font-size:21px; }
-  .journal-show{ width:110px; }
   .journal-show img{ width:96px; height:96px; }
-  .journal-show-name{ font-size:16px; }
+  .journal-show[data-kind="egg"] img{ width:80px; height:80px; margin:10px 0; }
+  .journal-show-name{ font-size:15px; }
+  .goal-ach{ width:48px; height:48px; }
+  .goal-ach img{ width:34px; height:34px; }
+  .goal-head{ padding-right:0; }
+  .journal-to-map{ position:static; order:9; align-self:flex-start; }
   .journal-body{ padding:4px 16px 20px; }
   .journal-cta{ grid-template-columns:1fr 1fr; }
   .journal-cta-main{ grid-column:1 / -1; grid-row:1; }
@@ -2719,7 +2733,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   /* Otro paso: el paisaje se asienta, el jefe aparece de un salto y el texto sube */
   .journal-bg{ animation:hero-bg-in .55s cubic-bezier(.2,.8,.2,1) both; }
   .journal-show{ animation:boss-pop .45s cubic-bezier(.3,1.4,.5,1) .08s both; }
-  .journal-head{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .04s both; }
+  .journal-goal{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .04s both; }
   .journal-body{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .1s both; }
   /* Las filas que aparecen al filtrar */
   .diary-row{ animation:enter-fade .25s ease both; }

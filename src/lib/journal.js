@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 import { STEPS } from "../data/steps.js";
 import { DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
+import FIGURES from "../data/figures.json";
 
 /**
  * Título corto del paso: el logro que persigue o, si no hay, el texto base sin
@@ -52,6 +53,25 @@ export function resolvedBoss(n) {
   const text = norm(done.replace(/hasta tener que pasar .*$/i, ""));
   return assetsFor(n)?.bosses?.find(b => text.includes(norm(b.name))) || null;
 }
+const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
+
+/**
+ * La figura del estandarte del paso: el Dofus que da; si no, la elegida para su logro
+ * (el dragón primordial, el jinete, Draconiros, Silvosse) o el PNJ que lo empieza
+ * (build_figures.py); y, si no hay nada, el jefe que resuelve.
+ */
+export function bannerFigure(n) {
+  const egg = ROAD_AT[n];
+  if (egg) return { img: egg.img, name: egg.name, as: "Se gana", kind: "egg" };
+  const f = FIGURES[n]?.f;
+  if (f) return { ...f, kind: "figure" };
+  const boss = resolvedBoss(n);
+  return boss ? { img: boss.img, name: boss.name, as: "Jefe del paso", kind: "boss" } : null;
+}
+
+/** El mapa del juego donde empieza la primera misión del paso (id de DofusDB). */
+export const startMap = n => FIGURES[n]?.m ?? null;
+
 /** Lo que se resuelve: el jefe que se pasa; sin jefe, la espada del juego. */
 export const doneIcon = n => resolvedBoss(n)?.img || OBJ_ICONS.fight;
 

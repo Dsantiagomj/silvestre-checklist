@@ -11,11 +11,11 @@ test("carga los 100 pasos con su arte y sin errores", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("el detalle del paso 93 muestra su jefe y objetos, sin «Recompensa» ni fichas de jefes", async ({ page }) => {
+test("el detalle del paso 93 muestra su Dofus y objetos, sin «Recompensa» ni fichas de jefes", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="93"] .row-main');
   await expect(page.locator('.diary-row[data-n="93"]')).toHaveAttribute("aria-current", "step");
-  await expect(page.locator("#journal .journal-show-name")).toHaveText("Nileza");
+  await expect(page.locator("#journal .journal-show-name")).toHaveText("Dofus Marfil");
   await expect(page.locator("#journal .journal-reward")).toHaveCount(0);
   // Sin fichas de jefes sueltas: el que importa va en el escenario y en lo que se resuelve
   await expect(page.locator(".boss-row")).toHaveCount(0);
