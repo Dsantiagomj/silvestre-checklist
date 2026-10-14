@@ -160,3 +160,15 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
   expect(box.x + box.width).toBeLessThanOrEqual(390);
   await ctx.close();
 });
+
+test("lo que necesitas va antes del tablero de pasos", async ({ page }) => {
+  await openApp(page);
+  const order = await page.evaluate(() => {
+    const needs = document.getElementById("needs");
+    const board = document.querySelector(".grid-section");
+    return needs.compareDocumentPosition(board) & Node.DOCUMENT_POSITION_FOLLOWING ? "antes" : "después";
+  });
+  expect(order).toBe("antes");
+  await expect(page.locator("#needs .section-num")).toHaveText("01");
+  await expect(page.locator(".grid-section .section-num")).toHaveText("02");
+});
