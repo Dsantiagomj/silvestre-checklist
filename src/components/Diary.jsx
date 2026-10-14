@@ -84,6 +84,28 @@ function DiaryWindow({ step, children }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [step]);
+  // La lista fija nunca es más alta que lo que queda de ventana bajo su tope: así el
+  // final de la ventana no la empuja hacia arriba (y no salta al desplegar o plegar
+  // misiones); en vez de subir, encoge por abajo y sus pasos se quedan donde están
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const side = el.querySelector(".diary-side");
+    if (!side) return undefined;
+    const fit = () => {
+      const top = parseFloat(getComputedStyle(side).top) || 0;
+      el.style.setProperty("--side-room", `${Math.max(220, el.getBoundingClientRect().bottom - top)}px`);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    addEventListener("scroll", fit, { passive: true });
+    addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      removeEventListener("scroll", fit);
+      removeEventListener("resize", fit);
+    };
+  }, []);
   return <div className="diary-window" ref={ref} style={floor ? { minHeight: floor } : undefined}>{children}</div>;
 }
 

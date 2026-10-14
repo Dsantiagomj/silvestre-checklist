@@ -2270,7 +2270,8 @@ header.show-progress .tb-progress{
 .diary-side{
   position:sticky; top:calc(var(--header-h) + 12px); align-self:start;
   display:flex; flex-direction:column;
-  max-height:calc(100vh - var(--header-h) - 24px);
+  /* --side-room: lo que queda de la ventana del diario bajo el tope (DiaryWindow) */
+  max-height:min(calc(100vh - var(--header-h) - 24px), var(--side-room, 100vh));
   background:var(--bg-2); border-right:1px solid var(--line);
 }
 .diary-tabs{ display:flex; gap:4px; padding:10px; border-bottom:1px solid var(--line); }
