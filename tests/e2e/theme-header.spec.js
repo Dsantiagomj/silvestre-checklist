@@ -180,3 +180,13 @@ test("las cantidades de «Necesitas» se leen en los dos temas", async ({ page }
     }), { timeout: 3_000 }).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+test("la pestaña lleva de favicon el huevo del Dofus Silvestre", async ({ page, request }) => {
+  await openApp(page);
+  for (const sel of ['link[rel="icon"][sizes="32x32"]', 'link[rel="icon"][sizes="128x128"]', 'link[rel="apple-touch-icon"]']) {
+    const href = await page.locator(`head ${sel}`).getAttribute("href");
+    const res = await request.get(new URL(href, page.url()).href);
+    expect(res.ok()).toBe(true);
+    expect(res.headers()["content-type"]).toContain("image/png");
+  }
+});
