@@ -1,4 +1,4 @@
-import { PREREQS_HECHIZOS, PREREQS_INTRO, PREREQS_LOGROS, PREREQS_OFICIOS } from "../../data/steps.js";
+import { PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OFICIOS } from "../../data/steps.js";
 import { PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
 import { isPrereqDone, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
@@ -70,10 +70,7 @@ export default function PrereqsPanel({ actions }) {
   const s = useAppState();
   return (
     <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
-      <div className="pr-top">
-        <p className="pr-intro">{PREREQS_INTRO}</p>
-        {actions}
-      </div>
+      <div className="pr-top">{actions}</div>
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>
