@@ -17,6 +17,7 @@ resources.json:
     g  group label for rows only some players need, or null
     a  alternatives: [[item key, qty], ...]; usually just one
     p  in step 0 only: the prerequisite (steps.js id) the item is spent on
+    m  the quests that use it up (from .build/lists/item_quests.json), if known
 """
 import json
 import pathlib
@@ -32,6 +33,8 @@ from build_assets_js import mirror  # noqa: E402
 
 SOURCE = ROOT / "lists" / "torrentearcano.json"
 COMPILED = ROOT / "lists" / "compilado.txt"
+# The quests that use each item up, per step (written by audit_resources.py)
+ITEM_QUESTS = ROOT / "lists" / "item_quests.json"
 CACHE = ROOT / "data" / "item_lookup_cache.json"
 OUT = ROOT.parent / "src" / "data" / "resources.json"
 API = "https://api.dofusdb.fr/"
@@ -259,6 +262,12 @@ def main():
                              "a": [[key, qty]], "p": prereq})
             print(f"paso {n}: con {hit['name']} ×{qty} ({label})")
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
+    # "m": the quests each item is for, so the app can say what it is for
+    purpose = json.loads(ITEM_QUESTS.read_text()) if ITEM_QUESTS.exists() else {}
+    for n, rows in steps.items():
+        for row in rows:
+            if purpose.get(n, {}).get(row["k"]):
+                row["m"] = purpose[n][row["k"]]
 
     results = mirror({it["img"] for it in items.values() if it["img"]})
     failed = {p for p, status in results if status not in ("ok", "cached")}

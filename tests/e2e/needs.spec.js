@@ -690,6 +690,16 @@ test("en «Ya utilizados» el aviso también dice para qué prerrequisito era", 
   await expect(page.locator('#bandUsed .slot[data-id="1019"] .slot-tip')).toContainText("«Pan Koko Mío»");
 });
 
+test("cada objeto de los pasos dice para qué misión es", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  // En «Pronto»: lo del paso 1 es para la misión que «Ver a Dark Vlad» pide antes
+  await expect(page.locator('#bandSoon .slot[data-id="2268"] .slot-tip-quest')).toHaveText("«Un péndulo para guiar sus pasos»");
+  // Y en el detalle del paso 5, la misión que lo consume (DofusDB y su guía)
+  await page.click('.diary-row[data-n="5"] .row-main');
+  await expect(page.locator('#journal .journal-needs .slot[data-id="384"] .slot-tip-quest')).toHaveText("«Las primeras impresiones son engañosas»");
+});
+
 test("el aviso de un objeto dice lo mismo en todas las secciones", async ({ page }) => {
   // Completos El despertar de Pandala y Altos vuelos: su Ortiga y el casco mejorado
   // salen en «Ya utilizados»; la pestaña de prerrequisitos sigue abierta
