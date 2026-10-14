@@ -46,7 +46,10 @@ test("marcar un paso actualiza la fila, hero, header y almacenamiento", async ({
 
 test("los prerrequisitos tienen icono y se marcan", async ({ page }) => {
   await openApp(page);
-  await expect.poll(() => page.locator(".pr-icons img").count()).toBeGreaterThanOrEqual(22);
+  // Cada tarjeta lleva su icono: imagen del juego o la «!» de misión
+  const bare = await page.locator(".pr-card").evaluateAll(cards =>
+    cards.filter(c => !c.querySelector(".pr-icons img, .pr-icons .quest-mark")).map(c => c.dataset.id));
+  expect(bare).toEqual([]);
   await page.click('.pr-card[data-id="o1"]');
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/done/);
   await expect(page.locator("#prereqsCount")).toHaveText("1/22");

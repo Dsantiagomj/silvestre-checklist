@@ -241,7 +241,8 @@ test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos g
   await expect(page.locator('.pr-card[data-id="o5"] .pr-sub')).toHaveText("Nivel 100");
   await expect(page.locator('.pr-card[data-id="o6"] .pr-sub')).toHaveText("Nivel 200 · campesino, alquimista, leñador, pescador, etc.");
   await expect(page.locator('.pr-card[data-id="h1"] .pr-sub')).toHaveText("Obligatorio");
-  await expect(page.locator('.pr-card[data-id="h3"] .pr-sub')).toHaveText("Opcional · útil para el paso 64");
+  await expect(page.locator('.pr-card[data-id="h3"] .pr-tag.optional')).toHaveText("Opcional");
+  await expect(page.locator('.pr-card[data-id="h3"] .pr-sub')).toHaveText("Útil para el paso 64");
   // Los iconos del juego ya traen marco: sin losa propia alrededor
   expect(await page.locator('.pr-card[data-id="o5"] .pr-icons').evaluate(el => getComputedStyle(el).borderTopStyle)).toBe("none");
   const icon = await page.locator('.pr-card[data-id="l4"] .pr-icons img').boundingBox();
@@ -415,12 +416,13 @@ test("los prerrequisitos siguen la lista actual de Torrente Arcano", async ({ pa
   await openApp(page);
   const card = id => page.locator(`#prereqs .pr-card[data-id="${id}"]`);
   await expect(card("l10")).toContainText("Altos vuelos");
-  await expect(card("l10").locator(".pr-sub")).toHaveText("Opcional · útil");
+  await expect(card("l10").locator(".pr-tag.optional")).toHaveText("Opcional");
+  await expect(card("l10").locator(".pr-sub")).toHaveText("Útil");
   await expect(card("l10")).not.toContainText("(Opcional");
   // La guía escribe "El despetar"; la misión del juego es "El despertar de Pandala"
   await expect(card("l11")).toContainText("El despertar de Pandala");
   await expect(card("l12")).toContainText("Ángeles y demonios");
-  await expect(card("l12").locator(".pr-sub")).toHaveText("Opcional · útil");
+  await expect(card("l12").locator(".pr-tag.optional")).toHaveText("Opcional");
   // Van en el mismo orden que en la guía
   const ids = await page.locator("#prereqs .pr-group").first().locator(".pr-card").evaluateAll(els => els.map(e => e.dataset.id));
   expect(ids).toEqual(["l1", "l2", "l3", "l4", "l5", "l10", "l6", "l11", "l7", "l8", "l9", "l12"]);
@@ -464,4 +466,25 @@ test("el Dofus Ocre se marca desde su aviso y cuenta como prerrequisito", async 
   expect(await readLS(page, "silvestre:prereqs")).toEqual({ d1: true });
   // En el camino del hero el Ocre pasa a conseguido
   await expect(page.locator('.road-dofus[title^="Dofus Ocre"]')).toHaveClass(/obtained/);
+});
+
+test("cada prerrequisito lleva el icono de lo que pide: misión o logro completo", async ({ page }) => {
+  await openApp(page);
+  const card = id => page.locator(`#prereqs .pr-card[data-id="${id}"]`);
+  // Piden misiones concretas (aunque sean de un logro): la «!» del juego
+  for (const id of ["l5", "l10", "l6", "l11", "l7", "l8", "l9", "l12"]) {
+    await expect(card(id).locator(".pr-icons .quest-mark"), id).toHaveCount(1);
+    await expect(card(id).locator(".pr-icons img"), id).toHaveCount(0);
+  }
+  // Piden el logro completo: el librito con trofeo
+  for (const id of ["l3", "l4"]) {
+    await expect(card(id).locator(".pr-icons img"), id).toHaveAttribute("src", /achievements\/273\.png$/);
+  }
+});
+
+test("lo opcional se distingue con su propia etiqueta", async ({ page }) => {
+  await openApp(page);
+  const tags = page.locator("#prereqs .pr-tag.optional");
+  await expect(tags).toHaveCount(3);
+  await expect(page.locator("#prereqs .pr-card.optional")).toHaveCount(3);
 });
