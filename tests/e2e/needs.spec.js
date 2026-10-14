@@ -648,3 +648,15 @@ test("con el filtro apagado, «Ya utilizados» muestra lo gastado y el resto, lo
   await page.locator("#shopPendingToggle").check({ force: true });
   await expect(used).toHaveCount(0);
 });
+
+test("cada objeto de los prerrequisitos dice para qué prerrequisito es", async ({ page }) => {
+  await openApp(page);
+  const tip = k => page.locator(`#prereqs .slot[data-id^="${k}"] .slot-tip-when`).first();
+  await expect(tip("1457")).toHaveText("Para «Intrusión en el territorio wabbit»");
+  await expect(tip("421")).toHaveText("Para «El despertar de Pandala»");
+  await expect(tip("1019")).toHaveText("Para «Pan Koko Mío»");
+  await expect(tip("8918@")).toHaveText("Para «Altos vuelos»");
+  // También en «Pronto»
+  await page.click("#tabItems");
+  await expect(page.locator('#bandSoon .slot[data-id="7904"] .slot-tip-when').first()).toHaveText("Para «El cementerio primitivo»");
+});
