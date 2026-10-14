@@ -71,14 +71,6 @@ function Calls({ step }) {
           <div>
             <b>{CALL[kind].label}</b>
             <RichText text={text} />
-            {kind === "done" && step.closes && (
-              <span className="call-steps">
-                Cierra también:
-                {step.closes.map(c => (
-                  <button key={c} type="button" className="step-chip" data-n={c} onClick={() => selectStep(c)}>Paso {c}</button>
-                ))}
-              </span>
-            )}
           </div>
         </div>
       ))}
@@ -93,7 +85,7 @@ function Quests({ step, quests, loaded }) {
   const stop = stopPoint(step, quests);
   return (
     <section className="journal-quests">
-      <h3 className="journal-h">Misiones <span className="n">({quests.length})</span></h3>
+      <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
       {quests.map((q, i) => {
         let offset = 0;
         return (
@@ -101,7 +93,7 @@ function Quests({ step, quests, loaded }) {
             <summary>
               <QuestMark className="q-mark" />
               <span className="q-name">{q.n}</span>
-              <span className="q-lv">{`nv. ${q.lv}`}</span>
+              <span className="q-lv">{`Niv. ${q.lv}`}</span>
               {missionGuide(q.n) && (
                 <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
               )}
@@ -129,7 +121,11 @@ function Quests({ step, quests, loaded }) {
   );
 }
 
-/** Marcar el paso y seguir; si su combate cierra otros pendientes, ofrecerlos. */
+/**
+ * Barra final, con los botones planos del juego: el paso anterior, «Paso hecho» (que
+ * marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del paso
+ * cierra otros que siguen pendientes, ofrece marcarlos también.
+ */
 function Actions({ step, s }) {
   const n = step.n;
   const done = !!s.done[n];
@@ -141,21 +137,23 @@ function Actions({ step, s }) {
   }
   return (
     <div className="journal-cta">
-      <button type="button" className={"btn-primary" + (done ? " is-done" : "")} id="toggleBtn" onClick={done ? () => toggleStep(n) : finish}>
-        {done ? "Desmarcar paso" : next != null ? `✓ Paso hecho · ir al ${next}` : "✓ Paso hecho"}
-      </button>
-      {closes.length > 0 && (
-        <span className="journal-also">
-          Este paso también cierra el {list(closes)}
-          <button type="button" className="btn-secondary" id="closesBtn" onClick={() => markSteps(closes)}>
+      <button type="button" className="gbtn" id="prevBtn" disabled={n === 1} aria-label={`Paso ${n - 1}`}
+        onClick={() => selectStep(n - 1)}>◀ {n > 1 ? n - 1 : ""}</button>
+      <div className="journal-cta-main">
+        <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id="toggleBtn"
+          title={done ? undefined : next != null ? `Marca el paso y abre el ${next}` : "Marca el paso"}
+          onClick={done ? () => toggleStep(n) : finish}>
+          {done ? "Desmarcar" : "✓ Paso hecho"}
+        </button>
+        {closes.length > 0 && (
+          <button type="button" className="gbtn" id="closesBtn" title={`Este paso también cierra el ${list(closes)}`}
+            onClick={() => markSteps(closes)}>
             Marcar el {list(closes)} también
           </button>
-        </span>
-      )}
-      <div className="detail-nav">
-        <button type="button" className="btn-nav" id="prevBtn" disabled={n === 1} onClick={() => selectStep(n - 1)}>← {n > 1 ? `Paso ${n - 1}` : ""}</button>
-        <button type="button" className="btn-nav" id="nextBtn" disabled={n === STEPS.length} onClick={() => selectStep(n + 1)}>{n < STEPS.length ? `Paso ${n + 1}` : ""} →</button>
+        )}
       </div>
+      <button type="button" className="gbtn" id="nextBtn" disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
+        onClick={() => selectStep(n + 1)}>{n < STEPS.length ? n + 1 : ""} ▶</button>
     </div>
   );
 }
@@ -197,7 +195,7 @@ export default function Journal({ n, id }) {
           </div>
         )}
         <Quests step={step} quests={quests} loaded={s.questsLoaded} />
-        <ReqBlock n={n} open s={s} title="Necesitas" />
+        <ReqBlock n={n} open s={s} title={<span className="t">Necesitas</span>} />
         <Actions step={step} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
       </div>
