@@ -17,16 +17,18 @@ const byName = (a, b) => rowName(a).localeCompare(rowName(b), "es");
 export function itemsView(s) {
   const q = normText(s.shopQuery.trim());
   const scope = s.shopPendingOnly ? pendingItemSteps(s) : STEPS_WITH_ITEMS;
+  // Las cantidades descuentan lo ya cogido para cada paso (por ejemplo, desde el diario)
+  const had = (k, n) => rowHave(s, { k }, [n]);
   let bands;
   if (s.shopSort === "soon") {
     const chips = soonSteps(s);
     const soon = chips.filter(n => STEPS_WITH_ITEMS.includes(n));
     bands = [
-      { id: "soon", chips, rows: aggregate(soon) },
-      { id: "later", rows: aggregate(scope.filter(n => !soon.includes(n))) },
+      { id: "soon", chips, rows: aggregate(soon, had) },
+      { id: "later", rows: aggregate(scope.filter(n => !soon.includes(n)), had) },
     ];
   } else {
-    const rows = aggregate(scope);
+    const rows = aggregate(scope, had);
     rows.sort(s.shopSort === "az" ? byName : (a, b) => (b.a[0][1] - a.a[0][1]) || byName(a, b));
     bands = [{ id: "all", rows }];
   }

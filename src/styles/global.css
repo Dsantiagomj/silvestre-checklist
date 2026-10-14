@@ -1963,6 +1963,8 @@ header.show-progress .tb-progress{
   font-size:9.5px; font-weight:800; color:#d8c8ff;
 }
 .slot.owned .slot-main{ border-color:color-mix(in srgb, var(--amber) 65%, transparent); }
+/* A medias: lo que falta, en el color de «Pronto» */
+.slot.partial .q{ color:var(--soon); }
 .slot.owned .slot-art{ opacity:.35; filter:grayscale(.6); }
 .slot.owned .slot-main::after{
   content:"✓"; position:absolute; top:-6px; right:-6px;

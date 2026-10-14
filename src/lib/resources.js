@@ -18,6 +18,9 @@ const CAT_ORDER = Object.fromEntries(CATEGORIES.map(([k], i) => [k, i]));
 
 export const rowName = row => row.a.map(([id]) => RES_ITEMS[id].name).join(" o ");
 export const rowQty = row => row.a.map(([, q]) => q).join(" / ");
+/** Lo que falta de una fila sumada: solo cuando ya hay partes cogidas y otras no. */
+export const rowPartial = row => !!row.left && row.left.some(q => q > 0) && row.left.some((q, i) => q !== row.a[i][1]);
+export const rowLeft = row => row.left.join(" / ");
 
 /** Filas de un paso tal cual: cada una es un objeto (o varias alternativas) con su cantidad. */
 export const rowsOf = n => RES_STEPS[String(n)] || [];
@@ -25,19 +28,23 @@ export const rowsOf = n => RES_STEPS[String(n)] || [];
 /**
  * Suma las filas de varios pasos. Los objetos que se conservan tras usarse (r) cuentan
  * el máximo, no la suma, y las filas solo necesarias en un caso concreto (x) no cuentan:
- * son las reglas del compilado de la propia página.
+ * son las reglas del compilado de la propia página. Con `had(k, n)` (la parte del paso
+ * n ya está cogida o cubierta) cada fila lleva además lo que falta en `left`.
  */
-export function aggregate(steps) {
+export function aggregate(steps, had) {
   const rows = new Map();
   for (const n of steps) {
     for (const row of rowsOf(n)) {
       if (row.x) continue;
       const cur = rows.get(row.k);
+      const left = had && row.a.map(([, q]) => (had(row.k, n) ? 0 : q));
       if (!cur) {
-        rows.set(row.k, { ...row, steps: [n] });
+        rows.set(row.k, { ...row, steps: [n], ...(had && { left }) });
         continue;
       }
-      cur.a = cur.a.map(([id, q], i) => [id, row.r ? Math.max(q, row.a[i][1]) : q + row.a[i][1]]);
+      const add = (q, more) => (row.r ? Math.max(q, more) : q + more);
+      cur.a = cur.a.map(([id, q], i) => [id, add(q, row.a[i][1])]);
+      if (had) cur.left = cur.left.map((q, i) => add(q, left[i]));
       cur.steps.push(n);
     }
   }
