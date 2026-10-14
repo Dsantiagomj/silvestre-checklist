@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { imgUrl } from "../../lib/assets.js";
 import { copyText } from "../../lib/motion.js";
-import { PREREQ_STEP, RES_ITEMS, rowName, rowQty } from "../../lib/resources.js";
+import { PREREQ_STEP, RES_ITEMS, rowLeft, rowName, rowPartial, rowQty } from "../../lib/resources.js";
 
 const LONG_PRESS_MS = 550;
 const COPIED_MS = 1200;
@@ -63,9 +63,12 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
 
   const first = Math.min(...row.steps);
   const badge = band === "soon" ? (first === PREREQ_STEP ? "Pre" : first) : null;
-  const qty = row.a[0][1];
+  // A medias (unas partes cogidas y otras no): se ve lo que falta, no el total
+  const partial = !have && rowPartial(row);
+  const qty = partial ? row.left[0] : row.a[0][1];
+  const qtyText = partial ? `${rowLeft(row)} de ${rowQty(row)}` : rowQty(row);
   const cls = "slot" + (list ? " list" : "") + (have ? " owned" : "") + (dim ? " dim" : "") + (match ? " match" : "") +
-    (copied ? " copied" : "");
+    (copied ? " copied" : "") + (partial ? " partial" : "");
   const art = (
     <span className={"slot-art" + (row.a.length > 1 ? " alt" : "")} aria-hidden="true">
       {row.a.map(([id]) => RES_ITEMS[id].img
@@ -103,7 +106,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
             )}
           </span>
           <span className={"slot-when" + (band === "soon" || band === "prereq" ? " soon" : "")}>{laterSteps(row.steps)}</span>
-          <span className="q">×{rowQty(row)}</span>
+          <span className="q">×{partial ? rowLeft(row) : rowQty(row)}</span>
           {copied && <span className="slot-copied" role="status">Copiado</span>}
         </button>
         {copyButton}
@@ -114,7 +117,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   return (
     <div className={cls} data-id={row.k}>
       <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}
-        aria-label={`${rowName(row)}, ${rowQty(row)}${have ? ", conseguido" : ""}`}>
+        aria-label={`${rowName(row)}, ${partial ? `faltan ${qtyText}` : rowQty(row)}${have ? ", conseguido" : ""}`}>
         {art}
         {badge != null && <span className="st" aria-hidden="true">{badge}</span>}
         {row.g && <span className="slot-tag" aria-hidden="true">{row.g.startsWith("Orden") ? "Orden" : "Opc."}</span>}
@@ -123,7 +126,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
       </button>
       {copyButton}
       <span className="slot-tip" role="tooltip">
-        <b>{rowName(row)} ×{rowQty(row)}</b>
+        <b>{rowName(row)} ×{partial ? qtyText : rowQty(row)}</b>
         {band === "soon" || band === "prereq"
           ? <span className="slot-tip-when">Para {forSteps(row.steps)}</span>
           : <span>{laterSteps(row.steps)}</span>}

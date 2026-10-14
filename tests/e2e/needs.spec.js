@@ -505,3 +505,24 @@ test("marcar un objeto no completa su prerrequisito: se puede comprar antes", as
   await expect(page.locator('#prereqs .pr-card[data-id="l11"]')).not.toHaveClass(/done/);
   await expect(page.locator("#prereqsCount")).toHaveText("0/21");
 });
+
+test("lo cogido para un paso se descuenta de la cantidad de «Pronto»", async ({ page }) => {
+  await openApp(page);
+  // La Ortiga la piden los prerrequisitos (50) y el paso 1 (50): en «Pronto» sale ×100
+  await page.click("#tabItems");
+  const ortiga = page.locator('#items .band.soon .slot[data-id="421"]');
+  await expect(ortiga.locator(".q")).toHaveText("100");
+  // Cogida para el paso 1 desde el diario: quedan 50 y sigue sin estar completa
+  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.locator('#journal .journal-needs .slot[data-id="421"] .slot-main').click();
+  await expect(ortiga.locator(".q")).toHaveText("50");
+  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
+  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-label", /Ortiga, faltan 50 de 100/);
+  // Completarla allí la da por cogida entera, con su cantidad total
+  await ortiga.locator(".slot-main").click();
+  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-pressed", "true");
+  await expect(ortiga.locator(".q")).toHaveText("100");
+  // Y desmarcar el paso 1 en el diario vuelve a dejar 50 pendientes
+  await page.locator('#journal .journal-needs .slot[data-id="421"] .slot-main').click();
+  await expect(ortiga.locator(".q")).toHaveText("50");
+});
