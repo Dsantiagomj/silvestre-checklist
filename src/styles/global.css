@@ -2082,6 +2082,99 @@ header.show-progress .tb-progress{
   .diary-next .long{ display:none; }
 }
 
+.steps-view{ display:inline-flex; padding:3px; border-radius:999px; border:1px solid var(--line-2); background:var(--inset); }
+.steps-view button{
+  padding:6px 16px; border:0; border-radius:999px; background:none; cursor:pointer;
+  font:700 13.5px var(--font-body); color:var(--txt-soft);
+}
+.steps-view button[aria-pressed="true"]{ background:var(--amber); color:#142208; }
+
+/* Mapa: los 100 pasos como un camino que serpentea; cada sello lleva el paisaje de su zona */
+.step-map{
+  position:relative; overflow:clip; margin-bottom:24px;
+  border-radius:16px; border:1px solid var(--line-warm); background:#161a14;
+}
+.step-map-bg{
+  position:absolute; inset:-24px; background:center / cover;
+  filter:blur(4px) saturate(.7) brightness(.4);
+  transition:background-image .4s ease;
+}
+.step-map-path{ position:absolute; inset:0; overflow:visible; }
+.step-map-path polyline{
+  fill:none; stroke:color-mix(in srgb, var(--soon) 70%, transparent);
+  stroke-width:5; stroke-dasharray:2 13; stroke-linecap:round; stroke-linejoin:round;
+}
+.map-arc{ fill:none; stroke:var(--amber); stroke-width:3; stroke-dasharray:6 6; }
+.map-node{
+  position:absolute; transform:translate(-50%, -50%);
+  display:grid; place-items:center; width:54px; height:54px; padding:0;
+  border-radius:50%; border:3px solid var(--zone-color);
+  background:#161a14 center / 320% auto; box-shadow:0 5px 12px rgba(0,0,0,.6);
+  cursor:pointer; transition:transform .15s ease, opacity .2s ease, filter .2s ease;
+}
+.map-node::before{ content:""; position:absolute; inset:0; border-radius:50%; background:rgba(13,14,12,.42); }
+.map-node:hover{ transform:translate(-50%, -50%) scale(1.08); z-index:2; }
+.node-num{
+  position:relative; font:400 19px 'Lilita One', var(--font-display); color:#f3ecd2;
+  -webkit-text-stroke:1.4px #121410; paint-order:stroke fill;
+}
+.map-node.done{ filter:grayscale(.75) brightness(.72); }
+.map-node.done::after{
+  content:"✓"; position:absolute; top:-6px; right:-6px; display:grid; place-items:center;
+  width:20px; height:20px; border-radius:50%; background:var(--amber); color:#142208; font:900 12px var(--font-body);
+}
+.map-node.dofus{ border-color:var(--soon); box-shadow:0 0 0 4px color-mix(in srgb, var(--soon) 30%, transparent), 0 5px 12px rgba(0,0,0,.6); }
+.map-node.current{
+  z-index:1; width:70px; height:70px; border-color:var(--amber);
+  box-shadow:0 0 0 8px color-mix(in srgb, var(--amber) 20%, transparent), 0 0 34px color-mix(in srgb, var(--amber) 65%, transparent);
+}
+.map-node.current .node-num{ font-size:26px; }
+.map-node.dimmed{ opacity:.28; filter:grayscale(1); }
+.node-egg{ position:absolute; top:-30px; width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 3px 5px #000); }
+.node-boss{
+  position:absolute; left:-12px; bottom:-10px; width:28px; height:28px; padding:1px; object-fit:contain;
+  border-radius:50%; border:2px solid var(--soon); background:#121411;
+}
+.step-map-legend{ position:absolute; left:14px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; }
+.step-map-legend span{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
+  background:rgba(13,14,12,.85); border:1px solid rgba(255,255,255,.1); font-size:11.5px; font-weight:700; color:#dfe4d6;
+}
+.step-map-legend i{ width:10px; height:10px; border-radius:50%; }
+.lg-egg{ background:var(--soon); }
+.lg-boss{ border:2px solid var(--soon); background:#121411; }
+.map-card{
+  position:absolute; z-index:5; width:350px; overflow:hidden;
+  border-radius:14px; border:1px solid var(--line-warm); background:#151813; color:#eef1e8;
+  box-shadow:0 16px 34px rgba(0,0,0,.7);
+}
+.map-card.above{ transform:translateY(-100%); }
+.map-card-hd{ position:relative; height:84px; background:#222 center / cover; }
+.map-card-hd::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, #151813, rgba(21,24,19,0)); }
+.map-card-hd img{ position:absolute; right:10px; bottom:-14px; z-index:1; width:88px; height:88px; object-fit:contain; filter:drop-shadow(0 6px 8px #000); }
+.map-card-x{
+  position:absolute; top:8px; right:8px; z-index:2; width:26px; height:26px; border-radius:50%;
+  border:0; background:rgba(13,14,12,.8); color:#eef1e8; font-size:16px; cursor:pointer;
+}
+.map-card-bd{ padding:4px 14px 14px; }
+.map-card-zone{ font:700 11px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:#a9b39f; }
+.map-card-title{
+  margin:2px 0 8px; font:400 19px/1.15 'Lilita One', var(--font-display); color:#f3ecd2;
+  -webkit-text-stroke:1.2px #121410; paint-order:stroke fill;
+}
+.map-card-line{ margin:0 0 6px; font-size:13px; line-height:1.4; color:#dfe4d6; }
+.map-card-cta{ display:flex; gap:8px; margin-top:10px; }
+.map-card-cta button{
+  padding:6px 12px; border-radius:999px; border:1px solid #2f3a2e; background:none; color:#eef1e8;
+  font:700 13px var(--font-body); cursor:pointer;
+}
+.map-card-cta .map-card-done{ background:var(--amber); border-color:var(--amber); color:#142208; }
+@media (max-width:600px){
+  .map-node{ width:46px; height:46px; }
+  .map-node.current{ width:58px; height:58px; }
+  .node-num{ font-size:16px; }
+}
+
 /* Sellos de zona: paisaje en un medallón con anillo de avance */
 .seals{ display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; padding:4px 2px 6px; scrollbar-width:thin; }
 .seal{

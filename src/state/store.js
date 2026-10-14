@@ -18,6 +18,7 @@ export const LS = {
   itemsView: "silvestre:itemsView",
   itemsPageSize: "silvestre:itemsPageSize",
   needsCollapsed: "silvestre:needsCollapsed",
+  stepsView: "silvestre:stepsView",
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -89,6 +90,8 @@ function initialState() {
     needsCollapsed: localStorage.getItem(LS.needsCollapsed) === "1",
     selectedStep: null,
     sheetOpen: false,
+    // Los 100 pasos como diario (lista + detalle) o como mapa del camino
+    stepsView: localStorage.getItem(LS.stepsView) === "map" ? "map" : "diary",
     // status: all | pending | done (las pestañas del diario)
     filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
@@ -213,6 +216,16 @@ export function overlayGo(n) {
 }
 
 export const clearSelection = () => setState({ selectedStep: null });
+
+export function setStepsView(view) {
+  localStorage.setItem(LS.stepsView, view);
+  setState({ stepsView: view });
+}
+/** Desde el mapa: abre el paso en el diario. */
+export function openInDiary(n) {
+  setStepsView("diary");
+  selectStep(n);
+}
 export const closeSheet = () => setState({ sheetOpen: false });
 
 export function toggleStep(n) {
@@ -365,6 +378,8 @@ export function applySnapshot(snap) {
     questObj: snap.questObj || {},
     selectedStep: null,
     sheetOpen: false,
+    // Los 100 pasos como diario (lista + detalle) o como mapa del camino
+    stepsView: localStorage.getItem(LS.stepsView) === "map" ? "map" : "diary",
     shopEpoch: s.shopEpoch + 1,
   }));
   // La versión vanilla siempre reescribía las cinco claves, aunque no cambiaran.

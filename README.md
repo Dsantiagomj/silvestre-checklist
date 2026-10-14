@@ -43,6 +43,9 @@ Los 100 pasos se leen como el diario de misiones del juego.
 - **Lista** a la izquierda, agrupada por el Dofus al que lleva cada tramo ("Hacia el Domakuro", 11/28). Cada fila tiene una casilla para marcar el paso sin abrirlo, la miniatura del paisaje de su zona, el número, el logro que persigue, su jefe o su Dofus y la duración. Si el paso se termina más adelante, lo dice ("se cierra en el 34"). Las pestañas Pendientes, Hechos y Todos filtran la lista.
 - **Detalle** a la derecha. Arriba va un escenario con el paisaje de la zona, el número y el título del paso, y su jefe flotando. Debajo, el texto de Sandglass, los avisos de la guía, las misiones con sus objetivos y lo que hace falta reunir. "Paso hecho · ir al 35" marca el paso y abre el siguiente pendiente. Si el combate del paso cierra otros que siguen pendientes, ofrece marcarlos también. Sin nada elegido, el detalle muestra el siguiente pendiente.
 
+### Mapa
+- La otra vista, a un clic de "Diario": los 100 pasos como un camino que serpentea sobre el paisaje de la zona del paso actual. Cada paso es un sello con el paisaje de su zona; los hechos se apagan con ✓, el actual brilla y los 10 Dofus son hitos dorados con su huevo. Los pasos cuyo combate cierra otros llevan la insignia de su jefe y, al elegir uno, un arco los une. La ficha del paso dice hasta dónde llegar y qué cierra, y deja marcarlo o abrirlo en el diario. Los sellos y la búsqueda apagan los pasos que no coinciden sin romper el camino. La vista elegida se recuerda.
+
 ### Mobile
 - La lista ocupa todo el ancho. Al tocar un paso, sube un **bottom sheet** con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
 
