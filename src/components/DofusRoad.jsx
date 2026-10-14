@@ -41,7 +41,7 @@ export default function DofusRoad({ big = false }) {
           );
         })}
       </ul>
-      {big && <button type="button" className="road-go" id="roadGo" onClick={showBoard}>Ver el tablero</button>}
+      {big && <button type="button" className="road-go" id="roadGo" onClick={showBoard}>Ver los pasos</button>}
     </section>
   );
 }
