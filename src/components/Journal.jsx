@@ -86,12 +86,23 @@ function goalText(e) {
  * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
  * Sandglass y, al pie, los pasos que cierra o donde se cierra.
  */
-function Goal({ step, done }) {
+function Goal({ step, done, s }) {
   const plan = PLANS[step.n] || [];
   const achs = plan.filter(e => e.t === "a");
   const head = achs[0];
   const many = achs.length > 1;
   const closedIn = !done && CLOSED_BY[step.n];
+  const lineOf = e => (
+    <span className="goal-line">
+      {e.t === "align"
+        ? (e.from != null && e.from < e.n
+          ? `Misiones ${e.from} a ${e.n} del alineamiento bontariano.`
+          : `Misión ${e.n} del alineamiento bontariano.`)
+        : goalText(e)}
+    </span>
+  );
+  const includes = stepCalls(step).filter(([kind]) => kind === "includes");
+  const needs = rowsOf(step.n).length > 0;
   return (
     <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
@@ -107,9 +118,10 @@ function Goal({ step, done }) {
               ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
               : stepTitle(step)}
           </h2>
+          {plan.length === 1 && lineOf(plan[0])}
         </div>
       </div>
-      {plan.length > 0 && (
+      {plan.length > 1 && (
         <ul className="goal-lines">
           {plan.map((e, i) => (
             <li key={i}>
@@ -119,13 +131,7 @@ function Goal({ step, done }) {
                   {achievementGuide(e.name) ? <a href={achievementGuide(e.name)} target="_blank" rel="noopener">{e.name}</a> : e.name}
                 </b>
               )}
-              <span className="goal-line">
-                {e.t === "align"
-                  ? (e.from != null && e.from < e.n
-                    ? `Misiones ${e.from} a ${e.n} del alineamiento bontariano.`
-                    : `Misión ${e.n} del alineamiento bontariano.`)
-                  : goalText(e)}
-              </span>
+              {lineOf(e)}
             </li>
           ))}
         </ul>
@@ -136,6 +142,16 @@ function Goal({ step, done }) {
         {done && <span className="badge is-done">✓ Hecho</span>}
       </div>
       <blockquote className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></blockquote>
+      {(includes.length > 0 || needs) && (
+        <div className="goal-prep">
+          {includes.length > 0 && (
+            <div className="prep-card">
+              {includes.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
+            </div>
+          )}
+          {needs && <div className="prep-card"><Needs n={step.n} s={s} /></div>}
+        </div>
+      )}
       {(closedIn || step.closes) && (
         <div className="goal-foot">
           {closedIn && (
@@ -154,25 +170,30 @@ function Goal({ step, done }) {
   );
 }
 
-/** Rojo, verde y azul de la guía; el verde enlaza los pasos que cierra. */
+/** Un aviso de la guía (rojo, verde o azul) con su medallón. */
+function Call({ step, kind, text }) {
+  return (
+    <div className={`call ${kind}`}>
+      <i aria-hidden="true">
+        {kind === "must" ? <QuestMark />
+          : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
+          : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
+      </i>
+      <div>
+        <b>{CALL[kind].label}</b>
+        <RichText text={text} />
+      </div>
+    </div>
+  );
+}
+
+/** Rojo, verde y azul de la guía, menos «Incluye», que va con el objetivo. */
 function Calls({ step }) {
-  const calls = stepCalls(step);
+  const calls = stepCalls(step).filter(([kind]) => kind !== "includes");
   if (!calls.length) return null;
   return (
     <div className="journal-calls">
-      {calls.map(([kind, text], i) => (
-        <div key={i} className={`call ${kind}`}>
-          <i aria-hidden="true">
-            {kind === "must" ? <QuestMark />
-              : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
-              : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
-          </i>
-          <div>
-            <b>{CALL[kind].label}</b>
-            <RichText text={text} />
-          </div>
-        </div>
-      ))}
+      {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
     </div>
   );
 }
@@ -336,11 +357,10 @@ export default function Journal({ n, id }) {
     <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <div className="journal-top">
         <Banner step={step} />
-        <Goal step={step} done={!!s.done[n]} />
+        <Goal step={step} done={!!s.done[n]} s={s} />
       </div>
       <div className="journal-body">
         <Calls step={step} />
-        <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
         <Actions step={step} s={s} />
         <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>

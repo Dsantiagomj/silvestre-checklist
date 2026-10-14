@@ -2443,7 +2443,8 @@ header.show-progress .tb-progress{
 .journal-body{ padding:6px 26px 24px; }
 /* Cuerpo del detalle con el estilo de la ventana de Misiones del juego: paneles de
    madera (pergamino en el tema claro), medallones, rombos dorados y botones planos */
-.journal-body{
+/* El estandarte va siempre en oscuro: lleva los colores de madera oscura en los dos temas */
+.journal-body, .journal-top{
   --gw-panel:linear-gradient(180deg, #2b2822, #211f1b);
   --gw-panel-2:#1f1d19;
   --gw-line:#4a4436;
@@ -2619,6 +2620,25 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   right:2px; bottom:2px; min-width:16px; padding:0 4px; border-radius:6px;
   background:rgba(18,20,16,.88); line-height:16px; text-align:center; text-shadow:none;
 }
+
+/* Lo que hay que preparar, junto al objetivo (opción B): «Incluye» y «Necesitas» en dos
+   tarjetas que llenan el hueco bajo la cita */
+.goal-prep{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
+.prep-card{
+  min-width:0; padding:10px 12px; border-radius:8px;
+  background:var(--gw-panel); border:1px solid var(--gw-line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.prep-card .call{ padding:0; background:none; border:0; box-shadow:none; grid-template-columns:36px minmax(0, 1fr); font-size:13.5px; }
+.prep-card .call::before{ display:none; }
+.prep-card .call i{ width:36px; height:36px; }
+.prep-card .call i img{ width:24px; height:24px; }
+.prep-card .call + .call{ margin-top:8px; }
+.prep-card .journal-needs{ margin:0; }
+.prep-card .journal-h{ justify-content:flex-start; margin:0 0 8px; font-size:12px; }
+.prep-card .journal-h::before, .prep-card .journal-h::after, .prep-card .journal-h .t::before, .prep-card .journal-h .n::after{ display:none; }
+.prep-card .journal-needs .slots{ justify-content:flex-start; gap:6px; }
+.goal-head .goal-line{ display:block; margin-top:4px; font-size:15px; line-height:1.4; color:#ece3cc; }
 
 /* Barra final: anterior · Paso hecho · siguiente, botones planos del juego */
 .journal-cta{

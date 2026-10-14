@@ -581,14 +581,32 @@ test("el estandarte lleva lo más representativo del paso sobre el mapa donde em
 test("una misión que da el PNJ de cada clase lo dice, y el paso no pone a uno cualquiera", async ({ page }) => {
   await openApp(page);
   await stepData(page, 7);
-  // Sin PNJ único ni jefe, el estandarte va sin figura
-  await expect(page.locator("#journal .journal-banner .journal-show")).toHaveCount(0);
+  // Sin PNJ único: la diosa Feca, con la que se habla en la misión
+  expect(await figure(page)).toBe("La cólera de los dioses:Diosa Feca");
   const q = page.locator("#journal .q-item", { hasText: "La cólera de los dioses" });
   await expect(q.locator(".q-start")).toContainText("depende de tu clase");
   await expect(q.locator(".q-start")).not.toContainText("Rigal");
   // Sin punto de inicio, el primer PNJ al que se va: Pandawelo en «De la mano»
   await stepData(page, 64);
   await expect(page.locator("#journal .q-item", { hasText: "De la mano" }).locator(".q-start")).toContainText("Pandawelo");
+});
+
+test("lo que hay que preparar va junto al objetivo: «Incluye» y «Necesitas» en dos tarjetas", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 1);
+  const prep = page.locator("#journal .journal-goal .goal-prep");
+  await expect(prep.locator(".prep-card")).toHaveCount(2);
+  await expect(prep.locator(".call.includes b")).toHaveText("Incluye");
+  await expect(prep.locator(".journal-needs .journal-h")).toContainText("Necesitas (3)");
+  await expect(prep.locator(".journal-needs .slot")).toHaveCount(3);
+  // Ya no se repiten abajo; los demás avisos y las misiones siguen en el cuerpo
+  await expect(page.locator("#journal .journal-body .call.includes, #journal .journal-body .journal-needs")).toHaveCount(0);
+  await expect(page.locator("#journal .journal-body .q-item").first()).toBeVisible();
+  // La frase del objetivo, bajo el título
+  await expect(page.locator("#journal .goal-head .goal-line")).toHaveText("Las 5 misiones del logro.");
+  // Un paso sin nada que preparar no deja tarjetas vacías
+  await stepData(page, 2);
+  await expect(page.locator("#journal .goal-prep")).toHaveCount(0);
 });
 
 test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
