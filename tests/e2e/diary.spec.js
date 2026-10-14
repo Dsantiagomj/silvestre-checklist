@@ -188,7 +188,9 @@ test("en el detalle, los objetos van antes que las misiones y se marcan como en 
     return !!(needs.compareDocumentPosition(quests) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   expect(before).toBe(true);
-  await expect(j.locator(".journal-needs .journal-h")).toContainText("(5)");
+  // La Ortiga y la Lana de «El despertar de Pandala» van en los prerrequisitos (l11), no aquí
+  await expect(j.locator(".journal-needs .journal-h")).toContainText("(3)");
+  await expect(j.locator('.journal-needs .slot[data-id="421"]')).toHaveCount(0);
 
   // Pulsar el objeto lo marca como cogido y «Lo que necesitas» lo refleja (uno que solo
   // pide este paso: los compartidos salen sumados allí y marcar una parte no los completa)
