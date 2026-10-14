@@ -36,7 +36,8 @@ export default function ResetDialog({ ref }) {
     const scope = Object.fromEntries(resetChecks().map(c => [c.name, c.checked]));
     const before = takeSnapshot();
     const after = takeSnapshot();
-    if (scope.steps) after.done = {};
+    // Con los pasos se va su avance objetivo a objetivo (overlay y medallones del diario)
+    if (scope.steps) Object.assign(after, { done: {}, questPos: {}, questObj: {} });
     // Prerrequisitos y objetos pueden darse por hechos sin estar marcados (guía completa,
     // pasos hechos). Lo que se conserva se marca de verdad para no perderlo al borrar los pasos.
     const s = getState();
@@ -80,7 +81,7 @@ export default function ResetDialog({ ref }) {
         </div>
         <fieldset className="rd-opts" ref={optsRef} onChange={syncResetConfirm}>
           <legend className="rd-legend">Qué borrar</legend>
-          <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
+          <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados y su avance en las misiones <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
           <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsDone(s)}</span></label>
           <label><input type="checkbox" name="owned" defaultChecked /> Objetos conseguidos <span className="n" id="rdNOwned">{ownedCount(s)}</span></label>
         </fieldset>
