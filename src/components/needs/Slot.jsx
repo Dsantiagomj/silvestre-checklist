@@ -22,10 +22,11 @@ function forSteps(steps, prereq) {
   return parts.join(" y ");
 }
 
-/** "Paso 57", "Pasos 57, 63, 70 y 6 más" */
-function laterSteps(steps) {
-  if (steps.length === 1 && steps[0] === PREREQ_STEP) return "Prerrequisitos";
-  const list = steps.map(n => (n === PREREQ_STEP ? "prerrequisitos" : n));
+/** "Paso 57", "Pasos 57, 63, 70 y 6 más", "«Pan Koko Mío»" (el prerrequisito que lo pide) */
+function laterSteps(steps, prereq) {
+  const pre = PREREQ_NAME[prereq] ? `«${PREREQ_NAME[prereq]}»` : null;
+  if (steps.length === 1 && steps[0] === PREREQ_STEP) return pre || "Prerrequisitos";
+  const list = steps.map(n => (n === PREREQ_STEP ? pre || "prerrequisitos" : n));
   if (list.length === 1) return `Paso ${list[0]}`;
   const shown = list.slice(0, 3);
   const more = list.length - shown.length;
@@ -114,7 +115,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
               </span>
             )}
           </span>
-          <span className={"slot-when" + (band === "soon" || band === "prereq" ? " soon" : "")}>{laterSteps(row.steps)}</span>
+          <span className={"slot-when" + (band === "soon" || band === "prereq" ? " soon" : "")}>{laterSteps(row.steps, row.p)}</span>
           <span className="q">×{partial ? rowLeft(row) : rowQty(row)}</span>
           {copied && <span className="slot-copied" role="status">Copiado</span>}
         </button>
@@ -138,7 +139,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
         <b>{rowName(row)} ×{partial ? qtyText : rowQty(row)}</b>
         {band === "soon" || band === "prereq"
           ? <span className="slot-tip-when">Para {forSteps(row.steps, row.p)}</span>
-          : <span>{laterSteps(row.steps)}</span>}
+          : <span>{laterSteps(row.steps, row.p)}</span>}
         {later > 0 && <span>Y {later.toLocaleString("es")} más adelante</span>}
         {row.g && <span className="slot-tip-when">{row.g}</span>}
         {(row.n || typeLine(row)) && <span>{row.n || typeLine(row)}</span>}

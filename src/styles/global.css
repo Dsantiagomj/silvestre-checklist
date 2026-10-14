@@ -1672,7 +1672,9 @@ header.show-progress .tb-progress{
 /* LO QUE NECESITAS ------------------------------------------------------------
    Prerrequisitos y objetos en una sección con dos pestañas que llevan el mismo
    lenguaje que las tarjetas del hero (icono, cuenta, barra en el borde, ✓). */
-.needs{ padding:18px; margin:18px 0; }
+/* Por encima de las secciones de después: la animación de entrada hace de cada una su
+   propio contexto de apilamiento, y sin esto el aviso de un objeto quedaba debajo */
+.needs{ position:relative; z-index:2; padding:18px; margin:18px 0; }
 .needs-head{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
 .needs-head .section-title{ margin:0; }
 .needs-act{
@@ -2000,6 +2002,8 @@ header.show-progress .tb-progress{
 .slot:hover .slot-copy, .slot-copy:focus-visible{ opacity:1; }
 .slot-copy:hover{ border-color:var(--soon); }
 .slot.owned .slot-copy{ top:auto; bottom:4px; right:auto; left:4px; }
+/* Con etiqueta abajo («Opc.», «Orden»), arriba a la izquierda para no taparla */
+.slot.owned:has(.slot-tag) .slot-copy{ top:4px; bottom:auto; }
 .slot-copied{
   position:absolute; inset:0; display:grid; place-items:center; border-radius:11px;
   background:rgba(13,14,12,.82); color:var(--soon); font-size:11px; font-weight:800;
