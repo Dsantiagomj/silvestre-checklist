@@ -1,6 +1,7 @@
 import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
+import { achievementGuide } from "../../lib/guides.js";
 import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
@@ -44,7 +45,18 @@ export function prereqParts(text) {
   return { zone, title, sub };
 }
 
+/** La guía del logro que nombra el prerrequisito, aunque pida solo algunas de sus misiones. */
+const prereqGuide = text => {
+  const name = text.match(/Logro "([^"]+)"/)?.[1];
+  return name ? achievementGuide(name) : null;
+};
+
+/**
+ * Tarjeta de un prerrequisito: pulsarla lo marca. La guía va aparte, encima de la
+ * esquina, porque un enlace no puede ir dentro del botón.
+ */
 function PrereqCard({ p, done }) {
+  const guide = prereqGuide(p.text);
   const icons = (PREREQ_ICONS[p.id] || []).filter(i => i.img);
   const { zone, title, sub } = prereqParts(p.text);
   const layout = icons.length >= 3 ? " quad" : icons.length === 2 ? " pair" : "";
@@ -52,27 +64,32 @@ function PrereqCard({ p, done }) {
   const optional = sub?.lead === "Opcional";
   const note = optional ? sub.tail.replace(/^./, c => c.toUpperCase()) : null;
   return (
-    <button type="button" className={"pr-card" + (done ? " done" : "") + (optional ? " optional" : "")} data-id={p.id}
-      aria-pressed={String(done)} onClick={() => togglePrereq(p.id)} title={p.text}>
-      <span className={"pr-icons" + layout} aria-hidden="true">
-        {icons.length
-          ? icons.slice(0, 4).map((i, k) => <img key={k} src={imgUrl(i.img)} alt="" loading="lazy" />)
-          : <span className="pr-quest"><QuestMark /></span>}
-      </span>
-      <span className="pr-body">
-        {zone && <span className="pr-zone">{zone}</span>}
-        <span className="pr-title">{title}</span>
-        {optional ? (
-          note && <span className="pr-sub">{note}</span>
-        ) : sub && (
-          <span className="pr-sub">
-            {sub.lead && <b>{sub.lead}</b>}
-            {sub.lead && sub.tail ? " · " : ""}{sub.tail}
-          </span>
-        )}
-      </span>
-      {optional && <span className="pr-tag optional">Opcional</span>}
-    </button>
+    <div className={"pr-item" + (guide ? " has-guide" : "")} data-id={p.id}>
+      <button type="button" className={"pr-card" + (done ? " done" : "") + (optional ? " optional" : "")} data-id={p.id}
+        aria-pressed={String(done)} onClick={() => togglePrereq(p.id)} title={p.text}>
+        <span className={"pr-icons" + layout} aria-hidden="true">
+          {icons.length
+            ? icons.slice(0, 4).map((i, k) => <img key={k} src={imgUrl(i.img)} alt="" loading="lazy" />)
+            : <span className="pr-quest"><QuestMark /></span>}
+        </span>
+        <span className="pr-body">
+          {zone && <span className="pr-zone">{zone}</span>}
+          <span className="pr-title">{title}</span>
+          {optional ? (
+            note && <span className="pr-sub">{note}</span>
+          ) : sub && (
+            <span className="pr-sub">
+              {sub.lead && <b>{sub.lead}</b>}
+              {sub.lead && sub.tail ? " · " : ""}{sub.tail}
+            </span>
+          )}
+        </span>
+        {optional && <span className="pr-tag optional">Opcional</span>}
+      </button>
+      {guide && (
+        <a className="pr-guide" href={guide} target="_blank" rel="noopener" title="Guía del logro en Torrente Arcano">Guía ↗</a>
+      )}
+    </div>
   );
 }
 
