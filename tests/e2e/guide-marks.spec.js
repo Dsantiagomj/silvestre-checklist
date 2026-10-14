@@ -11,9 +11,10 @@ test("cada paso trae sus resaltados por tipo, sin paréntesis sueltos", () => {
     ["tip", "Se pueden matar las araknas de las primeras 4 salas para validar una parte de la misión"],
     ["done", "Se pasa Lasoberaña y se terminan las misiones de los incisos 33 y 34."],
   ]);
-  // El paso 43 repite el mismo rojo para dos misiones: cuenta una vez
+  // El paso 43 repite el mismo rojo para dos misiones: cuenta una vez. Los que solo
+  // decían "Completo" (2 rojos y 17 azules) pasan a ser step.complete
   const count = k => STEPS.flatMap(s => s.marks || []).filter(m => m[0] === k).length;
-  expect([count("stop"), count("done"), count("tip")]).toEqual([62, 25, 60]);
+  expect([count("stop"), count("done"), count("tip")]).toEqual([60, 25, 43]);
 });
 
 test("el texto base no repite lo resaltado y el texto completo no cambia", () => {
@@ -39,6 +40,16 @@ test("el verde dice qué otros pasos se cierran; lo que solo se actualiza no cue
 test("un resaltado entre paréntesis los pierde aunque lleve otros dentro", () => {
   expect(step(77).marks[0][1]).toBe(
     "Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 78) con el ídolo del dios Sadida");
-  // Los paréntesis que no envuelven todo el resaltado se quedan
-  expect(step(81).marks[0][1]).toMatch(/^\(Completo\) Se pasa Golosotrón/);
+});
+
+test("«(Completo)» no es un aviso: marca el paso como logro completo", () => {
+  const complete = STEPS.filter(s => s.complete).map(s => s.n);
+  expect(complete).toHaveLength(25);
+  expect(complete).toEqual(expect.arrayContaining([1, 2, 18, 21, 49, 69, 99]));
+  // Ningún aviso es solo "Completo" ni empieza por él
+  for (const s of STEPS) for (const [, t] of s.marks || []) expect(t).not.toMatch(/^\(?Completos?\)?(\s|$)/);
+  // Lo que acompañaba a "(Completo)" se queda como aviso
+  expect(step(1).marks[0]).toEqual(["tip", expect.stringMatching(/^Este paso incluye también el logro/)]);
+  expect(step(18).marks?.some(([, t]) => t === "Completo")).toBeFalsy();
+  expect(step(34).complete).toBeUndefined();
 });

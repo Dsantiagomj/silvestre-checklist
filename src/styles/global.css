@@ -2315,6 +2315,7 @@ header.show-progress .tb-progress{
 .journal-meta{ display:flex; flex-wrap:wrap; gap:6px; }
 .journal-meta .badge{ background:rgba(13,14,12,.75); border-color:rgba(255,255,255,.14); color:#dfe4d6; }
 .journal-meta .badge.is-done{ color:#cbee8f; }
+.journal-meta .badge.is-complete{ color:#f3d58a; border-color:rgba(227,197,101,.45); }
 .journal-show{
   position:relative; flex:none; align-self:flex-end;
   display:flex; flex-direction:column; align-items:center;

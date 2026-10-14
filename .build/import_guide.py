@@ -16,7 +16,8 @@ Writes:
 
 Each text keeps the page's colour markers as marks: [[RED]] is where to stop
 ("stop"), [[GREEN]] what gets resolved ("done") and [[BLUE]] a tip ("tip").
-"base" is the text without them, and "closes" lists the earlier steps whose
+"complete" says the step asks for the whole achievement ("(Completo)", kept out
+of the marks). "base" is the text without them, and "closes" lists the earlier steps whose
 missions a "done" mark finishes ("se terminan las misiones de los incisos 33
 y 34"); steps it only updates ("se actualiza") are left out.
 
@@ -73,12 +74,25 @@ def closing_paren(text):
     return -1
 
 
-def mark_text(raw):
-    """A mark on its own: no leading punctuation, no wrapping parentheses."""
-    text = clean(raw).lstrip(".,; ")
+COMPLETE = re.compile(r"^\(?Completos?\)?\s*", re.I)
+
+
+def unwrap(text):
     if text.startswith("(") and closing_paren(text) == len(text) - 1:
         text = text[1:-1].strip()
+    return text
+
+
+def mark_text(raw):
+    """A mark on its own: no leading punctuation, no wrapping parentheses and no
+    "(Completo)", which is a property of the step (see complete), not advice."""
+    text = unwrap(COMPLETE.sub("", unwrap(clean(raw).lstrip(".,; "))))
     return text[:1].upper() + text[1:]
+
+
+def complete(raw):
+    """The step asks for the whole achievement: "(Completo)" in any of its marks."""
+    return any(COMPLETE.match(unwrap(clean(body).lstrip(".,; "))) for _, body in MARK.findall(raw))
 
 
 def marks(raw):
@@ -86,7 +100,7 @@ def marks(raw):
     out = []
     for kind, body in MARK.findall(raw):
         mark = [MARK_KINDS[kind], mark_text(body)]
-        if mark not in out:
+        if mark[1] and mark not in out:
             out.append(mark)
     return out
 
@@ -152,6 +166,8 @@ def main(page):
             zone = old[prev[0]]["zone"]
             effort = max((old[p]["effort"] for p in prev), key=TIER_ORDER.index)
         extra = ""
+        if complete(raw):
+            extra += ", complete: true"
         if marks(raw):
             extra += f", base: {json.dumps(base(raw), ensure_ascii=False)}"
             extra += f", marks: {json.dumps(marks(raw), ensure_ascii=False)}"
