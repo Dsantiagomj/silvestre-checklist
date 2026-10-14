@@ -2588,3 +2588,18 @@ header.show-progress .tb-progress{
   }
   .q-item[open]::details-content, .req[open]::details-content{ block-size:auto; }
 }
+
+/* El resto de la página: la misma ✓ con rebote al marcar y las secciones que entran
+   al hacer scroll (scroll-driven, sin JavaScript; donde no se soporta, no pasa nada) */
+@keyframes reveal{ from{ opacity:0; transform:translateY(28px); } }
+@media (prefers-reduced-motion:no-preference){
+  .pr-card.done::after, .slot.owned .slot-main::after{ animation:check-pop .35s cubic-bezier(.3,1.6,.5,1) both; }
+  .slot-art{ transition:opacity .3s ease, filter .3s ease; }
+  @supports (animation-timeline:view()){
+    .needs, .nota, .diary{
+      animation:reveal linear both;
+      animation-timeline:view();
+      animation-range:entry 0% entry 40%;
+    }
+  }
+}

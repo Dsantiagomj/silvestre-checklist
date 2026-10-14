@@ -98,3 +98,23 @@ test("la lista fija no se mueve mientras se anima el cambio de paso", async ({ p
   });
   expect(new Set(tops).size).toBe(1);
 });
+
+const pops = page => page.evaluate(() => document.getAnimations().filter(a => a.animationName === "check-pop").length);
+
+test("marcar un prerrequisito o un objeto hace aparecer su ✓ con el mismo rebote", async ({ page }) => {
+  await openApp(page);
+  await page.waitForTimeout(500);
+  await page.click('#prereqs .pr-card[data-id="o1"]');
+  expect(await pops(page)).toBeGreaterThan(0);
+  await page.click("#tabItems");
+  await page.waitForTimeout(500);
+  await page.locator("#items .slot .slot-main").first().click();
+  expect(await pops(page)).toBeGreaterThan(0);
+});
+
+test("las secciones entran al hacer scroll", async ({ page }) => {
+  await openApp(page);
+  const reveal = await page.locator("#diary").evaluate(el =>
+    el.getAnimations().some(a => a.animationName === "reveal" && a.timeline && !(a.timeline instanceof DocumentTimeline)));
+  expect(reveal).toBe(true);
+});
