@@ -29,7 +29,7 @@ const EASE = "cubic-bezier(.2, .8, .2, 1)";
  * mide la altura de antes y la de después y pasa de una a otra, así lo de debajo se
  * desplaza en vez de saltar. Sin efecto con movimiento reducido.
  */
-export function useHeightMorph(ref, key, duration = 320) {
+export function useHeightMorph(ref, key, { duration = 320, skip } = {}) {
   const last = useRef(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -37,7 +37,8 @@ export function useHeightMorph(ref, key, duration = 320) {
     const to = el.getBoundingClientRect().height;
     const from = last.current;
     last.current = to;
-    if (from == null || Math.abs(from - to) < 2 || prefersReducedMotion()) return;
+    // skip(): otra animación se encarga de este cambio (el zoom entre vistas)
+    if (from == null || Math.abs(from - to) < 2 || prefersReducedMotion() || skip?.()) return;
     // Hacia "auto" (con interpolate-size, en global.css) y no hacia la altura medida:
     // si el contenido se reajusta a mitad de camino, el destino lo sigue. "clip" y no
     // "hidden": hidden haría del bloque un contenedor de scroll y rompería lo sticky
