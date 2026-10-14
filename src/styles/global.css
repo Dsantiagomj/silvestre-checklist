@@ -1809,6 +1809,14 @@ header.show-progress .tb-progress{
 }
 .pr-group h3 .pr-count{ margin-left:6px; letter-spacing:0; color:var(--txt-mute); font-weight:700; }
 .pr-cards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap:10px; }
+/* La tarjeta y, encima de su esquina inferior, el enlace a la guía del logro */
+.pr-item{ position:relative; display:grid; }
+.pr-guide{
+  position:absolute; right:12px; bottom:9px;
+  font-size:12px; font-weight:700; color:var(--accent-ink); text-decoration:none; white-space:nowrap;
+}
+.pr-guide:hover{ text-decoration:underline; }
+.pr-item.has-guide .pr-body{ padding-right:56px; }
 .pr-card{
   position:relative; display:flex; align-items:center; gap:14px;
   padding:12px 14px 12px 12px; border-radius:14px; text-align:left;

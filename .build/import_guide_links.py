@@ -5,6 +5,8 @@ mission ("misión 2: Arak-hais, ¿dónde vais?") to a page of its own, built fro
 the mission title (slugifyTorrentArcano) unless missionUrlOverrides says
 otherwise. This script finds the same names in the step texts, builds the same
 URLs and keeps only the ones that answer, so the app never links a missing page.
+Prerequisite achievements (PREREQS_LOGROS in steps.js) get their page too when the
+sitemap has it: the card links the achievement, not the quests it asks for.
 It also links every quest the diary lists (src/data/quests.json) whose page, by the
 same slug, is in the site's sitemap: most have a guide the step text never names.
 
@@ -30,6 +32,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "data" / "guides.json"
 QUESTS = ROOT / "src" / "data" / "quests.json"
+STEPS_JS = ROOT / "src" / "data" / "steps.js"
 SITE = "https://www.torrentearcano.com/"
 
 # The page's own pattern (linkMissions), on the raw text instead of escaped HTML
@@ -99,6 +102,12 @@ def page_for(name, overrides, pages):
     return next((SITE + c for c in (base, compact, base + "-1") if SITE + c in pages), None)
 
 
+def prereq_achievements():
+    """Achievements the prerequisites name: 'Isla de Otomaï: Logro "Turbera maldita", …'."""
+    block = STEPS_JS.read_text().split("export const PREREQS_LOGROS = [", 1)[1].split("];", 1)[0]
+    return re.findall(r'Logro \\"([^"\\]+)\\"', block)
+
+
 def quest_names():
     """The names of the quests the diary lists, as the app shows them."""
     return sorted({q["n"] for q in json.loads(QUESTS.read_text())["QUESTS"].values()})
@@ -127,6 +136,10 @@ def main(page):
     overrides = js_object(html, "missionUrlOverrides")
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS}
     pages = site_pages()
+    for name in prereq_achievements():
+        url = page_for(name, {}, pages)
+        if url and name not in achievements:
+            achievements[name] = url
     diary_only = {}
     for name in quest_names():
         url = page_for(name, overrides, pages)
