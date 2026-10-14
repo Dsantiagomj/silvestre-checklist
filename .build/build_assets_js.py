@@ -54,9 +54,6 @@ HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
 # Hero counters: the laurel-wreathed Dofus of the achievements panel for
 # prerequisites, and the Mochila de recolector for the items to gather.
 HERO_ICONS = {"prereqs": "achievements/458.png", "items": "items/81028.png"}
-# Note on "Hasta tener que pasar X jefe": the key of the first dungeon the guide
-# asks you to leave for later (Laboratorio de Brumen Tinctorias, step 5).
-NOTA_ICON = "items/84716.png"
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
@@ -239,7 +236,7 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), *HERO_ICONS.values(), NOTA_ICON}
+              *HEADER_ICONS.values(), *HERO_ICONS.values()}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
     fresh = {p for p, status in results if status == "ok"}
@@ -266,7 +263,6 @@ def main():
         "BACKUP_ICONS": BACKUP_ICONS,
         "HEADER_ICONS": HEADER_ICONS,
         "HERO_ICONS": HERO_ICONS,
-        "NOTA_ICON": NOTA_ICON,
         "STEP_ASSETS": steps,
         "PREREQ_ICONS": prereqs,
     }) + "\n")

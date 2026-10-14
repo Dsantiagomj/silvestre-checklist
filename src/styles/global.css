@@ -224,42 +224,97 @@ header{
 }
 
 /* NOTA ----------------------------------------------------------------------*/
-/* Nota aclaratoria · tarjeta como las del hero, con la llave de la mazmorra */
+/* Nota aclaratoria · sin caja: un ejemplo real dibujado con casillas del tablero
+   (43 y 44 en pausa ante el jefe, el 45 los termina) y la explicación al lado */
 .nota{
-  display:flex; align-items:center; gap:16px;
-  margin:18px 0 6px; padding:14px 16px;
-  border-radius:16px;
-  background:var(--panel);
-  border:1px solid var(--line-2);
-  border-left:3px solid var(--gold-ink);
+  display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; gap:28px;
+  margin:18px 0 6px; padding:20px 4px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
 }
-.nota-art{
-  width:56px; height:56px; flex-shrink:0;
+.nota-example{ margin:0; }
+.nota-track{ position:relative; display:inline-flex; align-items:center; gap:14px; }
+/* El camino entre casillas */
+.nota-track::before{
+  content:""; position:absolute; left:22px; right:22px; top:50%;
+  border-top:2px dashed var(--line-2);
+}
+.nota-step{
+  position:relative;
+  width:44px; height:44px; border-radius:10px;
   display:grid; place-items:center;
-  border-radius:12px; background:var(--inset); border:1px solid var(--line);
+  background:var(--inset); border:1px solid var(--line-2);
+  font-family:var(--font-display); font-size:17px; font-weight:800; font-variant-numeric:tabular-nums;
+  color:var(--txt-soft);
+  transition:transform .15s ease, border-color .15s ease;
 }
-.nota-art img{ width:80%; height:80%; object-fit:contain; transform:rotate(-12deg); }
-.nota-body{ min-width:0; flex:1; }
-.nota-kicker{ margin:0; font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--gold-ink); }
-.nota-title{ margin:2px 0 4px; font-size:16px; font-weight:700; color:var(--txt); }
-.nota-text{ margin:0; max-width:760px; font-size:13.5px; line-height:1.55; color:var(--txt-soft); }
-.nota-actions{ display:flex; flex-direction:column; align-items:stretch; gap:6px; flex-shrink:0; }
-.nota-steps, .nota-ok{
-  padding:8px 14px; border-radius:999px;
-  font-size:13px; font-weight:700; white-space:nowrap; text-align:center;
-  transition:filter .15s ease, border-color .15s ease, color .15s ease;
+.nota-step:hover{ transform:translateY(-2px); border-color:var(--amber); }
+/* Marca de la casilla: pausa en las que esperan, ✓ en la que termina */
+.nota-step::before, .nota-step::after{
+  position:absolute; top:-7px; right:-7px;
+  display:grid; place-items:center; width:18px; height:18px; border-radius:50%;
+  font-family:var(--font-body); font-size:9px; font-weight:800; line-height:1;
 }
-.nota-steps{ background:var(--amber); color:#0d0e0c; }
-.nota-steps:hover{ filter:brightness(1.08); }
-.nota-ok{ border:1px solid var(--line-2); color:var(--txt-soft); }
-.nota-ok:hover{ border-color:var(--txt-mute); color:var(--txt); }
+/* Pausa dibujada con dos barras: el glifo ❚❚ no está en todas las fuentes */
+.nota-step.paused::before{
+  content:"";
+  background:
+    linear-gradient(var(--gold-ink), var(--gold-ink)) 5px 4px / 2px 8px no-repeat,
+    linear-gradient(var(--gold-ink), var(--gold-ink)) 9px 4px / 2px 8px no-repeat,
+    var(--panel-2);
+  border:1px solid var(--line-2);
+}
+.nota-step::after{ content:"✓"; background:var(--amber); color:#142208; font-size:11px; opacity:0; }
+.nota-step.closer{
+  color:var(--txt);
+  background:color-mix(in srgb, var(--amber) 22%, var(--inset));
+  border-color:var(--amber);
+}
+.nota-step.closer::after{ opacity:1; }
+.nota-boss{
+  position:relative;
+  width:46px; height:46px; border-radius:50%;
+  display:grid; place-items:center; overflow:hidden;
+  background:var(--panel-2); border:2px solid color-mix(in srgb, #e0556b 70%, var(--line-2));
+}
+.nota-boss img{ width:115%; height:115%; object-fit:cover; object-position:50% 20%; }
+/* Al llegar al 45, las casillas en pausa se terminan con él */
+.nota-step.paused{ animation:nota-wait 6s ease-in-out infinite; }
+.nota-step.paused::before{ animation:nota-pause-mark 6s ease-in-out infinite; }
+.nota-step.paused::after{ animation:nota-done-mark 6s ease-in-out infinite; }
+.nota-step.closer{ animation:nota-close 6s ease-in-out infinite; }
+@keyframes nota-wait{
+  0%, 52%{ background:var(--inset); border-color:var(--line-2); color:var(--txt-soft); }
+  60%, 92%{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
+  100%{ background:var(--inset); border-color:var(--line-2); color:var(--txt-soft); }
+}
+@keyframes nota-pause-mark{ 0%, 52%{ opacity:1; } 60%, 92%{ opacity:0; } 100%{ opacity:1; } }
+@keyframes nota-done-mark{ 0%, 52%{ opacity:0; transform:scale(.4); } 60%, 92%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+@keyframes nota-close{
+  0%, 40%{ box-shadow:none; }
+  50%{ box-shadow:0 0 0 6px color-mix(in srgb, var(--amber) 25%, transparent); }
+  60%, 100%{ box-shadow:none; }
+}
+.nota-example figcaption{
+  max-width:260px; margin-top:12px;
+  font-size:12px; line-height:1.45; color:var(--txt-mute);
+}
+.nota-title{ margin:0 0 6px; font-size:17px; font-weight:700; color:var(--txt); }
+.nota-title::before{ content:"«"; color:var(--gold-ink); margin-right:2px; }
+.nota-title::after{ content:"»"; color:var(--gold-ink); margin-left:2px; }
+.nota-text{ margin:0; max-width:640px; font-size:14px; line-height:1.55; color:var(--txt-soft); }
+.nota-links{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 18px; margin:10px 0 0; }
+.nota-links button{ padding:2px 0; font-size:13px; font-weight:700; }
+#notaSteps{ color:var(--accent-ink); }
+#notaSteps::after{ content:" →"; }
+#notaClose{ color:var(--txt-mute); }
+.nota-links button:hover{ text-decoration:underline; text-underline-offset:3px; }
+#notaClose:hover{ color:var(--txt); }
 .nota.hidden{ display:none; }
 @media (max-width:700px){
-  .nota{ flex-wrap:wrap; align-items:flex-start; }
-  .nota-art{ width:44px; height:44px; }
-  .nota-body{ flex-basis:calc(100% - 60px); }
-  .nota-actions{ flex-direction:row; width:100%; }
-  .nota-actions > *{ flex:1; }
+  .nota{ grid-template-columns:1fr; gap:16px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .nota-step.paused, .nota-step.paused::before, .nota-step.paused::after, .nota-step.closer{ animation:none; }
 }
 
 /* PRERREQUISITOS · acordeón "Requisitos" tipo Dofus -------------------------*/

@@ -1,17 +1,24 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
-test("la aclaración es una tarjeta que explica y lleva a los pasos afectados", async ({ page }) => {
+test("la aclaración explica la pausa con un ejemplo real de la guía", async ({ page }) => {
   await openApp(page);
   const nota = page.locator("#nota");
   await expect(nota.locator(".nota-title")).toHaveText("Hasta tener que pasar X jefe de mazmorra");
-  // El texto de Sandglass se mantiene tal cual
-  await expect(nota).toContainText("significa dejar pausada esa misión y no vencer al jefe en ese punto");
-  await expect(nota.locator(".nota-art img")).toHaveAttribute("src", /items\/84716\.png$/);
-  // Los 33 pasos que usan esa instrucción, a un clic
-  const go = nota.locator("#notaSteps");
-  await expect(go).toHaveText("Ver los 33 pasos");
-  await go.click();
+  await expect(nota.locator(".nota-text")).toContainText("se terminan dos o más pasos a la vez");
+  // Ejemplo: los pasos 43 y 44 se detienen ante Kodámade y el 45 los termina todos
+  const steps = nota.locator(".nota-step");
+  await expect(steps).toHaveText(["43", "44", "45"]);
+  await expect(nota.locator(".nota-boss img")).toHaveAttribute("src", /monsters\/2088\.png$/);
+  await expect(nota.locator("figcaption")).toContainText("Kodámade");
+  // Cada paso del ejemplo abre su detalle
+  await steps.nth(2).click();
+  await expect(page.locator('.cell[data-n="45"]')).toHaveClass(/selected/);
+});
+
+test("la aclaración lleva a los pasos con pausa", async ({ page }) => {
+  await openApp(page);
+  await page.click("#notaSteps");
   await expect(page.locator("#searchInput")).toHaveValue("hasta tener que pasar");
   await expect(page.locator("#grid")).toBeInViewport();
 });
