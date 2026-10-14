@@ -17,6 +17,7 @@ export const LS = {
   guide: "silvestre:guide",
   itemsView: "silvestre:itemsView",
   itemsPageSize: "silvestre:itemsPageSize",
+  needsCollapsed: "silvestre:needsCollapsed",
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -84,6 +85,8 @@ function initialState() {
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
     // "Lo que necesitas" abre en prerrequisitos mientras falte alguno
     needsTab: pendingPrereqs > 0 && Object.keys(done).length < STEPS.length ? "prereqs" : "items",
+    // Contraída a mano mientras la guía no está completa (al 100 % se contrae sola)
+    needsCollapsed: localStorage.getItem(LS.needsCollapsed) === "1",
     selectedStep: null,
     sheetOpen: false,
     filters: { zones: [], pending: false, search: "" },
@@ -242,7 +245,12 @@ export function setAllPrereqs(on) {
 
 // Lo que necesitas: pestaña activa y acceso desde el hero
 export const setNeedsTab = tab => setState({ needsTab: tab });
+export function setNeedsCollapsed(collapsed) {
+  localStorage.setItem(LS.needsCollapsed, collapsed ? "1" : "0");
+  setState({ needsCollapsed: collapsed });
+}
 export function openNeeds(tab) {
+  setNeedsCollapsed(false);
   setNeedsTab(tab);
   document.getElementById("needs")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }

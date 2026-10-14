@@ -2147,6 +2147,7 @@ header.show-progress .tb-progress{
   box-shadow:0 0 18px color-mix(in srgb, var(--amber) 40%, transparent);
 }
 .needs-done-head .section-title{ margin:0; }
+.needs-strip-title{ margin:2px 0 0; font-size:15px; font-weight:700; color:var(--soon-ink); }
 .needs-done-title{ margin:2px 0 0; font-family:'Lilita One', var(--font-body); font-size:22px; letter-spacing:.3px; color:var(--txt); }
 .needs-done-chip{
   display:inline-flex; align-items:center; gap:8px; padding:5px 12px 5px 6px; border-radius:999px;
