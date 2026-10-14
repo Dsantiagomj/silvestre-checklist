@@ -315,15 +315,19 @@ test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) 
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
 
-test("con el final del diario a la vista, plegar una misión no arrastra la lista", async ({ page }) => {
+test("con el final del diario a la vista, desplegar y plegar misiones no mueve la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click('.diary-row[data-n="5"] .row-main');
-  await page.locator("#journal .q-item").first().waitFor({ timeout: 15_000 });
+  await page.click('.diary-row[data-n="17"] .row-main');
+  await page.locator("#journal .q-item").nth(3).waitFor({ timeout: 15_000 });
   await page.locator("#journal .q-item summary").first().click();
   await page.waitForTimeout(600);
+  // Al final de la ventana del diario, como al bajar hasta las últimas misiones
   await page.evaluate(() => { const w = document.querySelector(".diary-window"); scrollTo(0, w.getBoundingClientRect().bottom + scrollY - innerHeight + 40); });
   await page.waitForTimeout(600);
-  const tops = await listTops(page, [0]);
+  // Las pestañas de la lista siguen a la vista: la lista no se ha ido hacia arriba
+  const tabsTop = await page.locator(".diary-tabs").evaluate(el => el.getBoundingClientRect().top);
+  expect(tabsTop).toBeGreaterThan(0);
+  const tops = await listTops(page, [2, 2, 0, 0]);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
