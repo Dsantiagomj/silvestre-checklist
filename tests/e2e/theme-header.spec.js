@@ -116,12 +116,16 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
     return (a + .05) / (b + .05);
   }, [fg, bg]);
   const style = (sel, prop) => page.locator(sel).first().evaluate((el, p) => getComputedStyle(el)[p], prop);
-  const pageBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const pageBg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  // Se mide hasta que los colores se asientan: leerlos a mitad de la transición de tema
+  // da un contraste falso. Uno que de verdad no llega a 4.5 sigue fallando.
+  const settles = (fg, bg) => expect.poll(async () => ratio(await fg(), await bg()), { timeout: 3_000 })
+    .toBeGreaterThanOrEqual(4.5);
 
   // Botón principal: texto sobre el relleno del acento
-  expect(await ratio(await style("#overlayBtn", "color"), await style("#overlayBtn", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
-  expect(await ratio(await style("#heroNextGo", "color"), await style("#heroNextGo", "backgroundColor"))).toBeGreaterThanOrEqual(4.5);
+  await settles(() => style("#overlayBtn", "color"), () => style("#overlayBtn", "backgroundColor"));
+  await settles(() => style("#heroNextGo", "color"), () => style("#heroNextGo", "backgroundColor"));
   // Acento usado como texto sobre el fondo de la página
-  expect(await ratio(await style(".hero-eyebrow", "color"), pageBg)).toBeGreaterThanOrEqual(4.5);
-  expect(await ratio(await style(".section-num", "color"), pageBg)).toBeGreaterThanOrEqual(4.5);
+  await settles(() => style(".hero-eyebrow", "color"), pageBg);
+  await settles(() => style(".section-num", "color"), pageBg);
 });
