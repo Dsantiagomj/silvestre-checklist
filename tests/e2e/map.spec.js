@@ -56,3 +56,15 @@ test("los sellos y la búsqueda apagan en el mapa lo que no coincide", async ({ 
   await page.locator("#zoneSeals .seal").first().click();
   await expect(page.locator(".map-node.dimmed")).toHaveCount(0);
 });
+
+test("en el tema claro el mapa tiene fondo claro", async ({ page }) => {
+  await openMap(page, { "silvestre:theme": "light" });
+  const lum = sel => page.locator(sel).evaluate(el => {
+    const [r, g, b] = getComputedStyle(el).backgroundColor.match(/[\d.]+/g).slice(0, 3).map(Number);
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  });
+  await expect.poll(() => lum(".step-map")).toBeGreaterThan(0.75);
+  // El paisaje de fondo se aclara en vez de oscurecerse
+  const filter = await page.locator(".step-map-bg").evaluate(el => getComputedStyle(el).filter);
+  expect(Number(filter.match(/brightness\(([\d.]+)\)/)[1])).toBeGreaterThanOrEqual(1);
+});
