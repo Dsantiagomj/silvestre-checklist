@@ -326,7 +326,7 @@ test("los objetivos de una misión son una ruta de medallones con su avance", as
   await openApp(page, { "silvestre:questPos": { 5: 0 }, "silvestre:questObjective": { 894: 3 } });
   await page.click('.diary-row[data-n="5"] .row-main');
   const quest = page.locator("#journal .q-item", { hasText: "Las primeras impresiones" });
-  await quest.locator("summary").click();
+  await quest.evaluate(e => { e.open = true; });
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   // Medallón con un objeto del juego por tipo: carta para hablar, espada para combatir…
@@ -347,7 +347,44 @@ test("con el paso hecho, todos sus objetivos salen hechos", async ({ page }) => 
   await openApp(page, { "silvestre:done": { 4: true, 5: true } });
   await page.click('.diary-row[data-n="5"] .row-main');
   const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
-  await page.locator("#journal .q-item summary").first().click();
+  await page.locator("#journal .q-item").first().evaluate(e => { e.open = true; });
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   expect(await rows.evaluateAll(els => els.every(el => el.classList.contains("done")))).toBe(true);
+});
+
+const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
+
+test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden desmarcar", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const quest = page.locator("#journal .q-item").first();
+  await quest.evaluate(e => { e.open = true; });
+  const rows = quest.locator(".obj-list.route > .obj-row");
+  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+  expect(await routeStates(rows)).toMatch(/^n-+$/);
+  // Pulsar el tercero: hechos hasta él, el cuarto es el actual (y lo ve el overlay)
+  await rows.nth(2).locator("button.obj-med").click();
+  expect(await routeStates(rows)).toMatch(/^dddn-+$/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questObjective"))["894"])).toBe(3);
+  // Pulsar uno hecho vuelve a él
+  await rows.nth(1).locator("button.obj-med").click();
+  expect(await routeStates(rows)).toMatch(/^dn-+$/);
+  // El último de la misión la termina y pasa a la siguiente del paso, que se abre
+  await rows.last().locator("button.obj-med").click();
+  expect(await routeStates(rows)).toMatch(/^d+$/);
+  await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "");
+});
+
+test("la misión en curso del paso se abre sola", async ({ page }) => {
+  await openApp(page, { "silvestre:questPos": { 5: 1 } });
+  await page.click('.diary-row[data-n="5"] .row-main');
+  await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "", { timeout: 15_000 });
+});
+
+test("«hasta que puedas entrar a la mazmorra» pone la parada antes de entrar en ella", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const quest = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
+  await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
+  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Bodega del albergue");
 });

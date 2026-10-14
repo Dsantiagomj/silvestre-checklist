@@ -2505,6 +2505,9 @@ header.show-progress .tb-progress{
   background:radial-gradient(circle at 35% 30%, var(--gw-pin-line), var(--gw-panel-2));
   border:2px solid var(--gw-gold); box-shadow:0 2px 6px rgba(0,0,0,.4);
 }
+button.obj-med{ padding:0; cursor:pointer; transition:transform .15s ease, border-color .15s ease; }
+button.obj-med:disabled{ cursor:default; }
+button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a; }
 .obj-med img{ width:26px; height:26px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .route .obj-row.done .obj-med{ border-color:#7ea83a; }
 .route .obj-row.done .obj-med::after{

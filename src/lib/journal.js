@@ -53,12 +53,18 @@ const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase
 export function stopPoint(step, quests) {
   for (const [kind, text] of step.marks || []) {
     if (kind !== "stop") continue;
-    const m = text.match(/pasar (?:la mazmorra (?:de )?)?(?:a )?(.+?)(?:\s+con\b|[.,;)]|$)/i);
-    if (!m) continue;
-    const name = norm(m[1]);
+    // "Hasta tener que pasar X": el objetivo que nombra al jefe. "Hasta que puedas entrar
+    // a la mazmorra X": el primero que ocurre dentro (su zona es la mazmorra)
+    const boss = text.match(/pasar (?:la mazmorra (?:de )?)?(?:a )?(.+?)(?:\s+con\b|[.,;)]|$)/i);
+    const dungeon = !boss && text.match(/entrar a la mazmorra (?:de )?(.+?)(?:[.,;)]|$)/i);
+    if (!boss && !dungeon) continue;
+    const name = norm((boss || dungeon)[1]);
+    // Dentro de la mazmorra: por la zona (el texto puede nombrarla sin estar dentro,
+    // como "Llave del Laboratorio de Brumen Tinctorias")
+    const where = o => norm(dungeon ? o.a || "" : o.t);
     for (const q of quests) {
       const objs = q.s.flatMap(stg => stg.o);
-      const index = objs.findIndex(o => norm(o.t).includes(name));
+      const index = objs.findIndex(o => where(o).includes(name));
       if (index >= 0) return { quest: q.id, index, text };
     }
   }
