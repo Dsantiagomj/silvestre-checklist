@@ -5,7 +5,9 @@ test("la aclaración explica la pausa con un ejemplo real de la guía", async ({
   await openApp(page);
   const nota = page.locator("#nota");
   await expect(nota.locator(".nota-title")).toHaveText("Hasta tener que pasar X jefe de mazmorra");
-  await expect(nota.locator(".nota-text")).toContainText("se terminan dos o más pasos a la vez");
+  await expect(nota.locator(".nota-text")).toHaveText(
+    "Ahí el paso queda en pausa: puedes avanzar en la mazmorra hasta la sala del jefe y abandonarla. " +
+    "Un paso posterior te pedirá pasar y completar esa misma mazmorra, y al hacerlo se terminan dos o más pasos a la vez.");
   // Ejemplo: los pasos 43 y 44 se detienen ante Kodámade y el 45 los termina todos
   const steps = nota.locator(".nota-step");
   await expect(steps).toHaveText(["43", "44", "45"]);
@@ -27,10 +29,9 @@ test("la aclaración lleva a los pasos con pausa", async ({ page }) => {
   await expect(page.locator("#grid")).toBeInViewport();
 });
 
-test("la aclaración se cierra con Entendido y no vuelve a salir", async ({ page }) => {
-  await openApp(page);
-  await page.click("#notaClose");
-  await expect(page.locator("#nota")).toBeHidden();
-  await page.reload();
-  await expect(page.locator("#nota")).toBeHidden();
+test("la aclaración siempre está visible y no se puede cerrar", async ({ page }) => {
+  // Aunque se cerrara en una versión anterior, ya no se oculta
+  await openApp(page, { "silvestre:notaDismissed": "1" });
+  await expect(page.locator("#nota")).toBeVisible();
+  await expect(page.locator("#notaClose")).toHaveCount(0);
 });
