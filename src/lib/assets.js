@@ -15,6 +15,8 @@ export const HEADER_ICONS = DATA.HEADER_ICONS || null;
 export const HERO_ICONS = DATA.HERO_ICONS || null;
 /** El Dofus Ocre: no está en el camino (lo da "La eterna cosecha", fuera de los pasos). */
 export const OCRE_ICON = DATA.OCRE_ICON || null;
+/** Iconos de los avisos de la guía: { stop, done, tip }. */
+export const CALL_ICONS = DATA.CALL_ICONS || {};
 /** Los Dofus que da la guía antes del Silvestre: { name, img, step, achievement }. */
 export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
 

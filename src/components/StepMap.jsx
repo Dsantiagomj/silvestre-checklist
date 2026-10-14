@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { showcase, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
 
@@ -79,8 +79,12 @@ function Card({ step, pos, width, height, done }) {
       <div className="map-card-bd">
         <span className="map-card-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>{step.zone} · {TIER_META[step.effort].label}</span>
         <h3 className="map-card-title">{step.n} · {stepTitle(step)}</h3>
-        {stops.map(([, text], i) => <p key={i} className="map-card-line stop">⛔ {text}</p>)}
-        {step.closes && <p className="map-card-line done">⚔️ Cierra también el {step.closes.join(", ")}</p>}
+        {stops.map(([, text], i) => (
+          <p key={i} className="map-card-line stop"><img src={imgUrl(CALL_ICONS.stop)} alt="" />{text}</p>
+        ))}
+        {step.closes && (
+          <p className="map-card-line done"><img src={imgUrl(CALL_ICONS.done)} alt="" />Cierra también el {step.closes.join(", ")}</p>
+        )}
         <div className="map-card-cta">
           <button type="button" className="map-card-done" onClick={() => toggleStep(step.n)}>{done ? "Desmarcar" : "✓ Hecho"}</button>
           <button type="button" className="map-card-open" onClick={() => openInDiary(step.n)}>Abrir en el diario</button>

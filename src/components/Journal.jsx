@@ -1,6 +1,6 @@
 import { Fragment, useEffect } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
@@ -8,11 +8,12 @@ import { loadQuests, markSteps, selectStep, toggleStep, useAppState } from "../s
 import { CoordChip, Objectives, ReqBlock } from "./StepParts.jsx";
 import QuestMark from "./QuestMark.jsx";
 
-// Los tres resaltados de la guía (rojo, verde, azul en torrentearcano)
+// Los tres resaltados de la guía (rojo, verde, azul en torrentearcano); el icono es
+// un objeto del juego: llave de mazmorra, librito con trofeo y libro de leyendas
 const CALL = {
-  stop: { label: "Hasta dónde llegar", icon: "⛔" },
-  done: { label: "Lo que se resuelve", icon: "⚔️" },
-  tip: { label: "Consejo", icon: "💡" },
+  stop: { label: "Hasta dónde llegar" },
+  done: { label: "Lo que se resuelve" },
+  tip: { label: "Consejo" },
 };
 
 const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
@@ -67,7 +68,7 @@ function Calls({ step }) {
     <div className="journal-calls">
       {step.marks.map(([kind, text], i) => (
         <div key={i} className={`call ${kind}`}>
-          <i aria-hidden="true">{CALL[kind].icon}</i>
+          <i aria-hidden="true">{CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}</i>
           <div>
             <b>{CALL[kind].label}</b>
             <RichText text={text} />

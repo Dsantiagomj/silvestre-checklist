@@ -188,3 +188,13 @@ test("el paso 79 da el Dofus Ocre", async ({ page }) => {
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Dofus Ocre");
   await expect(page.locator("#journal .call.ocre")).toHaveCount(0);
 });
+
+test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  const icon = kind => page.locator(`#journal .call.${kind} i img`);
+  await expect(icon("stop")).toHaveAttribute("src", /items\/84228\.png$/);
+  await expect(icon("done")).toHaveAttribute("src", /achievements\/273\.png$/);
+  await expect(icon("tip")).toHaveAttribute("src", /items\/25019\.png$/);
+  expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", "", ""]);
+});
