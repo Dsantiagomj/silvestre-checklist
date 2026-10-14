@@ -29,7 +29,7 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   const j = page.locator("#journal");
   await expect(j.locator(".journal-num")).toHaveText("34");
   await expect(j.locator(".journal-title")).toHaveText("El árbol que esconde el bosque");
-  await expect(j.locator(".journal-show-name")).toHaveText("Lasoberaña");
+  await expect(j.locator(".journal-show-name")).toHaveText("Silvosse");
   await expect(j.locator(".journal-base")).toHaveText(/hasta la misión 2: Arak-hais, ¿dónde vais\?$/);
   // Se resuelve en el mismo paso: sin aviso rojo, la línea verde va en la ruta
   await expect(j.locator(".call.stop")).toHaveCount(0);
@@ -241,7 +241,7 @@ test("un paso que pide el logro completo lo dice en la cabecera, no como consejo
 test("el paso 79 da el Dofus Ocre", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="79"] .row-main');
-  await expect(page.locator("#journal .journal-show-label")).toHaveText("Recompensa");
+  await expect(page.locator("#journal .journal-show-label")).toHaveText("Se gana");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Dofus Ocre");
   await expect(page.locator("#journal .call.ocre")).toHaveCount(0);
 });
@@ -281,7 +281,7 @@ test("cada tipo de aviso azul tiene su nombre y su icono", async ({ page }) => {
 test("el paso 99 da la Piñata de pino", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="99"] .row-main');
-  await expect(page.locator("#journal .journal-show-label")).toHaveText("Recompensa");
+  await expect(page.locator("#journal .journal-show-label")).toHaveText("Se gana");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Piñata de pino");
 });
 
@@ -548,35 +548,56 @@ test("en la lista, cada paso lleva solo el Dofus que da o el jefe que resuelve",
   for (const n of [2, 4, 10, 43]) await expect(art(n)).toHaveCount(0);
 });
 
-/** La línea del paso: sus medallones, en orden, como "tipo:texto principal". */
-const lineNodes = page => page.locator("#journal .step-line .line-node").evaluateAll(els =>
-  els.map(e => `${e.dataset.kind}:${e.querySelector(".line-label")?.textContent.trim()}`));
+/** La figura del estandarte del paso: "etiqueta:nombre". */
+const figure = page => page.locator("#journal .journal-banner .journal-show").evaluate(f =>
+  `${f.querySelector(".journal-show-label").textContent.trim()}:${f.querySelector(".journal-show-name").textContent.trim()}`);
 
-test("la descripción del paso es una línea: logro, misiones, jefe y pasos que cierra", async ({ page }) => {
+test("el estandarte lleva lo más representativo del paso sobre el mapa donde empieza", async ({ page }) => {
   await openApp(page);
-  // 17: Verde esmeralda, misiones 1–7, se pasa Maxilubo y cierra el 10
+  // El Dofus que se gana, antes que nada
+  await stepData(page, 1);
+  expect(await figure(page)).toBe("Se gana:Dofawa");
+  await stepData(page, 18);
+  expect(await figure(page)).toBe("Se gana:Dofus Esmeralda");
+  // Las líneas primordiales que empieza Meriana, con Meriana
   await stepData(page, 17);
-  expect(await lineNodes(page)).toEqual(["ach:Verde esmeralda", "missions:Misiones 1 a 7", "boss:Maxilubo", "closes:Cierra el 10"]);
-  await expect(page.locator('#journal .line-node[data-kind="missions"] .line-num')).toHaveText("1–7");
-  await expect(page.locator('#journal .line-node[data-kind="missions"] .line-caption')).toHaveText("hasta Draconantropía");
-  await expect(page.locator('#journal .line-node[data-kind="ach"] img')).toHaveAttribute("src", /achievements\//);
-  // 5: misiones sueltas, se queda a medias y se cierra en el 22
+  expect(await figure(page)).toBe("Inicia el paso:Meriana");
+  // El fondo: el mapa del juego donde empieza la primera misión
+  await expect(page.locator("#journal .journal-banner .journal-bg"))
+    .toHaveAttribute("style", /maps\/0\.5\/122421248\.jpg/);
+  // Figuras elegidas: el dragón de su Dofus, los jinetes, Draconiros y Silvosse
+  for (const [n, want] of [[39, "Dragón primordial:Aguabrial"], [74, "Jinete del Selocalipsis:Guerra"],
+    [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"]]) {
+    await stepData(page, n);
+    expect(await figure(page)).toBe(want);
+  }
+  // La figura es una imagen que carga
+  await expect.poll(() => page.locator("#journal .journal-show img").evaluate(i => i.naturalWidth)).toBeGreaterThan(0);
+});
+
+test("el detalle del paso es el estandarte y su objetivo, sin línea de medallones ni rombos", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 17);
+  const goal = page.locator("#journal .journal-goal");
+  await expect(goal.locator(".journal-title")).toHaveText("Verde esmeralda");
+  await expect(goal.locator(".goal-ach img")).toHaveAttribute("src", /achievements\//);
+  await expect(goal.locator(".goal-line")).toHaveText("Misiones 1 a 7 del logro, hasta Draconantropía.");
+  await expect(goal.locator(".journal-base.is-source")).toContainText("Verde esmeralda");
+  await expect(page.locator("#journal .step-line, #journal .tier-diamonds")).toHaveCount(0);
+  // El número y la zona, en el estandarte
+  await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
+  await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");
+  // El pie enlaza los pasos que cierra o donde se cierra
+  await expect(goal.locator('.goal-foot .badge.closes[data-n="10"]')).toHaveCount(1);
   await stepData(page, 5);
-  expect(await lineNodes(page)).toEqual(["ach:Misterios del Krosmoz", "missions:Misiones 2 y 5", "stop:Hasta aquí", "closedin:Se cierra en el 22"]);
-  // Los pasos enlazan
-  await page.locator('#journal .line-node[data-kind="closedin"] button').click();
+  await goal.locator(".goal-foot .badge.closed-in").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("22");
-  // 2: logro completo
-  await stepData(page, 2);
-  expect((await lineNodes(page))[1]).toBe("missions:Logro completo");
-  // 3: dos logros
-  await stepData(page, 3);
-  expect((await lineNodes(page)).filter(n => n.startsWith("ach:"))).toHaveLength(2);
-  // 20: alineamiento, de la 1 a la 19
+  // Alineamiento: de la misión en la que se quedó a la que pide
   await stepData(page, 20);
-  expect((await lineNodes(page)).slice(0, 2)).toEqual(["align:Alineamiento", "missions:Misiones 1 a 19"]);
-  // El texto de la guía, debajo como cita; sin fichas de jefes sueltas
-  await expect(page.locator("#journal .journal-base.is-source")).toContainText("Alineamiento Bontariano");
+  await expect(goal.locator(".goal-line")).toHaveText("Misiones 1 a 19 del alineamiento bontariano.");
+  // Dos logros: un objetivo por cada uno
+  await stepData(page, 3);
+  await expect(goal.locator(".goal-line")).toHaveCount(2);
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
