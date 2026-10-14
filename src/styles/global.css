@@ -2226,10 +2226,9 @@ header.show-progress .tb-progress{
 .seal-count{ font:800 11px var(--font-display); color:var(--txt-mute); }
 .seal[aria-pressed="true"] .seal-ring{ box-shadow:0 0 0 3px var(--soon), 0 0 16px color-mix(in srgb, var(--soon) 55%, transparent); }
 .seal[aria-pressed="true"] .seal-name{ color:var(--txt); }
-.seal.here .seal-ring::after{
-  content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%);
-  width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 6px var(--amber);
-}
+/* La zona del paso abierto: contorno discontinuo alrededor del sello y el nombre en acento */
+.seal.here .seal-ring{ outline:2px dashed color-mix(in srgb, var(--accent-ink) 75%, transparent); outline-offset:3px; }
+.seal.here .seal-name{ color:var(--accent-ink); }
 
 .diary-window{ display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip; }
 
