@@ -309,3 +309,14 @@ test("las misiones del paso enlazan su guía de Torrente Arcano aunque el texto 
   await expect(page.locator("#journal .q-item .q-guide")).toHaveCount(15);
   await expect(q("Respuestas para todo").locator(".q-guide")).toHaveCount(0);
 });
+
+test("los objetos del paso 5 van en el 5, no en el 4 (Barnabé solo pide un combate)", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="4"] .row-main');
+  await expect(page.locator("#journal .journal-num")).toHaveText("4");
+  await expect(page.locator("#journal .journal-needs")).toHaveCount(0);
+  await page.click('.diary-row[data-n="5"] .row-main');
+  const needs = page.locator("#journal .journal-needs");
+  await expect(needs.locator(".slot")).toHaveCount(2);
+  for (const k of ["384", "12073"]) await expect(needs.locator(`.slot[data-id="${k}"]`)).toHaveCount(1);
+});
