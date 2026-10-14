@@ -54,6 +54,22 @@ test("con el paso 99 hecho, en el anillo está la Piñata de pino", async ({ pag
   await expect(page.locator(".egg-body .egg-off")).toHaveCount(0);
 });
 
+test("al marcar el 99 se sube al hero y el Silvestre apagado se convierte en la Piñata de pino", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(98) });
+  const egg = page.locator(".hero-egg");
+  await expect(egg).toHaveAttribute("data-stage", "off");
+  await page.locator('.diary-row[data-n="99"] .row-check').click();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(80);
+  await expect(egg).toHaveClass(/morphing/);
+  // Lo que se transforma es el Silvestre apagado
+  await expect(page.locator(".egg-body .egg-from")).toHaveAttribute("src", /items\/23036\.png$/);
+  await expect(page.locator(".egg-body .egg-from")).toHaveClass(/is-off/);
+  await expect(egg).not.toHaveClass(/morphing/, { timeout: 6_000 });
+  await expect(egg).toHaveAttribute("data-stage", "pinata");
+  await expect(page.locator(".egg-body .egg-on")).toHaveAttribute("src", /items\/23035\.png$/);
+  await expect(page.locator(".egg-body .egg-from")).toHaveCount(0);
+});
+
 test("al marcar el 100 se sube al hero y la Piñata de pino se convierte en el Dofus Silvestre", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(99) });
   const egg = page.locator(".hero-egg");

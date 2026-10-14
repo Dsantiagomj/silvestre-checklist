@@ -49,25 +49,30 @@ const MORPH_MS = 3400;
  */
 const eggStage = s => (s.done[100] ? "silvestre" : s.done[99] && PINATA ? "pinata" : "off");
 
+// Las dos transformaciones: al marcar el 99, el Silvestre apagado se vuelve la Piñata de
+// pino; al marcar el 100, la Piñata se vuelve el Silvestre encendido
+const MORPHS = { "off>pinata": "off", "pinata>silvestre": "pinata" };
+
 /**
- * Al marcar el 100 con la Piñata en el anillo, sube al hero y la convierte en el
- * Silvestre. Solo en ese momento: al recargar, el Silvestre ya está encendido.
+ * Al pasar de una etapa a la siguiente marcando el paso, sube al hero y transforma el
+ * huevo. Devuelve la etapa de la que viene mientras dura, o null. Solo en ese momento:
+ * al recargar, el huevo ya sale como corresponde.
  */
 function useMorph(stage) {
-  const [morph, setMorph] = useState(false);
+  const [from, setFrom] = useState(null);
   const prev = useRef(stage);
   useEffect(() => {
-    const was = prev.current;
+    const was = MORPHS[`${prev.current}>${stage}`];
     prev.current = stage;
-    if (stage !== "silvestre" || was !== "pinata") return;
+    if (!was) return;
     const still = prefersReducedMotion();
     window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
     if (still) return;
-    setMorph(true);
-    const t = setTimeout(() => setMorph(false), MORPH_MS);
-    return () => { clearTimeout(t); setMorph(false); };
+    setFrom(was);
+    const t = setTimeout(() => setFrom(null), MORPH_MS);
+    return () => { clearTimeout(t); setFrom(null); };
   }, [stage]);
-  return morph;
+  return from;
 }
 
 /** HERO inmersivo: mapa a pantalla completa con parallax, el huevo como progreso */
@@ -179,8 +184,9 @@ export default function Hero() {
             {BRAND_ICON && (
               <div className="egg-body">
                 {stage === "off" && <img className="egg-off" src={imgUrl(BRAND_ICON)} alt="" />}
+                {morph === "off" && <img className="egg-from is-off" src={imgUrl(BRAND_ICON)} alt="" />}
+                {morph === "pinata" && <img className="egg-from" src={imgUrl(PINATA.img)} alt="" />}
                 {stage === "pinata" && <img className="egg-on" src={imgUrl(PINATA.img)} alt="" />}
-                {stage === "silvestre" && morph && <img className="egg-from" src={imgUrl(PINATA.img)} alt="" />}
                 {stage === "silvestre" && <img className="egg-on" src={imgUrl(BRAND_ICON)} alt="" />}
                 {morph && <i className="egg-flash"></i>}
               </div>
