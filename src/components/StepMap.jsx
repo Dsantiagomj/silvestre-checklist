@@ -8,7 +8,8 @@ import { useLiveId } from "../lib/leaving.js";
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const ROW_H = 108;
 const PAD = 48;
-const TOP = 54;
+// Sitio arriba para el Dofus que asoma sobre el primer paso y su halo de paso actual
+const TOP = 70;
 
 /** Cuántos pasos caben por fila: el camino serpentea más cerrado en pantallas estrechas. */
 const colsFor = w => (w >= 1100 ? 12 : w >= 800 ? 9 : w >= 560 ? 6 : 4);
