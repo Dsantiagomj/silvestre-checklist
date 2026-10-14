@@ -176,17 +176,41 @@ test("con movimiento reducido el cambio de vista es inmediato", async ({ page })
   await expect(page.locator(".steps-stage .steps-layer")).not.toHaveClass(/swap/);
 });
 
-test("durante el zoom solo se mueven las dos capas: ni la altura ni lo de dentro", async ({ page }) => {
+test("durante el zoom no se anima la altura ni nada dentro de la vista que se va", async ({ page }) => {
   await openApp(page);
   await page.waitForTimeout(500);
   await page.click("#stepsViewMap");
   const busy = await page.evaluate(() => {
     const stage = document.querySelector(".steps-stage");
-    const layers = [...stage.querySelectorAll(":scope > .steps-layer")];
+    const leaving = stage.querySelector(":scope > .steps-layer[inert]");
     return document.getAnimations().filter(a => {
       const t = a.effect?.target;
-      return t && stage.contains(t) && !layers.includes(t) && a.effect.getTiming().iterations !== Infinity;
+      return t && leaving.contains(t) && t !== leaving;
     }).length + stage.getAnimations().length;
   });
   expect(busy).toBe(0);
+});
+
+test("tras el zoom al diario el contenido no vuelve a aparecer (sin parpadeo)", async ({ page }) => {
+  await openApp(page);
+  await page.click("#stepsViewMap");
+  await page.waitForTimeout(800);
+  await page.click('.map-node[data-n="34"]');
+  // Opacidad efectiva del texto del detalle (la suya por la de sus ancestros) en cada fotograma
+  const seen = await page.evaluate(async () => {
+    document.querySelector("#mapCard .map-card-open").click();
+    const out = [];
+    const t0 = performance.now();
+    while (performance.now() - t0 < 1100) {
+      await new Promise(r => requestAnimationFrame(r));
+      let el = document.querySelector("#journal .journal-body"), o = 1;
+      for (; el; el = el.parentElement) o *= parseFloat(getComputedStyle(el).opacity);
+      out.push(Math.round(o * 100) / 100);
+    }
+    return out;
+  });
+  const peak = seen.findIndex(o => o >= 0.95);
+  expect(peak).toBeGreaterThanOrEqual(0);
+  // Una vez visible, no vuelve a apagarse
+  expect(Math.min(...seen.slice(peak))).toBeGreaterThanOrEqual(0.9);
 });
