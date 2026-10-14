@@ -35,3 +35,10 @@ test("el verde dice qué otros pasos se cierran; lo que solo se actualiza no cue
   // Siempre se cierran pasos anteriores
   for (const [n, closes] of pairs) for (const c of closes) expect(c).toBeLessThan(n);
 });
+
+test("un resaltado entre paréntesis los pierde aunque lleve otros dentro", () => {
+  expect(step(77).marks[0][1]).toBe(
+    "Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 78) con el ídolo del dios Sadida");
+  // Los paréntesis que no envuelven todo el resaltado se quedan
+  expect(step(81).marks[0][1]).toMatch(/^\(Completo\) Se pasa Golosotrón/);
+});
