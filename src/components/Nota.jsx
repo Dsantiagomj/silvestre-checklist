@@ -12,6 +12,8 @@ const PAUSED = STEPS.filter(s => s.text.toLowerCase().includes(PHRASE)).length;
 // y "se terminan las misiones de los incisos 43, 44 y 45".
 const EXAMPLE = { paused: [43, 44], closer: 45 };
 const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
+// Cuándo pasa el punto por cada casilla en pausa y la deja marcada (s)
+const PAUSE_AT = { 43: 0.5, 44: 1.2 };
 // Cuándo se marca cada casilla (s): primero el 45 al vencer al jefe, luego hacia atrás
 const CHECK_AT = { 45: 4.8, 44: 5.5, 43: 6.2 };
 
@@ -48,10 +50,10 @@ export default function Nota() {
         <div key={run} className={"nota-track" + (run ? " play" : "")} data-run={run} aria-hidden="true">
           <span className="nota-marker"></span>
           {EXAMPLE.paused.map(n => (
-            <span key={n} className="nota-step paused" style={{ "--d": `${CHECK_AT[n]}s` }}>{n}</span>
+            <span key={n} className="nota-step paused" style={{ "--pause-at": `${PAUSE_AT[n]}s`, "--check-at": `${CHECK_AT[n]}s` }}>{n}</span>
           ))}
           <span className="nota-boss">{BOSS && <img src={imgUrl(BOSS.img)} alt="" />}</span>
-          <span className="nota-step closer" style={{ "--d": `${CHECK_AT[EXAMPLE.closer]}s` }}>{EXAMPLE.closer}</span>
+          <span className="nota-step closer" style={{ "--check-at": `${CHECK_AT[EXAMPLE.closer]}s` }}>{EXAMPLE.closer}</span>
         </div>
         <figcaption>
           Los pasos 43 y 44 se detienen ante {BOSS?.name ?? "el jefe"}. En el 45 se pasa la mazmorra y se terminan los tres.

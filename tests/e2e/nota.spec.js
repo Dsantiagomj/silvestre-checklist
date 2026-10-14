@@ -59,8 +59,13 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
   const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
   await page.locator(".nota-example").hover();
   await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
+  // La pausa aparece en cada casilla cuando el punto pasa por ella, no antes
+  const pauses = () => page.locator(".nota-step.paused").evaluateAll(els =>
+    els.map(el => Number(getComputedStyle(el, "::before").opacity)));
+  expect(await pauses()).toEqual([0, 0]);
+  await expect.poll(pauses, { timeout: 2_000 }).toEqual([1, 1]);
   // Da tiempo a seguirla: a los 2 s todavía no ha caído el jefe
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(500);
   expect((await exampleState(page)).boss).not.toContain("grayscale(1)");
   // Al terminar: los tres pasos con ✓ y el jefe vencido, y se queda así
   await expect.poll(() => exampleState(page), { timeout: 10_000 })
