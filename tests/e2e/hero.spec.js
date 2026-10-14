@@ -147,3 +147,33 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   await page.click("#resetBtn");
   await expect(page.locator("#rdNPre")).toHaveText("0");
 });
+
+test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {
+  const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
+  await page.emulateMedia({ reducedMotion: "reduce" }); // el huevo quieto, para medir
+  await openApp(page, { "silvestre:done": all });
+  await expect.poll(() => page.locator(".egg-on").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+  // Mayor salto de luminancia entre dos columnas vecinas al cruzar el borde izquierdo de
+  // la imagen. Un brillo recortado deja un escalón de golpe; uno entero se apaga poco a poco.
+  const edgeJump = async () => {
+    const box = await page.locator(".egg-body").boundingBox();
+    const png = await page.screenshot({ clip: { x: box.x - 6, y: box.y + box.height / 2 - 1, width: 12, height: 2 } });
+    return page.evaluate(async b64 => {
+      const img = new Image();
+      img.src = "data:image/png;base64," + b64;
+      await img.decode();
+      const ctx = new OffscreenCanvas(img.width, img.height).getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const cols = [];
+      for (let x = 0; x < img.width; x++) {
+        const d = ctx.getImageData(x, 0, 1, img.height).data;
+        let sum = 0;
+        for (let i = 0; i < d.length; i += 4) sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+        cols.push(sum / (d.length / 4));
+      }
+      return Math.max(...cols.slice(1).map((v, i) => Math.abs(v - cols[i])));
+    }, png.toString("base64"));
+  };
+  await page.waitForTimeout(400); // el brillo entra con una transición
+  expect(await edgeJump()).toBeLessThan(8);
+});

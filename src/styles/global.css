@@ -2014,9 +2014,11 @@ header.show-progress .tb-progress{
 .egg-body img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .egg-off{ filter:grayscale(1) brightness(.42) drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
 [data-theme="light"] .egg-off{ filter:grayscale(1) brightness(.8) opacity(.55); }
-.egg-on{ clip-path:inset(calc((100 - var(--p)) * 1%) 0 0 0); filter:drop-shadow(0 0 12px rgba(183,220,105,.5)); }
+/* El recorte marca hasta dónde se ha llenado. Por los lados y abajo se sale del cuadro
+   para no cortar el brillo: si no, el drop-shadow deja un borde recto alrededor. */
+.egg-on{ clip-path:inset(calc((100 - var(--p)) * 1%) -40px -40px -40px); filter:drop-shadow(0 0 12px rgba(183,220,105,.5)); }
 .hero-egg.obtained .egg-body{ animation:egg-obtained 1.2s ease-in-out infinite; }
-.hero-egg.obtained .egg-on{ filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
+.hero-egg.obtained .egg-on{ clip-path:inset(-40px); filter:drop-shadow(0 0 22px rgba(183,220,105,.95)); }
 @keyframes egg-float{ 50%{ transform:translateY(-7px); } }
 @keyframes egg-obtained{ 0%,100%{ transform:rotate(0); } 20%{ transform:rotate(-7deg); } 40%{ transform:rotate(6deg); } 60%{ transform:rotate(-3deg); } }
 /* Cifra y pasos con fondo propio: debajo del disco el mapa queda a la vista */
