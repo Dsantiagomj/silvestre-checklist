@@ -98,10 +98,10 @@ Salen de la misma página de torrentearcano: Sandglass lista, paso a paso, solo 
 que reunir (recursos base, equipo, consumibles, almas, criaturas), sin los objetos
 intermedios que se fabrican por el camino. El "paso 0" son los prerrequisitos.
 `.build/build_resources.py` busca cada nombre en DofusDB para su imagen y escribe
-`src/data/resources.json`: **408 objetos en 68 pasos**.
+`src/data/resources.json`: **407 objetos en 68 pasos**.
 
 La suma se hace con las mismas reglas que el compilado de la página, y el script lo
-comprueba contra `.build/lists/compilado.txt` (421 de 421 filas iguales):
+comprueba contra `.build/lists/compilado.txt` (420 de 420 filas iguales):
 
 - Lo que se conserva tras usarlo (Mazorrasombrero, Varita pitusa, Piedra de alma mediana,
   Calzoncillo de repuesto de capitán chafer) cuenta una vez aunque lo pidan dos pasos.
@@ -110,8 +110,9 @@ comprueba contra `.build/lists/compilado.txt` (421 de 421 filas iguales):
 - Los objetos de una misión opcional o de una sola orden de alineamiento llevan etiqueta y
   no cuentan en el total del hero.
 
-Cuatro nombres no existen en DofusDB y salen sin imagen: Hoja de kalipto, Esencia de cil,
-Filtro de dragonalgas y "Recursos recolectables de los reinos de tinta y papel".
+La lista de la página trae un error, corregido en `CORRECTIONS`: pide "Hoja de kalipto", que
+no existe; es la Flor de kalipto. Tres nombres no existen en DofusDB y salen sin imagen:
+Esencia de cil, Filtro de dragonalgas y "Recursos recolectables de los reinos de tinta y papel".
 
 ### Todo auto-alojado
 

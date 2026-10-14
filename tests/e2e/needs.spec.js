@@ -64,7 +64,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
   await page.click('.needs-sort [data-sort="qty"]');
   await expect(page.locator("#bandSoon")).toHaveCount(0);
   // Sin progreso: la guía entera, una casilla por objeto
-  await expect(page.locator("#items .slot")).toHaveCount(421);
+  await expect(page.locator("#items .slot")).toHaveCount(420);
   await expect(page.locator("#items .slot").first()).toHaveAttribute("data-id", "14635");
   await page.click('.needs-sort [data-sort="az"]');
   await expect(page.locator("#items .slot .q").first()).toBeVisible();
@@ -73,7 +73,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
 test("las categorías filtran y cuentan objetos distintos", async ({ page }) => {
   await openApp(page);
   await page.click("#tabItems");
-  const counts = { todo: 421, recursos: 336, consumibles: 48, equipables: 18, almas: 9, criaturas: 9, cosmeticos: 1 };
+  const counts = { todo: 420, recursos: 335, consumibles: 48, equipables: 18, almas: 9, criaturas: 9, cosmeticos: 1 };
   for (const [cat, n] of Object.entries(counts)) {
     await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
   }
@@ -87,11 +87,11 @@ test("el buscador resalta coincidencias sin quitar casillas y entiende sin tilde
   await page.click("#tabItems");
   await page.click('.needs-sort [data-sort="az"]');
   await page.fill("#needsSearch", "bambu");
-  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 421$/);
+  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 420$/);
   const matches = page.locator("#items .slot.match");
   await expect(matches.first()).toBeVisible();
-  await expect(page.locator("#items .slot")).toHaveCount(421);
-  expect(await page.locator("#items .slot.dim").count()).toBe(421 - await matches.count());
+  await expect(page.locator("#items .slot")).toHaveCount(420);
+  expect(await page.locator("#items .slot.dim").count()).toBe(420 - await matches.count());
   // Los recuentos pasan a contar coincidencias ("bambu" también encuentra criaturas de bambú)
   await expect(page.locator('.needs-cat[data-cat="todo"] .n')).toHaveText(String(await matches.count()));
   await expect(page.locator('.needs-cat[data-cat="criaturas"] .n')).not.toHaveText("0");
