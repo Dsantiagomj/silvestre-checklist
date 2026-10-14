@@ -547,3 +547,38 @@ test("en la lista, cada paso lleva solo el Dofus que da o el jefe que resuelve",
   // Nada: un paso sin Dofus ni jefe resuelto, y el 43, que solo deja a Kodámade pendiente
   for (const n of [2, 4, 10, 43]) await expect(art(n)).toHaveCount(0);
 });
+
+/** La tarjeta del paso: logros con sus fichas de misión. */
+const planCards = page => page.locator("#journal .plan-card");
+const pips = card => card.locator(".plan-pip").evaluateAll(els => els.map(e =>
+  (e.classList.contains("on") ? "o" : "-") + (e.classList.contains("end") ? "!" : "")));
+
+test("la descripción del paso es una tarjeta de objetivo: el logro y sus misiones como fichas", async ({ page }) => {
+  await openApp(page);
+  // Hasta la misión 7 de 8: de la 1 a la 7, y la 7 destacada con su nombre
+  await stepData(page, 17);
+  const card = planCards(page).first();
+  await expect(card.locator(".plan-title")).toHaveText("Verde esmeralda");
+  await expect(card.locator(".plan-icon img")).toHaveAttribute("src", /achievements\//);
+  expect(await pips(card)).toEqual(["o", "o", "o", "o", "o", "o", "o!", "-"]);
+  await expect(card.locator(".plan-pip.end")).toHaveAttribute("title", /Draconantropía/);
+  await expect(card.locator(".plan-sub")).toContainText("Hasta la misión 7");
+  // Misiones sueltas: solo esas, encendidas
+  await stepData(page, 5);
+  expect((await pips(planCards(page).first())).filter(p => p.startsWith("o")).length).toBe(2);
+  // Logro completo: todas
+  await stepData(page, 2);
+  expect((await pips(planCards(page).first())).every(p => p.startsWith("o"))).toBe(true);
+  await expect(planCards(page).first().locator(".plan-sub")).toContainText("Logro completo");
+  // Dos logros, dos tarjetas
+  await stepData(page, 3);
+  await expect(planCards(page)).toHaveCount(2);
+  // Alineamiento
+  await stepData(page, 20);
+  await expect(planCards(page).first().locator(".plan-title")).toHaveText("Misión 19");
+  await expect(planCards(page).first().locator(".plan-sub")).toHaveText("De la misión 1 a la 19 del alineamiento");
+  // El texto de la guía se conserva debajo, y ya no hay fichas de jefes sueltas
+  await expect(page.locator("#journal .journal-base")).toContainText("Alineamiento Bontariano");
+  await stepData(page, 84);
+  await expect(page.locator("#journal .boss-row")).toHaveCount(0);
+});

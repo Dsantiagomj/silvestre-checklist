@@ -2,7 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
-import { linkify, missionGuide } from "../lib/guides.js";
+import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
+import PLANS from "../data/plans.json";
 import { CLOSED_BY, doneIcon, nextPendingAfter, resolvesHere, showcase, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
@@ -80,6 +81,65 @@ function Hero({ step, done, quests }) {
           </figcaption>
         </figure>
       )}
+    </div>
+  );
+}
+
+/** "Misión 2: X · Misión 5: Y" / "Hasta la misión 7: X" / "Logro completo · 8 misiones". */
+function planLine(e) {
+  const name = k => e.m[k - 1] || "objetivo del logro";
+  if (e.mode === "all") return `Logro completo · ${e.m.length} ${e.m.length === 1 ? "misión" : "misiones"}`;
+  if (e.mode === "upto") return `Hasta la misión ${e.on.at(-1)}: ${name(e.on.at(-1))}`;
+  return e.on.map(k => `Misión ${k}: ${name(k)}`).join(" · ");
+}
+
+/**
+ * Lo que pide el paso, como objetivo de juego (opción A): cada logro con su icono y sus
+ * misiones como fichas, encendidas las que se hacen y destacada hasta dónde llegar. El
+ * texto de Sandglass queda debajo. Sin plan (una misión suelta, órdenes…), solo el texto.
+ */
+function Plan({ step }) {
+  const plan = PLANS[step.n];
+  const text = <p className={"journal-base" + (plan ? " is-source" : "")}><RichText text={step.base} /></p>;
+  if (!plan) return text;
+  return (
+    <div className="plan">
+      {plan.map((e, i) => {
+        if (e.t === "align") {
+          return (
+            <div className="plan-card" key={i}>
+              <span className="plan-icon"><QuestMark /></span>
+              <div className="plan-head">
+                <small className="plan-tag">Alineamiento bontariano</small>
+                <b className="plan-title">Misión {e.n}</b>
+                {e.from != null && e.from < e.n && (
+                  <span className="plan-sub">De la misión {e.from} a la {e.n} del alineamiento</span>
+                )}
+              </div>
+            </div>
+          );
+        }
+        const lit = k => e.mode === "all" || (e.mode === "upto" ? k <= e.on.at(-1) : e.on.includes(k));
+        const end = k => (e.mode === "upto" ? k === e.on.at(-1) : e.mode === "some" && e.on.includes(k));
+        const guide = achievementGuide(e.name);
+        return (
+          <div className="plan-card" key={i}>
+            <span className="plan-icon">{e.img ? <img src={imgUrl(e.img)} alt="" /> : <QuestMark />}</span>
+            <div className="plan-head">
+              <small className="plan-tag">Logro · {step.zone}</small>
+              <b className="plan-title">{guide ? <a href={guide} target="_blank" rel="noopener">{e.name}</a> : e.name}</b>
+              <span className="plan-sub">{planLine(e)}</span>
+            </div>
+            <ol className="plan-track" aria-label="Misiones del logro">
+              {e.m.map((name, k) => (
+                <li key={k} className={"plan-pip" + (lit(k + 1) ? " on" : "") + (end(k + 1) ? " end" : "")}
+                  title={`Misión ${k + 1}: ${name || "objetivo del logro"}`}>{k + 1}</li>
+              ))}
+            </ol>
+          </div>
+        );
+      })}
+      {text}
     </div>
   );
 }
@@ -263,21 +323,8 @@ export default function Journal({ n, id }) {
     <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <Hero step={step} done={!!s.done[n]} quests={quests} />
       <div className="journal-body">
-        <p className="journal-base"><RichText text={step.base} /></p>
+        <Plan step={step} />
         <Calls step={step} />
-        {a?.bosses?.length > 1 && (
-          <div className="journal-extras">
-            {a.bosses.length > 1 && (
-              <div className="boss-row">
-                {a.bosses.map(b => (
-                  <span key={b.id} className="boss-chip" title={`Jefe: ${b.name}`}>
-                    <img src={imgUrl(b.img)} alt="" loading="lazy" decoding="async" /> {b.name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
         <Needs n={n} s={s} />
         <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
         <Actions step={step} s={s} />
