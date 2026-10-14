@@ -172,3 +172,24 @@ test("lo que necesitas va antes del tablero de pasos", async ({ page }) => {
   await expect(page.locator("#needs .section-num")).toHaveText("01");
   await expect(page.locator(".grid-section .section-num")).toHaveText("02");
 });
+
+test("el buscador es ancho y los controles van juntos a la izquierda", async ({ page }) => {
+  await openApp(page);
+  await page.click("#tabItems");
+  const search = await page.locator("#needsSearch").boundingBox();
+  expect(search.width).toBeGreaterThanOrEqual(400);
+  // Sin huecos grandes entre controles: nada empujado al otro extremo
+  const boxes = await page.locator(".needs-toolbar > *").evaluateAll(els => els.map(el => el.getBoundingClientRect())
+    .map(r => ({ left: r.left, right: r.right, top: r.top })));
+  for (let i = 1; i < boxes.length; i++) {
+    if (Math.abs(boxes[i].top - boxes[i - 1].top) < 10) expect(boxes[i].left - boxes[i - 1].right).toBeLessThan(40);
+  }
+});
+
+test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async ({ page }) => {
+  await openApp(page);
+  await expect(page.locator("#needsHint")).toContainText("18 prerrequisitos");
+  await page.click("#tabItems");
+  await expect(page.locator("#needsHint")).toContainText("lo que ves");
+  await expect(page.locator("#needsHint")).toContainText("solo quita lo que marcaste a mano");
+});
