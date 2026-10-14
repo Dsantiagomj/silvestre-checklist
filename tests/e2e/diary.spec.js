@@ -123,10 +123,16 @@ test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
   await page.click('.diary-row[data-n="34"] .row-main');
   await expect(page.locator('#zoneSeals .seal[data-zone="Reino de Amakna"]')).toHaveClass(/here/);
   await expect(page.locator("#zoneSeals .seal.here")).toHaveCount(1);
-  // Se marca con un contorno discontinuo alrededor del sello, no con un punto suelto sobre el nombre
-  const ring = page.locator('#zoneSeals .seal.here .seal-ring');
-  await expect.poll(() => ring.evaluate(el => getComputedStyle(el).outlineStyle)).toBe("dashed");
-  expect(await ring.evaluate(el => getComputedStyle(el, "::after").content)).toBe("none");
+  // Se marca con un marcador de ubicación encima del medallón, no con otro anillo:
+  // el anillo es del filtro activo y los dos pueden coincidir en el mismo sello
+  const here = page.locator('#zoneSeals .seal.here');
+  await expect(here.locator(".seal-pin")).toBeVisible();
+  await expect.poll(() => here.locator(".seal-ring").evaluate(el => getComputedStyle(el).outlineStyle)).toBe("none");
+  await here.click();
+  await expect(here).toHaveAttribute("aria-pressed", "true");
+  const [pin, ring] = await Promise.all([here.locator(".seal-pin").boundingBox(), here.locator(".seal-ring").boundingBox()]);
+  // El marcador queda por encima del medallón (y de su anillo de filtro, 3px), sin taparlo
+  expect(pin.y + pin.height).toBeLessThanOrEqual(ring.y + 8);
 });
 
 test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }) => {

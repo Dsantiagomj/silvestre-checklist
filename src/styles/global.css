@@ -2203,7 +2203,7 @@ header.show-progress .tb-progress{
 }
 
 /* Sellos de zona: paisaje en un medallón con anillo de avance */
-.seals{ display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; padding:4px 2px 6px; scrollbar-width:thin; }
+.seals{ display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; padding:16px 2px 6px; scrollbar-width:thin; }
 .seal{
   flex:1 1 0; min-width:62px; display:flex; flex-direction:column; align-items:center; gap:3px;
   padding:0; border:0; background:none; color:inherit; font:inherit; text-align:center; cursor:pointer;
@@ -2229,8 +2229,15 @@ header.show-progress .tb-progress{
 .seal-count{ font:800 11px var(--font-display); color:var(--txt-mute); }
 .seal[aria-pressed="true"] .seal-ring{ box-shadow:0 0 0 3px var(--soon), 0 0 16px color-mix(in srgb, var(--soon) 55%, transparent); }
 .seal[aria-pressed="true"] .seal-name{ color:var(--txt); }
-/* La zona del paso abierto: contorno discontinuo alrededor del sello y el nombre en acento */
-.seal.here .seal-ring{ outline:2px dashed color-mix(in srgb, var(--accent-ink) 75%, transparent); outline-offset:3px; }
+/* La zona del paso abierto: un marcador de ubicación encima del medallón y el nombre en
+   acento. No es otro anillo: el anillo amarillo es del filtro y pueden coincidir */
+.seal-pin{
+  position:absolute; top:-15px; left:50%; z-index:1; transform:translateX(-50%);
+  width:14px; height:18px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.45));
+}
+.seal-pin svg{ display:block; width:100%; height:100%; }
+.seal-pin path{ fill:var(--accent-ink); stroke:var(--bg); stroke-width:1.4; }
+.seal-pin circle{ fill:var(--bg); }
 .seal.here .seal-name{ color:var(--accent-ink); }
 
 .diary-window{ display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip; }
