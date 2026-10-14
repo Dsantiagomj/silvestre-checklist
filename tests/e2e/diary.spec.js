@@ -31,7 +31,8 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   await expect(j.locator(".journal-title")).toHaveText("El árbol que esconde el bosque");
   await expect(j.locator(".journal-show-name")).toHaveText("Lasoberaña");
   await expect(j.locator(".journal-base")).toHaveText(/hasta la misión 2: Arak-hais, ¿dónde vais\?$/);
-  await expect(j.locator(".call.stop")).toContainText("Hasta tener que pasar Lasoberaña");
+  // Se resuelve en el mismo paso: sin aviso rojo, la línea verde va en la ruta
+  await expect(j.locator(".call.stop")).toHaveCount(0);
   await expect(j.locator(".call.tip")).toContainText("primeras 4 salas");
   await expect(j.locator(".call.done")).toContainText("Se pasa Lasoberaña");
   // Los incisos del verde llevan a esos pasos
@@ -45,13 +46,25 @@ test("en la lista, un paso que se termina más adelante lo dice", async ({ page 
   await expect(row(page, 34).locator(".row-closed")).toHaveCount(0);
 });
 
-test("la línea de parada cae justo antes de vencer a Lasoberaña", async ({ page }) => {
+test("donde el paso se resuelve, la línea es verde y dice qué se termina, justo antes de vencer a Lasoberaña", async ({ page }) => {
   await openApp(page);
   await row(page, 34).locator(".row-main").click();
   const quest = page.locator("#journal .q-item", { hasText: "Arak-hais, ¿dónde vais?" });
-  await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
-  const next = quest.locator(".obj-stop + .obj-row");
-  await expect(next).toContainText("Vence a 1 x Lasoberaña");
+  await expect(quest.locator(".obj-resume")).toHaveCount(1, { timeout: 15_000 });
+  await expect(quest.locator(".obj-stop")).toHaveCount(0);
+  await expect(quest.locator(".obj-resume")).toContainText("Se pasa Lasoberaña");
+  await expect(quest.locator(".obj-resume + .obj-row")).toContainText("Vence a 1 x Lasoberaña");
+});
+
+test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota", async ({ page }) => {
+  await openApp(page);
+  await row(page, 22).locator(".row-main").click();
+  await expect(page.locator("#journal .call.stop")).toHaveCount(0);
+  await expect(page.locator("#journal .obj-resume").first()).toContainText("Se pasa Nelwynn", { timeout: 15_000 });
+  // El 54 decía más en el rojo: eso no se pierde
+  await row(page, 54).locator(".row-main").click();
+  await expect(page.locator("#journal .call.stop")).toHaveCount(0);
+  await expect(page.locator("#journal .call.note")).toContainText("Retomar sala 5");
 });
 
 test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ page }) => {
@@ -236,10 +249,16 @@ test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-main');
   const icon = kind => page.locator(`#journal .call.${kind} i img`);
-  await expect(icon("stop")).toHaveAttribute("src", /items\/84228\.png$/);
-  await expect(icon("done")).toHaveAttribute("src", /achievements\/273\.png$/);
+  // Lo que se resuelve: el jefe que se pasa (Lasoberaña), no un logro
+  await expect(icon("done")).toHaveAttribute("src", /monsters\/1267\.png$/);
   await expect(icon("tip")).toHaveAttribute("src", /items\/25019\.png$/);
-  expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", "", ""]);
+  expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", ""]);
+  // Sin jefe, la espada del juego
+  await page.click('.diary-row[data-n="38"] .row-main');
+  await expect(icon("done")).toHaveAttribute("src", /items\/6009\.png$/);
+  // El rojo, en un paso que se queda a medias
+  await page.click('.diary-row[data-n="77"] .row-main');
+  await expect(icon("stop")).toHaveAttribute("src", /items\/84228\.png$/);
 });
 
 test("cada tipo de aviso azul tiene su nombre y su icono", async ({ page }) => {

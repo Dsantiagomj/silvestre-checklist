@@ -2552,6 +2552,22 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   background:repeating-linear-gradient(90deg, var(--danger) 0 8px, transparent 8px 14px);
 }
 .obj-stop span{ max-width:70%; text-align:center; }
+/* Donde el paso se retoma y se resuelve: la misma línea, en el verde de la guía */
+.obj-resume{
+  display:flex; align-items:center; gap:10px; margin:6px 0; padding:0 14px;
+  font:800 11.5px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:#8fd13a;
+}
+.obj-resume::before, .obj-resume::after{
+  content:""; flex:1; height:2px;
+  background:repeating-linear-gradient(90deg, #8fd13a 0 8px, transparent 8px 14px);
+}
+.obj-resume span{ max-width:70%; text-align:center; }
+[data-theme="light"] .obj-resume{ color:#3d7a14; }
+[data-theme="light"] .obj-resume::before, [data-theme="light"] .obj-resume::after{
+  background:repeating-linear-gradient(90deg, #4e8f1b 0 8px, transparent 8px 14px);
+}
+/* El jefe que se pasa, en el medallón de lo que se resuelve */
+.call.done i img{ border-radius:50%; }
 
 /* Necesitas: las casillas de «Objetos necesarios», centradas y con el marco del diario */
 .journal-needs{ margin:6px 0 4px; }

@@ -67,7 +67,7 @@ export function Objectives({ objs, stop, route = false, at = -1, onPick }) {
       {objs.map((o, i) => (
         <Fragment key={i}>
         {stop?.index === i && (
-          <li className="obj-stop" role="separator"><span>{stop.text}</span></li>
+          <li className={stop.resume ? "obj-resume" : "obj-stop"} role="separator"><span>{stop.text}</span></li>
         )}
         <li className={`obj-row k-${o.k}` + (route && i < at ? " done" : route && i === at ? " now" : "")}
           aria-current={route && i === at ? "step" : undefined}>

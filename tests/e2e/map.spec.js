@@ -29,12 +29,16 @@ test("al elegir un paso sale su ficha con la parada y lo que cierra", async ({ p
   await node(page, 34).click();
   const card = page.locator("#mapCard");
   await expect(card.locator(".map-card-title")).toContainText("34");
-  await expect(card).toContainText("Hasta tener que pasar Lasoberaña");
+  // El 34 se resuelve solo: no hay dónde parar, solo lo que cierra
+  await expect(card).not.toContainText("Hasta tener que pasar Lasoberaña");
   await expect(card).toContainText("Cierra también el 33");
   // Un arco une el paso con el que cierra
   await expect(page.locator(".map-arc")).toHaveCount(1);
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).toHaveClass(/done/);
+  // Un paso que se queda a medias sí dice hasta dónde llegar
+  await node(page, 33).click();
+  await expect(card).toContainText("Hasta tener que pasar Lasoberaña");
 });
 
 test("«Abrir en el diario» cambia de vista con ese paso abierto", async ({ page }) => {
@@ -91,8 +95,11 @@ test("la ficha nunca tapa el paso anterior ni el siguiente", async ({ page }) =>
 test("la ficha del mapa usa los mismos iconos que los avisos", async ({ page }) => {
   await openMap(page);
   await node(page, 34).click();
+  // Se resuelve en el mismo paso: sin «hasta dónde llegar»; lo que cierra, con su jefe
+  await expect(page.locator("#mapCard .map-card-line.stop")).toHaveCount(0);
+  await expect(page.locator("#mapCard .map-card-line.done img")).toHaveAttribute("src", /monsters\/1267\.png$/);
+  await node(page, 77).click();
   await expect(page.locator("#mapCard .map-card-line.stop img")).toHaveAttribute("src", /items\/84228\.png$/);
-  await expect(page.locator("#mapCard .map-card-line.done img")).toHaveAttribute("src", /achievements\/273\.png$/);
   await expect(page.locator("#mapCard")).not.toContainText("⛔");
 });
 

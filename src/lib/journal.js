@@ -2,7 +2,7 @@
 // Diario de pasos: lo que la lista y el detalle derivan de la guía
 // ---------------------------------------------------------------------------
 import { STEPS } from "../data/steps.js";
-import { BRAND_ICON, DOFUS_ROAD, assetsFor } from "./assets.js";
+import { BRAND_ICON, DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
 
 /**
  * Título corto del paso: el logro que persigue o, si no hay, el texto base sin
@@ -13,6 +13,24 @@ export function stepTitle(step) {
   if (ach) return ach;
   return step.base.replace(/["«»]/g, "").replace(/\.$/, "");
 }
+
+/**
+ * Avisos que muestra el detalle. Un paso con verde se resuelve en sí mismo: su rojo
+ * no es dónde parar sino dónde se retoma (la línea verde de la ruta), así que no va
+ * como aviso; lo que añade tras su primera frase ("Retomar sala 5 como…") queda como nota.
+ */
+export function stepCalls(step) {
+  const marks = step.marks || [];
+  if (!resolvesHere(step)) return marks;
+  return marks.flatMap(([kind, text]) => {
+    if (kind !== "stop") return [[kind, text]];
+    const extra = text.match(/^.*?\.\s+(\S[\s\S]*)$/)?.[1];
+    return extra ? [["note", extra]] : [];
+  });
+}
+export const resolvesHere = step => !!step.marks?.some(m => m[0] === "done");
+/** Lo que se resuelve: el jefe que se pasa; sin jefe, la espada del juego. */
+export const doneIcon = n => assetsFor(n)?.bosses?.[0]?.img || OBJ_ICONS.fight;
 
 /** Capítulos de la lista: cada uno termina en el paso que da un Dofus; el último, en el Silvestre. */
 export const CHAPTERS = (() => {
@@ -60,12 +78,16 @@ export function stopPoint(step, quests) {
     if (!boss && !dungeon) continue;
     const name = norm((boss || dungeon)[1]);
     // Dentro de la mazmorra: por la zona (el texto puede nombrarla sin estar dentro,
-    // como "Llave del Laboratorio de Brumen Tinctorias")
-    const where = o => norm(dungeon ? o.a || "" : o.t);
-    for (const q of quests) {
-      const objs = q.s.flatMap(stg => stg.o);
-      const index = objs.findIndex(o => where(o).includes(name));
-      if (index >= 0) return { quest: q.id, index, text };
+    // como "Llave del Laboratorio de Brumen Tinctorias"). "Pasar la mazmorra X" busca
+    // antes en el texto y, si ningún objetivo la nombra, en la zona
+    const byText = o => norm(o.t).includes(name);
+    const byArea = o => norm(o.a || "").includes(name);
+    const tries = dungeon ? [byArea] : /pasar la mazmorra/i.test(text) ? [byText, byArea] : [byText];
+    for (const match of tries) {
+      for (const q of quests) {
+        const index = q.s.flatMap(stg => stg.o).findIndex(match);
+        if (index >= 0) return { quest: q.id, index, text };
+      }
     }
   }
   return null;
