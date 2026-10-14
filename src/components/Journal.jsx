@@ -3,7 +3,7 @@ import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
-import { nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
+import { CLOSED_BY, nextPendingAfter, showcase, stepTitle, stopPoint } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -59,6 +59,16 @@ function Hero({ step, done, quests }) {
           {step.complete && <span className="badge is-complete" title="El paso pide el logro entero">Logro completo</span>}
           {quests.length > 0 && <span className="badge">{quests.length} {quests.length === 1 ? "misión" : "misiones"}</span>}
           {done && <span className="badge is-done">✓ Hecho</span>}
+          {!done && CLOSED_BY[step.n] && (
+            <button type="button" className="badge closed-in" onClick={() => selectStep(CLOSED_BY[step.n])}>
+              Se cierra en el {CLOSED_BY[step.n]} →
+            </button>
+          )}
+          {step.closes?.map(m => (
+            <button key={m} type="button" className="badge closes" data-n={m} onClick={() => selectStep(m)}>
+              Cierra el {m} →
+            </button>
+          ))}
         </div>
       </div>
       {show && (
