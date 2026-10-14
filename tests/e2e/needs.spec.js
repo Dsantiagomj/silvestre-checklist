@@ -529,7 +529,7 @@ test("lo cogido para un paso se descuenta de la cantidad de «Pronto»", async (
   await expect(agua.locator(".q")).toHaveText("1");
 });
 
-test("los logros previos con guía en Torrente Arcano la enlazan; abrirla no marca el prerrequisito", async ({ page }) => {
+test("los prerrequisitos con guía en Torrente Arcano la enlazan; abrirla no los marca", async ({ page }) => {
   await openApp(page);
   const guide = id => page.locator(`#prereqs .pr-item[data-id="${id}"] .pr-guide`);
   // Al logro, aunque el prerrequisito pida solo algunas de sus misiones
@@ -538,9 +538,12 @@ test("los logros previos con guía en Torrente Arcano la enlazan; abrirla no mar
   for (const [id, slug] of [["l4", "el-gran-guarrok"], ["l10", "altos-vuelos"], ["l8", "pan-koko-mio"], ["l9", "frio-al-cubo"], ["l12", "angeles-y-demonios"]]) {
     await expect(guide(id)).toHaveAttribute("href", `https://www.torrentearcano.com/${slug}`);
   }
-  // Sin página (Primeriza) o sin logro (una misión suelta): sin enlace
+  // Los que son una misión suelta enlazan la guía de la misión
+  await expect(guide("l11")).toHaveAttribute("href", "https://www.torrentearcano.com/el-despertar-de-pandala");
+  await expect(guide("l7")).toHaveAttribute("href", "https://www.torrentearcano.com/intrusion-en-el-territorio-wabbit");
+  // Sin página en Torrente Arcano (Primeriza, El cementerio primitivo): sin enlace
   await expect(guide("l1")).toHaveCount(0);
-  await expect(guide("l11")).toHaveCount(0);
+  await expect(guide("l6")).toHaveCount(0);
   // El enlace no está dentro del botón de la tarjeta y abrirlo no la marca
   await expect(page.locator("#prereqs .pr-card .pr-guide")).toHaveCount(0);
   // La guía se abre en otra pestaña; sin salir a la red

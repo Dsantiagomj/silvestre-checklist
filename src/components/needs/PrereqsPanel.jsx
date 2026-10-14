@@ -1,7 +1,7 @@
 import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
-import { achievementGuide } from "../../lib/guides.js";
+import { achievementGuide, missionGuide } from "../../lib/guides.js";
 import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
@@ -45,10 +45,15 @@ export function prereqParts(text) {
   return { zone, title, sub };
 }
 
-/** La guía del logro que nombra el prerrequisito, aunque pida solo algunas de sus misiones. */
+/**
+ * La guía del logro que nombra el prerrequisito, aunque pida solo algunas de sus
+ * misiones; si es una misión suelta ('misión "X"'), la de la misión.
+ */
 const prereqGuide = text => {
-  const name = text.match(/Logro "([^"]+)"/)?.[1];
-  return name ? achievementGuide(name) : null;
+  const achievement = text.match(/Logro "([^"]+)"/)?.[1];
+  if (achievement) return achievementGuide(achievement);
+  const mission = text.match(/misión "([^"]+)"/)?.[1];
+  return mission ? missionGuide(mission) : null;
 };
 
 /**

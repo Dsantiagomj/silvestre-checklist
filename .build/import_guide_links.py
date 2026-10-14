@@ -6,7 +6,8 @@ the mission title (slugifyTorrentArcano) unless missionUrlOverrides says
 otherwise. This script finds the same names in the step texts, builds the same
 URLs and keeps only the ones that answer, so the app never links a missing page.
 Prerequisite achievements (PREREQS_LOGROS in steps.js) get their page too when the
-sitemap has it: the card links the achievement, not the quests it asks for.
+sitemap has it: the card links the achievement, not the quests it asks for. A
+prerequisite that is a single quest ('misión "X"') links that quest's page.
 It also links every quest the diary lists (src/data/quests.json) whose page, by the
 same slug, is in the site's sitemap: most have a guide the step text never names.
 
@@ -102,10 +103,10 @@ def page_for(name, overrides, pages):
     return next((SITE + c for c in (base, compact, base + "-1") if SITE + c in pages), None)
 
 
-def prereq_achievements():
-    """Achievements the prerequisites name: 'Isla de Otomaï: Logro "Turbera maldita", …'."""
+def prereq_names(kind):
+    """What the prerequisites name: 'Logro "Turbera maldita"' or 'misión "El cementerio primitivo"'."""
     block = STEPS_JS.read_text().split("export const PREREQS_LOGROS = [", 1)[1].split("];", 1)[0]
-    return re.findall(r'Logro \\"([^"\\]+)\\"', block)
+    return re.findall(kind + r' \\"([^"\\]+)\\"', block)
 
 
 def quest_names():
@@ -136,11 +137,15 @@ def main(page):
     overrides = js_object(html, "missionUrlOverrides")
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS}
     pages = site_pages()
-    for name in prereq_achievements():
+    for name in prereq_names("Logro"):
         url = page_for(name, {}, pages)
         if url and name not in achievements:
             achievements[name] = url
     diary_only = {}
+    for name in prereq_names("misión"):
+        url = page_for(name, overrides, pages)
+        if url and name not in wanted:
+            diary_only[name] = url
     for name in quest_names():
         url = page_for(name, overrides, pages)
         if url and name not in wanted:
