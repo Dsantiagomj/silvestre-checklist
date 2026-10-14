@@ -599,3 +599,37 @@ test("la etiqueta de un paso se marca cuando todo lo suyo está reunido", async 
   for (const k of ["2268", "9318", "746"]) await page.locator(`#bandSoon .slot[data-id="${k}"] .slot-main`).click();
   await expect(chips(page).nth(1)).toHaveClass(/\bdone\b/);
 });
+
+test("lo de un prerrequisito completo sale de «Pronto» aunque falten otros", async ({ page }) => {
+  // El despertar de Pandala (l11) hecho: su Ortiga ya se gastó; El gran Guarrok (l4) no
+  await openApp(page, { "silvestre:prereqs": { l11: true } });
+  await page.click("#tabItems");
+  await expect(chips(page).first()).toHaveText(/Pre/);
+  await expect(page.locator('#bandSoon .slot[data-id="421"]')).toHaveCount(0);
+  await expect(page.locator('#bandSoon .slot[data-id="399"]')).toHaveCount(1);
+  // Con el filtro de pendientes encendido, lo gastado no se ve en ningún sitio
+  await expect(page.locator('#items .slot[data-id="421"]')).toHaveCount(0);
+  await expect(page.locator("#bandUsed")).toHaveCount(0);
+});
+
+test("con el filtro apagado, «Ya utilizados» muestra lo gastado y el resto, lo que queda", async ({ page }) => {
+  // Hechos los prerrequisitos y los pasos 1 a 13: el Agua potable del 13 (1) ya se usó,
+  // la del 16 (10) no
+  await openApp(page, { "silvestre:done": range(1, 13), "silvestre:prereqs": ALL_PREREQS });
+  await page.click("#tabItems");
+  await page.locator("#shopPendingToggle").uncheck({ force: true });
+  const used = page.locator("#bandUsed");
+  await expect(used.locator(".later-h")).toContainText("Ya utilizados");
+  await expect(used.locator('.slot[data-id="311"] .q')).toHaveText("1");
+  await expect(page.locator('#bandSoon .slot[data-id="311"] .q')).toHaveText("10");
+  // La Ortiga de los prerrequisitos, gastada entera: solo en «Ya utilizados»
+  await expect(used.locator('.slot[data-id="421"] .q')).toHaveText("50");
+  await expect(page.locator('#bandSoon .slot[data-id="421"], #bandLater .slot[data-id="421"]')).toHaveCount(0);
+  // Va debajo de «Más adelante»
+  const below = await page.evaluate(() => !!(document.getElementById("bandLater")
+    .compareDocumentPosition(document.getElementById("bandUsed")) & Node.DOCUMENT_POSITION_FOLLOWING));
+  expect(below).toBe(true);
+  // Al encender el filtro desaparece
+  await page.locator("#shopPendingToggle").check({ force: true });
+  await expect(used).toHaveCount(0);
+});

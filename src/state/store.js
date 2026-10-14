@@ -162,6 +162,11 @@ export const rowHave = (s, row, steps = row.steps) =>
  */
 const rowCovered = (s, k, n) =>
   n === PREREQ_STEP && PREREQ_OF_ROW[k] ? isPrereqDone(s, PREREQ_OF_ROW[k]) : stepCovered(s, n);
+/**
+ * Esa parte del objeto ya se gastó: su paso está hecho o, en los prerrequisitos, el
+ * prerrequisito que la pide está completo (no hace falta que lo estén todos).
+ */
+export const rowUsed = (s, k, n) => guideComplete(s) || rowCovered(s, k, n);
 /** Conseguido a mano para ese paso: el objeto entero (clave sola) o solo esa parte ("clave#paso"). */
 const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`];
 

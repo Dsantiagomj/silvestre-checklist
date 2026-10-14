@@ -1,6 +1,6 @@
 import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName, rowsOf } from "../../lib/resources.js";
 import {
-  PAGE_SIZES, pendingItemSteps, rowHave, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
+  PAGE_SIZES, rowHave, rowUsed, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
   setShopTab, setShopView, soonSteps,
   toggleRowOwned, useAppState,
 } from "../../state/store.js";
@@ -16,9 +16,12 @@ const byName = (a, b) => rowName(a).localeCompare(rowName(b), "es");
  */
 export function itemsView(s) {
   const q = normText(s.shopQuery.trim());
-  const scope = s.shopPendingOnly ? pendingItemSteps(s) : STEPS_WITH_ITEMS;
   // Las cantidades descuentan lo ya cogido para cada paso (por ejemplo, desde el diario)
   const had = (k, n) => rowHave(s, { k }, [n]);
+  // Lo gastado (paso hecho o su prerrequisito completo) sale de lo pendiente; con el
+  // filtro apagado se ve aparte, en «Ya utilizados», con la cantidad que se usó
+  const used = (k, n) => rowUsed(s, k, n);
+  const usedBand = s.shopPendingOnly ? [] : [{ id: "used", rows: aggregate(STEPS_WITH_ITEMS, null, (k, n) => !used(k, n)) }];
   let bands;
   if (s.shopSort === "soon") {
     const chips = soonSteps(s);
@@ -26,13 +29,14 @@ export function itemsView(s) {
     bands = [
       // Por paso, en el orden de la guía: prerrequisitos, 1, 2, 3… (sort es estable:
       // dentro de un paso se queda el orden por categoría)
-      { id: "soon", chips, rows: aggregate(soon, had).sort((a, b) => Math.min(...a.steps) - Math.min(...b.steps)) },
-      { id: "later", rows: aggregate(scope.filter(n => !soon.includes(n)), had) },
+      { id: "soon", chips, rows: aggregate(soon, had, used).sort((a, b) => Math.min(...a.steps) - Math.min(...b.steps)) },
+      { id: "later", rows: aggregate(STEPS_WITH_ITEMS.filter(n => !soon.includes(n)), had, used) },
+      ...usedBand,
     ];
   } else {
-    const rows = aggregate(scope, had);
+    const rows = aggregate(STEPS_WITH_ITEMS, had, used);
     rows.sort(s.shopSort === "az" ? byName : (a, b) => (b.a[0][1] - a.a[0][1]) || byName(a, b));
-    bands = [{ id: "all", rows }];
+    bands = [{ id: "all", rows }, ...usedBand];
   }
   // Recuentos por objeto distinto: Pepita en "Pronto" y en "Más adelante" cuenta una vez
   const all = new Map();
@@ -46,7 +50,8 @@ export function itemsView(s) {
   }
   const inCat = r => s.shopTab === "todo" || r.c === s.shopTab;
   for (const b of bands) b.rows = b.rows.filter(inCat);
-  const visible = bands.flatMap(b => b.rows).filter(r => rowMatches(r, q));
+  // «Marcar todo»/«Limpiar» actúan sobre lo pendiente: lo gastado ya no se coge
+  const visible = bands.filter(b => b.id !== "used").flatMap(b => b.rows).filter(r => rowMatches(r, q));
   return { q, bands, counts, total: all.size, matches, visible };
 }
 
@@ -163,7 +168,8 @@ export default function ItemsPanel({ searchRef }) {
   const page = rows => (list ? paginate(rows, s.shopPage, s.shopPageSize) : { rows });
   const laterView = page(laterRows);
   const allView = page(allRows);
-  const empty = !soonRows.length && !laterRows.length && !allRows.length;
+  const usedRows = shown(bands.find(b => b.id === "used"));
+  const empty = !soonRows.length && !laterRows.length && !allRows.length && !usedRows.length;
 
   return (
     <div className="needs-panel items-panel" id="items" role="tabpanel" aria-labelledby="tabItems">
@@ -243,6 +249,13 @@ export default function ItemsPanel({ searchRef }) {
             <section className="band all" id="bandAll" aria-label="Objetos">
               <Slots rows={allView.rows} band="all" s={s} q={q} />
               {list && <Pager id="bandAll" total={allRows.length} view={allView} size={s.shopPageSize} />}
+            </section>
+          )}
+
+          {usedRows.length > 0 && (
+            <section className="band used" id="bandUsed" aria-label="Ya utilizados">
+              <p className="later-h">Ya utilizados · {usedRows.length} objetos</p>
+              <Slots rows={usedRows} band="used" s={s} q={q} />
             </section>
           )}
         </div>
