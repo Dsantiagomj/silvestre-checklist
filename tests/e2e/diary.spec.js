@@ -123,6 +123,10 @@ test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
   await page.click('.diary-row[data-n="34"] .row-main');
   await expect(page.locator('#zoneSeals .seal[data-zone="Reino de Amakna"]')).toHaveClass(/here/);
   await expect(page.locator("#zoneSeals .seal.here")).toHaveCount(1);
+  // Se marca con un contorno discontinuo alrededor del sello, no con un punto suelto sobre el nombre
+  const ring = page.locator('#zoneSeals .seal.here .seal-ring');
+  await expect.poll(() => ring.evaluate(el => getComputedStyle(el).outlineStyle)).toBe("dashed");
+  expect(await ring.evaluate(el => getComputedStyle(el, "::after").content)).toBe("none");
 });
 
 test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }) => {
