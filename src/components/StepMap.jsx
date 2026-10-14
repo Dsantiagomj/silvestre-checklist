@@ -30,14 +30,48 @@ function arcPath(a, b) {
   return `M${b.x} ${b.y - 30} Q${(a.x + b.x) / 2} ${Math.min(a.y, b.y) - lift} ${a.x} ${a.y - 30}`;
 }
 
-function Card({ step, at, width, height, done }) {
+const CARD_W = 350;
+const NODE_R = 36; // radio del sello más grande (el actual), con su halo
+const GAP = 14;
+
+/**
+ * Dónde va la ficha: debajo, arriba, en diagonal o al lado del paso, la primera
+ * que no tape ni el paso ni sus vecinos (el camino gira en los extremos de cada
+ * fila, así que el siguiente puede estar debajo).
+ */
+function placeCard(pos, n, cardH, width, height) {
+  const at = pos[n - 1];
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+  const rect = (left, top) => ({ left: clamp(left, 8, width - CARD_W - 8), top: clamp(top, 8, height - cardH - 8) });
+  const below = at.y + NODE_R + GAP;
+  const above = at.y - NODE_R - GAP - cardH;
+  // En las esquinas del camino un vecino va al lado y el otro debajo: quedan las diagonales
+  const options = [
+    rect(at.x - CARD_W / 2, below),
+    rect(at.x - CARD_W / 2, above),
+    rect(at.x + NODE_R, below),
+    rect(at.x - NODE_R - CARD_W, below),
+    rect(at.x + NODE_R, above),
+    rect(at.x - NODE_R - CARD_W, above),
+    rect(at.x + NODE_R + GAP, at.y - cardH / 2),
+    rect(at.x - NODE_R - GAP - CARD_W, at.y - cardH / 2),
+  ];
+  const keep = [n - 1, n, n + 1].filter(m => m >= 1 && m <= pos.length).map(m => pos[m - 1]);
+  const covers = (r, p) => p.x + NODE_R > r.left && p.x - NODE_R < r.left + CARD_W &&
+    p.y + NODE_R > r.top && p.y - NODE_R < r.top + cardH;
+  return options.find(r => !keep.some(p => covers(r, p))) || options[0];
+}
+
+function Card({ step, pos, width, height, done }) {
+  const ref = useRef(null);
+  const [cardH, setCardH] = useState(240);
+  useLayoutEffect(() => setCardH(ref.current.offsetHeight), [step.n]);
   const show = showcase(step.n);
   const zone = ZONE_IMG[step.zone];
   const stops = (step.marks || []).filter(m => m[0] === "stop");
-  const above = at.y + 300 > height;
-  const left = Math.min(Math.max(at.x - 175, 8), width - 358);
+  const { left, top } = placeCard(pos, step.n, cardH, width, height);
   return (
-    <div className={"map-card" + (above ? " above" : "")} id="mapCard" style={{ left, top: above ? at.y - 44 : at.y + 44 }}>
+    <div className="map-card" id="mapCard" ref={ref} style={{ left, top, width: CARD_W }}>
       <div className="map-card-hd" style={zone ? { backgroundImage: `url(${imgUrl(zone.img)})` } : undefined}>
         {show && <img src={imgUrl(show.img)} alt="" />}
         <button type="button" className="map-card-x" aria-label="Cerrar" onClick={clearSelection}>×</button>
@@ -103,7 +137,7 @@ export default function StepMap({ s, current, mobile }) {
             );
           })}
           {!mobile && sel && (
-            <Card key={sel.n} step={sel} at={pos[sel.n - 1]} width={width} height={height} done={!!s.done[sel.n]} />
+            <Card key={sel.n} step={sel} pos={pos} width={width} height={height} done={!!s.done[sel.n]} />
           )}
         </>
       )}
