@@ -28,6 +28,9 @@ export function loadQuests(onLoad) {
   });
 }
 
+/** Los logros de las misiones del paso, si son varios: [[nombre, icono, cuántas], …] en orden. */
+export const groupsOf = n => (data?.STEP_GROUPS?.[n] || null);
+
 export const questsOf = n =>
   data ? (data.STEP_QUESTS[n] || []).map(id => ({ id, ...data.QUESTS[id] })) : [];
 
