@@ -143,9 +143,9 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   await expect(page.locator("#heroItems")).toHaveClass(/\bcomplete\b/);
   await expect(page.locator(".prereq-item:not(.done)")).toHaveCount(0);
   await expect(page.locator(".shop-item:not(.owned)")).toHaveCount(0);
-  // El diálogo de reinicio cuenta lo que hay guardado, no lo deducido
+  // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
-  await expect(page.locator("#rdNPre")).toHaveText("0");
+  await expect(page.locator("#rdNPre")).toHaveText("18");
 });
 
 test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {

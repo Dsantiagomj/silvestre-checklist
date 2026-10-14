@@ -1,7 +1,8 @@
 import { useImperativeHandle, useRef, useState } from "react";
 import {
-  applySnapshot, doneCount, getState, prereqsMarked, progressPct, showToast, takeSnapshot, useAppState,
+  applySnapshot, doneCount, getState, isPrereqDone, prereqsDone, progressPct, showToast, takeSnapshot, useAppState,
 } from "../state/store.js";
+import { ALL_PREREQS } from "../data/steps.js";
 import { BRAND_ICON, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import BackupCard from "./BackupCard.jsx";
@@ -35,6 +36,9 @@ export default function ResetDialog({ ref }) {
     const after = takeSnapshot();
     if (scope.steps) after.done = {};
     if (scope.prereqs) after.prereqs = {};
+    // Con la guía completa los prerrequisitos se dan por hechos sin estar marcados.
+    // Si se conservan, se marcan de verdad para que no se pierdan al borrar los pasos.
+    else after.prereqs = Object.fromEntries(ALL_PREREQS.filter(p => isPrereqDone(getState(), p.id)).map(p => [p.id, true]));
 
     ringRef.current.style.setProperty("--rd-v", 0); // el anillo se vacía antes de cerrar
     setTimeout(() => {
@@ -72,7 +76,7 @@ export default function ResetDialog({ ref }) {
         <fieldset className="rd-opts" ref={optsRef} onChange={syncResetConfirm}>
           <legend className="rd-legend">Qué borrar</legend>
           <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
-          <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsMarked(s)}</span></label>
+          <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsDone(s)}</span></label>
         </fieldset>
         <BackupCard onRestore={restoreBackup} />
         <div className="rd-actions">

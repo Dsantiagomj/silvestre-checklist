@@ -107,3 +107,16 @@ test("un archivo que no es una copia muestra el error en la tarjeta", async ({ p
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator(".cell.done")).toHaveCount(5);
 });
+
+test("con la guía completa, reiniciar solo los pasos conserva los prerrequisitos", async ({ page }) => {
+  const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
+  await openApp(page, { "silvestre:done": all });
+  await page.click("#resetBtn");
+  await page.locator('#resetDialog input[name="prereqs"]').uncheck();
+  await page.click("#rdConfirm");
+  await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
+  await expect(page.locator(".cell.done")).toHaveCount(0);
+  // Se tenían por estar la guía completa: al conservarlos quedan marcados de verdad
+  await expect(page.locator("#prereqsCount")).toHaveText("18/18 completados");
+  expect(Object.keys(await readLS(page, "silvestre:prereqs"))).toHaveLength(18);
+});
