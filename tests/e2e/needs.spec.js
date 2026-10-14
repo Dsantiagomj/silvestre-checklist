@@ -314,7 +314,7 @@ test("al 100 % la sección se contrae en una franja y se despliega en dos nivele
   // Primer nivel: el resumen de lo reunido
   await page.click("#needsShowSummary");
   const summary = page.locator(".needs-summary");
-  await expect(summary.locator(".needs-sum-total")).toHaveText("6.770");
+  await expect(summary.locator(".needs-sum-total")).toHaveText("6.715"); // 6.770 de la página menos la Ortiga y la Lana repetidas en el paso 1
   await expect(summary.locator(".needs-sum-top li")).toHaveCount(6);
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("Pepita");
   await expect(summary.locator(".needs-sum-top li").first()).toContainText("2.202");
@@ -507,22 +507,24 @@ test("marcar un objeto no completa su prerrequisito: se puede comprar antes", as
 });
 
 test("lo cogido para un paso se descuenta de la cantidad de «Pronto»", async ({ page }) => {
-  await openApp(page);
-  // La Ortiga la piden los prerrequisitos (50) y el paso 1 (50): en «Pronto» sale ×100
+  // Hechos los pasos 1 a 11 y los prerrequisitos: «Pronto» son los pasos 12 a 16
+  await openApp(page, { "silvestre:done": range(1, 11), "silvestre:prereqs": ALL_PREREQS });
+  // El Agua potable la piden el paso 13 (1) y el 16 (10): en «Pronto» sale ×11
   await page.click("#tabItems");
-  const ortiga = page.locator('#items .band.soon .slot[data-id="421"]');
-  await expect(ortiga.locator(".q")).toHaveText("100");
-  // Cogida para el paso 1 desde el diario: quedan 50 y sigue sin estar completa
-  await page.click('.diary-row[data-n="1"] .row-main');
-  await page.locator('#journal .journal-needs .slot[data-id="421"] .slot-main').click();
-  await expect(ortiga.locator(".q")).toHaveText("50");
-  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
-  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-label", /Ortiga, faltan 50 de 100/);
+  const agua = page.locator('#items .band.soon .slot[data-id="311"]');
+  await expect(agua.locator(".q")).toHaveText("11");
+  // Cogida para el paso 13 desde el diario: quedan 10 y sigue sin estar completa
+  await page.click('.diary-row[data-n="13"] .row-main');
+  const inJournal = page.locator('#journal .journal-needs .slot[data-id="311"] .slot-main');
+  await inJournal.click();
+  await expect(agua.locator(".q")).toHaveText("10");
+  await expect(agua.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
+  await expect(agua.locator(".slot-main")).toHaveAttribute("aria-label", /Agua potable, faltan 10 de 11/);
   // Completarla allí la da por cogida entera, con su cantidad total
-  await ortiga.locator(".slot-main").click();
-  await expect(ortiga.locator(".slot-main")).toHaveAttribute("aria-pressed", "true");
-  await expect(ortiga.locator(".q")).toHaveText("100");
-  // Y desmarcar el paso 1 en el diario vuelve a dejar 50 pendientes
-  await page.locator('#journal .journal-needs .slot[data-id="421"] .slot-main').click();
-  await expect(ortiga.locator(".q")).toHaveText("50");
+  await agua.locator(".slot-main").click();
+  await expect(agua.locator(".slot-main")).toHaveAttribute("aria-pressed", "true");
+  await expect(agua.locator(".q")).toHaveText("11");
+  // Y desmarcar el paso 13 en el diario vuelve a dejar 1 pendiente
+  await inJournal.click();
+  await expect(agua.locator(".q")).toHaveText("1");
 });

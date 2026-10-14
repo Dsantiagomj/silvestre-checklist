@@ -68,6 +68,15 @@ PREREQ_OF = {
     "421": "l11", "885": "l11",                                 # El despertar de Pandala
     "1455": "l7", "1456": "l7", "1457": "l7", "1458": "l7",     # Intrusión en el territorio wabbit
 }
+# Rows the page lists twice. Step -> {item: why}. Dropped after the check against the
+# compiled list, which counts them twice too. Checked against each quest's guide on
+# torrentearcano and DofusDB's objectives and recipes.
+DUPLICATES = {
+    # "El receptáculo de los dofus" asks to do the quest that opens Pandala: that is
+    # "El despertar de Pandala", already prerequisite l11. Its "Suero contra la
+    # pandrista" takes 50 Ortiga and 5 Lana de jalatín negro, listed in step 0 for l11.
+    "1": {"421": "prerrequisito l11", "885": "prerrequisito l11"},
+}
 # Only needed if the alteration is gone: listed in its step, left out of totals.
 OPTIONAL = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
 
@@ -209,6 +218,9 @@ def main():
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
 
     check_against_compiled(steps, items)
+    for n, drop in DUPLICATES.items():
+        steps[n] = [row for row in steps[n] if row["k"] not in drop]
+        print(f"paso {n}: sin {', '.join(f'{items[k]["name"]} ({why})' for k, why in drop.items())}")
     for rows in steps.values():
         for row in rows:
             del row["src"], row["names"]
