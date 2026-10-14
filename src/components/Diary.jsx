@@ -93,7 +93,12 @@ function DiaryWindow({ step, children }) {
     if (!side) return undefined;
     const fit = () => {
       const top = parseFloat(getComputedStyle(side).top) || 0;
-      el.style.setProperty("--side-room", `${Math.max(220, el.getBoundingClientRect().bottom - top)}px`);
+      const box = el.getBoundingClientRect();
+      el.style.setProperty("--side-room", `${Math.max(220, box.bottom - top)}px`);
+      // Altura fija que cabe incluso al final de la página (descontando lo que hay
+      // debajo de la ventana, el pie): así no crece ni encoge al desplegar misiones
+      const below = document.documentElement.scrollHeight - (box.bottom + scrollY);
+      el.style.setProperty("--side-max", `${Math.max(300, innerHeight - top - below - 12)}px`);
     };
     fit();
     const ro = new ResizeObserver(fit);

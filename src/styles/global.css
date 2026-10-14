@@ -677,10 +677,12 @@ a:hover{ text-decoration:underline; }
 [data-theme="light"] .bar-outer{ background:var(--inset); }
 .bar-fill{ background:linear-gradient(90deg, var(--amber-2), var(--amber)); box-shadow:0 0 14px rgba(183,220,105,.45); }
 
-/* Cards */
-.needs, /* Plegar una misión no debe mover la página: sin el anclaje del navegador, que subía el
+/* Plegar una misión no debe mover la página: sin el anclaje del navegador, que subía el
    scroll y arrastraba la lista fija (y la ventana no encoge dentro del paso: DiaryWindow) */
-.diary-window, .diary-window *{ overflow-anchor:none; }
+html, .diary-window, .diary-window *{ overflow-anchor:none; }
+
+/* Cards */
+.needs,
 .diary-window{
   background:var(--panel);
   border:1px solid var(--line);
@@ -2271,7 +2273,9 @@ header.show-progress .tb-progress{
   position:sticky; top:calc(var(--header-h) + 12px); align-self:start;
   display:flex; flex-direction:column;
   /* --side-room: lo que queda de la ventana del diario bajo el tope (DiaryWindow) */
-  max-height:min(calc(100vh - var(--header-h) - 24px), var(--side-room, 100vh));
+  /* --side-max: alto que cabe también al final de la página; --side-room: lo que queda
+     de ventana bajo el tope (DiaryWindow) */
+  max-height:min(calc(100vh - var(--header-h) - 24px), var(--side-max, 100vh), var(--side-room, 100vh));
   background:var(--bg-2); border-right:1px solid var(--line);
 }
 .diary-tabs{ display:flex; gap:4px; padding:10px; border-bottom:1px solid var(--line); }

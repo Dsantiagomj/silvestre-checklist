@@ -731,3 +731,14 @@ test("al buscar, las coincidencias suben al principio de su franja", async ({ pa
   await page.click("#needsSearchClear");
   await expect(page.locator("#bandLater .slot").first()).not.toHaveAttribute("data-id", before);
 });
+
+test("«Lo que necesitas» es una tarjeta, con su fondo, borde y esquinas", async ({ page }) => {
+  await openApp(page);
+  const card = await page.locator("#needs").evaluate(el => {
+    const st = getComputedStyle(el);
+    return { bg: st.backgroundColor, border: st.borderTopWidth, radius: st.borderTopLeftRadius };
+  });
+  expect(card.bg).not.toBe("rgba(0, 0, 0, 0)");
+  expect(card.border).toBe("1px");
+  expect(card.radius).toBe("16px");
+});
