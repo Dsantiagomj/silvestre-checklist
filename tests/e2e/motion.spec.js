@@ -265,3 +265,25 @@ test("con todo a mano, la vista nueva aparece sin agotar la espera", async ({ pa
   // El límite es 1,5 s: esperar lo que el navegador no va a cargar lo agotaría
   expect(shown).toBeLessThan(1000);
 });
+
+test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, null, { view: null });
+  await page.waitForLoadState("networkidle");
+  // El mapa con el paso 1 a la vista, como al bajar hasta él
+  await page.evaluate(() => scrollTo(0, document.querySelector(".steps-stage").getBoundingClientRect().top + scrollY - 200));
+  await page.click('.map-node[data-n="1"]');
+  const before = await page.evaluate(() => scrollY);
+  // Cada ida y vuelta, dos segundos fotograma a fotograma: el desplazamiento suave se ve entero
+  const settle = () => page.evaluate(async () => {
+    const t0 = performance.now();
+    while (performance.now() - t0 < 2000) await new Promise(r => requestAnimationFrame(r));
+  });
+  await page.click("#mapCard .map-card-open");
+  await settle();
+  await page.click(".journal-to-map");
+  await settle();
+  // El paso ya estaba a la vista: nada que desplazar
+  const after = await page.evaluate(() => scrollY);
+  expect(Math.abs(after - before)).toBeLessThan(4);
+});
