@@ -15,11 +15,12 @@ test("el diálogo muestra los conteos reales y exige elegir algo", async ({ page
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator("#rdNSteps")).toHaveText("5");
   await expect(page.locator("#rdNPre")).toHaveText("2");
-  // Solo se puede reiniciar el progreso de la guía: objetos y overlay no son opciones
-  await expect(page.locator('#resetDialog input[name="owned"]')).toHaveCount(0);
+  // Los objetos cuentan lo mismo que en el hero; la posición del overlay no es una opción
+  await expect(page.locator("#rdNOwned")).toHaveText(await page.locator("#statOwned").textContent());
   await expect(page.locator('#resetDialog input[name="overlay"]')).toHaveCount(0);
   await page.uncheck('#resetDialog input[name="steps"]');
   await page.uncheck('#resetDialog input[name="prereqs"]');
+  await page.uncheck('#resetDialog input[name="owned"]');
   await expect(page.locator("#rdConfirm")).toBeDisabled();
 });
 
@@ -32,10 +33,11 @@ test("reiniciar borra solo lo elegido y se puede deshacer", async ({ page }) => 
   await expect(page.locator(".cell.done")).toHaveCount(0);
   expect(await readLS(page, "silvestre:done")).toEqual({});
   expect(await readLS(page, "silvestre:prereqs")).toEqual({});
-  expect(Object.keys(await readLS(page, "silvestre:owned"))).toHaveLength(2);
+  expect(await readLS(page, "silvestre:owned")).toEqual({});
   await page.click("#toastAction");
   await expect(page.locator(".cell.done")).toHaveCount(5);
   expect(Object.keys(await readLS(page, "silvestre:done"))).toHaveLength(5);
+  expect(Object.keys(await readLS(page, "silvestre:owned"))).toHaveLength(2);
 });
 
 test("la copia descargada se puede restaurar tras un reinicio", async ({ page }, info) => {
@@ -49,11 +51,15 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   expect(Object.keys(backup.data).sort()).toEqual(["done", "guide", "owned", "prereqs", "questObj", "questPos"]);
   expect(backup.data.guide).toBe(4); // la numeración de pasos con la que se guardó
 
+  const ownedBefore = await page.locator("#statOwned").textContent();
+  await page.uncheck('#resetDialog input[name="owned"]');
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
   await expect(page.locator(".cell.done")).toHaveCount(0);
-  // El reinicio nunca toca los objetos conseguidos ni la posición del overlay
-  expect(Object.keys(await readLS(page, "silvestre:owned"))).toHaveLength(2);
+  // Lo que no se elige se conserva: también los objetos que cubrían los pasos borrados.
+  // La posición del overlay nunca se toca.
+  await expect(page.locator("#statOwned")).toHaveText(ownedBefore);
+  expect(await readLS(page, "silvestre:owned")).toMatchObject({ 421: true, 306: true });
   expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
 
   await page.click("#resetBtn");
@@ -119,4 +125,17 @@ test("con la guía completa, reiniciar solo los pasos conserva los prerrequisito
   // Se tenían por estar la guía completa: al conservarlos quedan marcados de verdad
   await expect(page.locator("#prereqsCount")).toHaveText("18/18 completados");
   expect(Object.keys(await readLS(page, "silvestre:prereqs"))).toHaveLength(18);
+});
+
+test("con la guía completa, conservar los objetos los deja marcados al reiniciar los pasos", async ({ page }) => {
+  const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
+  await openApp(page, { "silvestre:done": all });
+  await page.click("#resetBtn");
+  const total = await page.locator("#heroItems .hero-req-count").textContent();
+  await expect(page.locator("#rdNOwned")).toHaveText(total.split("/")[1]);
+  await page.locator('#resetDialog input[name="owned"]').uncheck();
+  await page.click("#rdConfirm");
+  await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
+  await expect(page.locator(".cell.done")).toHaveCount(0);
+  await expect(page.locator("#heroItems .hero-req-count")).toHaveText(total);
 });

@@ -1,8 +1,10 @@
 import { useImperativeHandle, useRef, useState } from "react";
 import {
-  applySnapshot, doneCount, getState, isPrereqDone, prereqsDone, progressPct, showToast, takeSnapshot, useAppState,
+  applySnapshot, doneCount, getState, isPrereqDone, ownedCount, prereqsDone, progressPct, rowHave, showToast,
+  takeSnapshot, useAppState,
 } from "../state/store.js";
 import { ALL_PREREQS } from "../data/steps.js";
+import { ALL_ROWS } from "../lib/resources.js";
 import { BRAND_ICON, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import BackupCard from "./BackupCard.jsx";
@@ -35,10 +37,13 @@ export default function ResetDialog({ ref }) {
     const before = takeSnapshot();
     const after = takeSnapshot();
     if (scope.steps) after.done = {};
+    // Prerrequisitos y objetos pueden darse por hechos sin estar marcados (guía completa,
+    // pasos hechos). Lo que se conserva se marca de verdad para no perderlo al borrar los pasos.
+    const s = getState();
     if (scope.prereqs) after.prereqs = {};
-    // Con la guía completa los prerrequisitos se dan por hechos sin estar marcados.
-    // Si se conservan, se marcan de verdad para que no se pierdan al borrar los pasos.
-    else after.prereqs = Object.fromEntries(ALL_PREREQS.filter(p => isPrereqDone(getState(), p.id)).map(p => [p.id, true]));
+    else after.prereqs = Object.fromEntries(ALL_PREREQS.filter(p => isPrereqDone(s, p.id)).map(p => [p.id, true]));
+    if (scope.owned) after.owned = {};
+    else after.owned = { ...s.owned, ...Object.fromEntries(ALL_ROWS.filter(r => rowHave(s, r)).map(r => [r.k, true])) };
 
     ringRef.current.style.setProperty("--rd-v", 0); // el anillo se vacía antes de cerrar
     setTimeout(() => {
@@ -77,6 +82,7 @@ export default function ResetDialog({ ref }) {
           <legend className="rd-legend">Qué borrar</legend>
           <label><input type="checkbox" name="steps" defaultChecked /> Pasos completados <span className="n" id="rdNSteps">{doneCount(s)}</span></label>
           <label><input type="checkbox" name="prereqs" defaultChecked /> Prerrequisitos <span className="n" id="rdNPre">{prereqsDone(s)}</span></label>
+          <label><input type="checkbox" name="owned" defaultChecked /> Objetos conseguidos <span className="n" id="rdNOwned">{ownedCount(s)}</span></label>
         </fieldset>
         <BackupCard onRestore={restoreBackup} />
         <div className="rd-actions">
