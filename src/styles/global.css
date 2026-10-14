@@ -303,10 +303,7 @@ header{
 .nota-links button{ padding:2px 0; font-size:13px; font-weight:700; }
 #notaSteps{ color:var(--accent-ink); }
 #notaSteps::after{ content:" →"; }
-#notaClose{ color:var(--txt-mute); }
 .nota-links button:hover{ text-decoration:underline; text-underline-offset:3px; }
-#notaClose:hover{ color:var(--txt); }
-.nota.hidden{ display:none; }
 @media (max-width:700px){
   .nota{ grid-template-columns:1fr; gap:16px; }
 }

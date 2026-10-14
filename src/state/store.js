@@ -11,7 +11,6 @@ export const LS = {
   done: "silvestre:done",
   prereqs: "silvestre:prereqs",
   theme: "silvestre:theme",
-  notaDismissed: "silvestre:notaDismissed",
   prereqsOpen: "silvestre:prereqsOpen",
   owned: "silvestre:owned",
   questPos: "silvestre:questPos",
@@ -76,7 +75,6 @@ function initialState() {
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de misión
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
-    notaDismissed: localStorage.getItem(LS.notaDismissed) === "1",
     // Abrir prereqs por default si hay pendientes o el user lo dejó abierto
     prereqsOpen: savedOpen === "1" || (savedOpen === null && pendingPrereqs > 0),
     selectedStep: null,
@@ -215,10 +213,6 @@ export function setPrereqsOpen(open, persist) {
   setState({ prereqsOpen: open });
 }
 
-export function dismissNota() {
-  localStorage.setItem(LS.notaDismissed, "1");
-  setState({ notaDismissed: true });
-}
 
 // Filtros
 const setFilters = patch => setState(s => ({ filters: { ...s.filters, ...patch } }));

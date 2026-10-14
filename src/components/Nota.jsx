@@ -1,6 +1,6 @@
 import { STEPS } from "../data/steps.js";
 import { assetsFor, imgUrl } from "../lib/assets.js";
-import { dismissNota, setSearch, useAppState } from "../state/store.js";
+import { setSearch } from "../state/store.js";
 
 // La instrucción que explica la nota, tal como la escribe Sandglass en los pasos
 const PHRASE = "hasta tener que pasar";
@@ -16,11 +16,13 @@ function showPaused() {
   document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/** NOTA ACLARATORIA · qué significa "Hasta tener que pasar X jefe", con un ejemplo de la guía */
+/**
+ * NOTA ACLARATORIA · qué significa "Hasta tener que pasar X jefe", con un ejemplo de la guía.
+ * Siempre visible: es la clave para leer un tercio de los pasos.
+ */
 export default function Nota() {
-  const { notaDismissed } = useAppState();
   return (
-    <aside className={"nota" + (notaDismissed ? " hidden" : "")} id="nota" aria-labelledby="notaTitle">
+    <aside className="nota" id="nota" aria-labelledby="notaTitle">
       <figure className="nota-example">
         {/* Solo ilustra: el pie de foto lo cuenta para quien no lo ve */}
         <div className="nota-track" aria-hidden="true">
@@ -35,12 +37,11 @@ export default function Nota() {
       <div className="nota-body">
         <p className="nota-title" id="notaTitle">Hasta tener que pasar X jefe de mazmorra</p>
         <p className="nota-text">
-          Ahí la misión se deja en pausa, sin vencer al jefe. Un paso posterior pide pasar y completar esa misma
-          mazmorra, y al hacerlo se terminan dos o más pasos a la vez.
+          Ahí el paso queda en pausa: puedes avanzar en la mazmorra hasta la sala del jefe y abandonarla. Un paso
+          posterior te pedirá pasar y completar esa misma mazmorra, y al hacerlo se terminan dos o más pasos a la vez.
         </p>
         <p className="nota-links">
           <button type="button" id="notaSteps" onClick={showPaused}>Ver los {PAUSED} pasos</button>
-          <button type="button" id="notaClose" onClick={dismissNota}>Entendido</button>
         </p>
       </div>
     </aside>
