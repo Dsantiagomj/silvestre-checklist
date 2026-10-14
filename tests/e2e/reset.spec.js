@@ -57,10 +57,10 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
   await expect(page.locator(".diary-row.done")).toHaveCount(0);
   // Lo que no se elige se conserva: también los objetos que cubrían los pasos borrados.
-  // La posición del overlay nunca se toca.
+  // Con los pasos se va su avance objetivo a objetivo
   await expect(page.locator("#statOwned")).toHaveText(ownedBefore);
   expect(await readLS(page, "silvestre:owned")).toMatchObject({ 421: true, 306: true });
-  expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({});
 
   await page.click("#resetBtn");
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click("#rdRestore")]);
@@ -138,4 +138,22 @@ test("con la guía completa, conservar los objetos los deja marcados al reinicia
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
   await expect(page.locator(".diary-row.done")).toHaveCount(0);
   await expect(page.locator("#heroItems .hero-req-count")).toHaveText(total);
+});
+
+test("reiniciar los pasos borra también el avance de las misiones, y deshacer lo devuelve", async ({ page }) => {
+  await openApp(page, { ...SEED, "silvestre:questPos": { 1: 2 } });
+  await page.click("#resetBtn");
+  await page.click("#rdConfirm");
+  await expect(page.locator("#toast")).toHaveClass(/show/, { timeout: 3_000 });
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({});
+  expect(await readLS(page, "silvestre:questPos")).toEqual({});
+  // En el diario, los objetivos vuelven a empezar
+  await page.click('.diary-row[data-n="1"] .row-main');
+  const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
+  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
+  await expect(rows.first()).toHaveClass(/\bnow\b/);
+  await expect(page.locator("#journal .obj-row.done")).toHaveCount(0);
+  await page.click("#toastAction");
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
+  expect(await readLS(page, "silvestre:questPos")).toEqual({ 1: 2 });
 });
