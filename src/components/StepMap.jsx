@@ -24,6 +24,11 @@ function layout(width) {
   return { pos, height: TOP + Math.ceil(STEPS.length / cols) * ROW_H - 20 };
 }
 
+/** Dónde cae el sello del paso n en un mapa de este ancho (el centro del zoom entre vistas). */
+export function mapPoint(width, n) {
+  return layout(width).pos[n - 1];
+}
+
 /** Arco del paso abierto a cada paso que su combate cierra (el verde de la guía). */
 function arcPath(a, b) {
   const lift = Math.max(46, Math.abs(a.x - b.x) / 3);
