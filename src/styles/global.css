@@ -259,6 +259,7 @@ header{
     linear-gradient(var(--gold-ink), var(--gold-ink)) 9px 4px / 2px 8px no-repeat,
     var(--panel-2);
   border:1px solid var(--line-2);
+  opacity:0; transform:scale(.4);
 }
 .nota-step::after{ content:"✓"; background:var(--amber); color:#142208; font-size:11px; opacity:0; transform:scale(.4); }
 .nota-boss{
@@ -277,13 +278,16 @@ header{
 }
 
 /* La historia, una vez al verla: el punto llega al jefe, el jefe cae, el 45 se marca
-   y la ✓ vuelve hacia atrás al 44 y al 43. --d es cuándo se marca cada casilla. */
+   y la ✓ vuelve hacia atrás al 44 y al 43. --check-at es cuándo se marca cada casilla. */
 .nota-track.play .nota-marker{ animation:nota-travel 3.2s ease-in-out .4s forwards; }
 .nota-track.play .nota-boss{ animation:nota-hit .45s ease-in-out 3.55s, nota-defeat-ring .5s ease 4s forwards; }
 .nota-track.play .nota-boss img{ animation:nota-defeat .5s ease 4s forwards; }
-.nota-track.play .nota-step{ animation:nota-lit .4s ease var(--d) forwards; }
-.nota-track.play .nota-step::after{ animation:nota-check .4s cubic-bezier(.34,1.56,.64,1) var(--d) forwards; }
-.nota-track.play .nota-step.paused::before{ animation:nota-unpause .3s ease var(--d) forwards; }
+.nota-track.play .nota-step{ animation:nota-lit .4s ease var(--check-at) forwards; }
+.nota-track.play .nota-step::after{ animation:nota-check .4s cubic-bezier(.34,1.56,.64,1) var(--check-at) forwards; }
+/* La pausa la deja el punto al pasar (--pause-at) y se va cuando el paso se termina (--check-at) */
+.nota-track.play .nota-step.paused::before{
+  animation:nota-pause-in .3s cubic-bezier(.34,1.56,.64,1) var(--pause-at) forwards, nota-unpause .3s ease var(--check-at) forwards;
+}
 /* Sale del 43, pasa por detrás del 44, se detiene ante el jefe y entra.
    Centros: 43 en 22 px, tramo antes del jefe en 127 px, jefe en 163 px. */
 @keyframes nota-travel{
@@ -305,7 +309,8 @@ header{
   to{ background:color-mix(in srgb, var(--amber) 22%, var(--inset)); border-color:var(--amber); color:var(--txt); }
 }
 @keyframes nota-check{ to{ opacity:1; transform:none; } }
-@keyframes nota-unpause{ to{ opacity:0; transform:scale(.4); } }
+@keyframes nota-pause-in{ to{ opacity:1; transform:none; } }
+@keyframes nota-unpause{ from{ opacity:1; transform:none; } to{ opacity:0; transform:scale(.4); } }
 .nota-example figcaption{
   max-width:260px; margin-top:12px;
   font-size:12px; line-height:1.45; color:var(--txt-mute);
