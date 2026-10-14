@@ -86,3 +86,11 @@ test("la ficha nunca tapa el paso anterior ni el siguiente", async ({ page }) =>
   await node(page, 25).click();
   await expect(page.locator("#mapCard .map-card-title")).toContainText("25");
 });
+
+test("la ficha del mapa usa los mismos iconos que los avisos", async ({ page }) => {
+  await openMap(page);
+  await node(page, 34).click();
+  await expect(page.locator("#mapCard .map-card-line.stop img")).toHaveAttribute("src", /items\/84228\.png$/);
+  await expect(page.locator("#mapCard .map-card-line.done img")).toHaveAttribute("src", /achievements\/273\.png$/);
+  await expect(page.locator("#mapCard")).not.toContainText("⛔");
+});

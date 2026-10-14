@@ -2185,7 +2185,8 @@ header.show-progress .tb-progress{
   margin:2px 0 8px; font:400 19px/1.15 'Lilita One', var(--font-display); color:#f3ecd2;
   -webkit-text-stroke:1.2px #121410; paint-order:stroke fill;
 }
-.map-card-line{ margin:0 0 6px; font-size:13px; line-height:1.4; color:#dfe4d6; }
+.map-card-line{ display:flex; align-items:flex-start; gap:8px; margin:0 0 6px; font-size:13px; line-height:1.4; color:#dfe4d6; }
+.map-card-line img{ flex:none; width:20px; height:20px; object-fit:contain; }
 .map-card-cta{ display:flex; gap:8px; margin-top:10px; }
 .map-card-cta button{
   padding:6px 12px; border-radius:999px; border:1px solid #2f3a2e; background:none; color:#eef1e8;
@@ -2398,8 +2399,9 @@ header.show-progress .tb-progress{
   display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
   background:radial-gradient(circle at 35% 30%, var(--gw-pin-line), var(--gw-panel-2));
   border:2px solid var(--call); box-shadow:0 0 10px color-mix(in srgb, var(--call) 40%, transparent);
-  font-style:normal; font-size:20px;
+  font-style:normal;
 }
+.call i img{ width:30px; height:30px; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
 .call b{
   display:block; font:700 13px var(--font-display); letter-spacing:.14em; text-transform:uppercase;
   color:color-mix(in srgb, var(--call) 80%, var(--gw-ink));
