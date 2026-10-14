@@ -35,7 +35,7 @@ function stepScope(step) {
 function goToStep(n) {
   selectStep(n);
   // En escritorio el detalle vive junto al tablero; en móvil sube la hoja inferior
-  if (!isMobile()) document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (!isMobile()) document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /** HERO inmersivo: mapa a pantalla completa con parallax, el huevo como progreso */

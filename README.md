@@ -35,17 +35,16 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 
 ---
 
-## Interfaz (diseño D — grid + detalle)
+## Interfaz: el diario de pasos
 
-**No más lista lineal.** El nuevo diseño usa un layout tipo "achievement board":
+Los 100 pasos se leen como el diario de misiones del juego.
 
 ### Desktop
-- **Grid 10×10** a la izquierda con los 100 pasos como cuadritos visualmente diferenciados por zona (color de borde) y tier (ícono de esquina). Estados visuales claros: pendiente, completo (dorado), seleccionado (turquesa).
-- **Panel de detalle** a la derecha (sticky) con texto completo del paso seleccionado, badges, peso, navegación entre pasos, y CTA grande para marcar completado.
+- **Lista** a la izquierda, agrupada por el Dofus al que lleva cada tramo ("Hacia el Domakuro", 11/28). Cada fila tiene una casilla para marcar el paso sin abrirlo, la miniatura del paisaje de su zona, el número, el logro que persigue, su jefe o su Dofus y la duración. Si el paso se termina más adelante, lo dice ("se cierra en el 34"). Las pestañas Pendientes, Hechos y Todos filtran la lista.
+- **Detalle** a la derecha. Arriba va un escenario con el paisaje de la zona, el número y el título del paso, y su jefe flotando. Debajo, el texto de Sandglass, los avisos de la guía, las misiones con sus objetivos y lo que hace falta reunir. "Paso hecho · ir al 35" marca el paso y abre el siguiente pendiente. Si el combate del paso cierra otros que siguen pendientes, ofrece marcarlos también. Sin nada elegido, el detalle muestra el siguiente pendiente.
 
 ### Mobile
-- Grid 5×20 con cuadritos más grandes (touch-friendly).
-- Al tocar un paso, sube un **bottom sheet** estilo app nativa con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
+- La lista ocupa todo el ancho. Al tocar un paso, sube un **bottom sheet** con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
 
 ### Otras features
 - ✅ **Hero inmersivo**: el mapa del juego ocupa todo el ancho y casi toda la pantalla, con parallax al bajar, luciérnagas de noche y hojas que caen de día. El progreso es el propio Dofus Silvestre, que se llena de color desde abajo dentro de un anillo de 10 tramos; al 100 % se marca como obtenido. Junto al porcentaje van los pasos hechos y una nota que explica que el porcentaje está ponderado por esfuerzo. Bajo el título, una tarjeta con el siguiente paso que lleva a su detalle y, aparte, "Lo que necesitas": prerrequisitos y objetos necesarios, cada uno con su barra y un enlace a su sección. El parallax y el ambiente se apagan con movimiento reducido.
@@ -56,7 +55,8 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Paleta clara "lima y tinta"**: en modo claro los rellenos usan un verde lima y el texto de acento un verde tinta (`--accent-ink`) con contraste AA sobre fondos claros; el modo oscuro no cambia.
 - ✅ **Reiniciar con red de seguridad**: un diálogo muestra tu progreso, deja elegir qué borrar (pasos, prerrequisitos, objetos conseguidos) sin tocar la posición en el overlay. Lo que se conserva se guarda tal como se ve: si la guía estaba completa, prerrequisitos y objetos quedan marcados aunque se borren los pasos. Tras reiniciar, un aviso permite deshacer durante 8 segundos.
 - ✅ **Copia de seguridad**: dentro del mismo diálogo, una tarjeta con el cofre del juego dice cuándo fue la última copia (y avisa si hace más de 14 días o nunca), descarga el progreso en JSON y lo restaura con un botón o soltando el archivo encima.
-- ✅ **Filtros**: chips por zona, chips por tier, toggle "solo pendientes", búsqueda por texto o número.
+- ✅ **Filtros**: chips por zona y búsqueda por texto o número; los pasos que no coinciden salen de la lista.
+- ✅ **Avisos de la guía**: los resaltados de torrentearcano en tres colores. Rojo, hasta dónde avanzar ("Hasta tener que pasar Lasoberaña"); verde, lo que se resuelve y qué pasos cierra; azul, consejos. Cuando el rojo nombra un jefe que aparece en los objetivos, una línea roja marca dentro de la misión dónde parar.
 - ✅ **Navegación por teclado**: ←/→ entre pasos, espacio para marcar, Esc para cerrar.
 - ✅ **Animaciones**: pulse dorado al completar, shimmer en barra de progreso, transitions cubic-bezier.
 - ✅ **Dofus del camino**: los 10 Dofus que da la guía antes del Silvestre (Dofawa, Esmeralda, Púrpura, Domakuro, Dorigami, Turquesa, Moteado, Marfil, Ébano y Pesadilla), cada uno en el paso que completa su logro. Salen de las recompensas de los logros y de sus misiones, filtradas por el tipo de objeto Dofus de DofusDB, no por el nombre. Mientras avanzas se ven en una fila del hero, oscuros y con su paso hasta conseguirlos; con la guía terminada ocupan el sitio del siguiente paso y de "Lo que necesitas", que ya no hacen falta.
@@ -64,7 +64,7 @@ El conteo "X/100 pasos" se mantiene visible como stat secundario para los comple
 - ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
 - ✅ **Objetos necesarios**: la lista de torrentearcano, paso a paso, como un inventario del juego. La franja **Pronto** reúne lo que piden tus próximos 5 pasos con la cantidad justa para ellos, y el resto queda en "Más adelante"; marcar algo en Pronto marca solo esa parte. Se puede ordenar por cantidad o de la A a la Z, filtrar por categoría y buscar sin tildes (atajo `/`). Hay vista de cuadrícula y de lista: en la cuadrícula la búsqueda resalta en vez de esconder; la lista se pagina (10, 25, 50, 100 o todo, sin tocar Pronto) y la búsqueda filtra. Un objeto deja de hacer falta al completar todos los pasos que lo piden o al marcarlo. El icono de copiar de cada casilla (o mantenerla pulsada en móvil) copia su nombre para buscarlo en el mercadillo.
 - ✅ **Overlay**: una ventana compacta que se queda encima del juego y te lleva objetivo a objetivo por las misiones del paso, con mapa y coordenadas. Ver abajo.
-- ✅ **Misiones por paso**: el detalle de cada paso lista sus misiones con el NPC inicial, el nivel y todos los objetivos.
+- ✅ **Misiones por paso**: el detalle de cada paso lista sus misiones con el NPC inicial, el nivel y todos los objetivos. La misión donde cae la parada roja se abre sola.
 - ✅ **Iconos en prerrequisitos**: oficios, hechizos y logros previos con su icono del juego.
 - ✅ **Estética tipo duffus.fr**: carbón verdoso, acento lima, tipografía Barlow y un mapa del juego de fondo en la cabecera. La marca es un logotipo en la línea del de Dofus (Lilita One con contorno) junto al Dofus Silvestre inclinado; las letras hacen una ola al pasar el ratón. Los botones de overlay y reinicio usan objetos del juego: el Catalejo de gobletrotter, que se inclina y acerca, y el Minirreloj de arena, que se da la vuelta.
 
@@ -89,8 +89,13 @@ La primera fuente es la buena. El logro "Blanco marfil" recompensa el ítem 7115
 el Dofus Marfil, así que el paso 93 muestra ese huevo. Los iconos de categoría son el
 último recurso porque Ankama solo tiene tres para todo el checklist.
 
-El panel de detalle añade los retratos de los jefes nombrados en el texto (64 en total,
-36 jefes distintos) y chips de mazmorra y misión.
+El detalle muestra el primer jefe del paso en su escenario y, si hay más, sus retratos en
+una fila (64 en total, 36 jefes distintos). Cuando el icono del paso es la recompensa de
+su logro, aparece aparte como "Recompensa".
+
+El escenario y las filas usan un paisaje por zona: un mapa del juego elegido a mano entre
+los que recorren sus misiones. `.build/fetch_zone_maps.py` los descarga de DofusDB, recorta
+la marca de agua y los guarda en dos tamaños en `public/img/zones/`.
 
 ### Objetos necesarios
 
@@ -222,7 +227,7 @@ que quien ya tuviera progreso lo conserva.
 npx playwright test
 ```
 
-Son 17 pruebas de extremo a extremo con Playwright en `tests/e2e/`: grid, detalle, misiones,
+Son pruebas de extremo a extremo con Playwright en `tests/e2e/`: diario, detalle, misiones,
 filtros, prerrequisitos, lista de objetos, tema, header, reinicio con copia de seguridad,
 overlay y móvil. Sin `APP_URL`, construyen el sitio y lo prueban en `vite preview`. Con
 `APP_URL` se pueden pasar contra cualquier otro despliegue:

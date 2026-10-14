@@ -169,11 +169,11 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
 test("lo que necesitas va antes de la aclaración y del tablero de pasos", async ({ page }) => {
   await openApp(page);
   // La aclaración explica cómo leer los pasos: va pegada al tablero, debajo de lo que necesitas
-  const order = await page.evaluate(() => ["#needs", "#nota", ".grid-section"]
+  const order = await page.evaluate(() => ["#needs", "#nota", "#diary"]
     .map(sel => document.querySelector(sel).getBoundingClientRect().top + scrollY));
   expect(order).toEqual([...order].sort((a, b) => a - b));
   await expect(page.locator("#needs .section-num")).toHaveText("01");
-  await expect(page.locator(".grid-section .section-num")).toHaveText("02");
+  await expect(page.locator("#diary .section-num")).toHaveText("02");
 });
 
 test("el buscador es ancho y los controles van juntos a la izquierda", async ({ page }) => {

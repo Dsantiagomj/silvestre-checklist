@@ -21,7 +21,7 @@ const REWIND_MS = 450;
 
 function showPaused() {
   setSearch(PHRASE);
-  document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /**

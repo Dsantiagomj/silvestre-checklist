@@ -8,8 +8,7 @@ import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
 import Filters from "./components/Filters.jsx";
-import Grid from "./components/Grid.jsx";
-import DetailPanel from "./components/DetailPanel.jsx";
+import Diary from "./components/Diary.jsx";
 import Needs from "./components/Needs.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
 import ResetDialog from "./components/ResetDialog.jsx";
@@ -61,14 +60,7 @@ export default function App() {
         <Needs />
         <Nota />
         <Filters />
-        {/* LAYOUT PRINCIPAL */}
-        <div className="main-layout">
-          <section className="grid-section" aria-label="Tablero de pasos">
-            <h2 className="section-title"><span className="section-num">02</span>Tablero · 100 pasos</h2>
-            <Grid />
-          </section>
-          <DetailPanel mobile={mobile} />
-        </div>
+        <Diary mobile={mobile} />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />

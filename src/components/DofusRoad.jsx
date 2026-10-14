@@ -8,7 +8,7 @@ const shortName = name => {
 };
 
 function showBoard() {
-  document.getElementById("grid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /**

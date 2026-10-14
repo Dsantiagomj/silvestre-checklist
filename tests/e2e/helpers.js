@@ -12,7 +12,7 @@ export async function openApp(page, seed = null) {
     }, seed);
     await page.reload();
   }
-  await expect(page.locator(".cell")).toHaveCount(100);
+  await expect(page.locator(".diary-row")).toHaveCount(100);
   return errors;
 }
 

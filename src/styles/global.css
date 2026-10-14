@@ -474,28 +474,6 @@ header{
 .clear-btn:hover{ border-color:var(--danger); color:var(--danger); }
 .clear-btn.hidden{ display:none; }
 
-/* LAYOUT --------------------------------------------------------------------*/
-.main-layout{
-  display:grid;
-  grid-template-columns:1fr 1.05fr;
-  gap:18px;
-  margin-bottom:24px;
-  align-items:start;
-}
-@media (max-width:1100px){
-  .main-layout{ grid-template-columns:1fr 1fr; }
-}
-@media (max-width:900px){
-  .main-layout{ grid-template-columns:1fr; }
-}
-
-/* GRID DE PASOS · "tarjetas de logro" ---------------------------------------*/
-.grid-section{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--radius-lg);
-  padding:14px;
-}
 .section-title{
   display:flex; align-items:center; gap:8px;
   margin:0 0 12px;
@@ -510,292 +488,6 @@ header{
   width:3px; height:14px;
   background:var(--amber);
   border-radius:2px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(10, 1fr);
-  gap:5px;
-}
-@media (max-width:640px){
-  .grid{ grid-template-columns:repeat(5, 1fr); gap:6px; }
-}
-
-/* Una celda tipo "card del Dofus" — fondo color zona apagado + número arriba */
-.cell{
-  aspect-ratio:1/1;
-  position:relative;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--zone-color, var(--gold)) 18%, var(--inset)) 0%,
-      color-mix(in srgb, var(--zone-color, var(--gold)) 8%, var(--inset)) 100%);
-  border:1px solid color-mix(in srgb, var(--zone-color, var(--gold)) 35%, var(--line));
-  border-radius:var(--radius);
-  cursor:pointer;
-  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
-  overflow:hidden;
-  font-family:var(--font-display);
-  color:var(--txt);
-}
-.cell::before{
-  /* Brillo sutil arriba, tipo cristal del juego */
-  content:"";
-  position:absolute; top:0; left:0; right:0; height:35%;
-  background:linear-gradient(180deg, rgba(255,255,255,.06), transparent);
-  pointer-events:none;
-}
-.cell .num{
-  font-size:clamp(13px, 2.1vw, 18px);
-  font-weight:800;
-  letter-spacing:-.5px;
-  font-variant-numeric:tabular-nums;
-  z-index:2;
-  text-shadow:0 1px 2px rgba(0,0,0,.4);
-  line-height:1;
-}
-
-/* ART: sprite real del juego (ítem de recompensa o retrato de jefe).
-   Cuando hay arte, el número se va a la esquina y deja de competir con él. */
-.cell.has-art .num{
-  position:absolute;
-  top:2px; left:4px;
-  font-size:clamp(9px, 1.3vw, 11px);
-  opacity:.75;
-  text-shadow:0 1px 3px rgba(0,0,0,.9);
-}
-.cell-art{
-  width:78%; height:78%;
-  object-fit:contain;
-  z-index:1;
-  image-rendering:auto;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)) saturate(.92) brightness(.97);
-  opacity:0;
-  transform:scale(.82);
-  transition:opacity .45s ease, transform .45s cubic-bezier(.2,.9,.25,1), filter .2s ease;
-}
-.cell-art.loaded{ opacity:1; transform:scale(1); }
-.cell:hover .cell-art{ filter:drop-shadow(0 3px 8px rgba(0,0,0,.6)) saturate(1.12) brightness(1.06); }
-.cell.done .cell-art{ filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)) saturate(1.05) brightness(1.02); }
-.cell.selected .cell-art{ filter:drop-shadow(0 3px 10px rgba(0,0,0,.6)) saturate(1.15) brightness(1.08); }
-
-/* Skeleton shimmer mientras el sprite viaja por la red */
-.cell.loading::after{
-  content:"";
-  position:absolute; inset:0;
-  background:linear-gradient(100deg,
-    transparent 20%,
-    color-mix(in srgb, var(--zone-color, var(--gold)) 22%, transparent) 50%,
-    transparent 80%);
-  background-size:220% 100%;
-  animation:shimmer 1.25s ease-in-out infinite;
-  pointer-events:none;
-}
-@keyframes shimmer{
-  from{ background-position:180% 0; }
-  to  { background-position:-80% 0; }
-}
-
-/* Entrada escalonada del tablero (el --i lo pone renderGrid) */
-.cell.reveal{
-  animation:cell-in .5s cubic-bezier(.2,.9,.25,1) backwards;
-  animation-delay:calc(var(--i, 0) * 9ms);
-}
-@keyframes cell-in{
-  from{ opacity:0; transform:translateY(10px) scale(.9); }
-  to  { opacity:1; transform:none; }
-}
-@media (prefers-reduced-motion:reduce){
-  .cell.reveal{ animation:none; }
-  .cell.loading::after{ animation:none; }
-  .cell-art{ transition:opacity .2s linear; transform:none; }
-  .cell-art.loaded{ transform:none; }
-}
-.cell:hover{
-  transform:translateY(-2px) scale(1.04);
-  border-color:var(--zone-color, var(--gold));
-  box-shadow:0 4px 14px rgba(0,0,0,.4),
-             0 0 0 1px color-mix(in srgb, var(--zone-color, var(--gold)) 50%, transparent);
-  z-index:3;
-}
-/* Completado: fondo dorado + check verde esquina */
-.cell.done{
-  background:linear-gradient(180deg,
-    rgba(183,220,105,.28) 0%,
-    rgba(183,220,105,.18) 100%);
-  border-color:var(--gold);
-}
-.cell.done .num{
-  color:#ffffff;
-  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 8px rgba(183,220,105,.4);
-}
-.cell.done::after{
-  content:"✓";
-  position:absolute;
-  top:3px; right:3px;
-  width:14px; height:14px;
-  background:var(--success);
-  color:#142208;
-  font-size:10px;
-  font-weight:800;
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  line-height:1;
-  box-shadow:0 1px 3px rgba(0,0,0,.5);
-}
-/* Seleccionado: outline naranja-ámbar brillante (como en el juego) */
-.cell.selected{
-  border:2px solid var(--amber) !important;
-  box-shadow:
-    0 0 0 2px rgba(183,220,105,.25),
-    0 0 16px rgba(183,220,105,.5),
-    0 4px 14px rgba(0,0,0,.5);
-  transform:scale(1.05);
-  z-index:4;
-}
-.cell.dimmed{ opacity:.15; pointer-events:none; transform:scale(.95); }
-.cell:active{ transform:scale(.96); }
-.cell.just-completed{ animation:cell-pop .55s ease-out; }
-@keyframes cell-pop{
-  0%  { transform:scale(1); }
-  40% { transform:scale(1.22); box-shadow:0 0 24px var(--gold); }
-  100%{ transform:scale(1); }
-}
-
-/* PANEL DETALLE · estilo "panel derecho Aventura/Guía" -----------------------*/
-.detail-panel{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--radius-lg);
-  position:sticky;
-  top:calc(var(--header-h) + var(--sticky-h) + 14px);
-  max-height:calc(100vh - var(--header-h) - var(--sticky-h) - 28px);
-  overflow:hidden;
-  display:flex; flex-direction:column;
-}
-.detail-empty{
-  text-align:center;
-  padding:48px 24px;
-  color:var(--txt-soft);
-}
-.detail-empty .map-ico{
-  font-size:48px;
-  margin-bottom:14px;
-  opacity:.5;
-  color:var(--accent-ink);
-}
-.detail-empty p{
-  margin:0 0 18px;
-  font-size:14px;
-  line-height:1.55;
-}
-#detailContent{
-  display:flex; flex-direction:column;
-  height:100%;
-  overflow:hidden;
-}
-/* Header terracota del detalle, tipo el bloque rojo de "Dofus silvestre" */
-.detail-head{
-  background:linear-gradient(180deg, var(--terracotta) 0%, var(--terracotta-2) 100%);
-  padding:14px 18px;
-  display:flex; align-items:flex-start; gap:14px;
-  position:relative;
-  border-bottom:1px solid #000;
-  box-shadow:inset 0 -1px 0 rgba(255,255,255,.04);
-}
-.detail-head::before{
-  content:""; position:absolute; left:0; right:0; top:0; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(183,220,105,.4), transparent);
-}
-.detail-num-wrap{ flex:1; min-width:0; }
-.detail-num-eyebrow{
-  font-family:var(--font-display);
-  font-size:10px; font-weight:700;
-  letter-spacing:2px; text-transform:uppercase;
-  color:rgba(245,232,200,.7);
-  margin:0 0 2px;
-}
-.detail-num{
-  font-family:var(--font-display);
-  font-size:26px; font-weight:800;
-  color:#e6ecf4;
-  letter-spacing:.5px;
-  text-shadow:0 1px 0 rgba(0,0,0,.4);
-  margin:0;
-  line-height:1.15;
-}
-.detail-close{
-  width:28px; height:28px;
-  background:rgba(0,0,0,.3);
-  border:1px solid rgba(183,220,105,.3);
-  border-radius:var(--radius-sm);
-  color:#e6ecf4;
-  font-size:18px; line-height:1;
-  flex-shrink:0;
-  transition:all .15s ease;
-}
-.detail-close:hover{
-  background:rgba(208,64,96,.4);
-  border-color:var(--danger);
-}
-.detail-body{
-  flex:1; overflow-y:auto;
-  padding:16px 18px 18px;
-}
-.detail-badges{
-  display:flex; flex-wrap:wrap; gap:6px;
-  margin-bottom:10px;
-}
-
-/* GALERÍA DE ASSETS · recompensa, jefes y mazmorras del paso ----------------*/
-.detail-art{
-  display:flex; align-items:center; gap:14px;
-  padding:14px;
-  margin-bottom:14px;
-  background:
-    radial-gradient(120% 120% at 50% 0%,
-      color-mix(in srgb, var(--zone-color, var(--gold)) 16%, var(--inset)) 0%,
-      var(--inset) 70%);
-  border:1px solid color-mix(in srgb, var(--zone-color, var(--gold)) 32%, var(--line));
-  border-radius:var(--radius);
-  animation:art-in .4s cubic-bezier(.2,.9,.25,1) backwards;
-}
-@keyframes art-in{
-  from{ opacity:0; transform:translateY(8px); }
-  to  { opacity:1; transform:none; }
-}
-.detail-art-main{
-  flex:0 0 auto;
-  width:68px; height:68px;
-  display:grid; place-items:center;
-  background:var(--bg);
-  border:1px solid var(--line-2);
-  border-radius:var(--radius);
-}
-.detail-art-main img{
-  width:84%; height:84%;
-  object-fit:contain;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
-}
-.detail-art-meta{ min-width:0; }
-.detail-art-label{
-  margin:0 0 3px;
-  font-family:var(--font-display);
-  font-size:10px; font-weight:700;
-  letter-spacing:1.6px; text-transform:uppercase;
-  color:var(--txt-mute);
-}
-.detail-art-name{
-  margin:0;
-  font-family:var(--font-display);
-  font-size:15px; font-weight:700;
-  color:var(--gold-ink);
-  line-height:1.25;
-}
-.detail-art-sub{
-  margin:4px 0 0;
-  font-size:12px;
-  color:var(--txt-soft);
 }
 /* Fila de jefes */
 .boss-row{
@@ -829,9 +521,6 @@ header{
   font-family:var(--font-display);
   letter-spacing:.4px;
 }
-@media (prefers-reduced-motion:reduce){
-  .detail-art{ animation:none; }
-}
 .badge{
   display:inline-flex; align-items:center; gap:5px;
   padding:3px 9px;
@@ -852,32 +541,7 @@ header{
   width:7px; height:7px; border-radius:50%;
   background:var(--zone-color, var(--gold));
 }
-/* Texto verbatim · "card de misión" con franja ámbar lateral */
-.detail-text{
-  background:var(--inset);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  font-size:14px;
-  line-height:1.7;
-  white-space:pre-wrap; word-wrap:break-word;
-  margin-bottom:18px;
-  color:var(--txt);
-  font-family:var(--font-body);
-  position:relative;
-}
-.detail-text::before{
-  content:"";
-  position:absolute;
-  top:0; left:0; bottom:0;
-  width:3px;
-  background:var(--amber);
-  border-radius:var(--radius) 0 0 var(--radius);
-}
-
 /* CTAs ---------------------------------------------------------------------*/
-.detail-cta{ display:flex; flex-direction:column; gap:10px; }
-
 .btn-primary{
   background:linear-gradient(180deg, var(--gold) 0%, var(--gold-2) 100%);
   color:var(--bg);
@@ -998,7 +662,6 @@ header{
   -webkit-overflow-scrolling:touch;
   flex:1;
 }
-.sheet .detail-head{ border-radius:0; }
 @media (min-width:901px){
   .sheet, .sheet-overlay{ display:none; }
 }
@@ -1104,7 +767,7 @@ a:hover{ text-decoration:underline; }
 .bar-fill{ background:linear-gradient(90deg, var(--amber-2), var(--amber)); box-shadow:0 0 14px rgba(183,220,105,.45); }
 
 /* Cards */
-.grid-section, .detail-panel, .needs{
+.needs, .diary-window{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:16px;
@@ -1121,8 +784,6 @@ a:hover{ text-decoration:underline; }
   font-size:15px; font-weight:700; letter-spacing:.5px;
   margin-right:4px;
 }
-.cell{ border-radius:10px; }
-.cell.selected{ border-color:var(--amber) !important; }
 .btn-primary{ background:var(--amber) !important; color:#0d0e0c !important; border-color:var(--amber) !important; }
 .btn-primary.is-done{ background:transparent !important; color:var(--accent-ink) !important; }
 .btn-ghost{
@@ -2086,11 +1747,6 @@ header.show-progress .tb-progress{
   .hero-egg{ transition:none; }
 }
 
-/* En claro el borde lima se pierde sobre blanco: la celda seleccionada usa la tinta */
-[data-theme="light"] .cell.selected{
-  border-color:var(--accent-ink) !important;
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 45%, transparent), 0 4px 14px rgba(0,0,0,.12);
-}
 
 /* LO QUE NECESITAS ------------------------------------------------------------
    Prerrequisitos y objetos en una sección con dos pestañas que llevan el mismo
@@ -2492,3 +2148,206 @@ header.show-progress .tb-progress{
   .needs-find-end kbd{ display:none; }
 }
 
+
+/* 02 · LOS 100 PASOS --------------------------------------------------------
+   Diario: la lista por capítulos a la izquierda y, a la derecha, el paso con su
+   escenario (paisaje de la zona y jefe), los avisos de la guía y las misiones. */
+.diary{ margin-bottom:24px; scroll-margin-top:calc(var(--header-h) + 12px); }
+.diary-window{ display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip; }
+
+.diary-side{
+  position:sticky; top:calc(var(--header-h) + 12px); align-self:start;
+  display:flex; flex-direction:column;
+  max-height:calc(100vh - var(--header-h) - 24px);
+  background:var(--bg-2); border-right:1px solid var(--line);
+}
+.diary-tabs{ display:flex; gap:4px; padding:10px; border-bottom:1px solid var(--line); }
+.diary-tabs button{
+  flex:1; padding:7px 8px; border-radius:999px; border:0; background:none;
+  font-size:13px; font-weight:700; color:var(--txt-soft); cursor:pointer;
+}
+.diary-tabs button .n{ color:var(--txt-mute); font-weight:600; }
+.diary-tabs button[aria-pressed="true"]{ background:color-mix(in srgb, var(--soon) 18%, transparent); color:var(--soon-ink); }
+.diary-tabs button[aria-pressed="true"] .n{ color:inherit; }
+.diary-list{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding-bottom:10px; }
+.diary-empty{ padding:28px 16px; text-align:center; color:var(--txt-mute); }
+
+.diary-group-head{
+  position:sticky; top:0; z-index:1;
+  display:flex; align-items:center; gap:10px; margin:0; padding:10px 14px 8px;
+  background:var(--bg-2);
+  font-family:'Lilita One', var(--font-display); font-weight:400; font-size:15px; letter-spacing:.2px; color:var(--txt);
+}
+.diary-group-head img{ width:26px; height:26px; object-fit:contain; }
+.diary-group-head small{ margin-left:auto; font:800 12px var(--font-display); color:var(--txt-mute); }
+.diary-rows{ list-style:none; margin:0; padding:0; }
+
+.diary-row{ display:flex; align-items:center; gap:2px; padding-left:12px; border-left:3px solid transparent; }
+.diary-row.current{
+  border-left-color:var(--soon);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--soon) 16%, transparent), transparent);
+}
+.row-check{
+  position:relative; flex:none; width:20px; height:20px; padding:0;
+  border:2px solid var(--line-warm); border-radius:6px; background:none; cursor:pointer;
+}
+.row-check:hover{ border-color:var(--amber); }
+.row-check[aria-pressed="true"]{ background:var(--amber); border-color:var(--amber); }
+.row-check[aria-pressed="true"]::after{
+  content:"✓"; position:absolute; inset:0; display:grid; place-items:center;
+  font-size:13px; font-weight:900; color:#142208;
+}
+.row-main{
+  flex:1; min-width:0;
+  display:grid; grid-template-columns:34px 26px minmax(0, 1fr) 28px 46px; align-items:center; gap:10px;
+  padding:7px 10px 7px 8px; border:0; border-radius:8px; background:none;
+  color:inherit; font:inherit; text-align:left; cursor:pointer;
+}
+.row-main:hover{ background:color-mix(in srgb, var(--txt) 5%, transparent); }
+.row-thumb{
+  width:34px; height:26px; border-radius:6px;
+  background:var(--panel-2) center / cover; box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);
+}
+.row-num{ font:800 15px var(--font-display); color:var(--gold-ink); text-align:center; }
+.row-text{ min-width:0; }
+.row-title{ display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:14px; font-weight:600; }
+.row-sub{ display:flex; align-items:center; gap:6px; overflow:hidden; white-space:nowrap; font-size:11.5px; color:var(--txt-mute); }
+.row-closed{
+  flex:none; padding:0 7px; border-radius:999px;
+  background:color-mix(in srgb, var(--amber) 16%, transparent);
+  font-size:10.5px; font-weight:700; color:var(--accent-ink);
+}
+.row-art img{ display:block; width:28px; height:28px; object-fit:contain; }
+.row-effort{ font-size:12px; color:var(--txt-mute); text-align:right; }
+.diary-row.done .row-title{ color:var(--txt-mute); }
+.diary-row.done .row-thumb{ filter:grayscale(.8) brightness(.6); }
+.diary-row.done .row-art{ opacity:.5; }
+
+/* Detalle: el escenario va siempre en oscuro, como un estandarte, en los dos temas */
+.diary-detail{ min-width:0; }
+.journal-hero{
+  position:relative; isolation:isolate; overflow:hidden;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  min-height:230px; padding:22px 26px 18px;
+  background:#141712; color:#f3ecd2;
+}
+.journal-bg{ position:absolute; inset:0; z-index:-2; background:center 45% / cover; }
+.journal-hero::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:
+    linear-gradient(90deg, rgba(16,18,15,.94) 0, rgba(16,18,15,.66) 45%, rgba(16,18,15,0) 80%),
+    linear-gradient(0deg, rgba(16,18,15,.85) 0, rgba(16,18,15,0) 50%);
+}
+.journal-head{ min-width:0; max-width:62%; }
+.journal-num, .journal-title, .journal-show-name{
+  font-family:'Lilita One', var(--font-display); font-weight:400;
+  -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 3px 0 #121410;
+}
+.journal-num{ display:block; font-size:52px; line-height:1; color:#cbee8f; }
+.journal-title{ margin:6px 0 10px; font-size:28px; line-height:1.08; color:#f3ecd2; }
+.journal-meta{ display:flex; flex-wrap:wrap; gap:6px; }
+.journal-meta .badge{ background:rgba(13,14,12,.75); border-color:rgba(255,255,255,.14); color:#dfe4d6; }
+.journal-meta .badge.is-done{ color:#cbee8f; }
+.journal-show{
+  position:relative; flex:none; align-self:flex-end;
+  display:flex; flex-direction:column; align-items:center;
+  width:190px; margin:0; text-align:center;
+}
+.journal-show::before{
+  content:""; position:absolute; bottom:46px; width:140px; height:24px; border-radius:50%;
+  background:radial-gradient(rgba(227,197,101,.45), transparent 70%);
+}
+.journal-show img{
+  position:relative; width:150px; height:150px; object-fit:contain;
+  filter:drop-shadow(0 14px 14px rgba(0,0,0,.7));
+  animation:journal-float 3.2s ease-in-out infinite;
+}
+.journal-show figcaption small{
+  display:block; font:800 11px var(--font-display); letter-spacing:.18em; text-transform:uppercase; color:#e3c565;
+}
+.journal-show-name{ display:block; font-size:20px; line-height:1.1; color:#f3ecd2; -webkit-text-stroke-width:1.5px; }
+@keyframes journal-float{ 50%{ transform:translateY(-8px); } }
+
+.journal-body{ padding:6px 26px 24px; }
+.journal-base{ margin:12px 0; font-size:15px; line-height:1.6; color:var(--txt); }
+.journal-calls{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.call{
+  --call:var(--amber);
+  display:grid; grid-template-columns:30px minmax(0, 1fr); gap:10px; align-items:start;
+  padding:11px 14px; border-radius:12px;
+  background:color-mix(in srgb, var(--call) 9%, transparent);
+  border:1px solid color-mix(in srgb, var(--call) 42%, transparent);
+  font-size:14.5px; line-height:1.5;
+}
+.call.stop{ --call:var(--danger); }
+.call.tip{ --call:#5fa8e0; }
+.call i{
+  display:grid; place-items:center; width:30px; height:30px; border-radius:8px;
+  background:color-mix(in srgb, var(--call) 22%, transparent); font-style:normal; font-size:15px;
+}
+.call b{
+  display:block; font:800 11.5px var(--font-display); letter-spacing:.16em; text-transform:uppercase;
+  color:color-mix(in srgb, var(--call) 75%, var(--txt));
+}
+.call-steps{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px; font-size:13px; color:var(--txt-soft); }
+.step-chip{
+  padding:2px 10px; border-radius:999px; border:1px solid var(--line-warm); background:var(--inset);
+  font:700 13px var(--font-body); color:var(--txt); cursor:pointer;
+}
+.step-chip:hover{ border-color:var(--amber); }
+
+.journal-extras{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:6px; }
+.journal-extras .boss-row{ margin:0; }
+.journal-reward{
+  display:inline-flex; align-items:center; gap:8px; padding:4px 12px 4px 4px; border-radius:999px;
+  background:var(--inset); border:1px solid var(--line-2); font-size:13.5px;
+}
+.journal-reward img{ width:28px; height:28px; object-fit:contain; }
+.journal-h{ margin:18px 0 8px; font:800 12px var(--font-display); letter-spacing:.16em; text-transform:uppercase; color:var(--txt-soft); }
+.journal-h .n{ color:var(--accent-ink); }
+.journal-quests{ display:flex; flex-direction:column; gap:8px; }
+.journal-quests .q-item > :not(summary){ margin-left:12px; margin-right:12px; }
+.journal-quests .obj-list{ margin-bottom:12px; }
+.obj-stop{
+  display:flex; align-items:center; gap:10px; margin:6px 0;
+  font:800 11.5px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:var(--danger);
+}
+.obj-stop::before, .obj-stop::after{
+  content:""; flex:1; height:2px;
+  background:repeating-linear-gradient(90deg, var(--danger) 0 8px, transparent 8px 14px);
+}
+.obj-stop span{ max-width:70%; text-align:center; }
+.journal .req{ margin-top:18px; }
+.journal-cta{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:18px; }
+.journal-cta .btn-primary{ width:auto; }
+.journal-cta .detail-nav{ margin-left:auto; }
+.journal-also{
+  display:inline-flex; align-items:center; gap:8px; padding:4px 4px 4px 14px; border-radius:999px;
+  border:1px dashed color-mix(in srgb, var(--amber) 55%, transparent);
+  font-size:13.5px; color:var(--txt-soft);
+}
+.journal-also .btn-secondary{ width:auto; padding:6px 12px; }
+.journal .asset-note{ margin-top:16px; }
+
+@media (prefers-reduced-motion:reduce){
+  .journal-show img{ animation:none; }
+}
+@media (max-width:900px){
+  .diary-window{ grid-template-columns:1fr; }
+  .diary-side{ position:static; max-height:none; border-right:0; }
+  .diary-list{ overflow:visible; }
+  .diary-group-head{ top:var(--header-h); }
+}
+@media (max-width:600px){
+  .row-main{ grid-template-columns:30px 22px minmax(0, 1fr) 26px; gap:8px; }
+  .row-effort{ display:none; }
+  .journal-hero{ min-height:190px; padding:16px; }
+  .journal-head{ max-width:64%; }
+  .journal-num{ font-size:40px; }
+  .journal-title{ font-size:21px; }
+  .journal-show{ width:110px; }
+  .journal-show img{ width:96px; height:96px; }
+  .journal-show-name{ font-size:16px; }
+  .journal-body{ padding:4px 16px 20px; }
+  .journal-cta .detail-nav{ margin-left:0; width:100%; }
+}
