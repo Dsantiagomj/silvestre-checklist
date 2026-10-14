@@ -34,8 +34,8 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   await expect(j.locator(".call.stop")).toContainText("Hasta tener que pasar Lasoberaña");
   await expect(j.locator(".call.tip")).toContainText("primeras 4 salas");
   await expect(j.locator(".call.done")).toContainText("Se pasa Lasoberaña");
-  // Las fichas del verde llevan a esos pasos
-  await j.locator('.call.done .step-chip[data-n="33"]').click();
+  // Los incisos del verde llevan a esos pasos
+  await j.locator('.call.done .step-ref[data-n="33"]').click();
   await expect(j.locator(".journal-num")).toHaveText("33");
 });
 
@@ -57,7 +57,8 @@ test("la línea de parada cae justo antes de vencer a Lasoberaña", async ({ pag
 test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
   await row(page, 34).locator(".row-main").click();
-  await expect(page.locator("#toggleBtn")).toContainText("Paso hecho · ir al 35");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
+  await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca el paso y abre el 35");
   await page.click("#toggleBtn");
   await expect(row(page, 34)).toHaveClass(/done/);
   await expect(page.locator("#journal .journal-num")).toHaveText("35");

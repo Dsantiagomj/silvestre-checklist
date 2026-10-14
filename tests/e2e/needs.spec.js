@@ -439,7 +439,8 @@ test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async 
 
 test("los prerrequisitos que son misiones llevan el símbolo de misión del juego", async ({ page }) => {
   await openApp(page);
-  for (const id of ["l6", "l7", "l11"]) {
+  // Las misiones sin icono propio (el l6, koalaks, sí tiene el suyo)
+  for (const id of ["l7", "l11"]) {
     await expect(page.locator(`#prereqs .pr-card[data-id="${id}"] .pr-icons .quest-mark`)).toHaveCount(1);
   }
   await expect(page.locator("#prereqs")).not.toContainText("📜");
