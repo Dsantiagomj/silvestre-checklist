@@ -1,8 +1,18 @@
 import { expect } from "@playwright/test";
 
-/** Abre la app con un progreso inicial opcional y recoge los errores de la página. */
-export async function openApp(page, seed = null) {
+/**
+ * Abre la app con un progreso inicial opcional y recoge los errores de la página.
+ * La vista por defecto de los pasos es el mapa; casi todas las pruebas trabajan sobre el
+ * diario, así que empiezan en él salvo que la prueba elija otra (view: null deja la
+ * de la app).
+ */
+export async function openApp(page, seed = null, { view = "diary" } = {}) {
   const errors = [];
+  if (view) {
+    await page.addInitScript(v => {
+      if (!localStorage.getItem("silvestre:stepsView")) localStorage.setItem("silvestre:stepsView", v);
+    }, view);
+  }
   page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
   await page.goto("");
@@ -12,7 +22,7 @@ export async function openApp(page, seed = null) {
     }, seed);
     await page.reload();
   }
-  await expect(page.locator(".diary-row")).toHaveCount(100);
+  await expect(page.locator(view === "diary" ? ".diary-row" : ".map-node")).toHaveCount(100);
   return errors;
 }
 

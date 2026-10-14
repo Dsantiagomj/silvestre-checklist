@@ -142,7 +142,8 @@ const swapState = (page, click) => page.evaluate(async click => {
 
 test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) => {
   await openApp(page);
-  await page.waitForTimeout(500);
+  // Las funciones de animación de motion llegan aparte: sin ellas el cambio es instantáneo
+  await page.waitForLoadState("networkidle");
   const seen = await swapState(page, "#stepsViewMap");
   // Las dos vistas conviven: la que se va, inerte, encima de la que llega
   expect(seen.layers).toBe(2);
@@ -178,11 +179,15 @@ test("con movimiento reducido el cambio de vista es inmediato", async ({ page })
 
 test("durante el zoom no se anima la altura ni nada dentro de la vista que se va", async ({ page }) => {
   await openApp(page);
-  await page.waitForTimeout(500);
-  await page.click("#stepsViewMap");
-  const busy = await page.evaluate(() => {
+  // Las funciones de animación de motion llegan aparte: sin ellas el cambio es instantáneo
+  await page.waitForLoadState("networkidle");
+  // Clic y lectura en la misma llamada: el zoom dura 0,3 s
+  const busy = await page.evaluate(async () => {
+    document.getElementById("stepsViewMap").click();
+    await new Promise(r => requestAnimationFrame(r));
     const stage = document.querySelector(".steps-stage");
     const leaving = stage.querySelector(":scope > .steps-layer[inert]");
+    if (!leaving) return "sin capa saliente";
     return document.getAnimations().filter(a => {
       const t = a.effect?.target;
       return t && leaving.contains(t) && t !== leaving;

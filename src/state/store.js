@@ -91,8 +91,8 @@ function initialState() {
     needsCollapsed: localStorage.getItem(LS.needsCollapsed) === "1",
     selectedStep: null,
     sheetOpen: false,
-    // Los 100 pasos como diario (lista + detalle) o como mapa del camino
-    stepsView: localStorage.getItem(LS.stepsView) === "map" ? "map" : "diary",
+    // Los 100 pasos como mapa del camino (por defecto) o como diario (lista + detalle)
+    stepsView: localStorage.getItem(LS.stepsView) === "diary" ? "diary" : "map",
     // status: all | pending | done (las pestañas del diario)
     filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
@@ -401,8 +401,8 @@ export function applySnapshot(snap) {
     questObj: snap.questObj || {},
     selectedStep: null,
     sheetOpen: false,
-    // Los 100 pasos como diario (lista + detalle) o como mapa del camino
-    stepsView: localStorage.getItem(LS.stepsView) === "map" ? "map" : "diary",
+    // Los 100 pasos como mapa del camino (por defecto) o como diario (lista + detalle)
+    stepsView: localStorage.getItem(LS.stepsView) === "diary" ? "diary" : "map",
     shopEpoch: s.shopEpoch + 1,
   }));
   // La versión vanilla siempre reescribía las cinco claves, aunque no cambiaran.
