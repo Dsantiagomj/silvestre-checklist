@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ALL_PREREQS } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS, CATEGORIES, RES_ITEMS, STEPS_WITH_ITEMS, aggregate, rowName } from "../lib/resources.js";
@@ -88,7 +88,68 @@ function DoneStrip({ level, setLevel }) {
   );
 }
 
-const SOON_ICONS = 6;
+// Líneas de objetos de "Pronto" (más en móvil, donde caben menos por línea) y lo que
+// se reserva para el "+N" al final (px)
+const lines = () => (matchMedia("(max-width:600px)").matches ? 3 : 2);
+const MORE_W = 56;
+
+function SoonChip({ row }) {
+  const it = RES_ITEMS[row.a[0][0]];
+  return (
+    <span className="soon-chip">
+      {it.img ? <img src={imgUrl(it.img)} alt="" /> : <span className="item-unknown">?</span>}
+      <span className="soon-chip-name">{rowName(row)}</span>
+      <b>×{fmt.format(row.a[0][1])}</b>
+    </span>
+  );
+}
+
+/**
+ * Los objetos de "Pronto" con nombre y cantidad, tantos como quepan en dos líneas; el
+ * resto en "+N". Se miden en una fila fantasma para recalcular al cambiar el ancho.
+ */
+function SoonPeek({ rows }) {
+  const boxRef = useRef(null);
+  const ghostRef = useRef(null);
+  const [fit, setFit] = useState(rows.length);
+  useLayoutEffect(() => {
+    const box = boxRef.current, ghost = ghostRef.current;
+    if (!box || !ghost) return;
+    const measure = () => {
+      const widths = [...ghost.children].map(c => c.getBoundingClientRect().width);
+      const gap = parseFloat(getComputedStyle(box).columnGap) || 0;
+      const room = box.clientWidth;
+      // Se llenan las líneas en orden; en la última se deja sitio para el "+N"
+      const LINES = lines();
+      let line = 1, used = 0, n = 0;
+      for (const w of widths) {
+        const left = widths.length - (n + 1);
+        const reserve = line === LINES && left ? gap + MORE_W : 0;
+        const next = used + (used ? gap : 0) + w;
+        if (next + reserve <= room) { used = next; n++; continue; }
+        if (line === LINES) break;
+        line++; used = w; n++;
+      }
+      setFit(n);
+    };
+    measure();
+    // Con la fuente de respaldo los nombres miden otra cosa: se vuelve a medir al cargarla
+    document.fonts?.ready.then(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, [rows]);
+  const more = rows.length - fit;
+  return (
+    <span className="needs-strip-peek" ref={boxRef}>
+      {rows.slice(0, fit).map(r => <SoonChip key={r.k} row={r} />)}
+      {more > 0 && <span className="more">+{more}</span>}
+      <span className="needs-strip-ghost" ref={ghostRef} aria-hidden="true">
+        {rows.map(r => <SoonChip key={r.k} row={r} />)}
+      </span>
+    </span>
+  );
+}
 
 function Meter({ label, done, total }) {
   return (
@@ -105,7 +166,6 @@ function Meter({ label, done, total }) {
  */
 function ProgressStrip({ s }) {
   const soon = aggregate(soonSteps(s).filter(n => STEPS_WITH_ITEMS.includes(n))).filter(r => !rowHave(s, r));
-  const icons = soon.slice(0, SOON_ICONS);
   return (
     <>
       <h2 className="sr-only" id="needsTitle">Lo que necesitas</h2>
@@ -117,13 +177,7 @@ function ProgressStrip({ s }) {
             {soon.length ? `Pronto: ${soon.length} objetos para tus próximos pasos` : "Nada que reunir para tus próximos pasos"}
           </span>
         </span>
-        <span className="needs-strip-icons" aria-hidden="true">
-          {icons.map(r => {
-            const it = RES_ITEMS[r.a[0][0]];
-            return it.img ? <img key={r.k} src={imgUrl(it.img)} alt="" title={rowName(r)} /> : null;
-          })}
-          {soon.length > icons.length && <span className="more">+{soon.length - icons.length}</span>}
-        </span>
+        {soon.length > 0 && <SoonPeek rows={soon} />}
         <span className="needs-meters">
           <Meter label="Prerrequisitos" done={prereqsDone(s)} total={ALL_PREREQS.length} />
           <Meter label="Objetos" done={ownedCount(s)} total={ALL_ROWS.length} />
