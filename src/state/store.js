@@ -16,6 +16,14 @@ export const LS = {
   questObj: "silvestre:questObjective",
   guide: "silvestre:guide",
   itemsView: "silvestre:itemsView",
+  itemsPageSize: "silvestre:itemsPageSize",
+};
+
+// Tamaños de página de la lista de objetos; "all" = sin paginar
+export const PAGE_SIZES = [10, 25, 50, 100, "all"];
+const readPageSize = () => {
+  const v = localStorage.getItem(LS.itemsPageSize);
+  return v === "all" ? "all" : PAGE_SIZES.includes(Number(v)) ? Number(v) : 25;
 };
 
 // Versión de la guía de Sandglass con la que se numeran los pasos guardados
@@ -83,6 +91,8 @@ function initialState() {
     shopPendingOnly: true,
     shopSort: "soon",   // soon (Pronto primero) | qty | az
     shopView: localStorage.getItem(LS.itemsView) === "list" ? "list" : "grid",
+    shopPageSize: readPageSize(),
+    shopPage: 0,
     shopQuery: "",
     // Cada vez que la versión vanilla repintaba la lista entera se repetía la
     // animación de entrada; este contador remonta la rejilla en esos mismos casos.
@@ -249,14 +259,20 @@ export const setPendingFilter = b => setFilters({ pending: b });
 export const clearFilters = () => setFilters({ zones: [], pending: false, search: "" });
 
 // Objetos necesarios
-export const setShopTab = tab => setState(s => ({ shopTab: tab, shopEpoch: s.shopEpoch + 1 }));
-export const setShopPendingOnly = b => setState(s => ({ shopPendingOnly: b, shopEpoch: s.shopEpoch + 1 }));
-export const setShopSort = sort => setState(s => ({ shopSort: sort, shopEpoch: s.shopEpoch + 1 }));
-export const setShopQuery = q => setState({ shopQuery: q });
+// Cualquier cambio de lo que se ve vuelve a la primera página de la lista
+export const setShopTab = tab => setState(s => ({ shopTab: tab, shopPage: 0, shopEpoch: s.shopEpoch + 1 }));
+export const setShopPendingOnly = b => setState(s => ({ shopPendingOnly: b, shopPage: 0, shopEpoch: s.shopEpoch + 1 }));
+export const setShopSort = sort => setState(s => ({ shopSort: sort, shopPage: 0, shopEpoch: s.shopEpoch + 1 }));
+export const setShopQuery = q => setState({ shopQuery: q, shopPage: 0 });
 export function setShopView(view) {
   localStorage.setItem(LS.itemsView, view);
-  setState({ shopView: view });
+  setState({ shopView: view, shopPage: 0 });
 }
+export function setShopPageSize(size) {
+  localStorage.setItem(LS.itemsPageSize, String(size));
+  setState({ shopPageSize: size, shopPage: 0 });
+}
+export const setShopPage = page => setState({ shopPage: page });
 
 /**
  * Marca o desmarca filas de objetos para sus pasos (row.steps). Una fila de "Pronto"
