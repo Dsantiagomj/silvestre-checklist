@@ -56,15 +56,26 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
   expect(z.marker).toBeLessThan(z.step);
   expect(z.marker).toBeLessThan(z.boss);
 
-  // Pasar el ratón la repite desde el principio
-  const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
-  await page.locator(".nota-example").hover();
-  await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
-
   // Se detiene la animación y se salta a cada momento: no depende de lo rápida que vaya la máquina
   const at = ms => page.locator(".nota-track").evaluate((t, ms) => {
     for (const a of t.getAnimations({ subtree: true })) { a.pause(); a.currentTime = ms; }
   }, ms);
+  const finish = () => page.locator(".nota-track").evaluate(t => {
+    for (const a of t.getAnimations({ subtree: true })) a.finish();
+  });
+
+  // Pasar el ratón a mitad de la historia no la corta
+  const run = Number(await page.locator(".nota-track").getAttribute("data-run"));
+  await page.mouse.move(5, 5);
+  await page.locator(".nota-example").hover();
+  await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run));
+  // Terminada, pasar el ratón la rebobina con suavidad y la repite desde el principio
+  await finish();
+  await page.mouse.move(5, 5);
+  await page.locator(".nota-example").hover();
+  await expect(page.locator(".nota-track")).toHaveClass(/\brewind\b/);
+  await expect(page.locator(".nota-track")).toHaveAttribute("data-run", String(run + 1));
+  await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
   const pauses = () => page.locator(".nota-step.paused").evaluateAll(els =>
     els.map(el => Number(getComputedStyle(el, "::before").opacity)));
 
@@ -74,19 +85,19 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
   await at(900);
   expect(await pauses()).toEqual([1, 0]);
   // Con las dos pausas puestas el jefe sigue en pie: hay tiempo para seguir la historia
-  await at(2500);
+  await at(2300);
   expect(await pauses()).toEqual([1, 1]);
   expect((await exampleState(page)).boss).not.toContain("grayscale(1)");
   // El jefe cae antes de que se marque nada
-  await at(4700);
+  await at(3500);
   expect(await exampleState(page)).toMatchObject({ checks: [0, 0, 0], boss: expect.stringContaining("grayscale(1)") });
   // El 45 primero, luego hacia atrás
-  await at(5300);
+  await at(4100);
   expect((await exampleState(page)).checks).toEqual([0, 0, 1]);
-  await at(6000);
+  await at(4800);
   expect((await exampleState(page)).checks).toEqual([0, 1, 1]);
   // Final: los tres con ✓, sin pausas, y se queda así
-  await at(8000);
+  await at(7000);
   expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
   expect(await pauses()).toEqual([0, 0]);
 });
@@ -98,4 +109,24 @@ test("con movimiento reducido el ejemplo muestra directamente el final", async (
   expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
   await expect(page.locator(".nota-marker")).toBeHidden();
   await ctx.close();
+});
+
+test("el rebobinado parte del final, sin saltar al principio", async ({ page }) => {
+  await openApp(page);
+  await page.locator("#nota").scrollIntoViewIfNeeded();
+  await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
+  await page.locator(".nota-track").evaluate(t => { for (const a of t.getAnimations({ subtree: true })) a.finish(); });
+  // Congela las animaciones en el mismo instante en que empieza el rebobinado
+  await page.locator(".nota-track").evaluate(t => {
+    new MutationObserver((_, obs) => {
+      if (!t.classList.contains("rewind")) return;
+      for (const a of t.getAnimations({ subtree: true })) a.pause();
+      obs.disconnect();
+    }).observe(t, { attributes: true, attributeFilter: ["class"] });
+  });
+  await page.mouse.move(5, 5);
+  await page.locator(".nota-example").hover();
+  await expect(page.locator(".nota-track")).toHaveClass(/\brewind\b/);
+  // Al empezar a rebobinar todo sigue como al final: ✓ visibles y el jefe en gris
+  expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
 });
