@@ -1,4 +1,5 @@
 import { memo, useLayoutEffect, useRef } from "react";
+import { useHeightMorph } from "../lib/motion.js";
 import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { CHAPTERS, CLOSED_BY, stepTitle } from "../lib/journal.js";
@@ -136,6 +137,9 @@ export default function Diary({ mobile }) {
   // Sin nada elegido, el detalle abre el siguiente pendiente (en móvil vive en la hoja)
   const current = s.selectedStep ?? (mobile ? null : next);
   const map = s.stepsView === "map";
+  // Cambiar de vista o de paso mueve lo de debajo con suavidad, sin saltos
+  const stageRef = useRef(null);
+  useHeightMorph(stageRef, map ? "map" : `diary-${current}`);
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
@@ -148,6 +152,7 @@ export default function Diary({ mobile }) {
         <DiaryBar s={s} />
       </div>
       <ZoneSeals s={s} current={current} />
+      <div className="steps-stage" ref={stageRef}>
       {map ? (
         <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
       ) : (
@@ -161,6 +166,7 @@ export default function Diary({ mobile }) {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

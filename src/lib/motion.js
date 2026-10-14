@@ -39,9 +39,10 @@ export function useHeightMorph(ref, key, duration = 320) {
     last.current = to;
     if (from == null || Math.abs(from - to) < 2 || prefersReducedMotion()) return;
     // Hacia "auto" (con interpolate-size, en global.css) y no hacia la altura medida:
-    // si el contenido se reajusta a mitad de camino, el destino lo sigue
+    // si el contenido se reajusta a mitad de camino, el destino lo sigue. "clip" y no
+    // "hidden": hidden haría del bloque un contenedor de scroll y rompería lo sticky
     const anim = el.animate(
-      [{ height: `${from}px`, overflow: "hidden" }, { height: "auto", overflow: "hidden" }],
+      [{ height: `${from}px`, overflow: "clip" }, { height: "auto", overflow: "clip" }],
       { duration, easing: EASE },
     );
     // Al terminar, la altura real es la de partida del siguiente cambio
