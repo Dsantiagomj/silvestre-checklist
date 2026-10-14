@@ -287,7 +287,7 @@ export default function Needs() {
       <div className="needs-bar">
         <p className="needs-hint" id="needsHint">
           {tab === "prereqs"
-            ? "«Marcar todo» marca los 18 prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer."
+            ? `«Marcar todo» marca los ${ALL_PREREQS.length} prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer.`
             : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
         </p>
         {actions}

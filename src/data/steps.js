@@ -115,17 +115,25 @@ for (const step of STEPS) step.base ??= step.text;
 // PREREQUISITOS
 export const PREREQS_INTRO = "Esta guía está hecha por Sandglass, una de las mejores aportaciones jamás hechas para la comunidad hispana de Dofus. Antes de comenzar con las misiones, se recomienda que el personaje sea al menos nivel 150 por temas de requerimientos de nivel en algunas misiones.";
 
+// Mismo orden que la guía; los ids no cambian porque son la clave del progreso guardado
 export const PREREQS_LOGROS = [
   { id: "l1", text: "Ganadería · General: Logro \"Primeriza\"." },
   { id: "l2", text: "Ganadería · Dragopavos: Logro \"Cazamonturas\"." },
   { id: "l3", text: "General: Logro \"Con bases sólidas\". (Completo)" },
   { id: "l4", text: "Isla de Otomaï: Logro \"El gran Guarrok\". (Completo)" },
   { id: "l5", text: "Isla de Otomaï: Logro \"Turbera maldita\", misión 1: El guardián del puente de la muerte, misión 4: El caballero negro y rosa." },
+  { id: "l10", text: "Isla de Otomaï: Logro \"Altos vuelos\", misión 1: Escaeroplano de alta velocidad. (Opcional pero útil)" },
   { id: "l6", text: "Montaña de los koalaks: misión \"El cementerio primitivo\"." },
+  // La guía escribe "El despetar de Pandala"
+  { id: "l11", text: "Isla de Pandala: misión \"El despertar de Pandala\"." },
   { id: "l7", text: "Archipiélago wabbit: misión \"Intrusión en el territorio wabbit\"." },
   { id: "l8", text: "Isla de Moon: Logro \"Pan Koko Mío\", misión 1: Ida sin vuelta." },
   { id: "l9", text: "Isla de Frigost: Logro \"Frío al cubo\", misión 1: La tierra banquisa." },
+  { id: "l12", text: "Misiones de mundo: Logro \"Ángeles y demonios\", misión 1: Limpieza general, misión 2: Luisito, fab'huritu, eres muy malito. (Opcionales pero útiles)" },
 ];
+
+// Recomendación de Sandglass que acompaña a los prerrequisitos en torrentearcano
+export const PREREQS_OCRE = "Se recomienda mucho empezar haciendo el Dofus Ocre lo antes posible ya que es una misión larga e independiente de la mayoría de las etapas de la checklist. Cuanto antes se complete, mejor. A partir del paso 79 es OBLIGATORIO tener el Dofus ocre terminado para seguir las etapas de manera optimizada y eficiente.";
 
 export const PREREQS_OFICIOS = [
   { id: "o1", text: "Fabricante y Escultor nivel 10" },
