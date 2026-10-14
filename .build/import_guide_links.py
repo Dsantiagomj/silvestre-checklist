@@ -34,6 +34,11 @@ MISSION = re.compile(
 )
 
 
+# Missions the app lists that the guide text never names: the generic class quest row
+# (build_quests_js.py) links to the page that lists each class's quest.
+EXTRA_MISSIONS = ["Misión de clase"]
+
+
 def js_object(html, name):
     start = html.index(f"{name} = ") + len(name) + 3
     value, _ = json.JSONDecoder().raw_decode(html[start:])
@@ -85,7 +90,7 @@ def main(page):
     texts = js_template_array(html, "steps")
     achievements = js_object(html, "achievementLinks")
     overrides = js_object(html, "missionUrlOverrides")
-    wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts)}
+    wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS}
     urls = sorted(set(wanted.values()) | set(achievements.values()))
     ok = {url: answers(url) for url in urls}
     out = {

@@ -236,3 +236,16 @@ test("las misiones de cada paso son las de su logro, en su orden", async ({ page
   expect(at("Destino Astrub")).toBeLessThan(at("Archi y sus principios"));
   expect(at("Paseo por el bosque")).toBeLessThan(at("El receptáculo de los dofus"));
 });
+
+test("la misión de clase sale como una sola fila con su guía, no la de una clase", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  const j = page.locator("#journal");
+  const quest = j.locator(".q-item", { hasText: "Misión de clase" });
+  await expect(quest).toHaveCount(1, { timeout: 15_000 });
+  await expect(quest.locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/mision-de-clase");
+  await expect(j.locator(".q-item", { hasText: "Recibimiento de wauwaus" })).toHaveCount(0);
+  // Va donde la pide el logro: tras «Consejo de clase»
+  const names = await j.locator(".q-item .q-name").allInnerTexts();
+  expect(names.indexOf("Misión de clase")).toBe(names.indexOf("Consejo de clase") + 1);
+});
