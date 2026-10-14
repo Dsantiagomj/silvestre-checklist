@@ -62,8 +62,10 @@ test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page })
   await expect(page.locator("#statDone")).toHaveText("3");
   await expect(page.locator("#statPre")).toHaveText("1");
   await expect(page.locator("#statOwned")).toHaveText("4");
-  // Con prerrequisitos pendientes el contador avisa y abre su sección
-  await expect(page.locator("#heroWarn")).toHaveClass(/warn/);
+  // Pendiente no es un error: la tarjeta queda neutra (sin rojo) y abre su sección
+  await expect(page.locator("#heroWarn")).not.toHaveClass(/\b(warn|complete)\b/);
+  expect(await page.locator("#heroWarn .hero-req-name").evaluate(el => getComputedStyle(el).color))
+    .toBe(await page.locator("#heroItems .hero-req-name").evaluate(el => getComputedStyle(el).color));
   await page.click("#heroWarn");
   await expect(page.locator("#prereqs")).toHaveClass(/open/);
   await expect(page.locator("#prereqs")).toBeInViewport();
@@ -137,7 +139,8 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   expect(pre).toBe(preTotal);
   const [own, ownTotal] = (await page.locator("#heroItems .hero-req-count").textContent()).split("/");
   expect(own).toBe(ownTotal);
-  await expect(page.locator("#heroWarn")).not.toHaveClass(/\bwarn\b/);
+  await expect(page.locator("#heroWarn")).toHaveClass(/\bcomplete\b/);
+  await expect(page.locator("#heroItems")).toHaveClass(/\bcomplete\b/);
   await expect(page.locator(".prereq-item:not(.done)")).toHaveCount(0);
   await expect(page.locator(".shop-item:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo que hay guardado, no lo deducido
