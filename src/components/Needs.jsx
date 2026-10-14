@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ALL_PREREQS } from "../data/steps.js";
 import { HERO_ICONS, imgUrl } from "../lib/assets.js";
-import { ALL_ROWS, CATEGORIES, RES_ITEMS, rowName } from "../lib/resources.js";
+import { ALL_ROWS, CATEGORIES, RES_ITEMS, STEPS_WITH_ITEMS, aggregate, rowName } from "../lib/resources.js";
 import {
-  getState, guideComplete, ownedCount, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setNeedsTab, setRowsOwned, showToast,
+  getState, guideComplete, ownedCount, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setNeedsCollapsed, setNeedsTab,
+  setRowsOwned, showToast, soonSteps,
   useAppState,
 } from "../state/store.js";
 import ItemsPanel, { itemsView } from "./needs/ItemsPanel.jsx";
@@ -88,6 +89,33 @@ function DoneStrip({ level, setLevel }) {
 }
 
 /**
+ * Contraída a mano antes de terminar: lo esencial a la vista para no olvidar lo que falta
+ * (prerrequisitos, objetos y lo que piden los próximos pasos).
+ */
+function ProgressStrip({ s }) {
+  const soon = aggregate(soonSteps(s).filter(n => STEPS_WITH_ITEMS.includes(n))).filter(r => !rowHave(s, r)).length;
+  return (
+    <div className="needs-done needs-strip">
+      <div className="needs-done-head">
+        <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
+        <p className="needs-strip-title">
+          {soon ? `Pronto: ${soon} objetos para tus próximos pasos` : "Nada que reunir para tus próximos pasos"}
+        </p>
+      </div>
+      <span className="needs-done-chip">
+        {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}Prerrequisitos {prereqsDone(s)}/{ALL_PREREQS.length}
+      </span>
+      <span className="needs-done-chip">
+        {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}Objetos {ownedCount(s)}/{ALL_ROWS.length}
+      </span>
+      <div className="spacer"></div>
+      <button type="button" className="needs-done-toggle" id="needsExpand" aria-expanded="false"
+        onClick={() => setNeedsCollapsed(false)}>Desplegar ▾</button>
+    </div>
+  );
+}
+
+/**
  * LO QUE NECESITAS · prerrequisitos y objetos en una sección con dos pestañas.
  * "Marcar todo" y "Limpiar" actúan sobre lo que se ve y se pueden deshacer.
  */
@@ -108,7 +136,9 @@ export default function Needs() {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
       e.preventDefault();
-      setDoneLevel("lists");   // con la guía completa, despliega las listas para que haya buscador
+      // Contraída (a mano o por estar completa) no hay buscador: se despliega
+      setDoneLevel("lists");
+      setNeedsCollapsed(false);
       setNeedsTab("items");
       requestAnimationFrame(() => {
         searchRef.current?.focus();
@@ -138,6 +168,14 @@ export default function Needs() {
   const canMark = tab === "prereqs" ? preDone < ALL_PREREQS.length : toMark.length > 0;
   const canClear = tab === "prereqs" ? Object.keys(s.prereqs).length > 0 : toClear.length > 0;
 
+  if (!complete && s.needsCollapsed) {
+    return (
+      <section className="needs done" id="needs" aria-labelledby="needsTitle">
+        <ProgressStrip s={s} />
+      </section>
+    );
+  }
+
   if (complete && doneLevel !== "lists") {
     return (
       <section className="needs done" id="needs" aria-labelledby="needsTitle">
@@ -151,9 +189,8 @@ export default function Needs() {
       <div className="needs-head">
         <h2 className="section-title" id="needsTitle"><span className="section-num">01</span>Lo que necesitas</h2>
         <div className="spacer"></div>
-        {complete && (
-          <button type="button" className="needs-act" id="needsCollapse" onClick={() => setDoneLevel("strip")}>Contraer ▴</button>
-        )}
+        <button type="button" className="needs-act" id="needsCollapse"
+          onClick={() => (complete ? setDoneLevel("strip") : setNeedsCollapsed(true))}>Contraer ▴</button>
         <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
           ✓ Marcar todo
         </button>

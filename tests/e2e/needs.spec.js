@@ -335,3 +335,32 @@ test("si se baja del 100 % la sección vuelve a su forma normal", async ({ page 
   await expect(page.locator(".needs-done-title")).toHaveCount(0);
   await expect(page.locator("#tabPrereqs")).toBeVisible();
 });
+
+test("la sección se puede contraer siempre, con lo esencial a la vista, y se recuerda", async ({ page }) => {
+  await openApp(page, MID);
+  await page.click("#needsCollapse");
+  const strip = page.locator("#needs .needs-strip");
+  // Los objetos de los pasos 1 a 40 ya cuentan como cubiertos
+  await expect(strip.locator(".needs-done-chip")).toHaveText(["Prerrequisitos 18/18", /^Objetos \d+\/420$/]);
+  await expect(strip.locator(".needs-done-chip").nth(1)).toHaveText(`Objetos ${await page.locator("#heroItems .hero-req-count").textContent()}`);
+  await expect(strip.locator(".needs-strip-title")).toHaveText(/^Pronto: \d+ objetos para tus próximos pasos$/);
+  await expect(page.locator("#tabItems")).toHaveCount(0);
+  // Se recuerda
+  await page.reload();
+  await expect(page.locator("#needs .needs-strip")).toBeVisible();
+  await page.click("#needsExpand");
+  await expect(page.locator("#tabItems")).toBeVisible();
+  await page.reload();
+  await expect(page.locator("#tabItems")).toBeVisible();
+});
+
+test("las tarjetas del hero y el atajo / despliegan la sección contraída", async ({ page }) => {
+  await openApp(page, MID);
+  await page.click("#needsCollapse");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.click("#heroItems");
+  await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
+  await page.click("#needsCollapse");
+  await page.locator("body").press("/");
+  await expect(page.locator("#needsSearch")).toBeFocused();
+});
