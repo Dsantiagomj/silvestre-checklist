@@ -6,6 +6,7 @@ import {
   toggleRowOwned, useAppState,
 } from "../../state/store.js";
 import Slot from "./Slot.jsx";
+import SearchField from "../SearchField.jsx";
 
 const SORTS = [["soon", "Pronto primero"], ["qty", "Cantidad"], ["az", "A–Z"]];
 const CATS = [["todo", "Todo"], ...CATEGORIES];
@@ -129,12 +130,14 @@ function Pager({ id, total, view, size }) {
             onClick={() => go(view.page + 1)}>›</button>
         </div>
       )}
-      <div className="pager-size" role="group" aria-label="Objetos por página">
+      <div className="pager-size">
         <span>Por página</span>
-        {PAGE_SIZES.map(n => (
-          <button key={n} type="button" data-size={n} aria-pressed={String(size === n)}
-            onClick={() => setShopPageSize(n)}>{n === "all" ? "Todo" : n}</button>
-        ))}
+        <div className="seg" role="group" aria-label="Objetos por página">
+          {PAGE_SIZES.map(n => (
+            <button key={n} type="button" data-size={n} aria-pressed={String(size === n)}
+              onClick={() => setShopPageSize(n)}>{n === "all" ? "Todo" : n}</button>
+          ))}
+        </div>
       </div>
     </nav>
   );
@@ -180,29 +183,16 @@ export default function ItemsPanel({ searchRef }) {
   return (
     <div className="needs-panel items-panel" id={live("items")} role="tabpanel" aria-labelledby={live("tabItems")}>
       <div className="needs-toolbar">
-        <div className="needs-find">
-          <svg className="needs-find-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" /><path d="M10.4 10.4 14 14" /></svg>
-          <input ref={searchRef} type="search" id={live("needsSearch")} value={s.shopQuery} autoComplete="off"
-            placeholder="Buscar objeto" aria-label="Buscar objeto"
-            onChange={e => setShopQuery(e.target.value)}
-            onKeyDown={e => { if (e.key === "Escape") setShopQuery(""); }} />
-          <span className="needs-find-end">
-            {q ? (
-              <>
-                <span id={live("needsMatches")}><b>{matches}</b> de {total}</span>
-                <button type="button" className="needs-find-x" id={live("needsSearchClear")} aria-label="Borrar búsqueda"
-                  onClick={() => { setShopQuery(""); searchRef.current?.focus(); }}>×</button>
-              </>
-            ) : <kbd title="Atajo para buscar">/</kbd>}
-          </span>
-        </div>
-        <div className="needs-sort" role="group" aria-label="Ordenar">
+        <SearchField className="needs-find" id={live("needsSearch")} matchesId={live("needsMatches")} clearId={live("needsSearchClear")} inputRef={searchRef} value={s.shopQuery} onChange={setShopQuery}
+          placeholder="Buscar objeto" label="Buscar objeto" matches={matches} total={total}
+          hint={<kbd title="Atajo para buscar">/</kbd>} />
+        <div className="needs-sort seg" role="group" aria-label="Ordenar">
           {SORTS.map(([k, label]) => (
             <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
               onClick={() => setShopSort(k)}>{label}</button>
           ))}
         </div>
-        <div className="needs-view" role="group" aria-label="Vista">
+        <div className="needs-view seg" role="group" aria-label="Vista">
           {VIEWS.map(([k, label, icon]) => (
             <button key={k} type="button" data-view={k} aria-pressed={String(s.shopView === k)}
               onClick={() => setShopView(k)}>{icon}{label}</button>

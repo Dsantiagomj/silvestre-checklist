@@ -171,6 +171,9 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
   expect(box.x + box.width).toBeLessThanOrEqual(390);
   // Y la de prerrequisitos: ninguna tarjeta se sale por la derecha
   await page.click("#tabPrereqs");
+  // Ya en su sitio: mientras entra se desliza de lado
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1);
+  await page.waitForTimeout(100);
   const panel = await page.locator("#prereqs").boundingBox();
   const rights = await page.locator(".pr-card").evaluateAll(els => els.map(el => el.getBoundingClientRect().right));
   expect(Math.max(...rights)).toBeLessThanOrEqual(panel.x + panel.width + 0.5);

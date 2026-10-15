@@ -1655,31 +1655,7 @@ header.is-scrolled .title-bar{
 .needs-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px; margin:-4px 0 16px; }
 .needs-hint{ flex:1 1 280px; margin:0; font-size:12.5px; line-height:1.5; color:var(--txt-mute); }
 .items-body{ display:grid; grid-template-columns:190px minmax(0, 1fr); gap:16px; align-items:start; }
-.needs-find{ position:relative; flex:1 1 320px; }
-.needs-find input{
-  width:100%; box-sizing:border-box;
-  padding:10px 120px 10px 36px; border-radius:10px;
-  background:var(--inset); border:1px solid var(--line-2);
-  font:600 13px var(--font-body); color:var(--txt);
-  transition:border-color .15s ease, box-shadow .15s ease;
-}
-.needs-find input::placeholder{ color:var(--txt-mute); font-weight:500; }
-.needs-find input::-webkit-search-cancel-button{ display:none; }
-.needs-find input:focus{ outline:none; border-color:var(--soon); box-shadow:0 0 0 3px color-mix(in srgb, var(--soon) 22%, transparent); }
-.needs-find-ic{ position:absolute; left:11px; top:50%; width:15px; height:15px; transform:translateY(-50%); fill:none; stroke:var(--txt-mute); stroke-width:2; stroke-linecap:round; }
-.needs-find:focus-within .needs-find-ic{ stroke:var(--soon-ink); }
-.needs-find-end{
-  position:absolute; right:8px; top:50%; transform:translateY(-50%);
-  display:flex; align-items:center; gap:8px;
-  font-size:12px; color:var(--txt-mute); white-space:nowrap;
-}
-.needs-find-end b{ color:var(--soon-ink); }
-.needs-find-end kbd{ padding:0 7px; border-radius:5px; border:1px solid var(--line-2); font:600 12px var(--font-body); color:var(--txt-soft); }
-.needs-find-x{
-  width:20px; height:20px; border-radius:50%;
-  display:grid; place-items:center; font-size:14px; line-height:1;
-  background:var(--line-2); color:var(--txt-soft);
-}
+.needs-find{ flex:1 1 320px; }
 .needs-cats{ display:flex; flex-direction:column; gap:3px; position:sticky; top:84px; }
 .needs-cat{
   display:flex; justify-content:space-between; align-items:center;
@@ -1693,14 +1669,8 @@ header.is-scrolled .title-bar{
 .needs-cat.hit .n{ color:var(--soon-ink); font-weight:800; }
 
 .needs-toolbar{ display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px; margin-bottom:14px; }
-.needs-sort{ display:inline-flex; padding:3px; border-radius:999px; background:var(--inset); border:1px solid var(--line-2); }
-.needs-sort button{ padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; color:var(--txt-soft); }
-.needs-sort button[aria-pressed="true"]{ background:var(--soon); color:var(--soon-on); }
 .needs-empty{ color:var(--txt-mute); font-size:13px; padding:10px 2px; }
-.needs-view{ display:inline-flex; padding:3px; border-radius:999px; background:var(--inset); border:1px solid var(--line-2); }
-.needs-view button{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; color:var(--txt-soft); }
 .needs-view svg{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; }
-.needs-view button[aria-pressed="true"]{ background:var(--line-2); color:var(--txt); }
 
 .band.soon{
   margin-bottom:16px; padding:12px 12px 14px; border-radius:14px;
@@ -1836,10 +1806,7 @@ header.is-scrolled .title-bar{
 .pager-pages button[aria-current="page"]{ background:var(--amber); border-color:var(--amber); color:#0d0e0c; }
 .pager-pages button:disabled{ opacity:.35; cursor:default; }
 .pager-gap{ padding:0 2px; }
-.pager-size{ display:inline-flex; align-items:center; gap:4px; }
-.pager-size span{ margin-right:4px; }
-.pager-size button{ padding:4px 9px; border-radius:999px; font-weight:700; color:var(--txt-soft); }
-.pager-size button[aria-pressed="true"]{ background:var(--line-2); color:var(--txt); }
+.pager-size{ display:inline-flex; align-items:center; gap:8px; }
 
 /* Detalle del objeto al pasar el ratón */
 .slot-tip{
@@ -1875,9 +1842,63 @@ header.is-scrolled .title-bar{
 }
 /* Sin teclado ni ratón: ni atajo "/" ni icono de copiar flotante (se copia manteniendo pulsado) */
 @media (hover:none){
-  .needs-find-end kbd{ display:none; }
+  .search-field-end kbd{ display:none; }
 }
 
+
+/* CONTROLES DE LA VENTANA ------------------------------------------------------
+   Los mismos en todas las pestañas: el buscador (SearchField.jsx) y los interruptores
+   de varias opciones (.seg: orden, vista, por página, pendientes/hechos/todos). */
+.search-field{ position:relative; min-width:0; }
+.search-field input{
+  width:100%; box-sizing:border-box; height:40px;
+  padding:0 12px 0 36px; border-radius:10px;
+  background:var(--inset); border:1px solid var(--line-2);
+  font:600 14px var(--font-body); color:var(--txt);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+/* Sitio a la derecha para el recuento y la ×, o para la pista */
+.search-field:has(.search-field-end:not(:empty)) input{ padding-right:120px; }
+.search-field input::placeholder{ color:var(--txt-mute); font-weight:500; }
+.search-field input::-webkit-search-cancel-button{ display:none; }
+.search-field input:focus{ outline:none; border-color:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+.search-field-ic{
+  position:absolute; left:12px; top:50%; width:15px; height:15px; transform:translateY(-50%);
+  fill:none; stroke:var(--txt-mute); stroke-width:2; stroke-linecap:round; pointer-events:none;
+  transition:stroke .15s ease;
+}
+.search-field:focus-within .search-field-ic{ stroke:var(--accent-ink); }
+.search-field-end{
+  position:absolute; right:9px; top:50%; transform:translateY(-50%);
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; color:var(--txt-mute); white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.search-field-end b{ color:var(--accent-ink); }
+.search-field-end kbd{ padding:0 7px; border-radius:5px; border:1px solid var(--line-2); font:600 12px var(--font-body); color:var(--txt-soft); }
+.search-field-x{
+  width:22px; height:22px; border-radius:50%; cursor:pointer;
+  display:grid; place-items:center; font-size:15px; line-height:1;
+  background:var(--line-2); color:var(--txt-soft);
+  transition:background-color .15s ease, color .15s ease;
+}
+.search-field-x:hover{ background:color-mix(in srgb, var(--amber) 30%, var(--line-2)); color:var(--txt); }
+
+.seg{ display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--inset); border:1px solid var(--line-2); }
+.seg button{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:5px 12px; border:0; border-radius:999px; background:none; cursor:pointer;
+  font:700 12.5px var(--font-body); color:var(--txt-soft); white-space:nowrap;
+  transition:background-color .18s ease, color .18s ease;
+}
+.seg button:hover{ color:var(--txt); }
+.seg button[aria-pressed="true"]{ background:color-mix(in srgb, var(--soon) 22%, transparent); color:var(--soon-ink); }
+.seg .n{ font-weight:600; color:var(--txt-mute); font-variant-numeric:tabular-nums; transition:color .18s ease; }
+.seg button[aria-pressed="true"] .n{ color:inherit; }
+.seg-fill{ display:flex; }
+.seg-fill button{ flex:1; padding:6px 8px; }
+@media (prefers-reduced-motion:reduce){
+  .search-field input, .search-field-ic, .search-field-x, .seg button, .seg .n{ transition:none; }
+}
 
 /* 02 · LOS 100 PASOS --------------------------------------------------------
    Diario: la lista por capítulos a la izquierda y, a la derecha, el paso con su
@@ -1886,12 +1907,7 @@ header.is-scrolled .title-bar{
 .diary-head{ display:flex; align-items:center; gap:12px 18px; flex-wrap:wrap; margin-bottom:14px; }
 .diary-head .section-title{ margin:0; }
 .diary-bar{ flex:1; display:flex; gap:10px; min-width:min(100%, 420px); }
-.diary-search{
-  flex:1; min-width:0; padding:9px 12px; border-radius:10px;
-  background:var(--inset); border:1px solid var(--line-2); color:var(--txt); font:inherit; font-size:14px;
-}
-.diary-search::placeholder{ color:var(--txt-mute); }
-.diary-search:focus{ outline:none; border-color:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+.diary-bar .search-field{ flex:1; }
 .diary-next{
   flex:none; padding:9px 16px; border-radius:999px; border:0; cursor:pointer;
   background:var(--amber); color:#142208; font:700 14px var(--font-body);
@@ -1968,7 +1984,7 @@ header.is-scrolled .title-bar{
 .win-tools .diary-bar{ min-width:0; }
 .zone-menu{ position:relative; flex:none; }
 .zone-btn{
-  display:inline-flex; align-items:center; gap:5px; padding:9px 14px; border-radius:10px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:5px; height:40px; padding:0 14px; border-radius:10px; cursor:pointer;
   background:var(--inset); border:1px solid var(--line-2); color:var(--txt-soft);
   font:600 14px var(--font-body); font-variant-numeric:tabular-nums; white-space:nowrap;
 }
@@ -2003,7 +2019,7 @@ header.is-scrolled .title-bar{
   .win-tabs{ padding:10px 12px 0; overflow-x:auto; scrollbar-width:none; }
   .steps-view button, .needs-view-tabs button{ padding:6px 12px; }
   .win-tools{ padding:10px 12px; }
-  .zone-btn{ padding:9px 11px; }
+  .zone-btn{ padding:0 11px; }
   .zone-pop.seals{ grid-template-columns:repeat(5, minmax(0, 1fr)); width:calc(100vw - 50px); padding:24px 8px 12px; }
 }
 @media (prefers-reduced-motion:reduce){ .win-bar i, .road-dofus, .road-dofus img{ transition:none; } }
@@ -2148,14 +2164,7 @@ header.is-scrolled .title-bar{
   display:flex; flex-direction:column; min-height:0;
   background:var(--bg-2); border-right:1px solid var(--line);
 }
-.diary-tabs{ display:flex; gap:4px; padding:10px; border-bottom:1px solid var(--line); }
-.diary-tabs button{
-  flex:1; padding:7px 8px; border-radius:999px; border:0; background:none;
-  font-size:13px; font-weight:700; color:var(--txt-soft); cursor:pointer;
-}
-.diary-tabs button .n{ color:var(--txt-mute); font-weight:600; }
-.diary-tabs button[aria-pressed="true"]{ background:color-mix(in srgb, var(--soon) 18%, transparent); color:var(--soon-ink); }
-.diary-tabs button[aria-pressed="true"] .n{ color:inherit; }
+.diary-tabs{ padding:10px; border-bottom:1px solid var(--line); }
 .diary-list{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding-bottom:10px; }
 .diary-empty{ padding:28px 16px; text-align:center; color:var(--txt-mute); }
 
