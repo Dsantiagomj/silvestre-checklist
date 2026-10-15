@@ -217,3 +217,14 @@ test("«Hasta su último suspiro» no va en el 53, que para antes de Kumijo, sin
   await pending(page, "Réquiem por un yokai");
   await pending(page, "Hasta su último suspiro");
 });
+
+test("el 63 se retoma en el 81, donde Golosotrón da el recurso que le falta; es solo un aviso", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([81]) });
+  await openStep(page, 63);
+  const resumed = page.locator("#journal .call.resumedin");
+  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed.locator(".step-ref")).toHaveText(["81"]);
+  // No marca nada: el 63 sigue pendiente con el 81 hecho
+  await expect(row(page, 63)).not.toHaveClass(/\bdone\b/);
+  await expect(page.locator("#journal .call.closedin")).toHaveCount(0);
+});
