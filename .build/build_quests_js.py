@@ -101,8 +101,10 @@ MISSING_OBJECTIVES = {565: [439]}
 # de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
 # previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
 # mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
-# order quest 5 of the same line, which requires the 4th (need.quests).
-STEP_EXTRA = {78: [434, 111, 121, 423], 80: [1782], 89: [1917]}
+# order quest 5 of the same line, which requires the 4th (need.quests). Step 12's
+# "Espionaje industrial" requires "El maleficio del cofre" (after "Cofrología" and
+# "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=).
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782], 89: [1917]}
 
 # An objective any of several quests completes (one per class in "Un ciudadano
 # modelo") is no single quest: it becomes one generic row instead of the first match.
