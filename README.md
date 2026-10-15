@@ -24,6 +24,7 @@ No todos los pasos valen lo mismo: cuentan más los que más cuestan.
 - **Cada misión suma puntos según su nivel y su largo.** Cuanto más alto es su nivel y más objetivos tiene, más vale.
 - **Una misión que sale en varios pasos se reparte entre ellos**, así no cuenta dos veces.
 - **Un paso vale lo que suman sus misiones.**
+- **Las misiones terminadas ya suman.** Si llevas dos de las cinco misiones de un paso, esas dos cuentan aunque no hayas marcado el paso. Al marcarlo cuenta entero.
 
 Por ejemplo, el paso 1 (misiones de nivel bajo) mueve el porcentaje un 0,6 %, y el 61 (misiones de nivel 200) un 6,6 %. Con los pasos hechos en orden, el porcentaje va por el 11 % tras el paso 20, el 27 % tras el 50 y el 84 % tras el 90. Solo marca 100 % con todo hecho.
 
@@ -35,7 +36,8 @@ Al lado se sigue viendo "X/100 pasos" para quien prefiera contar pasos.
 - Puntos de una misión: `nivel × √objetivos`. Una de nivel 180 con 4 objetivos vale 360; con 25, 900. La raíz evita que las larguísimas se coman el porcentaje ("La eterna cosecha", 339 objetivos y nivel 40, vale unos 736).
 - El nivel es el "Nivel mínimo" que da la guía de la misión en Torrente Arcano (251 misiones); si no lo da, el `levelMin` de DofusDB (100). La misión de clase del paso 1 cuenta como nivel 20.
 - Una misión compartida (66 de las 351) reparte sus puntos a partes iguales. Un paso sin misiones valdría lo de una misión de nivel 1 (hoy todos tienen alguna).
-- `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`. Total: 160 468 puntos.
+- `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`. Total: 161 556 puntos.
+- Cada paso de `weights.json` lleva su peso (`w`), lo que vale cada una de sus misiones en orden, ya repartida (`q`), y el id y el número de objetivos de la última (`id`, `o`). En un paso sin marcar, `donePts` suma las misiones anteriores a la actual (`questPos`, el mismo avance del overlay y del diario) y la última cuando su objetivo (`questObj`) llega a `o`. No hace falta cargar `quests.json`. El 100 % sigue pidiendo los 100 pasos marcados.
 
 </details>
 
