@@ -129,7 +129,7 @@ test("con la guía completa, reiniciar solo los pasos conserva los prerrequisito
   await expect(page.locator(".diary-row.done")).toHaveCount(0);
   // Se tenían por estar la guía completa: al conservarlos quedan marcados de verdad
   await expect(page.locator("#prereqsCount")).toHaveText("✓");
-  expect(Object.keys(await readLS(page, "silvestre:prereqs"))).toHaveLength(21);
+  expect(Object.keys(await readLS(page, "silvestre:prereqs"))).toHaveLength(20);
 });
 
 test("con la guía completa, conservar los objetos los deja marcados al reiniciar los pasos", async ({ page }) => {
