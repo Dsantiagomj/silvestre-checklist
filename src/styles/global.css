@@ -1955,8 +1955,29 @@ header.is-scrolled .title-bar{
 .win-tabs .needs-view-tabs{ position:relative; margin-left:14px; }
 .win-tabs .needs-view-tabs::before{ content:""; position:absolute; left:-15px; top:6px; bottom:6px; width:1px; background:var(--line-2); }
 .win-tabs:has(+ .steps-stage){ padding-bottom:12px; }
-.win-tools{ display:flex; align-items:center; gap:10px; padding:12px 18px; }
-.steps-win .seals{ margin:0; padding:22px 18px 8px; }
+/* Por encima de la vista de debajo: ahí cae el desplegable de zona */
+.win-tools{ position:relative; z-index:6; display:flex; align-items:center; gap:10px; padding:12px 18px; }
+.win-tools .diary-bar{ min-width:0; }
+.zone-menu{ position:relative; flex:none; }
+.zone-btn{
+  display:inline-flex; align-items:center; gap:5px; padding:9px 14px; border-radius:10px; cursor:pointer;
+  background:var(--inset); border:1px solid var(--line-2); color:var(--txt-soft);
+  font:600 14px var(--font-body); font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.zone-btn b{ color:var(--txt); }
+.zone-btn:hover, .zone-btn[aria-expanded="true"]{ border-color:var(--amber); }
+.zone-caret{ margin-left:4px; font-size:11px; transition:transform .15s ease; }
+.zone-btn[aria-expanded="true"] .zone-caret{ transform:rotate(180deg); }
+/* Los sellos, en una rejilla dentro de un panel que cae bajo el botón */
+.zone-pop.seals{
+  position:absolute; right:0; top:calc(100% + 8px); z-index:1;
+  display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:14px 6px;
+  width:min(620px, calc(100vw - 48px)); margin:0; padding:24px 14px 14px; overflow:visible;
+  background:var(--panel-2); border:1px solid var(--line-2); border-radius:14px;
+  box-shadow:0 18px 40px rgba(0,0,0,.45);
+}
+[data-theme="light"] .zone-pop.seals{ box-shadow:0 18px 40px rgba(40,50,20,.18); }
+.zone-pop .seal{ min-width:0; }
 .steps-win .step-map{ margin:0; border-width:1px 0 0; border-radius:0 0 16px 16px; }
 .steps-win .diary-window{ border-width:1px 0 0; border-radius:0 0 16px 16px; }
 /* Sin sitio para todo en una fila: los huevos bajan a la suya */
@@ -1974,7 +1995,8 @@ header.is-scrolled .title-bar{
   .win-tabs{ padding:10px 12px 0; overflow-x:auto; scrollbar-width:none; }
   .steps-view button, .needs-view-tabs button{ padding:6px 12px; }
   .win-tools{ padding:10px 12px; }
-  .steps-win .seals{ padding:22px 12px 8px; }
+  .zone-btn{ padding:9px 11px; }
+  .zone-pop.seals{ grid-template-columns:repeat(5, minmax(0, 1fr)); width:calc(100vw - 50px); padding:24px 8px 12px; }
 }
 @media (prefers-reduced-motion:reduce){ .win-bar i, .road-dofus, .road-dofus img{ transition:none; } }
 
@@ -2069,8 +2091,7 @@ header.is-scrolled .title-bar{
   .node-num{ font-size:16px; }
 }
 
-/* Sellos de zona: paisaje en un medallón con anillo de avance */
-.seals{ display:flex; gap:4px; margin-bottom:16px; overflow-x:auto; padding:22px 2px 6px; scrollbar-width:thin; }
+/* Sellos de zona: paisaje en un medallón con anillo de avance (en el desplegable de zona) */
 .seal{
   flex:1 1 0; min-width:62px; display:flex; flex-direction:column; align-items:center; gap:3px;
   padding:0; border:0; background:none; color:inherit; font:inherit; text-align:center; cursor:pointer;

@@ -339,13 +339,12 @@ export default function Diary({ mobile }) {
       <div className="steps-win">
         <WinStrip s={s} />
         <WinTabs s={s} />
+        {/* Buscador y zona: solo para los pasos */}
         {steps && (
-          <>
-            <div className="win-tools">
-              <DiaryBar s={s} />
-            </div>
+          <div className="win-tools">
+            <DiaryBar s={s} />
             <ZoneSeals s={s} current={current} />
-          </>
+          </div>
         )}
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null ? { minHeight: swap } : undefined}>
