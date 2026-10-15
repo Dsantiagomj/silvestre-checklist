@@ -14,7 +14,8 @@ import {
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
-import Needs from "./Needs.jsx";
+import Needs, { NeedsBar } from "./Needs.jsx";
+import { ItemsTools } from "./needs/ItemsPanel.jsx";
 import StepMap, { mapPoint, mapScrollTop } from "./StepMap.jsx";
 import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
@@ -299,32 +300,51 @@ function useSlashToItems() {
 }
 
 /**
- * Buscador y zona, solo para los pasos. Al pasar a una lista se pliega (y al volver se
- * despliega) en vez de desaparecer de golpe: lo de debajo sube y baja con suavidad.
+ * Un juego de herramientas de la fila: el de los pasos (mapa y diario comparten el
+ * suyo), el de los prerrequisitos o el de los objetos. Todos ocupan la misma celda de
+ * la fila, así que cambiar de pestaña no mueve nada: el que se va se apaga mientras se
+ * apaga la vista vieja y el nuevo se enciende con la vista nueva. Mientras se va, inerte y sin ids.
  */
-function WinTools({ enter, reduce, children }) {
+function ToolSet({ group, enter, reduce, children }) {
   const [present, safeToRemove] = usePresence();
   const ref = useRef(null);
-  const frames = () => {
-    const el = ref.current;
-    const cs = getComputedStyle(el);
-    return [
-      { height: "0px", paddingTop: "0px", paddingBottom: "0px", opacity: 0, overflow: "clip" },
-      { height: `${el.offsetHeight}px`, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1, overflow: "clip" },
-    ];
-  };
-  // Al llegar, antes de pintarse: se despliega desde cero
+  // Al llegar, antes de pintarse: invisible hasta que la vista vieja se ha ido
   useLayoutEffect(() => {
-    if (enter && !reduce) ref.current.animate(frames(), { duration: OUT_MS, easing: EASE });
+    if (enter && !reduce) ref.current.animate([{ opacity: 0 }, { opacity: 1 }], TOOL_IN);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Al irse, se pliega y luego se quita
   useEffect(() => {
     if (present) return;
     if (reduce) return safeToRemove();
-    ref.current.animate(frames().reverse(), { duration: OUT_MS, easing: EASE, fill: "forwards" })
-      .finished.then(safeToRemove, safeToRemove);
+    ref.current.animate([{ opacity: 1 }, { opacity: 0 }], TOOL_OUT).finished.then(safeToRemove, safeToRemove);
   }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <div className="win-tools" ref={ref} inert={!present}>{children}</div>;
+  return (
+    <div className="win-tool" data-tool={group} ref={ref} inert={!present} aria-hidden={!present || undefined}>
+      <LeavingContext.Provider value={!present}>{children}</LeavingContext.Provider>
+    </div>
+  );
+}
+
+/**
+ * La fila de herramientas de la ventana, siempre con el mismo alto: el buscador de pasos
+ * y la zona en el mapa y el diario, "Marcar todo" y "Limpiar" en los prerrequisitos, y
+ * el buscador, el orden, la vista y el filtro en los objetos.
+ */
+function WinTools({ s, current, enter, reduce }) {
+  const group = isStepsView(s.stepsView) ? "steps" : s.stepsView;
+  return (
+    <div className="win-tools">
+      <AnimatePresence initial={false}>
+        <ToolSet key={group} group={group} enter={enter} reduce={reduce}>
+          {group === "steps" ? (
+            <>
+              <DiaryBar s={s} />
+              <ZoneSeals s={s} current={current} />
+            </>
+          ) : group === "prereqs" ? <NeedsBar tab="prereqs" /> : <ItemsTools />}
+        </ToolSet>
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual (0,3 s,
@@ -336,13 +356,16 @@ const ZOOM = { duration: 0.3, ease: "easeInOut" };
 const ZOOMED = { map: "scale(1.15)", diary: "scale(0.94)" };     // de dónde llega cada vista
 const LEAVING = { map: "scale(0.9)", diary: "scale(1.15)" };     // a dónde va la que se va
 // Cambio de pestaña con las listas: un fundido en dos tiempos. La vieja se aparta un
-// poco hacia un lado y se apaga del todo (en ese tiempo la barra del buscador se pliega
-// o se despliega); solo entonces llega la nueva desde el lado de su pestaña. Nunca se
-// ven dos vistas a la vez ni salta nada una vez visible
+// poco hacia un lado y se apaga del todo (con ella, las herramientas de su pestaña);
+// solo entonces llega la nueva desde el lado de su pestaña, y sus herramientas se
+// encienden a la vez. Nunca se ven dos vistas a la vez ni se mueve nada
 const SHIFT = 12;
 const OUT_MS = 140;
 const SLIDE_OUT = { duration: OUT_MS / 1000, ease: [0.4, 0, 1, 1] };
 const SLIDE_IN = { duration: 0.24, delay: OUT_MS / 1000 + 0.02, ease: [0.2, 0.8, 0.2, 1] };
+// Las herramientas de la fila: solo opacidad, al compás de las vistas
+const TOOL_OUT = { duration: OUT_MS, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" };
+const TOOL_IN = { duration: OUT_MS, delay: OUT_MS + 20, easing: EASE, fill: "backwards" };
 
 /** El cambio en curso: { id, to, kind: "zoom" | "slide", dir } y el canal por el que la nueva avisa a la vieja. */
 const SwapContext = createContext(null);
@@ -498,15 +521,7 @@ export default function Diary({ mobile }) {
       <div className="steps-win">
         <WinStrip s={s} />
         <WinTabs s={s} />
-        {/* Buscador y zona: solo para los pasos */}
-        <AnimatePresence initial={false}>
-          {steps && (
-            <WinTools key="tools" enter={mounted.current} reduce={reduce}>
-              <DiaryBar s={s} />
-              <ZoneSeals s={s} current={current} />
-            </WinTools>
-          )}
-        </AnimatePresence>
+        <WinTools s={s} current={current} enter={mounted.current} reduce={reduce} />
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null && flow ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>

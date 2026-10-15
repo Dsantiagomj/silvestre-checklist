@@ -323,9 +323,12 @@ test("con la guía completa las dos pestañas quedan sin nada pendiente", async 
 
 test("Marcar todo y Limpiar van junto a su explicación", async ({ page }) => {
   await openPre(page, MID);
-  // Misma fila en las dos pestañas: la explicación a la izquierda y las acciones a la derecha
-  for (const tab of ["#tabPrereqs", "#tabItems"]) {
+  // Misma fila en las dos pestañas: la explicación a la izquierda y las acciones a la
+  // derecha (en Prerrequisitos, en la fila de herramientas de la ventana; en Objetos,
+  // sobre la lista, porque esa fila es del buscador)
+  for (const [tab, where] of [["#tabPrereqs", ".win-tools"], ["#tabItems", ".needs"]]) {
     await page.click(tab);
+    await expect(page.locator(`${where} .needs-bar #needsMarkAll`)).toBeVisible();
     const [hint, mark, clear] = await Promise.all(["#needsHint", "#needsMarkAll", "#needsClear"]
       .map(sel => page.locator(`.needs-bar ${sel}`).boundingBox()));
     expect(hint.x + hint.width).toBeLessThanOrEqual(mark.x);
@@ -340,10 +343,14 @@ test("el crédito a Sandglass encabeza las dos pestañas", async ({ page }) => {
   const intro = page.locator("#needsIntro");
   await expect(intro).toHaveText(/^Esta guía está hecha por Sandglass.*nivel 150/);
   const top = sel => page.locator(sel).evaluate(el => el.getBoundingClientRect().top);
-  expect(await top("#tabPrereqs")).toBeLessThan(await top("#needsIntro"));
-  expect(await top("#needsIntro")).toBeLessThan(await top(".needs-bar"));
+  // En Prerrequisitos los botones van en la fila de herramientas, encima; el crédito abre la lista
+  expect(await top("#tabPrereqs")).toBeLessThan(await top(".win-tools .needs-bar"));
+  expect(await top(".win-tools .needs-bar")).toBeLessThan(await top("#needsIntro"));
+  expect(await top("#needsIntro")).toBeLessThan(await top(".prereqs-panel"));
   await page.click("#tabItems");
   await expect(intro).toBeVisible();
+  // En Objetos, el crédito y debajo, sobre la lista, los botones con su explicación
+  expect(await top("#needsIntro")).toBeLessThan(await top(".needs .needs-bar"));
   await page.click("#tabPrereqs");
   await expect(intro).toBeVisible();
   await expect(page.locator(".pr-intro")).toHaveCount(0);

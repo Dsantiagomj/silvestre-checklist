@@ -165,11 +165,46 @@ function Slots({ rows, band, s, q, later }) {
   );
 }
 
-/** OBJETOS NECESARIOS · inventario con buscador, categorías y la franja "Tus próximos pasos". */
-export default function ItemsPanel({ searchRef }) {
+/**
+ * Buscador, orden, vista y filtro de los objetos: van en la fila de herramientas de la
+ * ventana (Diary.jsx), en el mismo sitio que el buscador de pasos.
+ */
+export function ItemsTools() {
   const live = useLiveIds();
   const s = useAppState();
-  const { q, bands, counts, total, matches } = itemsView(s);
+  const { total, matches } = itemsView(s);
+  return (
+    <div className="needs-toolbar">
+      <SearchField className="needs-find" id={live("needsSearch")} matchesId={live("needsMatches")} clearId={live("needsSearchClear")} value={s.shopQuery} onChange={setShopQuery}
+        placeholder="Buscar objeto" label="Buscar objeto" matches={matches} total={total}
+        hint={<kbd title="Atajo para buscar">/</kbd>} />
+      <div className="needs-sort seg" role="group" aria-label="Ordenar">
+        {SORTS.map(([k, label]) => (
+          <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
+            onClick={() => setShopSort(k)}>{label}</button>
+        ))}
+      </div>
+      <div className="needs-view seg" role="group" aria-label="Vista">
+        {VIEWS.map(([k, label, icon]) => (
+          <button key={k} type="button" data-view={k} aria-pressed={String(s.shopView === k)}
+            onClick={() => setShopView(k)}>{icon}{label}</button>
+        ))}
+      </div>
+      <label className="toggle">
+        <input type="checkbox" id={live("shopPendingToggle")} checked={s.shopPendingOnly}
+          onChange={e => setShopPendingOnly(e.target.checked)} />
+        <span className="sw"></span>
+        Solo pasos pendientes
+      </label>
+    </div>
+  );
+}
+
+/** OBJETOS NECESARIOS · inventario por categorías y la franja "Tus próximos pasos". */
+export default function ItemsPanel() {
+  const live = useLiveIds();
+  const s = useAppState();
+  const { q, bands, counts } = itemsView(s);
   const soon = bands.find(b => b.id === "soon");
   const later = bands.find(b => b.id === "later");
   // Lo que queda de cada objeto después de los próximos pasos
@@ -189,30 +224,6 @@ export default function ItemsPanel({ searchRef }) {
 
   return (
     <div className="needs-panel items-panel" id={live("items")} role="tabpanel" aria-labelledby={live("tabItems")}>
-      <div className="needs-toolbar">
-        <SearchField className="needs-find" id={live("needsSearch")} matchesId={live("needsMatches")} clearId={live("needsSearchClear")} inputRef={searchRef} value={s.shopQuery} onChange={setShopQuery}
-          placeholder="Buscar objeto" label="Buscar objeto" matches={matches} total={total}
-          hint={<kbd title="Atajo para buscar">/</kbd>} />
-        <div className="needs-sort seg" role="group" aria-label="Ordenar">
-          {SORTS.map(([k, label]) => (
-            <button key={k} type="button" data-sort={k} aria-pressed={String(s.shopSort === k)}
-              onClick={() => setShopSort(k)}>{label}</button>
-          ))}
-        </div>
-        <div className="needs-view seg" role="group" aria-label="Vista">
-          {VIEWS.map(([k, label, icon]) => (
-            <button key={k} type="button" data-view={k} aria-pressed={String(s.shopView === k)}
-              onClick={() => setShopView(k)}>{icon}{label}</button>
-          ))}
-        </div>
-        <label className="toggle">
-          <input type="checkbox" id={live("shopPendingToggle")} checked={s.shopPendingOnly}
-            onChange={e => setShopPendingOnly(e.target.checked)} />
-          <span className="sw"></span>
-          Solo pasos pendientes
-        </label>
-      </div>
-
       <div className="items-body">
         <div className="needs-cats" role="group" aria-label="Categorías">
           {CATS.map(([k, label]) => (
