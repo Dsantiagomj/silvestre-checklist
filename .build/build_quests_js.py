@@ -253,6 +253,15 @@ def step_plan(step, achievements, marks, quests, images):
     return [entry for _, entry in sorted(found, key=lambda f: f[0])]
 
 
+def achievement_img(ach, images):
+    """The achievement's icon: the one the step assets use or, for an achievement the
+    step text never names, its DofusDB icon when it is already mirrored."""
+    if ach["id"] in images:
+        return images[ach["id"]]
+    img = f"achievements/{ach.get('iconId')}.png"
+    return img if (ROOT / "public" / "img" / img).exists() else None
+
+
 def quest_groups(step_quests, achievements, images):
     """Steps whose quests come from more than one achievement -> [[name, img, count], ...]
     in quest order. Each quest goes to the achievement holding the most quests of the
@@ -282,7 +291,7 @@ def quest_groups(step_quests, achievements, images):
             if groups and ach is not None and groups[-1][3] == ach["id"]:
                 groups[-1][2] += 1
             elif ach is not None:
-                groups.append([ach["name"]["es"], images.get(ach["id"]), 1, ach["id"]])
+                groups.append([ach["name"]["es"], achievement_img(ach, images), 1, ach["id"]])
         if len(groups) > 1:
             out[n] = [g[:3] for g in groups]
     return out
