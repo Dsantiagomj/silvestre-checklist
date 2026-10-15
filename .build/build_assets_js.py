@@ -51,9 +51,6 @@ BACKUP_ICONS = {"chest": "items/94023.png", "map": "items/24006.png"}
 # Header buttons: the Minirreloj de arena for reset (turning the hourglass over
 # starts again) and the Catalejo de gobletrotter for the overlay (watching from afar).
 HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
-# Hero counters: the laurel-wreathed Dofus of the achievements panel for
-# prerequisites, and the Mochila de recolector for the items to gather.
-HERO_ICONS = {"prereqs": "achievements/458.png", "items": "items/81028.png"}
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
@@ -347,7 +344,7 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), *HERO_ICONS.values(), OCRE_ICON, *CALL_ICONS.values(), *OBJ_ICONS.values()}
+              *HEADER_ICONS.values(), OCRE_ICON, *CALL_ICONS.values(), *OBJ_ICONS.values()}
     paths |= {d["img"] for d in road}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
@@ -377,7 +374,6 @@ def main():
         "OCRE_ICON": OCRE_ICON,
         "CALL_ICONS": CALL_ICONS,
         "OBJ_ICONS": OBJ_ICONS,
-        "HERO_ICONS": HERO_ICONS,
         "STEP_ASSETS": steps,
         "PREREQ_ICONS": prereqs,
         "DOFUS_ROAD": road,

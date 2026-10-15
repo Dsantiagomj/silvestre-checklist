@@ -12,7 +12,6 @@ export const BRAND_ICON = DATA.BRAND_ICON || null;
 export const THEME_ICONS = DATA.THEME_ICONS || null;
 export const BACKUP_ICONS = DATA.BACKUP_ICONS || null;
 export const HEADER_ICONS = DATA.HEADER_ICONS || null;
-export const HERO_ICONS = DATA.HERO_ICONS || null;
 /** El Dofus Ocre: no está en el camino (lo da "La eterna cosecha", fuera de los pasos). */
 export const OCRE_ICON = DATA.OCRE_ICON || null;
 /** Iconos de los avisos de la guía: { stop, done, tip }. */
