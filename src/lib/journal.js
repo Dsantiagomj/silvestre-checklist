@@ -28,13 +28,16 @@ export function optionalMissions(step) {
   });
 }
 
-/** La nota suelta "Opcional pero útil" dice de qué misión habla. */
+/**
+ * La nota suelta "Opcional pero útil" dice de qué misión habla, por su nombre: el número
+ * es el del logro y no el del paso (en el 27 es la 2.ª del logro y va primera).
+ */
 function namedOptional(step) {
   const marks = step.marks || [];
   const opt = optionalMissions(step);
   if (opt.length !== 1) return marks;
   return marks.map(([kind, text]) => (kind === "note" && /^opcional pero útil\.?$/i.test(text.trim())
-    ? [kind, `La misión ${opt[0].k}, «${opt[0].name}», es opcional pero útil.`]
+    ? [kind, `La misión «${opt[0].name}» es opcional pero útil.`]
     : [kind, text]));
 }
 

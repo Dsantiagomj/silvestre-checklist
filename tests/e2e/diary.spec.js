@@ -781,7 +781,8 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
   await openApp(page);
   for (const [n, name] of [[27, "Star ski y Dutch"], [7, "Arma letal"]]) {
     await stepData(page, n);
-    await expect(page.locator("#journal .goal-calls .call.note")).toHaveText(/Nota\s*La misión 2, «.+», es opcional pero útil\./i);
+    // Sin el número del logro: en el 27 es la 2.ª del logro pero la 1.ª del paso
+    await expect(page.locator("#journal .goal-calls .call.note")).toHaveText(new RegExp(`^Nota\\s*La misión «${name}» es opcional pero útil\\.$`, "i"));
     const optional = page.locator("#journal .q-item .q-optional");
     await expect(optional).toHaveCount(1);
     await expect(page.locator("#journal .q-item", { has: page.locator(".q-optional") }).locator(".q-name")).toHaveText(new RegExp(name, "i"));
