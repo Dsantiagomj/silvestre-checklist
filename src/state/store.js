@@ -436,6 +436,28 @@ export function closeSteps(n, closes) {
   showToast(pendingText(plan.pending), `Las hice, marcar el ${list(ns)}`, () => markSteps(ns));
 }
 
+/**
+ * Las misiones obligatorias del paso, todas hechas (pasadas de largo o en su último
+ * objetivo, como en el diario). Sin misiones cargadas o sin ninguna obligatoria, no.
+ */
+function questsAllDone(s, n) {
+  const quests = questsOf(n);
+  const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
+  const needed = quests.filter(q => q.kind === "mandatory");
+  return needed.length > 0 && quests.every((q, i) => q.kind !== "mandatory" || i < pos || (s.questObj[q.id] || 0) >= objCount(q));
+}
+
+/**
+ * Con todas sus misiones obligatorias hechas, el paso queda hecho solo, sin cambiar de
+ * paso: como «Hecho», también termina lo que queda de los que cierra.
+ */
+function completeIfDone(n) {
+  if (state.done[n] || !questsAllDone(state, n)) return;
+  const closes = pendingCloses(state, n);
+  if (closes.length) closeSteps(n, closes);
+  else markSteps([n]);
+}
+
 /** "¡Dofus Esmeralda obtenido!", "¡Piñata de pino obtenida!", "¡Dofus Marfil y Dofus Ébano obtenidos!" */
 export function dofusWonText(road) {
   const names = road.map(d => d.name);
@@ -567,16 +589,24 @@ export function setObjective(n, qi, qid, k, total) {
       questPos: list[qi]?.kind === "optional" ? s.questPos : { ...s.questPos, [n]: at },
       questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
     };
-  });
+  });  completeIfDone(n);
 }
 
 export function moveObjective(delta) {
-  const cur = currentQuest(overlayStep(state), state.questPos, state.questObj);
+  const n = overlayStep(state);
+  const cur = currentQuest(n, state.questPos, state.questObj);
   if (!cur) return;
   const next = cur.k + delta;
-  if (next >= cur.objs.length) return moveQuest(1); // fin de la misión: pasa a la siguiente
   if (next < 0) return;
-  setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: next } }));
+  // Fin de la misión: queda terminada y se pasa a la siguiente (en la última, el paso
+  // puede quedar hecho)
+  if (next >= cur.objs.length) {
+    setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: cur.objs.length } }));
+    moveQuest(1);
+  } else {
+    setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: next } }));
+  }
+  completeIfDone(n);
 }
 
 // ---------------------------------------------------------------------------
