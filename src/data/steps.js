@@ -153,17 +153,7 @@ export const PREREQS_HECHIZOS = [
   { id: "h3", text: "Zanahowia Sabwosa (no obligatorio, útil para el paso 64)" },
 ];
 
-export const TIER_POINTS = { trivial: 1, corto: 3, medio: 8, largo: 20, epico: 50 };
-export const TIER_META = {
-  trivial: { label: "Trivial", icon: "🌱", cls: "t-trivial" },
-  corto:   { label: "Corto",   icon: "🕐", cls: "t-corto" },
-  medio:   { label: "Medio",   icon: "⚔️", cls: "t-medio" },
-  largo:   { label: "Largo",   icon: "🛡️", cls: "t-largo" },
-  epico:   { label: "Épico",   icon: "👑", cls: "t-epico" },
-};
-
 export const ALL_PREREQS = [...PREREQS_LOGROS, ...PREREQS_OFICIOS, ...PREREQS_HECHIZOS];
-export const TOTAL_PTS = STEPS.reduce((a, s) => a + TIER_POINTS[s.effort], 0);
 export const ZONES = [...new Set(STEPS.map(s => s.zone))];
 
 // Color por zona (HSL distribuido)

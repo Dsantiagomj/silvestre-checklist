@@ -10,26 +10,24 @@ El checklist actual usa **conteo plano**: cada uno de los 100 pasos vale 1%. Est
 
 | Paso | Descripción | Tiempo real | Peso actual | Peso nuevo |
 |------|-------------|-------------|-------------|------------|
-| 4    | Misión "Barnabé en el espacio" | 10-15 min | 1% | **0.10%** |
-| 93   | Logro "Blanco marfil" completo (6 jefes, 4 tótems, 4 sacrificios, Necronix) | 30-40 h | 1% | **5.21%** |
+| 4    | Misión "Barnabé en el espacio" (nivel 15) | 10-15 min | 1% | **0.03%** |
+| 93   | Logro "Blanco marfil" completo (6 jefes, 4 tótems, 4 sacrificios, Necronix) | 30-40 h | 1% | **4.59%** |
 
-El paso 93 vale **50 veces más esfuerzo** que el paso 4. La barra antigua los trataba igual; la nueva refleja la realidad.
+El paso 93 pesa **132 veces más** que el paso 4. La barra antigua los trataba igual; la nueva refleja la realidad.
 
 ---
 
 ## Sistema de progreso ponderado
 
-Cada paso tiene un peso según una clasificación de esfuerzo en 5 niveles:
+El peso de cada paso sale del nivel de las misiones que cubre (las de `src/data/quests.json`):
 
-| Tier | Puntos | Cuándo se usa |
-|------|--------|---------------|
-| 🌱 Trivial | 1 pt | Misión única corta |
-| 🕐 Corto | 3 pts | Fragmento de logro |
-| ⚔️ Medio | 8 pts | Boss + misión |
-| 🛡️ Largo | 20 pts | Logro completo |
-| 👑 Épico | 50 pts | Mega-logros (Blanco marfil, Negro ébano, Seis de seis, etc.) |
+- Cada misión vale 100 puntos por un multiplicador de dificultad: su nivel entre 100. Una de nivel 2 vale 2 puntos (×0,02), una de nivel 20 vale 20 (×0,2) y una de nivel 200 vale 200 (×2).
+- Una misión que sale en varios pasos (66 de las 351) reparte sus puntos a partes iguales entre ellos, así que nada cuenta dos veces. La misión de clase del paso 1 cuenta como nivel 20.
+- El peso del paso es la suma de lo que le toca de cada misión. Un paso sin misiones pesaría 0, así que tendría el peso de una misión de nivel 1 para que marcarlo siga contando (hoy todos tienen alguna).
 
-Total: **960 puntos** distribuidos entre los 100 pasos.
+El nivel es el "Nivel mínimo" de la guía de la misión en Torrente Arcano cuando la página lo dice (251 misiones). Si no, el `levelMin` de DofusDB (100: 94 páginas no dicen nivel y 6 misiones no tienen guía). Las dos fuentes no coinciden casi nunca: en 234 de las 251 Torrente Arcano da un nivel más bajo (nunca más alto), a veces mucho ("La cólera de los dioses": 50 frente a 200). `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`.
+
+Total: **43 126 puntos**. Los pasos más pesados son el 61 (6,0 %), el 47 (5,5 %) y el 82 (5,2 %); el más ligero, el 6 (0,02 %). Con los pasos hechos en orden, el porcentaje va así: 0,8 % tras el 1, 2,6 % tras el 10, 12,7 % tras el 20, 32,8 % tras el 50, 57,6 % tras el 70, 85,4 % tras el 90 y 98,7 % tras el 99. El porcentaje se redondea a un decimal, pero solo marca 100 % con todo hecho y 0 % sin nada.
 
 El conteo "X/100 pasos" se mantiene visible como stat secundario para los completistas, pero la barra principal es la ponderada.
 
@@ -50,7 +48,7 @@ Los 100 pasos se leen como el diario de misiones del juego.
 - La lista ocupa todo el ancho. Al tocar un paso, sube un **bottom sheet** con el detalle. Se cierra arrastrando hacia abajo o tocando el overlay.
 
 ### Otras features
-- ✅ **Hero inmersivo**: el mapa del juego ocupa todo el ancho y casi toda la pantalla, con parallax al bajar, luciérnagas de noche y hojas que caen de día. El progreso lo marca un anillo de 10 tramos alrededor del Dofus Silvestre, que va apagado hasta el final. Al marcar el 99, la página sube al hero y el Silvestre apagado tiembla, estalla en un destello y se convierte en la Piñata de pino. Al marcar el 100 pasa lo mismo con la Piñata, que se convierte en el Silvestre encendido. La animación solo sale en ese momento: al recargar, el huevo ya está como corresponde, y con movimiento reducido cambia sin animación. Al 100 % se marca como obtenido. Junto al porcentaje van los pasos hechos y una nota que explica que el porcentaje está ponderado por esfuerzo. Bajo el título, una tarjeta con el siguiente paso que lleva a su detalle y, aparte, "Lo que necesitas": prerrequisitos y objetos necesarios, cada uno con su barra, que abre su pestaña en la ventana de los pasos. Con la guía terminada, el hero se queda con el título y el huevo obtenido. El parallax y el ambiente se apagan con movimiento reducido.
+- ✅ **Hero inmersivo**: el mapa del juego ocupa todo el ancho y casi toda la pantalla, con parallax al bajar, luciérnagas de noche y hojas que caen de día. El progreso lo marca un anillo de 10 tramos alrededor del Dofus Silvestre, que va apagado hasta el final. Al marcar el 99, la página sube al hero y el Silvestre apagado tiembla, estalla en un destello y se convierte en la Piñata de pino. Al marcar el 100 pasa lo mismo con la Piñata, que se convierte en el Silvestre encendido. La animación solo sale en ese momento: al recargar, el huevo ya está como corresponde, y con movimiento reducido cambia sin animación. Al 100 % se marca como obtenido. Junto al porcentaje van los pasos hechos y una nota que explica que el porcentaje pesa cada paso por el nivel de sus misiones. Bajo el título, una tarjeta con el siguiente paso que lleva a su detalle y, aparte, "Lo que necesitas": prerrequisitos y objetos necesarios, cada uno con su barra, que abre su pestaña en la ventana de los pasos. Con la guía terminada, el hero se queda con el título y el huevo obtenido. El parallax y el ambiente se apagan con movimiento reducido.
 - ✅ **Header fusionado con el hero**: arriba es transparente sobre el mapa del hero y al bajar se vuelve sólido. No lleva barra de progreso: el progreso vive en la franja de arriba de la ventana de los pasos.
 - ✅ **Lo que necesitas**: prerrequisitos y objetos son dos pestañas de la ventana de los pasos, tras "Mapa | Diario" y separadas de ellas por una raya. Cada pestaña lleva una insignia con lo que falta (una ✓ cuando no falta nada). Las tarjetas del hero cambian la ventana a su pestaña y la dejan a la vista, y la tecla "/" abre la de objetos con el buscador listo desde cualquier parte de la página. Ya no hay una sección aparte, así que los títulos pierden la numeración. La pestaña abierta se recuerda, como la vista de los pasos, y abrir un paso desde una lista (el aviso del Dofus Ocre, por ejemplo) vuelve a la última vista de los pasos. Arriba de cada lista va el crédito a Sandglass y, en la misma fila que la explicación de qué hacen en cada pestaña, los botones "Marcar todo" y "Limpiar": actúan sobre lo que se ve y se pueden deshacer.
 - ✅ **Prerrequisitos** (21: 12 logros y misiones previos, 6 oficios y 3 hechizos, al día con torrentearcano) como tarjetas que se marcan, con los objetos que piden debajo. Cada objeto va asociado al prerrequisito en el que se gasta (`PREREQ_OF` en `build_resources.py`, sacado de los objetivos de sus misiones en DofusDB), así que al completar un prerrequisito sus objetos cuentan como usados. Al revés no: marcar un objeto no completa el prerrequisito, porque se puede comprar antes. La página apunta dos veces la Ortiga ×50 y la Lana de jalatín negro ×5 de "El despertar de Pandala": en los prerrequisitos (l11) y en el paso 1, cuyo "El receptáculo de los dofus" pide hacer esa misión. `DUPLICATES` en `build_resources.py` las deja solo en los prerrequisitos. La página también pone en el paso 4 (Barnabé en el espacio, que solo pide un combate) la Lana de jalató ×5 y la Llave del Laboratorio de Brumen Tinctorias del paso 5: son el primer objetivo de sus dos misiones, según DofusDB y sus guías. `MOVED` las pasa al 5. Igual con el 19 (la Calavera, la Llave del Ring Eskarlata y el Tallo de bambuto son de las misiones 5 y 6 de Púrpura profundo, en el 21) y el 34 (la Glándula de arak-hai se entrega en el 35). Las tablas y la cuerda del paso 75 son un duplicado del 76, de cuando la página partió el antiguo paso 75: `DUPLICATES` las quita. Todo revisado en la guía de cada misión y en DofusDB. El Casco y las Alas de madera son para el cañón a la isla de Moon de "Ida sin vuelta" (Pan Koko Mío): basta con llevarlos encima. "Altos vuelos", que es opcional, pide en cambio el Casco mejorado y las Alas de madera mejoradas; la página no los lista, así que `EXTRA` los añade con la etiqueta "Opcional · Altos vuelos". La etiqueta de un paso en "Pronto" no espera a lo opcional para marcarse. Al pasar el ratón, cada objeto de los prerrequisitos dice para cuál es ("Para «Intrusión en el territorio wabbit»"), también en "Pronto". Los de los pasos dicen además para qué misión son ("«Las primeras impresiones son engañosas»"). Lo saca `.build/audit_resources.py`, que cruza lo que pide cada paso con lo que consumen sus misiones en DofusDB (entregas y fabricaciones, con sus recetas) y con el "Necesitarás" de su guía en Torrente Arcano. Escribe `.build/lists/item_quests.json` y muestra lo que no cuadra: objetos que ninguna misión del paso pide (y en qué paso vecino sí), cantidades distintas y lo que las misiones consumen y la lista no recoge. Con `0` revisa los prerrequisitos contra DofusDB. Encima, la recomendación de Sandglass de empezar el Dofus Ocre cuanto antes: lo da "La eterna cosecha", una misión larga que la guía termina en el paso 79 con el logro "El fin de la eternidad", y el aviso lleva a ese paso. **NO suman al progreso del Silvestre**: son un seguimiento aparte.
@@ -155,6 +153,7 @@ python3 -I .build/fetch_dofusdb.py     # descarga logros, jefes, mazmorras y mis
 python3 -I .build/match_assets.py      # empareja los 100 pasos e imprime la cobertura
 python3 -I .build/build_assets_js.py   # escribe src/data/assets.json (60 KB) y copia las imágenes a public/img/
 python3 -I .build/build_quests_js.py   # escribe src/data/quests.json (506 KB): misiones y objetivos por paso
+python3 -I .build/build_weights.py     # escribe src/data/weights.json: el peso de cada paso en el porcentaje
 python3 -I .build/build_figures.py     # escribe src/data/figures.json: mapa de inicio y figura del estandarte por paso
 python3 -I .build/build_resources.py   # escribe src/data/resources.json: los objetos de cada paso
 ```
@@ -249,31 +248,29 @@ dos versiones las pasaban sin cambios.
 
 ## Limitaciones honestas
 
-1. **La clasificación de esfuerzo es aproximada**. Yo clasifiqué los 100 pasos basándome en patrones del texto ("Completo" = más esfuerzo, "misión X" = menos), pero **Sandglass y jugadores experimentados son la autoridad real**. Si algún peso parece mal calibrado, se cambia en 1 línea del array `STEPS` en el HTML.
+1. **El nivel mide la dificultad, no el tiempo**. El peso de un paso sale del nivel de sus misiones, no de lo que se tarda: una misión de nivel 200 de hablar con dos PNJ pesa igual que una de nivel 200 con tres mazmorras. Es una aproximación objetiva y reproducible, no una medida exacta del esfuerzo.
 
-2. **Los pesos aún no usan las misiones**. `src/data/quests.json` ya trae las misiones y objetivos de cada paso; el siguiente paso natural es recalibrar el esfuerzo con esa cantidad real en vez de con patrones del texto.
+2. **El progreso vive en localStorage** — sin sync a servidor / cuenta de usuario.
 
-3. **El progreso vive en localStorage** — sin sync a servidor / cuenta de usuario.
-
-4. **El emparejamiento de assets es automático**. Un paso puede mostrar el icono de una
+3. **El emparejamiento de assets es automático**. Un paso puede mostrar el icono de una
    recompensa secundaria en vez de la que tú esperarías, porque el script toma el primer
    logro del texto que entrega un ítem. Los jefes se detectan por nombre propio en
    mayúscula, lo que descarta falsos positivos como "la guerra interminable" pero
    dependería de que Sandglass siga escribiéndolos así. Revisar
    `.build/data/step_assets.json` para auditar cualquier paso.
 
-5. **Los datos vienen de DofusDB**, un servicio de terceros. Las imágenes ya están
+4. **Los datos vienen de DofusDB**, un servicio de terceros. Las imágenes ya están
    copiadas en `public/img/`, así que la página no depende de él para funcionar; solo para
    regenerar los datos.
 
-6. **Los mapas del overlay dependen de DofusDB**. Iconos y objetos están en `public/img/`, pero los
+5. **Los mapas del overlay dependen de DofusDB**. Iconos y objetos están en `public/img/`, pero los
    mapas se enlazan desde su CDN por tamaño.
 
-7. **La sintaxis de `/travel` no está verificada en el juego**. La única referencia que
+6. **La sintaxis de `/travel` no está verificada en el juego**. La única referencia que
    encontré es una extensión para dofus-map.com que copia `/travel` seguido de dos
    coordenadas. Si el juego espera otro formato, se cambia en `copyTravel()`.
 
-8. **Las misiones de alineamiento salen del criterio de inicio**, no de un listado oficial.
+7. **Las misiones de alineamiento salen del criterio de inicio**, no de un listado oficial.
    Los niveles cuadran con lo que dice cada paso (la 99, nivel 199, lleva al Mirador de
    Ilyzaelle), pero es una inferencia.
 
@@ -314,10 +311,11 @@ silvestre-checklist/
     ├── match_assets.py       ← empareja los 100 pasos con logros, jefes y misiones
     ├── build_assets_js.py    ← genera los datos de pasos y copia las imágenes
     ├── build_quests_js.py    ← resuelve cada paso a sus misiones
+    ├── build_weights.py      ← peso de cada paso para el porcentaje, por el nivel de sus misiones
     ├── build_figures.py      ← mapa de inicio y figura del estandarte de cada paso
     ├── build_resources.py    ← objetos de cada paso desde la lista de torrentearcano
     ├── lists/                ← datos importados de torrentearcano y su compilado
-    ├── steps.js, steps_data.py
+    ├── steps.js
     └── data/                 ← datos crudos y cachés de la API (gitignored)
 ```
 

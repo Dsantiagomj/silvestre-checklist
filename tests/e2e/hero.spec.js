@@ -97,6 +97,27 @@ test("con movimiento reducido el Dofus cambia sin animación", async ({ page }) 
   await expect(page.locator(".hero-egg")).not.toHaveClass(/morphing/);
 });
 
+test("el porcentaje pesa cada paso por el nivel de sus misiones", async ({ page }) => {
+  const pctWith = async done => {
+    await page.evaluate(d => localStorage.setItem("silvestre:done", JSON.stringify(d)), done);
+    await page.reload();
+    await expect(page.locator(".diary-row")).toHaveCount(100);
+    return parseFloat(await page.locator("#heroPct").innerText());
+  };
+  await openApp(page);
+  expect(await pctWith({})).toBe(0);
+  // El 1 son misiones de nivel bajo; el 61, misiones de nivel 200: pesa mucho más
+  const first = await pctWith({ 1: true });
+  const heavy = await pctWith({ 61: true });
+  expect(first).toBeGreaterThan(0);
+  expect(heavy).toBeGreaterThan(first * 5);
+  // Todo pesa algo: sin el 4, una sola misión de nivel 15, no se llega al 100
+  const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
+  expect(await pctWith(all)).toBe(100);
+  expect(await pctWith({ ...all, 4: false })).toBeLessThan(100);
+  expect(await pctWith({ 4: true })).toBeGreaterThan(0);
+});
+
 test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
@@ -169,7 +190,7 @@ test("la descripción explica la página y el ponderado es una nota del porcenta
   await expect(page.locator("#pctNote")).toBeHidden();
   await info.hover();
   await expect(page.locator("#pctNote")).toBeVisible();
-  await expect(page.locator("#pctNote")).toContainText("esfuerzo");
+  await expect(page.locator("#pctNote")).toContainText("nivel");
 });
 
 test("los pasos van con el progreso y los requisitos van aparte", async ({ page }) => {
