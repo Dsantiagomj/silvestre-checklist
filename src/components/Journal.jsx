@@ -191,9 +191,10 @@ function Quests({ step, quests, loaded, s }) {
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
           {optional.has(q.n.toLowerCase()) && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
+          {/* Con una sola misión, terminarla es «Paso hecho»: el botón sobra */}
+          {quests.length > 1 && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
             disabled={!pick} title={!pick ? undefined : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
-            aria-label="Misión hecha" onClick={toggleDone}>✓<span className="q-done-txt"> Misión hecha</span></button>
+            aria-label="Misión hecha" onClick={toggleDone}>✓<span className="q-done-txt"> Misión hecha</span></button>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
