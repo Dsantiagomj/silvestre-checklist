@@ -2115,96 +2115,292 @@ header.is-scrolled .title-bar{
 }
 @media (prefers-reduced-motion:reduce){ .win-bar i, .road-dofus, .road-dofus img{ transition:none; } }
 
-/* Mapa: los 100 pasos como un camino que serpentea; cada sello lleva el paisaje de su zona */
+/* ============================================================================
+   MAPA · UN CAMINO DE AVENTURA (StepMap.jsx, MapCard.jsx)
+   Una senda que serpentea sobre un pergamino: pergamino oscuro y cálido en el tema
+   oscuro, claro en el claro. Lo andado se enciende en verde; los Dofus son hitos;
+   el siguiente pendiente lleva «Estás aquí». Sin imágenes: textura y viñeta con
+   degradados (y un ruido SVG en línea).
+   ============================================================================ */
+:root{
+  --parch:        #2b2216;
+  --parch-hi:     rgba(255,222,160,.07);
+  --parch-shade:  rgba(0,0,0,.42);
+  --parch-ink:    #ead9b4;
+  --parch-soft:   #b9a47c;
+  --parch-road:   rgba(10,6,2,.32);
+  --parch-trail:  #c9a86a;
+  --parch-node:   #3a2e1f;
+  --parch-card:   #1f1912;
+  --parch-line:   #6b5536;
+  --walked:       #9fe05a;
+  --walked-glow:  rgba(159,224,90,.32);
+  --egg-gold:     #e3c565;
+}
+[data-theme="light"]{
+  --parch:        #efe0bd;
+  --parch-hi:     rgba(255,255,255,.5);
+  --parch-shade:  rgba(120,80,30,.22);
+  --parch-ink:    #3b2a14;
+  --parch-soft:   #7a6038;
+  --parch-road:   rgba(120,84,36,.16);
+  --parch-trail:  #8a6630;
+  --parch-node:   #fbf3df;
+  --parch-card:   #fffaf0;
+  --parch-line:   #c9ad7c;
+  --walked:       #4f9a1c;
+  --walked-glow:  rgba(110,180,50,.3);
+  --egg-gold:     #c99a2e;
+}
 .step-map{
   position:relative; overflow:clip; margin-bottom:24px;
-  border-radius:16px; border:1px solid var(--line-warm); background:#161a14;
+  border-radius:16px; border:1px solid var(--parch-line);
+  background-color:var(--parch); color:var(--parch-ink);
+  background-image:
+    /* Viñeta en los bordes del pergamino */
+    linear-gradient(90deg, var(--parch-shade), transparent 7%, transparent 93%, var(--parch-shade)),
+    linear-gradient(180deg, var(--parch-shade), transparent 110px, transparent calc(100% - 110px), var(--parch-shade)),
+    /* Manchas y zonas gastadas */
+    radial-gradient(ellipse 60% 22% at 18% 12%, var(--parch-hi), transparent 70%),
+    radial-gradient(ellipse 50% 18% at 82% 46%, var(--parch-hi), transparent 70%),
+    radial-gradient(ellipse 45% 14% at 30% 78%, rgba(0,0,0,.08), transparent 70%),
+    /* Grano del papel */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.step-map-bg{
-  position:absolute; inset:-24px; background:center / cover;
-  filter:blur(4px) saturate(.7) brightness(.4);
-  transition:background-image .4s ease;
-}
-.step-map-path{ position:absolute; inset:0; overflow:visible; }
-.step-map-path polyline{
-  fill:none; stroke:color-mix(in srgb, var(--soon) 70%, transparent);
-  stroke-width:5; stroke-dasharray:2 13; stroke-linecap:round; stroke-linejoin:round;
-}
-.map-arc{ fill:none; stroke:var(--amber); stroke-width:3; stroke-dasharray:6 6; }
-/* En claro, el paisaje se lava hacia el fondo de la página en vez de oscurecerse */
-[data-theme="light"] .step-map{ background:var(--panel-2); }
-[data-theme="light"] .step-map-bg{ filter:blur(4px) saturate(.8) brightness(1.08); opacity:.5; }
-[data-theme="light"] .step-map-path polyline{ stroke:color-mix(in srgb, var(--soon-ink) 70%, transparent); }
-[data-theme="light"] .map-arc{ stroke:var(--accent-ink); }
+.step-map-path{ position:absolute; inset:0; overflow:visible; pointer-events:none; }
+.step-map-path path{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
+/* La senda: una franja gastada y, encima, las pisadas punteadas en tinta */
+.map-road{ stroke:var(--parch-road); stroke-width:20; }
+.map-trail{ stroke:var(--parch-trail); stroke-width:4; stroke-dasharray:0 11; opacity:.85; }
+/* Lo andado: un halo ancho y la línea verde encima (sin filtros: barato de pintar) */
+.map-trail-glow{ stroke:var(--walked-glow); stroke-width:16; }
+.map-trail-lit{ stroke:var(--walked); stroke-width:5; }
+.map-arc{ stroke:var(--egg-gold); stroke-width:3; stroke-dasharray:6 6; }
+
+/* Los sellos: piedras del camino con el color de su zona en el borde */
 .map-node{
-  position:absolute; transform:translate(-50%, -50%);
-  display:grid; place-items:center; width:54px; height:54px; padding:0;
+  position:absolute; z-index:1; transform:translate(-50%, -50%);
+  display:grid; place-items:center; width:44px; height:44px; padding:0;
   border-radius:50%; border:3px solid var(--zone-color);
-  background:#161a14 center / 320% auto; box-shadow:0 5px 12px rgba(0,0,0,.6);
+  background:var(--parch-node); color:var(--parch-ink);
+  box-shadow:0 0 0 3px var(--parch), 0 4px 10px rgba(0,0,0,.45);
   cursor:pointer; transition:transform .15s ease, opacity .2s ease, filter .2s ease;
 }
-.map-node::before{ content:""; position:absolute; inset:0; border-radius:50%; background:rgba(13,14,12,.42); }
-.map-node:hover{ transform:translate(-50%, -50%) scale(1.08); z-index:2; }
-.node-num{
-  position:relative; font:400 19px 'Lilita One', var(--font-display); color:#f3ecd2;
-  -webkit-text-stroke:1.4px #121410; paint-order:stroke fill;
+.map-node:hover{ transform:translate(-50%, -50%) scale(1.1); z-index:3; }
+.map-node:focus-visible{ outline:3px solid var(--egg-gold); outline-offset:4px; z-index:3; }
+.node-num{ position:relative; font:400 17px/1 'Lilita One', var(--font-display); }
+/* Hecho: encendido en verde, con su ✓ */
+.map-node.done{
+  border-color:#d9f59a; color:#14240a;
+  background:radial-gradient(circle at 35% 30%, #c9f27f, #5f9a2a);
+  box-shadow:0 0 0 3px var(--parch), 0 0 16px var(--walked-glow), 0 0 4px var(--walked);
 }
-.map-node.done{ filter:grayscale(.75) brightness(.72); }
 .map-node.done::after{
-  content:"✓"; position:absolute; top:-6px; right:-6px; display:grid; place-items:center;
-  width:20px; height:20px; border-radius:50%; background:var(--amber); color:#142208; font:900 12px var(--font-body);
+  content:"✓"; position:absolute; top:-7px; right:-7px; display:grid; place-items:center;
+  width:19px; height:19px; border-radius:50%; background:var(--walked); color:#10200a;
+  border:2px solid var(--parch); font:900 11px var(--font-body);
 }
-.map-node.dofus{ border-color:var(--soon); box-shadow:0 0 0 4px color-mix(in srgb, var(--soon) 30%, transparent), 0 5px 12px rgba(0,0,0,.6); }
+/* Los Dofus del camino: hitos grandes con su huevo, apagado hasta conseguirlo */
+.map-node.dofus{
+  width:62px; height:62px; border:3px solid var(--egg-gold);
+  background:radial-gradient(circle, var(--parch-node) 55%, color-mix(in srgb, var(--egg-gold) 30%, var(--parch-node)));
+  box-shadow:0 0 0 3px var(--parch), 0 0 0 6px color-mix(in srgb, var(--egg-gold) 35%, transparent), 0 6px 14px rgba(0,0,0,.5);
+}
+.node-egg{
+  position:relative; width:52px; height:52px; margin-top:-12px; object-fit:contain;
+  filter:grayscale(1) brightness(.85) opacity(.55); transition:filter .3s ease;
+}
+.map-node.dofus.done{
+  background:radial-gradient(circle, #4f7426 45%, #2b4413);
+  box-shadow:0 0 0 3px var(--parch), 0 0 0 6px color-mix(in srgb, var(--egg-gold) 55%, transparent), 0 0 26px rgba(255,214,110,.55);
+}
+.map-node.dofus.done .node-egg{ filter:drop-shadow(0 0 7px rgba(255,226,140,.9)); }
+.map-node.dofus .node-num{
+  position:absolute; bottom:-10px; padding:1px 7px; border-radius:999px; font-size:12px;
+  background:var(--parch-node); color:var(--parch-ink); border:1.5px solid var(--egg-gold);
+}
+.map-node.dofus.done .node-num{ background:#2b4413; color:#e9f7cf; }
+/* Estás aquí: el siguiente pendiente brilla y late (motion, más abajo) */
 .map-node.current{
-  z-index:1; width:70px; height:70px; border-color:var(--amber);
+  z-index:2; width:54px; height:54px; border-color:var(--amber);
   box-shadow:0 0 0 8px color-mix(in srgb, var(--amber) 20%, transparent), 0 0 34px color-mix(in srgb, var(--amber) 65%, transparent);
 }
-.map-node.current .node-num{ font-size:26px; }
-.map-node.dimmed{ opacity:.28; filter:grayscale(1); }
-.node-egg{ position:absolute; top:-30px; width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 3px 5px #000); }
-.node-boss{
-  position:absolute; left:-12px; bottom:-10px; width:28px; height:28px; padding:1px; object-fit:contain;
-  border-radius:50%; border:2px solid var(--soon); background:#121411;
+.map-node.dofus.current{ width:68px; height:68px; }
+.map-node.current .node-num{ font-size:21px; }
+.map-node.dofus.current .node-num{ font-size:13px; }
+.map-here{
+  position:absolute; bottom:calc(100% + 12px); left:50%; transform:translateX(-50%);
+  padding:3px 10px; border-radius:999px; white-space:nowrap; pointer-events:none;
+  background:var(--amber); color:#142208; font:800 11px/1.3 var(--font-display); letter-spacing:.1em; text-transform:uppercase;
+  box-shadow:0 4px 10px rgba(0,0,0,.35);
 }
-.step-map-legend{ position:absolute; left:14px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; }
+.map-here::after{
+  content:""; position:absolute; top:100%; left:50%; margin-left:-5px;
+  border:5px solid transparent; border-top-color:var(--amber);
+}
+.map-node.dofus .map-here{ bottom:calc(100% + 18px); }
+.map-node.selected{ outline:3px solid var(--egg-gold); outline-offset:4px; z-index:3; }
+.map-node.dimmed{ opacity:.25; filter:grayscale(1); }
+/* El jefe que se pasa en el paso, pequeño junto al sello */
+.node-boss{
+  position:absolute; right:-18px; bottom:-10px; width:28px; height:28px; padding:1px; object-fit:contain;
+  border-radius:50%; border:2px solid var(--egg-gold); background:var(--parch-card);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+/* El cartucho del mapa: título, lo andado y la leyenda, en un marco dorado */
+.map-cartouche{
+  position:absolute; top:22px; left:50%; transform:translateX(-50%); z-index:0;
+  width:min(560px, calc(100% - 32px)); padding:14px 22px 16px; text-align:center;
+  border-radius:14px; border:1.5px solid var(--egg-gold);
+  outline:1px solid color-mix(in srgb, var(--egg-gold) 45%, transparent); outline-offset:-6px;
+  background:color-mix(in srgb, var(--parch-card) 78%, transparent);
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+}
+.map-cartouche-kicker{ font:800 10.5px var(--font-display); letter-spacing:.2em; text-transform:uppercase; color:var(--egg-gold); }
+.map-cartouche-title{ margin:2px 0 4px; font:400 26px/1.1 'Lilita One', var(--font-display); color:var(--parch-ink); }
+.map-cartouche-count{ margin:0; font-weight:700; font-size:13.5px; color:var(--parch-ink); }
+.map-cartouche-help{ margin:2px 0 10px; font-size:12.5px; color:var(--parch-soft); }
+/* El final del camino: el Dofus Silvestre, apagado hasta terminar la guía */
+.map-trail-end{ stroke:var(--parch-trail); stroke-width:4; stroke-dasharray:0 11; opacity:.85; }
+.map-trail-end.lit{ stroke:var(--walked); stroke-dasharray:none; }
+.map-end{
+  position:absolute; left:50%; bottom:28px; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; pointer-events:none;
+}
+.map-end img{
+  width:76px; height:76px; object-fit:contain; padding:6px; border-radius:50%;
+  background:var(--parch-node); border:3px solid var(--egg-gold);
+  box-shadow:0 0 0 3px var(--parch), 0 0 0 7px color-mix(in srgb, var(--egg-gold) 35%, transparent);
+  filter:grayscale(1) brightness(.9);
+}
+.map-end.done img{ filter:drop-shadow(0 0 10px rgba(255,226,140,.8)); }
+.map-end-label{ margin-top:4px; font:800 10.5px var(--font-display); letter-spacing:.2em; text-transform:uppercase; color:var(--egg-gold); }
+.map-end-name{ font:400 20px/1.1 'Lilita One', var(--font-display); color:var(--parch-ink); }
+.step-map-legend{ display:flex; justify-content:center; gap:6px; flex-wrap:wrap; }
 .step-map-legend span{
   display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
-  background:rgba(13,14,12,.85); border:1px solid rgba(255,255,255,.1); font-size:11.5px; font-weight:700; color:#dfe4d6;
+  background:var(--parch-card); border:1px solid var(--parch-line); font-size:11.5px; font-weight:700; color:var(--parch-ink);
 }
 .step-map-legend i{ width:10px; height:10px; border-radius:50%; }
-.lg-egg{ background:var(--soon); }
-.lg-boss{ border:2px solid var(--soon); background:#121411; }
+.lg-walked{ background:var(--walked); box-shadow:0 0 6px var(--walked); }
+.lg-here{ background:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 30%, transparent); }
+.lg-egg{ background:var(--egg-gold); }
+.lg-boss{ border:2px solid var(--egg-gold); background:var(--parch-card); }
+
+/* La píldora del paso bajo el ratón */
+.map-tip{
+  position:absolute; z-index:6; display:flex; align-items:center; gap:8px;
+  padding:4px 14px 4px 4px; border-radius:999px; pointer-events:none; white-space:nowrap;
+  background:var(--parch-card); color:var(--parch-ink); border:1px solid var(--parch-line);
+  box-shadow:0 8px 20px rgba(0,0,0,.4);
+  transform:translate(calc(var(--r) + 12px), -50%);
+}
+.map-tip.left{ transform:translate(calc(-100% - var(--r) - 12px), -50%); }
+.map-tip img, .map-tip-blank{
+  flex:none; width:36px; height:36px; border-radius:50%; object-fit:contain;
+  background:color-mix(in srgb, var(--zone-color) 25%, var(--parch)); border:2px solid var(--zone-color);
+}
+.map-tip-num{ font:400 20px/1 'Lilita One', var(--font-display); color:var(--egg-gold); }
+.map-tip-text{ display:flex; flex-direction:column; min-width:0; }
+.map-tip-text b{ max-width:260px; overflow:hidden; text-overflow:ellipsis; font-size:13px; line-height:1.2; }
+.map-tip-text small{ font:700 10.5px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--parch-soft); }
+
+/* La ficha del paso: el estandarte a la izquierda y lo que importa a la derecha */
 .map-card{
-  position:absolute; z-index:5; overflow:hidden;
-  border-radius:14px; border:1px solid var(--line-warm); background:#151813; color:#eef1e8;
-  box-shadow:0 16px 34px rgba(0,0,0,.7);
+  position:relative; display:grid; grid-template-columns:132px minmax(0, 1fr); gap:14px;
+  padding:12px 14px 12px 12px; border-radius:16px;
+  background:var(--parch-card); color:var(--parch-ink); border:1px solid var(--parch-line);
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
 }
-.map-card-hd{ position:relative; height:84px; background:#222 center / cover; }
-.map-card-hd::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, #151813, rgba(21,24,19,0)); }
-.map-card-hd img{ position:absolute; right:10px; bottom:-14px; z-index:1; width:88px; height:88px; object-fit:contain; filter:drop-shadow(0 6px 8px #000); }
-.map-card-x{
-  position:absolute; top:8px; right:8px; z-index:2; width:26px; height:26px; border-radius:50%;
-  border:0; background:rgba(13,14,12,.8); color:#eef1e8; font-size:16px; cursor:pointer;
+.map-card.is-floating{ position:absolute; z-index:5; width:min(480px, calc(100% - 16px)); }
+.map-card:focus{ outline:none; }
+.map-card:focus-visible{ outline:2px solid var(--egg-gold); outline-offset:2px; }
+/* La flecha hacia el paso, en el lado que toca (data-side: dónde va la ficha) */
+.map-card-arrow{
+  position:absolute; width:16px; height:16px; background:var(--parch-card);
+  border:1px solid var(--parch-line); transform:rotate(45deg);
 }
-.map-card-bd{ padding:4px 14px 14px; }
-.map-card-zone{ font:700 11px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:#a9b39f; }
-.map-card-title{
-  margin:2px 0 8px; font:400 19px/1.15 'Lilita One', var(--font-display); color:#f3ecd2;
-  -webkit-text-stroke:1.2px #121410; paint-order:stroke fill;
+.map-card[data-side="right"] .map-card-arrow{ left:-9px; top:calc(var(--arrow) - 8px); border-top:0; border-right:0; }
+.map-card[data-side="left"] .map-card-arrow{ right:-9px; top:calc(var(--arrow) - 8px); border-bottom:0; border-left:0; }
+.map-card[data-side="below"] .map-card-arrow{ top:-9px; left:calc(var(--arrow) - 8px); border-bottom:0; border-right:0; }
+.map-card[data-side="above"] .map-card-arrow{ bottom:-9px; left:calc(var(--arrow) - 8px); border-top:0; border-left:0; }
+/* El estandarte en pequeño (Banner.jsx): la zona ya va a la derecha */
+.map-card-banner.journal-banner{ min-height:196px; padding:10px 6px 30px; }
+.map-card-banner .journal-num{ font-size:32px; }
+.map-card-banner .banner-zone{ display:none; }
+.map-card-banner .journal-show{ padding-top:4px; }
+.map-card-banner .journal-show::before{ bottom:30px; width:80px; }
+.map-card-banner .journal-show img{ width:72px; height:72px; animation:none; }
+.map-card-banner .journal-show[data-kind="egg"] img{ width:58px; height:58px; margin:6px 0; }
+.map-card-banner .journal-show figcaption small{ font-size:8.5px; letter-spacing:.12em; }
+.map-card-banner .journal-show-name{ font-size:14px; }
+.map-card-bd{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; padding-right:18px; }
+.map-card-zone{
+  padding:2px 9px; border-radius:999px; border:1px solid color-mix(in srgb, var(--zone-color) 70%, transparent);
+  background:color-mix(in srgb, var(--zone-color) 16%, transparent);
+  font:800 10.5px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:var(--parch-ink);
 }
-.map-card-line{ display:flex; align-items:flex-start; gap:8px; margin:0 0 6px; font-size:13px; line-height:1.4; color:#dfe4d6; }
+.map-card-title{ margin:0; font:400 19px/1.15 'Lilita One', var(--font-display); color:var(--parch-ink); }
+.map-card-reward{ display:flex; flex-direction:column; gap:3px; margin:0; padding:0; list-style:none; }
+.map-card-reward li{ display:flex; align-items:center; gap:7px; font-weight:700; font-size:13.5px; color:var(--egg-gold); }
+[data-theme="light"] .map-card-reward li{ color:var(--soon-ink); }
+.map-card-reward img{ width:26px; height:26px; object-fit:contain; }
+.map-card-reward .boss img{ border-radius:50%; border:1.5px solid var(--egg-gold); background:rgba(0,0,0,.25); }
+.map-card-line{ display:flex; align-items:flex-start; gap:7px; font-size:12.5px; line-height:1.4; }
 .map-card-line img{ flex:none; width:20px; height:20px; object-fit:contain; }
-.map-card-cta{ display:flex; gap:8px; margin-top:10px; }
+.map-card-line p{ margin:0; }
+.map-card-line b{ margin-right:4px; font:800 10px var(--font-display); letter-spacing:.12em; text-transform:uppercase; }
+.map-card-line.stop b{ color:#e05a4f; }
+.map-card-line.done b{ color:var(--walked); }
+.map-card-line.later b{ color:#6fa8dc; }
+[data-theme="light"] .map-card-line.stop b{ color:#b8334b; }
+[data-theme="light"] .map-card-line.later b{ color:#2f6aa3; }
+.step-chip{
+  display:inline-grid; place-items:center; min-width:24px; height:20px; margin:0 2px; padding:0 6px;
+  border-radius:999px; border:1.5px solid var(--walked); background:color-mix(in srgb, var(--walked) 18%, transparent);
+  color:inherit; font:400 12px/1 'Lilita One', var(--font-display); cursor:pointer; vertical-align:1px;
+}
+.step-chip:hover{ background:var(--walked); color:#10200a; }
+.map-card-line.later .step-chip{ border-color:#6fa8dc; background:color-mix(in srgb, #6fa8dc 18%, transparent); }
+.map-card-meta{ margin:0; font-size:12px; font-weight:700; color:var(--parch-soft); }
+.map-card-cta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
 .map-card-cta button{
-  padding:6px 12px; border-radius:999px; border:1px solid #2f3a2e; background:none; color:#eef1e8;
+  padding:6px 12px; border-radius:999px; border:1px solid var(--parch-line); background:none; color:var(--parch-ink);
   font:700 13px var(--font-body); cursor:pointer;
 }
 .map-card-cta .map-card-done{ background:var(--amber); border-color:var(--amber); color:#142208; }
-@media (max-width:600px){
-  .map-node{ width:46px; height:46px; }
-  .map-node.current{ width:58px; height:58px; }
-  .node-num{ font-size:16px; }
+.map-card-cta .map-card-done.is-done{ background:none; border-color:var(--parch-line); color:var(--parch-ink); }
+.map-card-cta button:hover{ filter:brightness(1.1); }
+.map-card-x{
+  position:absolute; top:8px; right:8px; z-index:2; width:26px; height:26px; padding:0; border-radius:50%;
+  border:1px solid var(--parch-line); background:var(--parch-card); color:var(--parch-ink); font-size:16px; line-height:1; cursor:pointer;
 }
+/* En móvil la ficha va en la hoja inferior (BottomSheet.jsx) */
+.map-card.is-sheet{
+  margin:4px 12px 16px; grid-template-columns:116px minmax(0, 1fr); gap:12px;
+  box-shadow:none;
+}
+.map-card.is-sheet .map-card-banner.journal-banner{ min-height:178px; }
+@media (max-width:600px){
+  .map-node{ width:38px; height:38px; }
+  .map-node.dofus{ width:52px; height:52px; }
+  .map-node.current{ width:46px; height:46px; }
+  .map-node.dofus.current{ width:58px; height:58px; }
+  .node-num{ font-size:15px; }
+  .node-egg{ width:44px; height:44px; }
+  .node-boss{ width:22px; height:22px; right:-12px; }
+  .map-here{ font-size:10px; padding:2px 8px; }
+  .map-cartouche{ top:14px; padding:10px 12px 12px; }
+  .map-cartouche-title{ font-size:21px; }
+  .map-cartouche-help{ display:none; }
+  .map-cartouche-count{ margin-bottom:8px; font-size:12.5px; }
+  .step-map-legend span{ padding:3px 8px; font-size:10.5px; }
+}
+@keyframes map-tip-in{ from{ opacity:0; } }
+@media (prefers-reduced-motion:no-preference){
+  .map-tip{ animation:map-tip-in .15s ease both; }
+}
+/* ======================= fin del mapa · camino de aventura ======================= */
 
 /* Sellos de zona: paisaje en un medallón con anillo de avance (en el desplegable de zona) */
 .seal{
