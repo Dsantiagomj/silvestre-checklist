@@ -18,6 +18,7 @@ import Needs from "./Needs.jsx";
 import StepMap, { mapPoint } from "./StepMap.jsx";
 import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
+import SearchField from "./SearchField.jsx";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -108,12 +109,14 @@ function DiaryList({ s, current }) {
 
   return (
     <div className="diary-side">
-      <div className="diary-tabs" role="group" aria-label="Mostrar">
-        {TABS.map(([key, label, id]) => (
-          <button key={key} type="button" id={tabId(id)} aria-pressed={status === key} onClick={() => setStatusFilter(key)}>
-            {label} <span className="n">{count(key)}</span>
-          </button>
-        ))}
+      <div className="diary-tabs">
+        <div className="seg seg-fill" role="group" aria-label="Mostrar">
+          {TABS.map(([key, label, id]) => (
+            <button key={key} type="button" id={tabId(id)} aria-pressed={status === key} onClick={() => setStatusFilter(key)}>
+              {label} <span className="n">{count(key)}</span>
+            </button>
+          ))}
+        </div>
       </div>
       <div className="diary-list" ref={listRef}>
         {visible.size === 0 && (
@@ -136,8 +139,9 @@ function DiaryList({ s, current }) {
 function DiaryBar({ s }) {
   return (
     <div className="diary-bar">
-      <input type="search" className="diary-search" id="searchInput" placeholder="Buscar por número o texto…"
-        aria-label="Buscar paso" value={s.filters.search} onChange={e => setSearch(e.target.value)} />
+      <SearchField className="diary-search" id="searchInput" matchesId="searchMatches" clearId="searchClear" value={s.filters.search} onChange={setSearch}
+        placeholder="Buscar paso por número o texto" label="Buscar paso"
+        matches={STEPS.filter(st => stepMatchesFilters(s, st)).length} total={STEPS.length} />
     </div>
   );
 }
