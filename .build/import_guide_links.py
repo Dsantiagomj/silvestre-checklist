@@ -114,8 +114,12 @@ def prereq_names(kind):
 
 
 def quest_names():
-    """The names of the quests the diary lists, as the app shows them."""
-    return sorted({q["n"] for q in json.loads(QUESTS.read_text())["QUESTS"].values()})
+    """The names of the quests the diary lists, as the app shows them, and of the ones
+    behind a row that depends on the alignment ("El destino", "La fatalidad"...): its
+    start links each one."""
+    quests = json.loads(QUESTS.read_text())["QUESTS"].values()
+    alts = {name for q in quests for name, _ in (q["st"] or {}).get("ali", [])}
+    return sorted({q["n"] for q in quests} | alts)
 
 
 def answers(url, tries=4):

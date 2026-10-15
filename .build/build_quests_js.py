@@ -115,9 +115,30 @@ STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782]
 # its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48.
 OBJECTIVE_ORDER = {(1660, 0): [1, 2, 0, 3]}
 
-# An objective any of several quests completes (one per class in "Un ciudadano
-# modelo") is no single quest: it becomes one generic row instead of the first match.
+# An objective any of several quests completes is no single quest: it becomes one
+# generic row instead of the first match. The one per class in "Un ciudadano modelo"
+# (objective 5371) is CLASS_QUEST; any other gets "alt:<achievement>:<objective>"
+# ("Prólogo invernal" in "Un alma helada", one quest per alignment).
 CLASS_QUEST = "clase"
+CLASS_OBJECTIVE = 5371
+
+
+def alt_id(ach, objective):
+    return CLASS_QUEST if objective["id"] == CLASS_OBJECTIVE else f"alt:{ach['id']}:{objective['id']}"
+
+
+def is_alt(q):
+    return isinstance(q, str) and q.startswith("alt:")
+
+
+def alternatives_of(ach):
+    """{alt id: (objective name, [quest ids])} for the achievement's generic rows."""
+    out = {}
+    for o in [o for o in (ach.get("objectives") or []) if o]:
+        alternatives = re.findall(r"Qf=(\d+)", o.get("criterion") or "")
+        if len(alternatives) > 1 and o["id"] != CLASS_OBJECTIVE:
+            out[alt_id(ach, o)] = ((o.get("name") or {}).get("es") or "", [int(q) for q in alternatives])
+    return out
 
 
 def achievement_quests(ach):
@@ -132,7 +153,7 @@ def achievement_quests(ach):
     objectives = [o for o in (ach.get("objectives") or []) if o]
     for o in sorted(objectives, key=lambda o: o.get("order", 0)):
         alternatives = re.findall(r"Qf=(\d+)", o.get("criterion") or "")
-        out.append(CLASS_QUEST if len(alternatives) > 1 else int(alternatives[0]) if alternatives else None)
+        out.append(alt_id(ach, o) if len(alternatives) > 1 else int(alternatives[0]) if alternatives else None)
     return out
 
 
@@ -285,8 +306,9 @@ def step_plan(step, achievements, marks, quests, images):
             continue
         ach = achievements[a["id"]]
         ordered = achievement_quests(ach)
-        names = [("Misión de clase" if q == CLASS_QUEST else quests[q]["name"]["es"]) if q in quests or q == CLASS_QUEST
-                 else None for q in ordered]
+        alts = alternatives_of(ach)
+        names = [("Misión de clase" if q == CLASS_QUEST else alts[q][0] if is_alt(q) else quests[q]["name"]["es"])
+                 if q in quests or isinstance(q, str) else None for q in ordered]
         nxt = LOGRO.search(base, pos + 1)
         segment = base[pos:nxt.start() if nxt else len(base)]
         wanted = missions_for(base, pos)
@@ -359,6 +381,59 @@ def quest_groups(step_quests, achievements, images):
 # ---------------------------------------------------------------------------
 # Quest -> compact record
 # ---------------------------------------------------------------------------
+def alignment(criterion):
+    """The alignment a quest asks for in its startCriterion (Ps = alignment), or None."""
+    parts = set((criterion or "").split("&"))
+    if "Ps=1" in parts:
+        return "Bonta"
+    if "Ps=2" in parts:
+        return "Brakmar"
+    if {"Ps!1", "Ps!2"} <= parts:
+        return "sin alineamiento o neutral"
+    return None
+
+
+def or_list(items):
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " o " + items[-1]
+
+
+def merged_text(texts):
+    """One text for objectives that only differ in a name: "Entrégale a A, B o C: 1 x X"."""
+    if len(set(texts)) == 1:
+        return texts[0]
+    pre = 0
+    while all(len(t) > pre for t in texts) and len({t[pre] for t in texts}) == 1:
+        pre += 1
+    pre = texts[0].rfind(" ", 0, pre) + 1  # whole words
+    suf = 0
+    while all(len(t) - pre > suf for t in texts) and len({t[-1 - suf] for t in texts}) == 1:
+        suf += 1
+    while suf and texts[0][len(texts[0]) - suf].isalnum():  # whole words
+        suf -= 1
+    middles = list(dict.fromkeys(t[pre:len(t) - suf] for t in texts))
+    return texts[0][:pre] + or_list(middles) + texts[0][len(texts[0]) - suf:]
+
+
+def alt_record(name, records, criteria):
+    """The generic row for an objective any of several quests completes. Where the
+    quests have the same objectives (the three of "Prólogo invernal" only change who
+    gets the item), it keeps them, merging the ones that differ; otherwise one
+    objective names the quests. If the quests go by alignment, its start says so."""
+    labels = [alignment(c) for c in criteria]
+    start = {"ali": [[r["n"], label] for r, label in zip(records, labels)]} if all(labels) else None
+    flat = [[o for stage in r["s"] for o in stage["o"]] for r in records]
+    if len({len(f) for f in flat}) == 1:
+        objs = []
+        for same in zip(*flat):
+            obj = {"k": same[0]["k"], "t": merged_text([o["t"] for o in same])}
+            for key in ("m", "x", "y", "a"):  # the place only if it is the same in all
+                if key in same[0] and all(o.get(key) == same[0][key] for o in same):
+                    obj[key] = same[0][key]
+            objs.append(obj)
+    else:
+        objs = [{"k": "free", "t": "Haz una de estas misiones: " + or_list([r["n"] for r in records])}]
+    return {"n": name, "lv": min(r["lv"] for r in records), "st": start, "s": [{"n": "", "o": objs}]}
+
 PLACEHOLDER = re.compile(r"\{(\w+),(\d+)(?:,[^}]*)?\}")
 
 
@@ -389,19 +464,23 @@ def main():
                     entry["from"] = prev_align
             prev_align = last
         ids = STEP_EXTRA.get(step["n"], []) + [q for q in ids if q not in STEP_EXTRA.get(step["n"], [])]
-        ids = [q for q in ids if q in quests or q == CLASS_QUEST]
+        ids = [q for q in ids if q in quests or isinstance(q, str)]
         if ids:
             step_quests[str(step["n"])] = ids
             kinds = step_kinds(step, plan, achievements, ids)
             if kinds:
                 step_kinds_out[str(step["n"])] = kinds
-    used = sorted({q for ids in step_quests.values() for q in ids if q != CLASS_QUEST})
+    used = sorted({q for ids in step_quests.values() for q in ids if isinstance(q, int)})
     step_groups = quest_groups(step_quests, achievements, images)
+    # The generic rows the steps list, and the quests behind them (for their objectives)
+    alts = {k: v for a in achievements.values() for k, v in alternatives_of(a).items()}
+    used_alts = sorted({q for ids in step_quests.values() for q in ids if is_alt(q)})
+    behind = sorted({q for k in used_alts for q in alts[k][1]})
 
     # Collect everything that needs a name or a position.
     wanted = {k: set() for k in PLACEHOLDER_SOURCE}
     start_maps, subareas = set(), set()
-    for qid in used:
+    for qid in used + behind:
         q = quests[qid]
         for sp in q.get("startPosition") or []:
             if sp and sp.get("mapId"):
@@ -436,8 +515,7 @@ def main():
             return value or {"npc": "un PNJ", "item": "un objeto", "monster": "un monstruo"}.get(kind, "?")
         return PLACEHOLDER.sub(sub, text or "")
 
-    out_quests = {}
-    for qid in used:
+    def record(qid):
         q = quests[qid]
         start = None
         positions = [sp for sp in q.get("startPosition") or [] if sp]
@@ -483,12 +561,17 @@ def main():
                 assert sorted(order) == list(range(len(objs))), (qid, j, len(objs))
                 objs = [objs[i] for i in order]
             stages.append({"n": ((st.get("name") or {}).get("es") or "").strip(), "o": objs})
-        out_quests[str(qid)] = {
+        return {
             "n": q["name"]["es"],
             "lv": q.get("levelMin") or 0,
             "st": start,
             "s": stages,
         }
+
+    out_quests = {str(qid): record(qid) for qid in used}
+    for aid in used_alts:
+        out_quests[aid] = alt_record(alts[aid][0], [record(q) for q in alts[aid][1]],
+                                     [quests[q].get("startCriterion") for q in alts[aid][1]])
 
     # La misión de clase: la da el representante de tu clase tras "Consejo de clase"
     out_quests[CLASS_QUEST] = {

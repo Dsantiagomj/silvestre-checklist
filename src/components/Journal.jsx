@@ -180,9 +180,23 @@ function TakeOnly({ q, open, setOpen }) {
   );
 }
 
-/** Dónde empieza la misión: el PNJ y su posición, o el templo de tu clase. */
+/** Dónde empieza la misión: el PNJ y su posición, el templo de tu clase o, en una que
+ * depende del alineamiento («Prólogo invernal»), cuál de sus misiones toca, con su guía. */
 function QuestStart({ q }) {
   if (q.st?.cls) return <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>;
+  if (q.st?.ali) {
+    return (
+      <p className="q-start">
+        Depende de tu alineamiento:{" "}
+        {q.st.ali.map(([name, side], i) => (
+          <Fragment key={name}>
+            {i ? (i === q.st.ali.length - 1 ? " o " : ", ") : ""}
+            {missionGuide(name) ? <a className="guide-link" href={missionGuide(name)} target="_blank" rel="noopener">{name}</a> : name} ({side})
+          </Fragment>
+        ))}.
+      </p>
+    );
+  }
   if (!q.st) return null;
   return (
     <p className="q-start">
