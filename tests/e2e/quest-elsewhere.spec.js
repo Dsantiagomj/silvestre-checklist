@@ -19,7 +19,8 @@ const quest = (page, name) => page.locator("#journal .q-item")
 const btn = (page, name) => quest(page, name).locator(".q-done-btn");
 
 async function openStep(page, n) {
-  await row(page, n).locator(".row-main").click();
+  // Por el número: en el centro de la fila puede caer la etiqueta "cierra el…", que lleva a otro paso
+  await row(page, n).locator(".row-num").click();
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
@@ -173,10 +174,7 @@ test("el 87 termina «Las cuatro voluntades», que el 73 deja a medias, y deja t
   const errors = await openApp(page, { "silvestre:done": doneOf([86]), "silvestre:questPos": { 73: 1 } });
   await expect(row(page, 73).locator(".row-closed")).toHaveText("se cierra en el 87");
   await expect(row(page, 87).locator(".row-closes")).toHaveText("cierra el 72, 73, 85, 86");
-  // Por el título: la etiqueta de la fila lleva al 72
-  await row(page, 87).locator(".row-title").click();
-  await expect(page.locator("#journal .journal-num")).toHaveText("87");
-  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+  await openStep(page, 87);
   // Se hacen de una en una: la 4 («La guerra de Cania…») y luego la 3, la de Ilyzaelle
   await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(["Las cuatro voluntades", "Toma de conciencia",
     "La guerra de Cania no se llevará a cabo", "El juicio de la Muerte"]);
