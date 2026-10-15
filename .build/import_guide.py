@@ -21,7 +21,8 @@ guide also requires ("must"), advice ("tip") and anything else ("note").
 "complete" says the step asks for the whole achievement ("(Completo)", kept out
 of the marks). "base" is the text without them, and "closes" lists the earlier steps whose
 missions a "done" mark finishes ("se terminan las misiones de los incisos 33
-y 34"); steps it only updates ("se actualiza") are left out.
+y 34"); steps it only updates ("se actualiza la misión del inciso 53") go in
+"updates" instead: the guide picks their mission up there without finishing it.
 
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
@@ -137,6 +138,19 @@ def closes(n, raw):
     return sorted(set(found))
 
 
+def updates(n, raw):
+    """Earlier steps whose mission this step's "done" marks update without finishing."""
+    found = []
+    for kind, body in MARK.findall(raw):
+        if kind != "GREEN":
+            continue
+        for clause in re.split(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)", clean(body)):
+            after = re.search(r"actualiza\s+la\s+misi[oó]n\b.*?\bincisos?\s+(.*)", clause)
+            if after:
+                found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
+    return sorted(set(found))
+
+
 def read_old_steps():
     body = STEPS_JS.read_text().split("export const STEPS = [", 1)[1].split("\n];", 1)[0]
     pattern = re.compile(r'\{ n: (\d+), zone: "(.*?)", effort: "(\w+)", text: ')
@@ -186,6 +200,8 @@ def main(page):
             extra += f", marks: {json.dumps(marks(raw), ensure_ascii=False)}"
         if closes(n, raw):
             extra += f", closes: {json.dumps(closes(n, raw))}"
+        if updates(n, raw):
+            extra += f", updates: {json.dumps(updates(n, raw))}"
         lines.append(f"  {{ n: {n}, zone: {json.dumps(zone, ensure_ascii=False)}, "
                      f"effort: \"{effort}\", text: {json.dumps(text, ensure_ascii=False)}{extra} }},")
 

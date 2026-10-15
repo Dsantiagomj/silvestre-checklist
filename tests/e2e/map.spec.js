@@ -347,3 +347,24 @@ test("el mapa empieza por el camino: sin cartucho de título ni leyenda encima",
   const first = await node(page, 1).evaluate(el => el.getBoundingClientRect().top);
   expect(first - top).toBeLessThan(140);
 });
+
+test("la ficha dice dónde se retoma el paso, antes de dónde se termina", async ({ page }) => {
+  await openMap(page);
+  await node(page, 53).click();
+  const card = page.locator("#mapCard");
+  await expect(card.locator(".journal-num")).toHaveText("53");
+  await expect(card.locator(".map-card-line.resumed")).toContainText("Se retoma más adelante");
+  await expect(card.locator(".map-card-line.resumed")).toContainText("En el paso 54");
+  await card.locator('.map-card-line.resumed .step-chip[data-n="54"]').click();
+  await expect(card.locator(".journal-num")).toHaveText("54");
+  await expect(card.locator(".map-card-line.resumed")).toHaveCount(0);
+  // El 58: se retoma en el 59 y se termina en el 61, en ese orden
+  await node(page, 58).click();
+  await expect(card.locator(".journal-num")).toHaveText("58");
+  const lines = card.locator(".map-card-line.resumed, .map-card-line.later");
+  await expect(lines).toHaveCount(2);
+  await expect(lines.nth(0)).toHaveClass(/resumed/);
+  await expect(lines.nth(0).locator(".step-chip")).toHaveAttribute("data-n", "59");
+  await expect(lines.nth(1)).toHaveClass(/later/);
+  await expect(lines.nth(1).locator(".step-chip")).toHaveAttribute("data-n", "61");
+});

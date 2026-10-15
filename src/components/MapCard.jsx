@@ -1,7 +1,7 @@
 import { useEffect, useId } from "react";
 import { ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, OBJ_ICONS, imgUrl } from "../lib/assets.js";
-import { CLOSED_BY, doneIcon, list, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
+import { CLOSED_BY, RESUMED_IN, doneIcon, list, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
 import { questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { closeSteps, loadQuests, openInDiary, pendingCloses, toggleStep, useAppState } from "../state/store.js";
@@ -46,6 +46,8 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
   // Las mismas paradas que el detalle: si el paso se resuelve solo, solo la que deja el verde
   const stops = stepCalls(step).filter(m => m[0] === "stop");
   const later = !done && CLOSED_BY[n];
+  // Donde se retoma (sin terminarse) va antes de donde se termina, como en el diario
+  const resumed = done ? [] : RESUMED_IN[n] || [];
   const quests = questsLoaded ? questsOf(n).length : null;
   const items = rowsOf(n).length;
   const meta = [quests ? count(quests, "misión", "misiones") : null, items ? count(items, "objeto", "objetos") : null]
@@ -69,6 +71,11 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
         {step.closes && (
           <Line kind="done" icon={doneIcon(n)} label="Lo que se resuelve">
             Cierra {step.closes.length > 1 ? "los pasos" : "el paso"} <Chips ns={step.closes} onGo={onGo} />
+          </Line>
+        )}
+        {resumed.length > 0 && (
+          <Line kind="resumed" icon={OBJ_ICONS.map} label="Se retoma más adelante">
+            En el paso <Chips ns={resumed} onGo={onGo} />
           </Line>
         )}
         {later && (

@@ -573,6 +573,30 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
 });
 
+test("«se retoma más adelante» lleva al paso que actualiza la misión, y va antes de «se termina»", async ({ page }) => {
+  await openApp(page);
+  // El 54 pasa Kumijo y actualiza la misión del 53: el 53 lo dice y lleva al 54
+  await row(page, 53).locator(".row-main").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("53");
+  const resumed = page.locator("#journal .call.resumedin");
+  await expect(resumed).toHaveCount(1);
+  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed.locator("img")).toHaveAttribute("src", /\.png$/);
+  await resumed.locator('.step-ref[data-n="54"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("54");
+  // El 54 no se retoma en ningún otro
+  await expect(page.locator("#journal .call.resumedin")).toHaveCount(0);
+  // El 58 se retoma en el 59 y se termina en el 61: las dos líneas, en orden de paso
+  await row(page, 58).locator(".row-main").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("58");
+  const later = page.locator("#journal .call.resumedin, #journal .call.closedin");
+  await expect(later).toHaveCount(2);
+  await expect(later.nth(0)).toHaveClass(/resumedin/);
+  await expect(later.nth(0).locator(".step-ref")).toHaveAttribute("data-n", "59");
+  await expect(later.nth(1)).toHaveClass(/closedin/);
+  await expect(later.nth(1).locator(".step-ref")).toHaveAttribute("data-n", "61");
+});
+
 test("las coordenadas llevan la brújula del juego, no un símbolo", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="5"] .row-main');
