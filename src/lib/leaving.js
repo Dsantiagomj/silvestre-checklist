@@ -11,3 +11,9 @@ export const useLeaving = () => useContext(LeavingContext);
 
 /** El id solo en la vista que se queda. */
 export const useLiveId = id => (useLeaving() ? undefined : id);
+
+/** Lo mismo para varios ids en un componente: live("x") da "x" solo en la que se queda. */
+export const useLiveIds = () => {
+  const leaving = useLeaving();
+  return id => (leaving ? undefined : id);
+};

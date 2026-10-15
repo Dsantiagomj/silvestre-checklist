@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useLiveIds } from "../lib/leaving.js";
 import { ALL_PREREQS, PREREQS_INTRO } from "../data/steps.js";
 import {
   getState, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setRowsOwned, showToast, useAppState,
@@ -11,6 +12,7 @@ import PrereqsPanel from "./needs/PrereqsPanel.jsx";
  * "Marcar todo" y "Limpiar" actúan sobre lo que se ve y se pueden deshacer.
  */
 export default function Needs({ tab }) {
+  const live = useLiveIds();
   const s = useAppState();
   const searchRef = useRef(null);
   const items = tab === "items" ? itemsView(s) : null;
@@ -36,20 +38,20 @@ export default function Needs({ tab }) {
   const canClear = tab === "prereqs" ? Object.keys(s.prereqs).length > 0 : toClear.length > 0;
 
   return (
-    <div className="needs" id="needs" role="tabpanel" aria-labelledby={tab === "prereqs" ? "tabPrereqs" : "tabItems"}>
-      <p className="needs-intro" id="needsIntro">{PREREQS_INTRO}</p>
+    <div className="needs" id={live("needs")} role="tabpanel" aria-labelledby={live(tab === "prereqs" ? "tabPrereqs" : "tabItems")}>
+      <p className="needs-intro" id={live("needsIntro")}>{PREREQS_INTRO}</p>
       <div className="needs-bar">
-        <p className="needs-hint" id="needsHint">
+        <p className="needs-hint" id={live("needsHint")}>
           {tab === "prereqs"
             ? `«Marcar todo» marca los ${ALL_PREREQS.length} prerrequisitos y «Limpiar» los desmarca. Las dos se pueden deshacer.`
             : "«Marcar todo» y «Limpiar» actúan sobre lo que ves: la categoría y la búsqueda actuales. «Limpiar» solo quita lo que marcaste a mano; lo que cubren los pasos ya hechos sigue contando."}
         </p>
         {/* Actúan sobre la pestaña abierta: van con su lista */}
         <div className="needs-actions">
-          <button type="button" className="needs-act mark" id="needsMarkAll" disabled={!canMark} onClick={() => act(true)}>
+          <button type="button" className="needs-act mark" id={live("needsMarkAll")} disabled={!canMark} onClick={() => act(true)}>
             ✓ Marcar todo
           </button>
-          <button type="button" className="needs-act clear" id="needsClear" disabled={!canClear} onClick={() => act(false)}>
+          <button type="button" className="needs-act clear" id={live("needsClear")} disabled={!canClear} onClick={() => act(false)}>
             Limpiar
           </button>
         </div>

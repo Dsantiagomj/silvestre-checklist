@@ -22,7 +22,7 @@ export async function copyText(doc, text) {
   }
 }
 
-const EASE = "cubic-bezier(.2, .8, .2, 1)";
+export const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
 /**
  * Lleva la altura de un bloque de `from` (px) a la suya. Hacia "auto" (con
