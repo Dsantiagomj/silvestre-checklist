@@ -701,6 +701,13 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
   }
 });
 
+test("en el paso 100, «Flovoración» enlaza a su guía", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 100);
+  await expect(page.locator('#journal .call.must a.guide-link', { hasText: "Flovoración" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/flovoracion");
+});
+
 test("el detalle del paso es el estandarte y su objetivo, con el texto de la guía una sola vez", async ({ page }) => {
   await openApp(page);
   await stepData(page, 17);
