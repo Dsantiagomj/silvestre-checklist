@@ -10,7 +10,7 @@ import WEIGHTS from "../data/weights.json";
 import { currentQuest, loadQuests as loadQuestsData, nextWalked, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
-import { list, stopPoints } from "../lib/journal.js";
+import { list, resolvesHere, stopPoints } from "../lib/journal.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -167,15 +167,64 @@ export const isDone = (s, n) => !!s.done[n];
 export const doneCount = s => STEPS.filter(st => s.done[st.n]).length;
 const weight = n => WEIGHTS[n]?.w ?? 1;
 const TOTAL_PTS = STEPS.reduce((a, st) => a + weight(st.n), 0);
+
+// Paso -> pasos que lo cierran (todos, no solo el primero como CLOSED_BY)
+const CLOSERS = {};
+for (const st of STEPS) for (const c of st.closes || []) (CLOSERS[c] ??= []).push(st.n);
+
+/**
+ * Misión -> pasos que la llevan como obligatoria, y paso -> las que deja a medias: la de
+ * su parada roja y las de después, salvo que el paso se resuelva en sí mismo (lleva
+ * verde). Necesita las misiones (las paradas se sitúan en sus objetivos): se calcula una
+ * vez, cuando llegan. «clase» no se cruza: en el 63 no es la misión de clase del 1.
+ */
+let questIndex = null;
+function questIndexOf() {
+  if (questIndex || !questsData()) return questIndex;
+  const steps = {};
+  const open = {};
+  for (const st of STEPS) {
+    const quests = questsOf(st.n);
+    const at = stopPoints(st, quests).map(p => quests.findIndex(q => q.id === p.quest)).filter(i => i >= 0);
+    const from = !resolvesHere(st) && at.length ? Math.min(...at) : Infinity;
+    quests.forEach((q, i) => {
+      if (q.kind !== "mandatory" || q.id === "clase") return;
+      (steps[q.id] ??= []).push(st.n);
+      if (i >= from) (open[st.n] ??= new Set()).add(String(q.id));
+    });
+  }
+  return (questIndex = { steps, open });
+}
+
+/**
+ * La misión `qid`, terminada en otro paso que la lleva: hecho y sin dejarla a medias, o
+ * dejándola a medias pero con hechos también los pasos que lo cierran. Devuelve el paso
+ * donde se terminó (el que cierra, en el segundo caso) o null. Sin las misiones cargadas
+ * no se sabe dónde paran los pasos: null, y el porcentaje la suma cuando llegan (el hero
+ * se vuelve a pintar al cambiar `questsLoaded`).
+ */
+export function questDoneElsewhere(s, qid, except) {
+  const idx = questIndexOf();
+  if (!idx) return null;
+  for (const m of idx.steps[qid] || []) {
+    if (m === except || !s.done[m]) continue;
+    if (!idx.open[m]?.has(String(qid))) return m;
+    const by = CLOSERS[m] || [];
+    if (by.length && by.every(c => s.done[c])) return by.at(-1);
+  }
+  return null;
+}
+
 /**
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
- * el diario: las de antes de la actual y cualquiera pasada de su último objetivo, aunque
- * vaya por delante. Las opcionales y las de solo tomarla valen 0.
+ * el diario: las de antes de la actual, cualquiera pasada de su último objetivo, aunque
+ * vaya por delante, y las que terminó otro paso hecho (questDoneElsewhere). Las
+ * opcionales y las de solo tomarla valen 0.
  */
 function questPts(s, n) {
   const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
   const pos = Math.min(s.questPos[n] || 0, q.length - 1);
-  return q.reduce((a, p, i) => a + (i < pos || (s.questObj[ids[i]] || 0) >= os[i] ? p : 0), 0);
+  return q.reduce((a, p, i) => a + (i < pos || (s.questObj[ids[i]] || 0) >= os[i] || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -352,21 +401,24 @@ export function openInDiary(n) {
 export const closeSheet = () => setState({ sheetOpen: false });
 
 export function toggleStep(n) {
-  const before = state.done;
+  const before = state;
   setState(s => {
     const done = { ...s.done };
     if (done[n]) delete done[n];
     else done[n] = true;
     return { done, shopEpoch: s.shopEpoch + 1 };
   });
-  celebrateDofus(before);
+  celebrateDofus(before.done);
+  // Desmarcar no termina nada en otro paso
+  if (state.done[n]) completeOthers(before);
 }
 
 /** Marca varios pasos a la vez (los que cierra un mismo combate). */
 export function markSteps(ns) {
-  const before = state.done;
+  const before = state;
   setState(s => ({ done: { ...s.done, ...Object.fromEntries(ns.map(n => [n, true])) }, shopEpoch: s.shopEpoch + 1 }));
-  celebrateDofus(before);
+  celebrateDofus(before.done);
+  completeOthers(before);
 }
 
 /** Los pasos que n cierra y siguen pendientes (ninguno si n ya está hecho). */
@@ -399,7 +451,7 @@ export function closingPlan(s, closes) {
     // Hecha como en el diario y en el porcentaje: pasada de largo o en su último objetivo
     const pos = Math.min(s.questPos[c] || 0, quests.length - 1);
     const missing = quests.filter((q, i) => q.kind === "mandatory" && i >= pos
-      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < objCount(q));
+      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < objCount(q) && !questDoneElsewhere(s, q.id, c));
     if (missing.length) out.pending.push({ n: c, missing });
     else out.done.push(c);
   }
@@ -424,16 +476,18 @@ export function pendingText(pending) {
  */
 export function closeSteps(n, closes) {
   const plan = closingPlan(state, closes);
-  const before = state.done;
+  const before = state;
   setState(s => ({
     done: { ...s.done, [n]: true, ...Object.fromEntries(plan.done.map(c => [c, true])) },
     questObj: { ...s.questObj, ...plan.questObj },
     shopEpoch: s.shopEpoch + 1,
   }));
-  celebrateDofus(before);
-  if (!plan.pending.length) return;
-  const ns = plan.pending.map(p => p.n);
-  showToast(pendingText(plan.pending), `Las hice, marcar el ${list(ns)}`, () => markSteps(ns));
+  celebrateDofus(before.done);
+  if (plan.pending.length) {
+    const ns = plan.pending.map(p => p.n);
+    showToast(pendingText(plan.pending), `Las hice, marcar el ${list(ns)}`, () => markSteps(ns));
+  }
+  completeOthers(before);
 }
 
 /**
@@ -444,7 +498,8 @@ function questsAllDone(s, n) {
   const quests = questsOf(n);
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
   const needed = quests.filter(q => q.kind === "mandatory");
-  return needed.length > 0 && quests.every((q, i) => q.kind !== "mandatory" || i < pos || (s.questObj[q.id] || 0) >= objCount(q));
+  return needed.length > 0 && quests.every((q, i) => q.kind !== "mandatory" || i < pos
+    || (s.questObj[q.id] || 0) >= objCount(q) || questDoneElsewhere(s, q.id, n));
 }
 
 /**
@@ -456,6 +511,33 @@ function completeIfDone(n) {
   const closes = pendingCloses(state, n);
   if (closes.length) closeSteps(n, closes);
   else markSteps([n]);
+}
+
+/** Los pasos pendientes con todas sus misiones obligatorias hechas. */
+const readySteps = s => (questsData() ? STEPS.filter(st => !s.done[st.n] && questsAllDone(s, st.n)).map(st => st.n) : []);
+
+/**
+ * Tras marcar pasos, los pendientes que con eso tienen hechas todas sus obligatorias
+ * (las terminó el paso marcado, questDoneElsewhere) quedan hechos también, como con
+ * completeIfDone. Solo los que no lo estaban ya antes: uno que se desmarcó a mano con
+ * todo hecho sigue pendiente. Cada paso hecho puede completar otro: se repite hasta que
+ * no queda ninguno (como mucho, un paso por vuelta). Sin las misiones cargadas, nada.
+ */
+let cascading = false;
+function completeOthers(before) {
+  if (cascading) return;
+  cascading = true;
+  try {
+    const skip = new Set(readySteps(before));
+    for (let i = 0; i < STEPS.length; i++) {
+      const n = readySteps(state).find(m => !skip.has(m));
+      if (n == null) break;
+      completeIfDone(n);
+      skip.add(n);
+    }
+  } finally {
+    cascading = false;
+  }
 }
 
 /** "¡Dofus Esmeralda obtenido!", "¡Piñata de pino obtenida!", "¡Dofus Marfil y Dofus Ébano obtenidos!" */
