@@ -9,6 +9,7 @@ How a step maps to quests:
     is the achievement's 4th objective.
   * "hasta (llegar a) la misión N" takes missions 1..N.
   * Explicit "misión N" references take exactly those.
+  * "misión: Nombre", with no number, takes the mission of that name.
   * "(Completo)" or no numbers takes the whole achievement.
   * Quests matched directly by name (kind "quest") are added as they are.
   * Each quest of a step has a kind (STEP_QUEST_KINDS, only the ones that are not
@@ -107,8 +108,9 @@ MISSING_OBJECTIVES = {565: [439]}
 # mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
 # order quest 5 of the same line, which requires the 4th (need.quests). Step 12's
 # "Espionaje industrial" requires "El maleficio del cofre" (after "Cofrología" and
-# "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=).
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782], 89: [1917]}
+# "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=). Step 83's "Birk, hija de Bork" requires
+# "Llama, amigo y entra", mission 1 of "Allá bajo la montaña" (Qf=2010).
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782], 83: [2010], 89: [1917]}
 
 # Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
 # guide does them in another, (quest, stage) -> the new order, so the red line falls in
@@ -159,6 +161,8 @@ def achievement_quests(ach):
 
 UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
 NUMBERED = re.compile(r"misi[oó]n(?:es)?\s+(\d+)", re.I)
+# "misión: Birk, hija de Bork." (step 83): the mission by its name, no number
+BY_NAME = re.compile(r"misi[oó]n:\s*\"?([^\".(]+)", re.I)
 LOGRO = re.compile(r"\blogro\b", re.I)
 INCLUDES = re.compile(r"\bincluye\b", re.I)
 
@@ -179,8 +183,9 @@ def optional_missions(text, matched_on):
 # Quests the guide only asks to have taken, not to do. Step 28: "En este punto se debe
 # tomar la misión de la Isla de Frigost: Logro "La cantera de hielo", misión 4: Luces y
 # sombras. No es necesario hacerla, solo tenerla tomada." Its wording is unique, so it
-# is listed by hand instead of parsed.
-TAKE_ONLY = {28: [1286]}
+# is listed by hand instead of parsed. Step 83 stops "justo después de pasar Dazahk
+# Martegel y obtener la misión: La biblia de los rencores": taken, done later.
+TAKE_ONLY = {28: [1286], 83: [2013]}
 
 
 def step_kinds(step, plan, achievements, ids):
@@ -197,11 +202,13 @@ def step_kinds(step, plan, achievements, ids):
     return kinds
 
 
-def missions_for(text, start):
+def missions_for(text, start, names=()):
     """Mission numbers referenced in the text segment that starts at `start`.
 
     The segment runs until the next "Logro" mention, so numbers are attributed to
-    the achievement they follow. Returns None to mean "the whole achievement".
+    the achievement they follow. With no number, "misión: Nombre" is the mission of
+    that name among `names` (the achievement's, in order). Returns None to mean "the
+    whole achievement".
     """
     nxt = LOGRO.search(text, start + 1)
     segment = text[start:nxt.start() if nxt else len(text)]
@@ -209,6 +216,9 @@ def missions_for(text, start):
     if until:
         return list(range(1, int(until[1]) + 1))
     nums = [int(n) for n in NUMBERED.findall(segment)]
+    if not nums:
+        wanted = [m.strip().lower() for m in BY_NAME.findall(segment)]
+        nums = [i + 1 for i, name in enumerate(names) if name and name.lower() in wanted]
     return sorted(set(nums)) or None
 
 
@@ -243,11 +253,11 @@ def read_marks():
     return out
 
 
-def step_quest_ids(step, achievements, marks):
+def step_quest_ids(step, achievements, marks, quests):
     """The step's quests in play order: achievements a note says the step includes
     (they are its requirements, so they come first), the achievement it is about (from
     the base text, never from a note), then missions a note names by number ("Logro X,
-    misión 2"), then quests matched by name."""
+    misión 2"), then quests matched by name, then the ones the step only has taken."""
     base, notes = marks.get(step["n"], (None, []))
     base = base or step["text"]
     included, main, extra, named = [], [], [], []
@@ -259,7 +269,8 @@ def step_quest_ids(step, achievements, marks):
             pick = lambda wanted: [ordered[n - 1] for n in wanted if 0 < n <= len(ordered)]
             pos = base.find(a["matched_on"])
             if pos >= 0:
-                wanted = missions_for(base, pos)
+                names = [quests[q]["name"]["es"] if q in quests else None for q in ordered]
+                wanted = missions_for(base, pos, names)
                 main.append((pos, ordered if wanted is None else pick(wanted)))
                 continue
             # Only in a note: the missions it names, or the whole achievement when the
@@ -277,7 +288,8 @@ def step_quest_ids(step, achievements, marks):
                     included.append((at, ordered))
     # Varios logros en un paso: en el orden en que los nombra la guía
     in_order = lambda found: [q for _, qs in sorted(found, key=lambda m: m[0]) for q in qs]
-    ids = [q for q in in_order(included) + in_order(main) + extra + named if q]
+    taken = TAKE_ONLY.get(step["n"], [])
+    ids = [q for q in in_order(included) + in_order(main) + extra + named + taken if q]
     seen, out = set(), []
     for q in ids:  # keep order, drop repeats
         if q not in seen:
@@ -311,7 +323,7 @@ def step_plan(step, achievements, marks, quests, images):
                  if q in quests or isinstance(q, str) else None for q in ordered]
         nxt = LOGRO.search(base, pos + 1)
         segment = base[pos:nxt.start() if nxt else len(base)]
-        wanted = missions_for(base, pos)
+        wanted = missions_for(base, pos, names)
         mode = "all" if wanted is None else "upto" if UNTIL.search(segment) else "some"
         entry = {"t": "a", "id": a["id"], "name": ach["name"]["es"], "img": images.get(a["id"]),
                  "m": names, "mode": mode, "on": wanted or []}
@@ -453,7 +465,7 @@ def main():
         plan = step_plan(step, achievements, marks, quests, images)
         if plan:
             plans[str(step["n"])] = plan
-        ids = step_quest_ids(step, achievements, marks)
+        ids = step_quest_ids(step, achievements, marks, quests)
         align = ALIGN_STEP.search(step["text"])
         if align:
             last = int(align[1])

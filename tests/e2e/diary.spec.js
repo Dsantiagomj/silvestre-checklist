@@ -173,7 +173,8 @@ test("lo que termina el 22 en el 5 se ve en su detalle y suma al porcentaje", as
   await row(page, 22).locator(".row-main").click();
   await waitQuests(page);
   await page.click("#toggleBtn");
-  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base + WEIGHTS[22].w + WEIGHTS[5].q[1])}%`);
+  // Con el 22 hecho, «Veneno de scorbuto para la prisión», que también lleva el 36, cuenta allí
+  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base + WEIGHTS[22].w + WEIGHTS[5].q[1] + WEIGHTS[36].q[0])}%`);
   await row(page, 5).locator(".row-main").click();
   await waitQuests(page);
   await expect(questBtn(page, "7.ª compañía")).toHaveAttribute("aria-pressed", "true");

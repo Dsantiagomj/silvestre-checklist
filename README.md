@@ -24,10 +24,10 @@ No todos los pasos valen lo mismo: cuentan más los que más cuestan.
 - **Cada misión suma puntos según su nivel y su largo.** Cuanto más alto es su nivel y más objetivos tiene, más vale.
 - **Una misión que sale en varios pasos se reparte entre ellos**, así no cuenta dos veces.
 - **Un paso vale lo que suman sus misiones.**
-- **Solo cuentan las misiones que el paso pide.** Las opcionales ("Arma letal" en el 7, "Star ski y Dutch" en el 27) y las que basta con tener tomadas ("Luces y sombras" en el 28) no suman, ni hechas ni sin hacer.
+- **Solo cuentan las misiones que el paso pide.** Las opcionales ("Arma letal" en el 7, "Star ski y Dutch" en el 27) y las que basta con tener tomadas ("Luces y sombras" en el 28, "La biblia de los rencores" en el 83) no suman, ni hechas ni sin hacer.
 - **Las misiones terminadas ya suman.** Si llevas dos de las cinco misiones de un paso, esas dos cuentan aunque no hayas marcado el paso. Al marcarlo cuenta entero.
 
-Por ejemplo, el paso 1 (misiones de nivel bajo) mueve el porcentaje un 0,6 %, y el 61 (misiones de nivel 200) un 6,6 %. Con los pasos hechos en orden, el porcentaje va por el 11 % tras el paso 20, el 27 % tras el 50 y el 84 % tras el 90. Solo marca 100 % con todo hecho.
+Por ejemplo, el paso 1 (misiones de nivel bajo) mueve el porcentaje un 0,6 %, y el 61 (misiones de nivel 200) un 6,8 %. Con los pasos hechos en orden, el porcentaje va por el 12 % tras el paso 20, el 29 % tras el 50 y el 84 % tras el 90. Solo marca 100 % con todo hecho.
 
 Al lado se sigue viendo "X/100 pasos" para quien prefiera contar pasos.
 
@@ -35,10 +35,10 @@ Al lado se sigue viendo "X/100 pasos" para quien prefiera contar pasos.
 <summary>Cómo se calcula exactamente</summary>
 
 - Puntos de una misión: `nivel × √objetivos`. Una de nivel 180 con 4 objetivos vale 360; con 25, 900. La raíz evita que las larguísimas se coman el porcentaje ("La eterna cosecha", 339 objetivos y nivel 40, vale unos 736).
-- El nivel es el "Nivel mínimo" que da la guía de la misión en Torrente Arcano (255 misiones); si no lo da, el `levelMin` de DofusDB (101). La misión de clase del paso 1 cuenta como nivel 20. El "Prólogo invernal" del 63 es una de tres misiones según tu alineamiento, todas de nivel 50 y 6 objetivos, así que vale unos 122.
-- Las misiones opcionales y las de solo tomarla valen 0 en su paso (`STEP_QUEST_KINDS` en `quests.json`). Sin ellas, el 7 pasa de 864 a 100 puntos, el 27 de 677 a 265 y el 28 de 607 a 365.
-- Una misión compartida (65 de las 356) reparte sus puntos a partes iguales entre los pasos que la piden. Un paso sin misiones valdría lo de una misión de nivel 1 (hoy todos tienen alguna).
-- `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`. Total: 160 260 puntos.
+- El nivel es el "Nivel mínimo" que da la guía de la misión en Torrente Arcano (250 misiones); si no lo da, el `levelMin` de DofusDB (99). La misión de clase del paso 1 cuenta como nivel 20. El "Prólogo invernal" del 63 es una de tres misiones según tu alineamiento, todas de nivel 50 y 6 objetivos, así que vale unos 122.
+- Las misiones opcionales y las de solo tomarla valen 0 en su paso (`STEP_QUEST_KINDS` en `quests.json`). Sin ellas, el 7 pasa de 864 a 100 puntos, el 27 de 677 a 265, el 28 de 607 a 365 y el 83 de 1910 a 1085.
+- Una misión compartida (59 de las 349) reparte sus puntos a partes iguales entre los pasos que la piden. Un paso sin misiones valdría lo de una misión de nivel 1 (hoy todos tienen alguna).
+- `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`. Total: 155 339 puntos.
 - Cada paso de `weights.json` lleva su peso (`w`), lo que vale cada una de sus misiones en orden, ya repartida (`q`), y el id y el número de objetivos de cada una (`ids`, `os`). En un paso sin marcar, `donePts` suma las misiones anteriores a la actual (`questPos`, el mismo avance del overlay y del diario), cualquier otra cuyo objetivo (`questObj`) llegue a su total, aunque vaya por delante, y las que terminó otro paso hecho: cuenta lo mismo que el diario muestra hecho. Esto último necesita las misiones cargadas, porque depende de dónde para cada paso; hasta que llegan no se suma. Deshacer una misión terminada que va por delante no adelanta el avance. No hace falta cargar `quests.json`. El 100 % sigue pidiendo los 100 pasos marcados.
 
 </details>
@@ -185,6 +185,7 @@ paso se resuelve a sus misiones:
 
 - "hasta la misión N" toma de la 1 a la N.
 - "misión 7, misión 8" toma exactamente esas.
+- "misión: Birk, hija de Bork", sin número, toma la misión de ese nombre.
 - "(Completo)" o sin números toma el logro entero.
 - "Alineamiento Bontariano: Misión N" usa la misión de alineamiento cuyo requisito es nivel
   de alineamiento N−1 en el bando de Bonta. El paso cubre desde la misión que dejó en pausa

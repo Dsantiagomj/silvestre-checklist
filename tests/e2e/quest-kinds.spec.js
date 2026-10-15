@@ -24,7 +24,7 @@ async function openStep(page, n) {
 
 test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", async () => {
   const { STEP_QUESTS, STEP_QUEST_KINDS } = read("quests.json");
-  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" } });
+  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 83: { 2013: "take" } });
   for (const [n, kinds] of Object.entries(STEP_QUEST_KINDS)) {
     const { w, q } = WEIGHTS[n];
     STEP_QUESTS[n].forEach((id, i) => { if (kinds[id]) expect(q[i]).toBe(0); });
@@ -33,11 +33,13 @@ test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", 
   expect(WEIGHTS[7].w).toBeCloseTo(100, 3);
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
   expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
-  expect(TOTAL).toBeCloseTo(160260, 0);
+  expect(WEIGHTS[83].w).toBeCloseTo(1085.307, 3);
+  expect(TOTAL).toBeCloseTo(155339, 0);
   // El id y los objetivos de cada misión, en el orden del paso
   expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
   expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);
   expect([WEIGHTS[28].ids, WEIGHTS[28].os]).toEqual([["577", "1286"], [11, 3]]);
+  expect([WEIGHTS[83].ids, WEIGHTS[83].os]).toEqual([["2010", "2011", "2013"], [9, 27, 17]]);
 });
 
 test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Completar»", async ({ page }) => {
@@ -157,4 +159,21 @@ test("el overlay entra en «Arma letal» y salta «Luces y sombras»", async ({ 
   await expect(ov.locator(".ov-qhead .ov-title")).toHaveText("Pesca en aguas congeladas");
   await expect(ov.locator(".ov-switch")).toContainText("Misión 1 / 1");
   await expect(ov.locator('[data-q="1"]')).toBeDisabled();
+});
+
+test("paso 83: «Birk, hija de Bork» con la misión que pide antes y «La biblia de los rencores» solo tomada", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": upTo(82) });
+  await openStep(page, 83);
+  // No el logro entero: la misión que nombra, la que la abre y la que deja tomada
+  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+    ["Llama, amigo y entra", "Birk, hija de Bork", "La biblia de los rencores"]);
+  const biblia = quest(page, "La biblia de los rencores");
+  await expect(biblia.locator(".q-take")).toHaveText("Solo tomarla");
+  // La parada roja, justo tras vencer a Dazahk y recibir «La biblia de los rencores»
+  const birk = quest(page, "Birk, hija de Bork");
+  await birk.locator("summary .q-name").click();
+  await expect(birk.locator(".obj-stop")).toHaveCount(1);
+  await expect(birk.locator(".obj-stop")).toContainText("Hasta justo después de pasar Dazahk Martegel");
+  await expect(page.locator("#journal .obj-stop")).toHaveCount(1);
+  expect(errors).toEqual([]);
 });
