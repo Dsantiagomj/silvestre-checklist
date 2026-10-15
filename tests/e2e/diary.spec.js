@@ -696,6 +696,12 @@ test("las misiones de un paso con varios logros van agrupadas por logro", async 
     expect(await heads.count()).toBeGreaterThan(1);
     await expect(heads.locator("img")).toHaveCount(await heads.count());
   }
+  // El 21 mezcla las 8 de su logro con una que no es de ninguno: va aparte, con la «!»
+  await stepData(page, 21);
+  await expect(groups.locator(".q-group-name")).toHaveText(["Púrpura profundo", "Fuera del logro"]);
+  expect(await groups.evaluateAll(gs => gs.map(g => g.querySelectorAll(".q-item").length))).toEqual([8, 1]);
+  await expect(groups.nth(1).locator(".q-item .q-name")).toHaveText("Cómo perder la pluma");
+  await expect(groups.locator(".q-group-head").nth(1).locator(".quest-mark")).toHaveCount(1);
   // Un paso de un solo logro, sin títulos
   await stepData(page, 17);
   await expect(page.locator("#journal .q-group-name")).toHaveCount(0);
