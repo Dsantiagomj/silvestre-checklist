@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { CALL_ICONS, OBJ_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
-import { MAP_IMG, groupsOf, questsOf } from "../lib/quests.js";
+import { Fragment, useEffect, useState } from "react";
+import { STEPS } from "../data/steps.js";
+import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
+import { groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, bannerFigure, doneIcon, nextPendingAfter, optionalMissions, resolvesHere, startMap, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, doneIcon, nextPendingAfter, optionalMissions, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -13,6 +13,7 @@ import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
+import Banner from "./Banner.jsx";
 
 // Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
 // que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
@@ -39,77 +40,6 @@ function RichText({ text }) {
     ) : (
       part.t
     ));
-}
-
-// La punta del pendón: lo que baja el centro respecto de los lados (igual que el clip-path)
-const TIP = 26;
-
-/** Ancho y alto de un elemento, al día con sus cambios de tamaño. */
-function useSize() {
-  const ref = useRef(null);
-  const [size, setSize] = useState(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const measure = () => setSize(prev => {
-      const w = el.offsetWidth, h = el.offsetHeight;
-      return prev && prev.w === w && prev.h === h ? prev : { w, h };
-    });
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, size];
-}
-
-/**
- * El marco dorado del pendón, con la punta incluida: el borde de fuera y el filete de
- * dentro. Va en SVG porque un borde de CSS no sigue las diagonales del clip-path.
- */
-function BannerFrame({ w, h }) {
-  // El contorno metido `d` px hacia dentro: los lados y el techo, d; las diagonales de
-  // la punta bajan con pendiente TIP / (w/2) y, desplazadas d en su normal, suben d/cos
-  const outline = d => {
-    const slope = TIP / (w / 2);
-    const up = d * Math.hypot(1, slope);
-    const side = h - TIP + d * slope - up;
-    return `M${d} ${d} H${w - d} V${side} L${w / 2} ${h - up} L${d} ${side} Z`;
-  };
-  return (
-    <svg className="banner-frame" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <path className="frame-out" d={outline(1)} />
-      <path className="frame-in" d={outline(6)} />
-    </svg>
-  );
-}
-
-/**
- * El estandarte (izquierda): sobre el mapa del juego donde empieza el paso, su número,
- * su zona y lo que lo representa (bannerFigure). Sin mapa, el paisaje de la zona.
- */
-function Banner({ step }) {
-  const fig = bannerFigure(step.n);
-  const map = startMap(step.n);
-  const zone = ZONE_IMG[step.zone];
-  const bg = [map && `url(${MAP_IMG}${map}.jpg)`, zone && `url(${imgUrl(zone.img)})`].filter(Boolean).join(", ");
-  const [ref, size] = useSize();
-  return (
-    <aside className="journal-banner" ref={ref} style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
-      {bg && <div className="journal-bg" style={{ backgroundImage: bg }}></div>}
-      {size && <BannerFrame {...size} />}
-      <span className="journal-num">{step.n}</span>
-      <span className="banner-zone">{step.zone}</span>
-      {fig && (
-        <figure className="journal-show" data-kind={fig.kind}>
-          <img src={imgUrl(fig.img)} alt="" decoding="async" />
-          <figcaption>
-            <small className="journal-show-label">{fig.as}</small>
-            <b className="journal-show-name">{fig.name}</b>
-          </figcaption>
-        </figure>
-      )}
-    </aside>
-  );
 }
 
 /**
