@@ -34,7 +34,7 @@ test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", 
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
   expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
   expect(WEIGHTS[83].w).toBeCloseTo(1085.307, 3);
-  expect(TOTAL).toBeCloseTo(155339, 0);
+  expect(TOTAL).toBeCloseTo(156159, 0);
   // El id y los objetivos de cada misión, en el orden del paso
   expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
   expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);

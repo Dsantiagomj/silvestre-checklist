@@ -33,8 +33,9 @@ def norm(s):
 def load_steps():
     html = (ROOT / "src" / "data" / "steps.js").read_text()
     body = html.split("const STEPS = [", 1)[1].split("\n];", 1)[0]
+    # The text is a JSON string; base, marks, closes… may follow it on the same line
     pattern = re.compile(
-        r'\{\s*n:\s*(\d+),\s*zone:\s*"(.*?)",\s*effort:\s*"(\w+)",\s*text:\s*"(.*)"\s*\},?\s*$'
+        r'\{\s*n:\s*(\d+),\s*zone:\s*"(.*?)",\s*effort:\s*"(\w+)",\s*text:\s*("(?:[^"\\]|\\.)*")'
     )
     steps = []
     for line in body.splitlines():
@@ -44,7 +45,7 @@ def load_steps():
                 "n": int(m[1]),
                 "zone": m[2],
                 "effort": m[3],
-                "text": m[4].replace('\\"', '"').replace("\\n", "\n"),
+                "text": json.loads(m[4]),
             })
     return steps
 
@@ -91,6 +92,13 @@ def lookup(query, table):
 # Candidate names inside a step's text.
 QUOTED = re.compile(r'["«]([^"«»]{3,80})["»]')
 MISSION = re.compile(r"[Mm]isi[oó]n(?:es)?\s*:\s*([^.;\n(]{4,80})")
+# Several in a row, "Misión: La pesca de Mel, Misión: Mel odiosa, …" (step 29): one
+# MISSION match takes them all, so it is split at each "Misión:"
+NEXT_MISSION = re.compile(r",?\s*[Mm]isi[oó]n(?:es)?\s*:\s*")
+# A quest the guide requires without the colon: "Se debe hacer la misión Flovoración en
+# algún punto de esta" (step 100). Only "se debe hacer": "se puede lanzar la misión La
+# sombra del reino" (step 38) is optional and stays out
+MUST_MISSION = re.compile(r"[Ss]e debe hacer la misi[oó]n\s+([^:.;\n(]{4,80})")
 DUNGEON_WORD = re.compile(r"mazmorra\s+([^,.;\n(]{3,60})", re.I)
 
 
@@ -124,13 +132,22 @@ def assets_for(step):
             add("quest", rec, raw, score, None)
 
     # 2. Unquoted "Misión: X" names.
-    for raw in MISSION.findall(text):
+    for raw in [r for m in MISSION.findall(text) for r in NEXT_MISSION.split(m)]:
         parts = [p for p in raw.split(",") if p.strip()]
         candidates = [raw] + [",".join(parts[:i]) for i in range(len(parts), 0, -1)]
         for cand in candidates:
             rec, score = lookup(cand, QUEST)
             if rec:
                 add("quest", rec, cand, score, None)
+                break
+
+    # 2b. "Se debe hacer la misión X …": the longest run of words that names a quest
+    for raw in MUST_MISSION.findall(text):
+        words = raw.split()
+        for i in range(len(words), 0, -1):
+            rec, score = lookup(" ".join(words[:i]), QUEST)
+            if rec and score == 1.0:
+                add("quest", rec, " ".join(words[:i]), score, None)
                 break
 
     # 3. Dungeons, plus the boss sprite they resolve to.

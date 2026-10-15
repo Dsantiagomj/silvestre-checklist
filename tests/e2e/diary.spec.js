@@ -717,6 +717,16 @@ test("el paso 12 lleva las misiones que exige «Espionaje industrial» antes de 
     "Las grandes galerías", "Espionaje industrial"]);
 });
 
+test("el 29 lleva las tres misiones de Mel que nombra y el 100, «Flovoración» tras la misión del logro", async ({ page }) => {
+  await openApp(page);
+  // «Misión: La pesca de Mel, Misión: Mel odiosa, Misión: Mel, o «dramática».», en ese orden
+  expect((await stepData(page, 29)).quests).toEqual(["La pesca de Mel", "Mel odiosa", "Mel, o «dramática»"]);
+  // «Se debe hacer la misión Flovoración en algún punto de esta»: la nota sigue con su enlace
+  expect((await stepData(page, 100)).quests).toEqual(["¿Quién nos protege del protector?", "Flovoración"]);
+  await expect(page.locator("#journal .call.must", { hasText: "Se debe hacer la misión Flovoración" })
+    .locator("a.guide-link", { hasText: "Flovoración" })).toHaveCount(1);
+});
+
 test("las paradas revisadas en las guías caen en su objetivo, también cuando un paso tiene dos", async ({ page }) => {
   await openApp(page);
   const after = async (n, quest, text) => {
