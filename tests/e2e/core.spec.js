@@ -31,13 +31,13 @@ test("el detalle lista las misiones del paso cuando cargan", async ({ page }) =>
   await expect(page.locator(".q-item .q-name").first()).toHaveText("El dragón blanco");
 });
 
-test("marcar un paso actualiza la fila, hero, header y almacenamiento", async ({ page }) => {
+test("marcar un paso actualiza la fila, hero, ventana de pasos y almacenamiento", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="93"] .row-main');
   await page.click("#toggleBtn");
   await expect(page.locator('.diary-row[data-n="93"]')).toHaveClass(/done/);
   await expect(page.locator("#statDone")).toHaveText("1");
-  await expect(page.locator("#sbDone")).toHaveText("1");
+  await expect(page.locator("#winDone")).toHaveText("1");
   await expect(page.locator("#heroPct")).not.toHaveText(/^0%?$/);
   expect(await readLS(page, "silvestre:done")).toEqual({ "93": true });
   // «Paso hecho» ya llevó al 94; se desmarca desde la casilla de la fila

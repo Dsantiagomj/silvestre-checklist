@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { doneCount, progressPct, useAppState } from "../state/store.js";
+import { useEffect, useState } from "react";
 import { BRAND_ICON, HEADER_ICONS, imgUrl } from "../lib/assets.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
 
@@ -20,40 +19,27 @@ function GameIcon({ path, fallback, kind }) {
 
 /** HEADER · estilo ventana de juego Dofus */
 export default function Header({ onOverlay, onReset }) {
-  const s = useAppState();
-  const pct = progressPct(s);
-  const headerRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
-  const [showProgress, setShowProgress] = useState(false);
 
-  // Header: sólido en cuanto hay scroll; con progreso al dejar atrás el hero. Se mide
-  // la posición del hero en cada scroll (y al cambiar de tamaño): un IntersectionObserver
-  // puede entregar en un mismo lote "sale" y "vuelve a entrar" tras un salto rápido, y
-  // quedarse con el aviso viejo dejaba la barra a la vista con el hero arriba
+  // Header: sólido en cuanto hay scroll. El progreso ya no va aquí: vive en la franja de
+  // la ventana de los pasos
   useEffect(() => {
-    const header = headerRef.current;
-    const hero = document.querySelector(".hero");
     let frame = 0;
     const sync = () => {
       frame = 0;
       setScrolled(window.scrollY > 8);
-      setShowProgress(hero ? hero.getBoundingClientRect().bottom <= header.offsetHeight : false);
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(sync); };
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
     sync();
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(frame);
     };
   }, []);
 
-  const cls = [scrolled && "is-scrolled", showProgress && "show-progress"].filter(Boolean).join(" ");
-
   return (
-    <header ref={headerRef} className={cls || undefined}>
+    <header className={scrolled ? "is-scrolled" : undefined}>
       <div className="title-bar">
         <div className="title-bar-inner">
           <div className="brand">
@@ -64,12 +50,6 @@ export default function Header({ onOverlay, onReset }) {
               <LogoWord text="Dofus" className="w1" start={0} />
               <LogoWord text="Silvestre" className="w2" start={5} />
             </span>
-          </div>
-          {/* Barra de experiencia: aparece centrada al dejar atrás el hero */}
-          <div className="tb-progress" aria-hidden="true">
-            <span className="tb-bar"><span className="tb-bar-fill" id="sbFill" style={{ width: pct + "%" }}></span></span>
-            <b className="tb-pct" id="sbPct">{pct}%</b>
-            <span className="tb-done"><b id="sbDone">{doneCount(s)}</b>/100</span>
           </div>
           <div className="spacer"></div>
           <button className="icon-btn primary has-icon" id="overlayBtn" aria-label="Abrir overlay sobre el juego" onClick={onOverlay}>

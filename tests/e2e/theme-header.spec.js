@@ -20,16 +20,15 @@ test("los huevos del interruptor cargan", async ({ page }) => {
   }
 });
 
-test("el header es transparente arriba, sólido al bajar y muestra el progreso tras el hero", async ({ page }) => {
+test("el header es transparente arriba, sólido al bajar y sin barra de progreso", async ({ page }) => {
   await openApp(page);
   const header = page.locator("header");
   await expect(header).not.toHaveClass(/is-scrolled/);
-  await expect(header).not.toHaveClass(/show-progress/);
   await page.evaluate(() => window.scrollTo(0, 120));
   await expect(header).toHaveClass(/is-scrolled/);
-  await expect(header).not.toHaveClass(/show-progress/);
+  // El progreso vive en la ventana de los pasos, no en el header
   await page.evaluate(() => window.scrollTo(0, 1000));
-  await expect(header).toHaveClass(/show-progress/);
+  await expect(header.locator(".tb-progress")).toHaveCount(0);
 });
 
 test("la marca es un logotipo con la tipografía de Dofus y se lee entera", async ({ page }) => {
@@ -60,46 +59,17 @@ test("los botones de overlay y reinicio usan objetos del juego", async ({ page }
     .toMatch(/^matrix\(-1, [^,]+, [^,]+, -1/);
 });
 
-test("el progreso del header aparece centrado solo al salir del hero", async ({ page }) => {
-  await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
-  const pct = parseFloat(await page.locator("#heroPct").innerText());
-  const bar = page.locator("header .tb-progress");
-  // Arriba y aún dentro del hero no se ve
-  await expect(bar).not.toBeVisible();
-  await page.evaluate(() => window.scrollTo(0, 200));
-  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
-  await expect(bar).not.toBeVisible();
-  // Fuera del hero aparece, centrado en el header
-  await page.evaluate(() => window.scrollTo(0, 1200));
-  await expect(bar).toBeVisible();
-  await expect.poll(async () => {
-    const box = await bar.boundingBox();
-    return Math.abs(box.x + box.width / 2 - 720);
-  }).toBeLessThanOrEqual(3);
-  const fill = await page.locator("#sbFill").evaluate(el => el.style.width);
-  expect(parseFloat(fill)).toBeCloseTo(pct, 1);
-  await expect(page.locator("#sbPct")).toHaveText(`${pct}%`);
-  await expect(page.locator("#sbDone")).toHaveText("3");
-});
-
-test("el progreso oculto del header no ocupa sitio", async ({ browser }) => {
+test("en móvil el contenido del header cabe con márgenes simétricos", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   await openApp(page);
-  expect(await page.locator("header .tb-progress").evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-  // Márgenes simétricos: el contenido del header cabe dentro de su relleno
   const left = await page.locator("header .brand").evaluate(el => el.getBoundingClientRect().left);
-  const right = await page.locator("#resetBtn").evaluate(el => innerWidth - el.getBoundingClientRect().right);
-  expect(right).toBeGreaterThanOrEqual(left - 2);
-
-  // Al aparecer, el porcentaje se ve entero y todo sigue cabiendo
+  const right = () => page.locator("#resetBtn").evaluate(el => innerWidth - el.getBoundingClientRect().right);
+  expect(await right()).toBeGreaterThanOrEqual(left - 2);
+  // Al bajar sigue cabiendo
   await page.evaluate(() => window.scrollTo(0, 1500));
-  await expect(page.locator("header")).toHaveClass(/show-progress/);
-  // Se espera a la condición, no a un tiempo fijo: la transición tarda más con la máquina cargada
-  await expect.poll(() => page.locator("header .tb-progress").evaluate(el => el.scrollWidth > el.clientWidth + 1))
-    .toBe(false);
-  await expect.poll(() => page.locator("#resetBtn").evaluate(el => innerWidth - el.getBoundingClientRect().right))
-    .toBeGreaterThanOrEqual(left - 2);
+  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
+  await expect.poll(right).toBeGreaterThanOrEqual(left - 2);
   await ctx.close();
 });
 
@@ -127,14 +97,15 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
   await settles(() => style("#heroNextGo", "color"), () => style("#heroNextGo", "backgroundColor"));
   // Acento usado como texto sobre el fondo de la página
   await settles(() => style(".hero-eyebrow", "color"), pageBg);
-  await settles(() => style(".section-num", "color"), pageBg);
+  // El porcentaje de la ventana de pasos, en acento sobre su panel
+  await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
 });
 
-test("con la barra de progreso a la vista solo hay un Dofus Silvestre en el header", async ({ page }) => {
+test("al bajar solo hay un Dofus Silvestre en el header", async ({ page }) => {
   await openApp(page);
   await page.evaluate(() => window.scrollTo(0, 1600));
-  await expect(page.locator("header")).toHaveClass(/show-progress/);
-  // El del logo; la barra se entiende con el porcentaje y los pasos
+  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
+  // El del logo
   await expect(page.locator('header img[src*="items/23036.png"]')).toHaveCount(1);
   await expect(page.locator(".brand img")).toBeVisible();
 });
@@ -213,21 +184,4 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
       return (a + .05) / (b + .05);
     }, { timeout: 3_000, message: sel }).toBeGreaterThanOrEqual(4.5);
   }
-});
-
-test("al volver arriba de golpe desde muy abajo, el header no muestra el progreso", async ({ page }) => {
-  await openApp(page);
-  await page.evaluate(() => scrollTo(0, 2500));
-  await expect(page.locator("header")).toHaveClass(/show-progress/);
-  // Subir al hero (como hace la animación del huevo) y comprobar en cada fotograma
-  await page.evaluate(() => scrollTo({ top: 0, behavior: "smooth" }));
-  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
-  await expect(page.locator("header")).not.toHaveClass(/show-progress/);
-  // La barra depende de dónde está el hero, no de un aviso que pueda llegar desordenado
-  const shown = await page.evaluate(async () => {
-    scrollTo(0, 2500); scrollTo(0, 0);
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    return document.querySelector("header").classList.contains("show-progress");
-  });
-  expect(shown).toBe(false);
 });

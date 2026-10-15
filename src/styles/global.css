@@ -1041,8 +1041,8 @@ html.vt-to-light::view-transition-old(root){ z-index:2; animation:vt-night 1s cu
 
 /* HEADER FUSIONADO CON EL HERO ---------------------------------------------
    Arriba del todo el header es transparente y flota sobre el mapa del hero.
-   Al bajar se vuelve sólido (.is-scrolled) y, al dejar atrás el hero, muestra
-   el progreso (.show-progress), que antes vivía en una barra pegajosa aparte. */
+   Al bajar se vuelve sólido (.is-scrolled). El progreso vive en la ventana de
+   los pasos, no aquí. */
 header{ background:transparent; border-bottom:0; }
 header .title-bar{
   background:transparent;
@@ -1055,73 +1055,6 @@ header.is-scrolled .title-bar{
   backdrop-filter:blur(12px);
   border-bottom-color:var(--line);
 }
-/* Progreso del header: una barra de experiencia enmarcada, centrada en el
-   header, que aparece al dejar atrás el hero. Oculta no se ve ni ocupa sitio. */
-.tb-progress{
-  position:absolute; left:50%; top:50%;
-  display:flex; align-items:center; gap:10px;
-  padding:5px 14px 5px 6px; border-radius:999px;
-  background:color-mix(in srgb, var(--bg) 82%, transparent);
-  border:1px solid var(--line-2);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 6px 18px rgba(0,0,0,.28);
-  white-space:nowrap;
-  opacity:0; visibility:hidden; pointer-events:none;
-  transform:translate(-50%, -50%) translateY(-6px);
-  transition:opacity .3s ease, transform .3s ease, visibility 0s linear .3s;
-}
-header.show-progress .tb-progress{
-  opacity:1; visibility:visible;
-  transform:translate(-50%, -50%);
-  transition:opacity .3s ease, transform .3s ease, visibility 0s;
-}
-.tb-bar{
-  position:relative; flex-shrink:0;
-  width:clamp(160px, 22vw, 300px); height:12px; border-radius:999px;
-  background:#0a0c09;
-  box-shadow:inset 0 1px 3px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.06);
-  overflow:hidden;
-}
-[data-theme="light"] .tb-bar{ background:#dde3d0; box-shadow:inset 0 1px 2px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06); }
-.tb-bar-fill{
-  position:absolute; inset:0 auto 0 0;
-  background:linear-gradient(180deg, #e2f6a8 0%, var(--amber) 45%, var(--amber-2) 100%);
-  box-shadow:0 0 10px rgba(183,220,105,.6);
-  transition:width .6s cubic-bezier(.22,1,.36,1);
-}
-/* Brillo superior y diez tramos marcados, como la barra de experiencia del juego */
-.tb-bar::before, .tb-bar::after{ content:""; position:absolute; inset:0; pointer-events:none; }
-.tb-bar::before{ background:linear-gradient(180deg, rgba(255,255,255,.22), transparent 55%); }
-.tb-bar::after{ background:repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgba(0,0,0,.55) calc(10% - 1px) 10%); }
-.tb-pct{
-  font-family:'Lilita One', var(--font-body); font-weight:400; font-size:18px; line-height:1;
-  color:var(--accent-ink); font-variant-numeric:tabular-nums;
-  -webkit-text-stroke:1.5px #121410; paint-order:stroke fill;
-}
-[data-theme="light"] .tb-pct{ -webkit-text-stroke:0; }
-.tb-done{ font-size:12.5px; color:var(--txt-soft); font-variant-numeric:tabular-nums; }
-.tb-done b{ color:var(--txt); font-weight:600; }
-
-/* Sin hueco libre en el centro: la barra pasa a ocupar el espacio entre marca y botones */
-@media (max-width:1024px){
-  .tb-progress{
-    position:static; transform:none;
-    flex:0 1 auto; min-width:0; max-width:0;
-    padding:0; border-width:0; margin:0 auto;
-    overflow:hidden;
-  }
-  header.show-progress .tb-progress{
-    transform:none; flex:1 1 auto; max-width:420px;
-    padding:4px 12px 4px 5px; border-width:1px; margin:0 12px;
-  }
-  .tb-bar{ flex:1 1 auto; width:auto; min-width:40px; }
-  .tb-done{ display:none; }
-}
-/* En móvil la marca se queda en el huevo mientras se ve la barra */
-@media (max-width:600px){
-  header.show-progress .brand .logo{ display:none; }
-  header.show-progress .tb-progress{ margin:0 8px; padding-left:10px; }
-}
-@media (prefers-reduced-motion:reduce){ .tb-progress, .tb-bar-fill{ transition:none; } }
 /* El nombre nunca se parte: en pantallas estrechas se encoge */
 .brand{ white-space:nowrap; }
 @media (max-width:420px){ .brand{ font-size:16px; gap:7px; } .brand-icon{ width:24px; height:24px; } }
@@ -1465,78 +1398,6 @@ header.show-progress .tb-progress{
   transition:filter .15s ease, transform .15s ease;
 }
 .hero-next-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
-/* Dofus del camino: fila compacta mientras avanzas, tarjeta grande con la guía terminada */
-.road{ margin-top:16px; max-width:540px; }
-.road-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
-.road-title{
-  margin:0; font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;
-  color:var(--txt-mute);
-}
-.road-count{ font-size:12px; font-weight:700; color:var(--accent-ink); font-variant-numeric:tabular-nums; }
-.road-list{ display:flex; gap:8px; margin:0; padding:0; list-style:none; }
-.road-dofus{ display:flex; flex-direction:column; align-items:center; gap:5px; }
-.road-art{
-  position:relative; display:grid; place-items:center;
-  width:40px; height:40px; border-radius:10px;
-  background:color-mix(in srgb, var(--bg) 66%, transparent); border:1px solid var(--line-2);
-  backdrop-filter:blur(6px);
-}
-.road-art img{ width:78%; height:78%; object-fit:contain; filter:grayscale(1) brightness(.35); opacity:.75; }
-.road-step{
-  position:absolute; right:-5px; bottom:-5px;
-  min-width:18px; height:16px; padding:0 4px; border-radius:999px;
-  display:grid; place-items:center;
-  background:var(--panel-2); border:1px solid var(--line-2);
-  font-size:9.5px; font-weight:800; color:var(--txt-soft); font-variant-numeric:tabular-nums;
-}
-.road-dofus.obtained .road-art{ border-color:color-mix(in srgb, var(--gold-ink) 60%, transparent); }
-.road-dofus.obtained .road-art img{ filter:drop-shadow(0 0 6px rgba(246,215,122,.45)); opacity:1; }
-
-.road.big{
-  margin-top:18px; padding:16px 18px 18px;
-  border-radius:16px;
-  background:color-mix(in srgb, var(--bg) 72%, transparent);
-  border:1.5px solid color-mix(in srgb, var(--accent-ink) 70%, transparent);
-  backdrop-filter:blur(8px);
-  box-shadow:0 14px 34px rgba(0,0,0,.25), 0 0 28px rgba(183,220,105,.15);
-  display:grid; grid-template-columns:1fr auto; align-items:center; column-gap:12px;
-}
-.road.big .road-head{ margin:0; }
-.road.big .road-title{
-  font-family:'Lilita One', var(--font-body); font-weight:400;
-  font-size:21px; letter-spacing:.3px; text-transform:none; color:var(--txt);
-}
-.road.big .road-sub{ grid-column:1; margin:2px 0 0; font-size:12.5px; color:var(--txt-soft); }
-.road.big .road-go{ grid-column:2; grid-row:1 / span 2; }
-/* 12 Dofus: filas de 6 (6 + 6); en móvil, de 4 */
-.road.big .road-list{
-  --per-row:6;
-  grid-column:1 / -1; display:flex; flex-wrap:wrap; justify-content:center; gap:14px 8px; margin-top:14px;
-}
-.road.big .road-dofus{ flex:0 0 calc((100% - (var(--per-row) - 1) * 8px) / var(--per-row)); }
-.road.big .road-art{ width:58px; height:58px; border-radius:14px; }
-.road-name{ font-size:11px; font-weight:700; color:var(--txt-soft); }
-.road-go{
-  padding:10px 18px; border-radius:999px;
-  background:var(--amber); color:#0d0e0c;
-  font-size:14px; font-weight:800; white-space:nowrap;
-  transition:filter .15s ease, transform .15s ease;
-}
-.road-go:hover{ filter:brightness(1.08); transform:translateX(2px); }
-@media (max-width:600px){
-  .road.big{ grid-template-columns:1fr; }
-  .road.big .road-go{ grid-column:1; grid-row:auto; margin-top:14px; justify-self:start; }
-  .road.big .road-list{ --per-row:4; gap:12px 8px; }
-  .road.big .road-art{ width:48px; height:48px; }
-  /* La fila compacta tiene que caber entera: las 12 casillas se reparten el ancho */
-  .road-list{ gap:3px; }
-  /* El número del último sobresale 4px: se le deja sitio */
-  .road:not(.big) .road-list{ padding-right:4px; }
-  .road:not(.big) .road-dofus{ flex:1 1 0; min-width:0; }
-  .road:not(.big) .road-art{ width:100%; max-width:28px; height:auto; aspect-ratio:1; border-radius:7px; }
-  .road-step{ min-width:15px; height:13px; font-size:8px; right:-4px; bottom:-4px; }
-}
-
 /* Obtención: el Dofus se llena de color desde abajo dentro de un anillo de 10 tramos */
 .hero-visual{ display:flex; flex-direction:column; align-items:center; gap:8px; }
 .hero-egg{
@@ -2162,9 +2023,6 @@ header.show-progress .tb-progress{
   background:var(--amber); color:#142208; font:700 14px var(--font-body);
 }
 .diary-next:disabled{ opacity:.6; cursor:default; }
-@media (max-width:600px){
-  .diary-next .long{ display:none; }
-}
 
 .steps-view{ display:inline-flex; padding:3px; border-radius:999px; border:1px solid var(--line-2); background:var(--inset); }
 .steps-view button{
@@ -2172,6 +2030,65 @@ header.show-progress .tb-progress{
   font:700 13.5px var(--font-body); color:var(--txt-soft);
 }
 .steps-view button[aria-pressed="true"]{ background:var(--amber); color:#142208; }
+
+/* La ventana de los pasos: una sola tarjeta. Arriba, la franja de los Dofus del camino
+   con el progreso global y el siguiente pendiente; debajo, las pestañas, las
+   herramientas y la vista elegida, que pierde su propio marco para no ir doble */
+.steps-win{ background:var(--panel); border:1px solid var(--line); border-radius:16px; }
+.win-strip{
+  display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; grid-template-areas:"head eggs prog next";
+  align-items:center; gap:12px 24px; padding:14px 18px;
+  border-bottom:1px solid var(--line); border-radius:16px 16px 0 0;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent 85%);
+}
+.win-strip .road-head{ grid-area:head; display:flex; flex-direction:column; gap:3px; }
+.road-title{ margin:0; font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--txt-mute); }
+.road-count{ font:400 26px/1 'Lilita One', var(--font-body); color:var(--gold-ink); font-variant-numeric:tabular-nums; }
+.road-list{ grid-area:eggs; display:flex; justify-content:space-between; gap:4px; margin:0; padding:0; list-style:none; }
+.road-dofus{
+  display:grid; place-items:center; width:46px; height:46px; padding:0;
+  border:0; border-radius:12px; background:none; cursor:pointer;
+  transition:transform .15s ease, background-color .15s ease;
+}
+.road-dofus:hover{ transform:translateY(-2px); background:var(--line); }
+.road-dofus:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+/* Los que faltan, apagados; los conseguidos, a todo color con un brillo dorado */
+.road-dofus img{ width:38px; height:38px; object-fit:contain; filter:grayscale(1) brightness(.4); opacity:.7; transition:filter .3s ease, opacity .3s ease; }
+.road-dofus.obtained img{ filter:drop-shadow(0 0 7px rgba(246,215,122,.55)); opacity:1; }
+[data-theme="light"] .road-dofus img{ filter:grayscale(1) brightness(.6); opacity:.5; }
+[data-theme="light"] .road-dofus.obtained img{ filter:drop-shadow(0 0 6px rgba(196,140,20,.5)); opacity:1; }
+.win-progress{ grid-area:prog; display:grid; grid-template-columns:auto auto; align-items:baseline; gap:6px 12px; min-width:170px; }
+.win-pct{ font:400 24px/1 'Lilita One', var(--font-body); color:var(--accent-ink); font-variant-numeric:tabular-nums; }
+.win-done{ justify-self:end; font-size:12.5px; color:var(--txt-soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.win-done b{ color:var(--txt); }
+.win-bar{ grid-column:1 / -1; grid-row:2; height:6px; border-radius:999px; background:var(--line-2); overflow:hidden; }
+.win-bar i{
+  display:block; height:100%; border-radius:inherit;
+  background:linear-gradient(90deg, var(--amber-2), var(--amber));
+  transition:width .6s cubic-bezier(.22,1,.36,1);
+}
+.win-strip .diary-next{ grid-area:next; white-space:nowrap; }
+.win-tabs{ display:flex; align-items:center; gap:10px; padding:12px 18px 0; }
+.win-tools{ display:flex; align-items:center; gap:10px; padding:12px 18px; }
+.steps-win .seals{ margin:0; padding:22px 18px 8px; }
+.steps-win .step-map{ margin:0; border-width:1px 0 0; border-radius:0 0 16px 16px; }
+.steps-win .diary-window{ border-width:1px 0 0; border-radius:0 0 16px 16px; }
+/* Sin sitio para todo en una fila: los huevos bajan a la suya */
+@media (max-width:1100px){
+  .win-strip{ grid-template-columns:auto minmax(0, 1fr) auto; grid-template-areas:"head prog next" "eggs eggs eggs"; }
+  .win-progress{ justify-self:end; }
+}
+/* En móvil, los 12 en dos filas de 6 y el progreso a lo ancho */
+@media (max-width:600px){
+  .win-strip{ grid-template-columns:minmax(0, 1fr) auto; grid-template-areas:"head next" "prog prog" "eggs eggs"; gap:12px; padding:12px; }
+  .win-strip .road-head{ flex-direction:row; align-items:baseline; gap:10px; }
+  .win-progress{ justify-self:stretch; min-width:0; }
+  .road-list{ display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); justify-items:center; gap:6px 4px; }
+  .win-tabs{ padding:10px 12px 0; }
+  .win-tools{ padding:10px 12px; }
+  .steps-win .seals{ padding:22px 12px 8px; }
+}
+@media (prefers-reduced-motion:reduce){ .win-bar i, .road-dofus, .road-dofus img{ transition:none; } }
 
 /* Mapa: los 100 pasos como un camino que serpentea; cada sello lleva el paisaje de su zona */
 .step-map{

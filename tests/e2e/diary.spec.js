@@ -731,3 +731,49 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
+
+test("la ventana de pasos abre con los Dofus del camino, conseguidos o apagados", async ({ page }) => {
+  // Esmeralda (paso 18) y Púrpura (21); el 17 solo lleva "Verde esmeralda" hasta la misión 7
+  await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
+  const road = page.locator("#diary .steps-win #winRoad");
+  await expect(road.locator(".road-title")).toHaveText("Dofus del camino");
+  await expect(road.locator(".road-count")).toHaveText("2/12");
+  // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
+  // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
+  const dofus = road.locator(".road-dofus");
+  await expect(dofus).toHaveCount(12);
+  await expect(dofus.nth(0)).toHaveAttribute("title", "Dofawa · paso 1");
+  await expect(dofus.nth(0)).not.toHaveClass(/\bobtained\b/);
+  await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
+  await expect(dofus.nth(2)).toHaveClass(/\bobtained\b/);
+  await expect(dofus.nth(3)).toHaveAttribute("title", "Domakuro · paso 49");
+  await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
+  // El Ocre llega al terminar "La eterna cosecha": el logro "El fin de la eternidad" del paso 79
+  await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · paso 79");
+  await expect(dofus.nth(7)).not.toHaveClass(/\bobtained\b/);
+  // La Piñata de pino se da por conseguida al completar el paso 99
+  await expect(dofus.nth(11)).toHaveAttribute("title", "Piñata de pino · paso 99");
+  // Los que faltan, en gris; los conseguidos, a todo color. Ninguno marca el siguiente
+  const filter = i => dofus.nth(i).locator("img").evaluate(el => getComputedStyle(el).filter);
+  expect(await filter(3)).toContain("grayscale");
+  expect(await filter(1)).not.toContain("grayscale");
+  await expect(road.locator(".road-step, .road-dofus.next")).toHaveCount(0);
+  // Pulsar uno abre su paso
+  await dofus.nth(3).click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("49");
+});
+
+test("la ventana de pasos muestra el progreso global y lleva al siguiente pendiente", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 32) });
+  const pct = await page.locator("#heroPct").innerText();
+  await expect(page.locator("#winPct")).toHaveText(pct);
+  await expect(page.locator("#winDone")).toHaveText("32");
+  const fill = await page.locator("#winFill").evaluate(el => el.style.width);
+  expect(parseFloat(fill)).toBeCloseTo(parseFloat(pct), 1);
+  await expect(page.locator(".steps-win #diaryNext")).toContainText("33");
+  // Lleva al siguiente y deja la ventana a la vista, con su franja arriba
+  await page.click("#diaryNext");
+  await expect(page.locator("#journal .journal-num")).toHaveText("33");
+  await expect(page.locator("#winRoad")).toBeInViewport();
+});
+
