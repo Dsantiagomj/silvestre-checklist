@@ -584,6 +584,40 @@ test("en la lista, cada paso lleva solo el Dofus que da o el jefe que resuelve",
   for (const n of [2, 4, 10, 43]) await expect(art(n)).toHaveCount(0);
 });
 
+test("en la fila, el título usa todo el ancho y a la derecha van el Dofus o el jefe y las etiquetas de cierre", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  const box = (n, sel) => row(page, n).locator(sel).boundingBox();
+  // Las etiquetas salen de debajo del título y van a la derecha, antes del retrato
+  for (const [n, tag] of [[5, ".row-closed"], [22, ".row-closes"]]) {
+    await expect(row(page, n).locator(`.row-sub ${tag}`)).toHaveCount(0);
+    await expect(row(page, n).locator(`.row-tags ${tag}`)).toHaveCount(1);
+    const [text, tags] = [await box(n, ".row-text"), await box(n, ".row-tags")];
+    expect(tags.x).toBeGreaterThanOrEqual(text.x + text.width - 0.5);
+  }
+  const [tags, art] = [await box(22, ".row-tags"), await box(22, ".row-art img")];
+  expect(art.x).toBeGreaterThanOrEqual(tags.x + tags.width - 0.5);
+  // El retrato, más grande que antes
+  expect(art.width).toBeGreaterThanOrEqual(36);
+  // Sin etiquetas, el título llega hasta el retrato: el del 2 se lee entero
+  const title = row(page, 2).locator(".row-title");
+  expect(await title.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+});
+
+test("en móvil, la fila sigue entera: el retrato a la derecha y las etiquetas bajo el título", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openApp(page);
+  const r = row(page, 22);
+  const [main, art, tags, title] = await Promise.all(
+    [".row-main", ".row-art img", ".row-closes", ".row-title"].map(sel => r.locator(sel).boundingBox()));
+  // Nada se sale de la fila
+  expect(art.x + art.width).toBeLessThanOrEqual(main.x + main.width + 0.5);
+  expect(tags.x + tags.width).toBeLessThanOrEqual(art.x + 0.5);
+  // La etiqueta, debajo del título y entera
+  expect(tags.y).toBeGreaterThanOrEqual(title.y + title.height - 0.5);
+  expect(await r.locator(".row-closes").evaluate(el => el.scrollWidth <= el.clientWidth + 0.5)).toBe(true);
+});
+
 /** La figura del estandarte del paso: "etiqueta:nombre". */
 const figure = page => page.locator("#journal .journal-banner .journal-show").evaluate(f =>
   `${f.querySelector(".journal-show-label").textContent.trim()}:${f.querySelector(".journal-show-name").textContent.trim()}`);
