@@ -56,19 +56,34 @@ function ObjText({ o, route }) {
 /**
  * Lista de objetivos de una etapa. La comparten el overlay y el detalle.
  * `stop` ({ index, text, resume }) o `stops` (varias) pintan la parada roja de la guía,
- * o la verde donde se retoma, antes de ese objetivo.
+ * o la verde donde se retoma, antes de ese objetivo. `kids` ({ index, items: [{ id, n }] })
+ * dice qué misiones del paso empiezan ahí y cumplen esos objetivos; `onKid(id, el)` lleva
+ * a una de ellas.
  * Con `route` (el detalle) es una ruta de medallones: `at` es el objetivo actual de
  * la etapa; los de antes salen hechos (más allá del final, todos). Con `onPick(k)`
  * cada medallón es un botón: deja el avance en `k` (pulsar uno pendiente lo da por
  * hecho, `k` = el siguiente; uno hecho vuelve a él).
  */
-export function Objectives({ objs, stop, stops, route = false, at = -1, onPick }) {
+export function Objectives({ objs, stop, stops, kids = [], onKid, route = false, at = -1, onPick }) {
   // Una o varias líneas (una misión puede retomarse en verde y volver a parar en rojo)
   const lines = stops || (stop ? [stop] : []);
   return (
     <ul className={"obj-list" + (route ? " route" : "")}>
       {objs.map((o, i) => (
         <Fragment key={i}>
+        {kids.filter(c => c.index === i).map((c, k) => (
+          <li key={`c${k}`} className="obj-kids" role="note">
+            <span>
+              {c.items.length > 1 ? "Aquí se hacen " : "Aquí se hace "}
+              {c.items.map((q, j) => (
+                <Fragment key={q.id}>
+                  {j > 0 && (j === c.items.length - 1 ? " y " : ", ")}
+                  <button type="button" className="q-ref" onClick={e => onKid?.(q.id, e.currentTarget)}>«{q.n}»</button>
+                </Fragment>
+              ))}
+            </span>
+          </li>
+        ))}
         {lines.filter(l => l.index === i).map((l, k) => (
           <li key={k} className={l.resume ? "obj-resume" : "obj-stop"} role="separator"><span>{l.text}</span></li>
         ))}

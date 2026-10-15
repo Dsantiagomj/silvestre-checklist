@@ -15,14 +15,16 @@ How a step maps to quests:
   * Each quest of a step has a kind (STEP_QUEST_KINDS, only the ones that are not
     mandatory): "optional" when the guide says "misión N (opcional pero útil)", and
     "take" for the ones it only asks to have taken (TAKE_ONLY).
+  * A quest that starts inside another one the same step lists, and fulfils its
+    objectives, is its child (PARENT: parent -> [objective index, children]).
   * "Alineamiento Bontariano: Misión N" maps to the Bontarian alignment quest
     whose start criterion is `Ps=1&Pa=N-1` (side Bonta, alignment level N-1).
     The step covers the run from the previous alignment step's mission, which
     was left paused, up to N.
 
 Reads  : .build/data/{step_assets,achievements,quests}.json
-Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS and QUESTS;
-         the app loads it lazily)
+Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT and
+         QUESTS; the app loads it lazily)
 Caches : .build/data/lookup_<kind>.json  (names and map positions from the API)
 Run    : python3 -I .build/build_quests_js.py   (after match_assets.py)
 """
@@ -524,6 +526,52 @@ def alt_record(name, records, criteria):
 PLACEHOLDER = re.compile(r"\{(\w+),(\d+)(?:,[^}]*)?\}")
 
 
+def objective_ids(quest):
+    """The quest's objective ids in the order the app shows them (OBJECTIVE_ORDER)."""
+    out = []
+    for j, st in enumerate([s for s in (quest.get("steps") or []) if s]):
+        ids = [o["id"] for o in (st.get("objectives") or []) if o]
+        order = OBJECTIVE_ORDER.get((quest["id"], j))
+        out += [ids[i] for i in order] if order else ids
+    return out
+
+
+def parents(step_quests, quests):
+    """Quests that start inside another one of the same step and fulfil its objectives:
+    {parent: [[objective index, [children]], ...]}. DofusDB says it in the child's start:
+    "Qa=1786&Qo>11555" (parent 1786 in progress, past its objective 11555: the child
+    starts at the next one), "Qa=1909&Qo=13095" (at that objective), "Qo=18502" (the
+    objective's quest is the parent) or just "Qa=2406" (from the start). A start with an
+    alternative ("|") is no child: "La sombra del reino" can also start once "Esto parece
+    el Sur" is finished. Only pairs that some step lists together."""
+    found = {}
+    for ids in step_quests.values():
+        listed = [q for q in ids if isinstance(q, int)]
+        for child in listed:
+            crit = quests[child].get("startCriterion") or ""
+            if "|" in crit:
+                continue
+            parts = [p.strip("()") for p in crit.split("&")]
+            qa = next((int(p[3:]) for p in parts if re.fullmatch(r"Qa=\d+", p)), None)
+            qo = next((re.fullmatch(r"Qo([=>])(\d+)", p) for p in parts if re.fullmatch(r"Qo[=>]\d+", p)), None)
+            for parent in listed:
+                if parent == child or (qa and parent != qa):
+                    continue
+                if qo:
+                    objs = objective_ids(quests[parent])
+                    if int(qo[2]) not in objs:
+                        continue
+                    at = objs.index(int(qo[2])) + (qo[1] == ">")
+                elif qa:
+                    at = 0
+                else:
+                    continue
+                kids = found.setdefault(parent, {}).setdefault(at, [])
+                if child not in kids:
+                    kids.append(child)
+    return {p: [[at, kids] for at, kids in sorted(by.items())] for p, by in sorted(found.items())}
+
+
 def main():
     report = json.loads((DATA / "step_assets.json").read_text())
     achievements = {a["id"]: a for a in json.loads((DATA / "achievements.json").read_text())}
@@ -673,8 +721,10 @@ def main():
 
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    parent = parents(step_quests, quests)
     OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups,
-                                    "STEP_QUEST_KINDS": step_kinds_out, "QUESTS": out_quests}) + "\n")
+                                    "STEP_QUEST_KINDS": step_kinds_out, "PARENT": parent,
+                                    "QUESTS": out_quests}) + "\n")
     OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
@@ -684,6 +734,7 @@ def main():
     print(f"pasos con misión : {len(step_quests)}/100")
     print(f"pasos agrupados  : {len(step_groups)} (misiones de varios logros)")
     print(f"no obligatorias  : {step_kinds_out}")
+    print(f"misiones madre   : {len(parent)} ({sum(len(k) for v in parent.values() for _, k in v)} hijas)")
     print(f"misiones         : {len(out_quests)}")
     print(f"objetivos        : {len(objs)} ({len(located)} con ubicación)")
     print(f"con NPC inicial  : {sum(1 for q in out_quests.values() if q['st'] and q['st'].get('npc'))}")

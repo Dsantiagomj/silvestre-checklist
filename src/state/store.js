@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "../data/weights.json";
-import { currentQuest, loadQuests as loadQuestsData, nextWalked, questsData, questsOf } from "../lib/quests.js";
+import { currentQuest, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { list, resolvesHere, stopPoints } from "../lib/journal.js";
@@ -683,12 +683,18 @@ export function setObjective(n, qi, qid, k, total) {
     // Deshacer una terminada que va por delante del avance no lo adelanta: las de antes
     // siguen como estaban (se terminó la 2.ª, se deshizo la 1.ª y luego la 2.ª)
     const undo = k < total && (s.questObj[qid] || 0) >= total;
-    const at = k >= total && next >= 0 ? next : undo ? Math.min(s.questPos[n] || 0, qi) : qi;
+    // Terminada, se sigue por la siguiente sin terminar (las hijas ya hechas se saltan)
+    let at = k >= total && next >= 0 ? nextOpen(list, qi, { ...s.questObj, [qid]: total }) : undo ? Math.min(s.questPos[n] || 0, qi) : qi;
+    // Una hija no pasa de largo a su madre sin terminar: le quedan los objetivos de después
+    const mother = k >= total ? parentIn(list, qid) : -1;
+    if (mother >= 0 && mother < at && (s.questPos[n] || 0) <= mother
+      && (s.questObj[list[mother].id] || 0) < objCount(list[mother])) at = mother;
     return {
       questPos: list[qi]?.kind === "optional" ? s.questPos : { ...s.questPos, [n]: at },
       questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
     };
-  });  completeIfDone(n);
+  });
+  completeIfDone(n);
 }
 
 export function moveObjective(delta) {

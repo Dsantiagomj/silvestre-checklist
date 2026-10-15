@@ -14,7 +14,9 @@ const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 100
 const base = n => sum(Array.from({ length: n }, (_, i) => WEIGHTS[i + 1].w)) + (n >= 22 ? WEIGHTS[36].q[0] : 0);
 const heroPct = page => page.locator("#heroPct");
 const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
-const quest = (page, name) => page.locator("#journal .q-item", { hasText: name });
+// Por el nombre exacto: la ruta de una misión puede nombrar otras («Aquí se hace…»)
+const quest = (page, name) => page.locator("#journal .q-item")
+  .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
 
 async function openStep(page, n) {
   await page.click(`.diary-row[data-n="${n}"] .row-main`);
