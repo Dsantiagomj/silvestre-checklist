@@ -18,7 +18,8 @@ const running = (page, sel) => page.evaluate(s => {
 test("cambiar a la pestaña de objetos anima el panel nuevo", async ({ page }) => {
   await openApp(page, null, { view: "prereqs" });
   await page.click("#tabItems");
-  expect(await running(page, "#items")).toBeGreaterThan(0);
+  // La capa que lo lleva entra deslizándose
+  expect(await running(page, ".steps-stage > .steps-layer:not([inert])")).toBeGreaterThan(0);
 });
 
 test("con movimiento reducido no hay animaciones al cambiar de pestaña", async ({ page }) => {
@@ -395,3 +396,131 @@ for (const [name, view, click] of [
     expect(Math.max(...frames.slice(1).map(f => f.dt))).toBeLessThan(150);
   });
 }
+
+/**
+ * Las capas de la ventana en los primeros fotogramas tras pulsar una pestaña: cuántas
+ * conviven y hasta dónde se desplaza cada una (el máximo, con su signo).
+ */
+const tabSwap = (page, click) => page.evaluate(async click => {
+  document.querySelector(click).click();
+  const x = el => new DOMMatrix(getComputedStyle(el).transform).m41;
+  const far = (a, b) => (Math.abs(b) > Math.abs(a) ? b : a);
+  const seen = { layers: 0, enterX: 0, leaveX: 0, enterOpacity: 1, offset: 0 };
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => requestAnimationFrame(r));
+    const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+    const enter = layers.find(l => !l.hasAttribute("inert"));
+    const leave = layers.find(l => l.hasAttribute("inert"));
+    seen.layers = Math.max(seen.layers, layers.length);
+    seen.enterX = far(seen.enterX, x(enter));
+    seen.enterOpacity = Math.min(seen.enterOpacity, parseFloat(getComputedStyle(enter).opacity));
+    if (leave) {
+      seen.leaveX = far(seen.leaveX, x(leave));
+      seen.offset = Math.max(seen.offset, Math.abs(enter.offsetTop - leave.offsetTop));
+    }
+  }
+  return seen;
+}, click);
+
+test("las pestañas de las listas se cruzan deslizándose hacia el lado de la pestaña", async ({ page }) => {
+  await openApp(page, null, { view: "prereqs" });
+  await page.waitForLoadState("networkidle");
+  // Hacia la derecha: la nueva llega desde la derecha y la vieja se va por la izquierda
+  const right = await tabSwap(page, "#tabItems");
+  expect(right.layers).toBe(2);
+  expect(right.offset).toBeLessThanOrEqual(1);
+  expect(right.enterX).toBeGreaterThan(0);
+  expect(right.leaveX).toBeLessThan(0);
+  expect(right.enterOpacity).toBeLessThan(1);
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
+  // Y al revés
+  const left = await tabSwap(page, "#tabPrereqs");
+  expect(left.enterX).toBeLessThan(0);
+  expect(left.leaveX).toBeGreaterThan(0);
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
+  // Del diario a una lista, el mismo deslizamiento (el zoom es solo entre mapa y diario)
+  await page.click("#stepsViewDiary");
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
+  const fromDiary = await tabSwap(page, "#tabPrereqs");
+  expect(fromDiary.layers).toBe(2);
+  expect(fromDiary.enterX).toBeGreaterThan(0);
+});
+
+test("al cambiar de pestaña la ventana cambia de alto poco a poco", async ({ page }) => {
+  await openApp(page, null, { view: "diary" });
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(400);
+  const heights = await page.evaluate(async () => {
+    const win = document.querySelector(".steps-win");
+    const out = [win.offsetHeight];
+    document.getElementById("tabPrereqs").click();
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => requestAnimationFrame(r));
+      out.push(win.offsetHeight);
+    }
+    return out;
+  });
+  const from = heights[0], to = heights.at(-1);
+  expect(Math.abs(to - from)).toBeGreaterThan(100);
+  // Pasa por alturas intermedias en vez de saltar de una a otra
+  const between = new Set(heights.filter(h => h > Math.min(from, to) + 10 && h < Math.max(from, to) - 10));
+  expect(between.size).toBeGreaterThanOrEqual(3);
+});
+
+test("la marca de la pestaña activa se desliza hasta la pestaña nueva", async ({ page }) => {
+  await openApp(page, null, { view: "diary" });
+  await page.waitForTimeout(400);
+  const pill = page.locator(".win-tabs .win-tab-pill");
+  const box = async sel => page.locator(sel).evaluate(el => { const r = el.getBoundingClientRect(); return { x: r.left, w: r.width }; });
+  const at = await pill.evaluate(el => el.getBoundingClientRect().left);
+  expect(Math.abs(at - (await box("#stepsViewDiary")).x)).toBeLessThanOrEqual(1);
+  const xs = await page.evaluate(async () => {
+    document.getElementById("tabItems").click();
+    const out = [];
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => requestAnimationFrame(r));
+      out.push(document.querySelector(".win-tab-pill").getBoundingClientRect().left);
+    }
+    return out;
+  });
+  const target = await box("#tabItems");
+  // Recorre el camino (posiciones intermedias) y acaba bajo la pestaña nueva, con su ancho
+  expect(xs.filter(x => x > at + 5 && x < target.x - 5).length).toBeGreaterThan(2);
+  const end = await pill.evaluate(el => { const r = el.getBoundingClientRect(); return { x: r.left, w: r.width }; });
+  expect(Math.abs(end.x - target.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(end.w - target.w)).toBeLessThanOrEqual(1);
+});
+
+test("la insignia de una pestaña rebota cuando cambia lo que falta", async ({ page }) => {
+  await openApp(page, null, { view: "prereqs" });
+  await page.waitForTimeout(400);
+  await page.click('#prereqs .pr-card[data-id="o1"]');
+  expect(await page.locator("#prereqsCount").evaluate(el =>
+    el.getAnimations().some(a => a.animationName === "badge-bump"))).toBe(true);
+});
+
+test("la barra de búsqueda se pliega al pasar a una lista y se despliega al volver", async ({ page }) => {
+  await openApp(page, null, { view: "diary" });
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(400);
+  const seen = await page.evaluate(async () => {
+    document.getElementById("tabPrereqs").click();
+    await new Promise(r => requestAnimationFrame(r));
+    const tools = document.querySelector(".win-tools");
+    return { during: tools ? tools.getAnimations().length : -1 };
+  });
+  // Sigue ahí mientras se pliega
+  expect(seen.during).toBeGreaterThan(0);
+  await expect(page.locator(".win-tools")).toHaveCount(0, { timeout: 2000 });
+  await page.click("#stepsViewDiary");
+  expect(await page.locator(".win-tools").evaluate(el => el.getAnimations().length)).toBeGreaterThan(0);
+});
+
+test("con movimiento reducido las pestañas cambian al instante", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openApp(page, null, { view: "diary" });
+  await page.click("#tabPrereqs");
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 150 });
+  await expect(page.locator(".win-tools")).toHaveCount(0, { timeout: 150 });
+  expect(await page.locator(".win-tab-pill").evaluate(el => getComputedStyle(el).transitionDuration)).toBe("0s");
+});

@@ -1,4 +1,5 @@
 import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
+import { useLiveIds } from "../../lib/leaving.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
 import { achievementGuide, missionGuide } from "../../lib/guides.js";
@@ -126,9 +127,10 @@ function OcreNote() {
 
 /** PRERREQUISITOS · tarjetas por grupo y, debajo, los objetos que piden. */
 export default function PrereqsPanel() {
+  const live = useLiveIds();
   const s = useAppState();
   return (
-    <div className="needs-panel prereqs-panel" id="prereqs" role="tabpanel" aria-labelledby="tabPrereqs">
+    <div className="needs-panel prereqs-panel" id={live("prereqs")} role="tabpanel" aria-labelledby={live("tabPrereqs")}>
       <OcreNote />
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>

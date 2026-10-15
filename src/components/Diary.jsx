@@ -2,7 +2,7 @@ import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffec
 import { AnimatePresence, usePresence, useReducedMotion } from "motion/react";
 import { useAnimate } from "motion/react-mini";
 import { makeChannel, whenReady } from "../lib/viewSwap.js";
-import { morphHeight, useHeightMorph } from "../lib/motion.js";
+import { EASE, morphHeight, prefersReducedMotion, restartClass, useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
@@ -153,6 +153,49 @@ const NEEDS = [
   ["items", "Objetos", "tabItems", "itemsCount", s => ALL_ROWS.length - ownedCount(s)],
 ];
 
+const TAB_ORDER = [...VIEWS, ...NEEDS].map(t => t[0]);
+
+/** Lo que falta en una lista; sin nada pendiente, una ✓. Rebota al cambiar. */
+function WinBadge({ n, id }) {
+  const ref = useRef(null);
+  const last = useRef(n);
+  useLayoutEffect(() => {
+    if (last.current === n) return;
+    last.current = n;
+    if (!prefersReducedMotion()) restartClass(ref.current, "bump");
+  }, [n]);
+  return (
+    <span ref={ref} className={"win-badge" + (n ? "" : " done")} id={id}
+      aria-label={n ? `${n} pendientes` : "completo"}>{n || "✓"}</span>
+  );
+}
+
+/**
+ * La marca de la pestaña activa: una sola píldora bajo las cuatro que se desliza hasta
+ * la elegida (y sigue su ancho si cambia, por ejemplo al cambiar una insignia).
+ */
+function useTabPill(listRef, pillRef, view) {
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const pill = pillRef.current;
+    const place = () => {
+      const tab = list.querySelector('[aria-selected="true"]');
+      if (!tab) return;
+      const a = list.getBoundingClientRect(), b = tab.getBoundingClientRect();
+      pill.style.transform = `translate(${b.left - a.left + list.scrollLeft}px, ${b.top - a.top}px)`;
+      pill.style.width = `${b.width}px`;
+      pill.style.height = `${b.height}px`;
+    };
+    place();
+    // La primera vez, en su sitio sin viajar; después, cada cambio se desliza
+    const ready = requestAnimationFrame(() => pill.classList.add("ready"));
+    const ro = new ResizeObserver(place);
+    ro.observe(list);
+    list.querySelectorAll('[role="tab"]').forEach(t => ro.observe(t));
+    return () => { cancelAnimationFrame(ready); ro.disconnect(); };
+  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 function WinTab({ s, view, label, id, children }) {
   const on = s.stepsView === view;
   return (
@@ -164,7 +207,7 @@ function WinTab({ s, view, label, id, children }) {
 /** Las cuatro pestañas; con las flechas se pasa de una a otra, como en una lista de pestañas. */
 function WinTabs({ s }) {
   const onKey = e => {
-    const order = [...VIEWS, ...NEEDS].map(t => t[0]);
+    const order = TAB_ORDER;
     const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
     if (!step) return;
     e.preventDefault();
@@ -175,8 +218,11 @@ function WinTabs({ s }) {
     setStepsView(next);
     requestAnimationFrame(() => list.querySelector(`[aria-selected="true"]`)?.focus());
   };
+  const listRef = useRef(null);
+  const pillRef = useRef(null);
+  useTabPill(listRef, pillRef, s.stepsView);
   return (
-    <div className="win-tabs" role="tablist" aria-label="Ventana de pasos" onKeyDown={onKey}>
+    <div className="win-tabs" role="tablist" aria-label="Ventana de pasos" onKeyDown={onKey} ref={listRef}>
       <div className="steps-view">
         {VIEWS.map(([key, label, id]) => <WinTab key={key} s={s} view={key} label={label} id={id} />)}
       </div>
@@ -185,13 +231,12 @@ function WinTabs({ s }) {
           const n = pending(s);
           return (
             <WinTab key={key} s={s} view={key} label={label} id={id}>
-              {/* Lo que falta; sin nada pendiente, una ✓ */}
-              <span className={"win-badge" + (n ? "" : " done")} id={countId}
-                aria-label={n ? `${n} pendientes` : "completo"}>{n || "✓"}</span>
+              <WinBadge n={n} id={countId} />
             </WinTab>
           );
         })}
       </div>
+      <span className="win-tab-pill" ref={pillRef} aria-hidden="true"></span>
     </div>
   );
 }
@@ -215,6 +260,35 @@ function useSlashToItems() {
   }, []);
 }
 
+/**
+ * Buscador y zona, solo para los pasos. Al pasar a una lista se pliega (y al volver se
+ * despliega) en vez de desaparecer de golpe: lo de debajo sube y baja con suavidad.
+ */
+function WinTools({ enter, reduce, children }) {
+  const [present, safeToRemove] = usePresence();
+  const ref = useRef(null);
+  const frames = () => {
+    const el = ref.current;
+    const cs = getComputedStyle(el);
+    return [
+      { height: "0px", paddingTop: "0px", paddingBottom: "0px", opacity: 0, overflow: "clip" },
+      { height: `${el.offsetHeight}px`, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1, overflow: "clip" },
+    ];
+  };
+  // Al llegar, antes de pintarse: se despliega desde cero
+  useLayoutEffect(() => {
+    if (enter && !reduce) ref.current.animate(frames(), { duration: 280, easing: EASE });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Al irse, se pliega y luego se quita
+  useEffect(() => {
+    if (present) return;
+    if (reduce) return safeToRemove();
+    ref.current.animate(frames().reverse(), { duration: 220, easing: EASE, fill: "forwards" })
+      .finished.then(safeToRemove, safeToRemove);
+  }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <div className="win-tools" ref={ref} inert={!present}>{children}</div>;
+}
+
 // Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual (0,3 s,
 // easeInOut, en la línea de duffus.fr) que hace de pantalla de carga. Del mapa al diario
 // se entra (el mapa crece); del diario al mapa se sale (el diario se encoge). La vista
@@ -223,8 +297,14 @@ function useSlashToItems() {
 const ZOOM = { duration: 0.3, ease: "easeInOut" };
 const ZOOMED = { map: "scale(1.15)", diary: "scale(0.94)" };     // de dónde llega cada vista
 const LEAVING = { map: "scale(0.9)", diary: "scale(1.15)" };     // a dónde va la que se va
+// Cambio de pestaña con las listas: la vieja se aparta hacia un lado y se apaga deprisa;
+// la nueva llega desde el lado de su pestaña un instante después. Así no se mezclan
+// dos listas a media opacidad
+const SHIFT = 28;
+const SLIDE_IN = { duration: 0.3, delay: 0.07, ease: [0.2, 0.8, 0.2, 1] };
+const SLIDE_OUT = { duration: 0.15, ease: [0.4, 0, 1, 1] };
 
-/** El cambio en curso: { id, to } y el canal por el que la nueva avisa a la vieja. */
+/** El cambio en curso: { id, to, kind: "zoom" | "slide", dir } y el canal por el que la nueva avisa a la vieja. */
 const SwapContext = createContext(null);
 
 /** Una de las dos vistas. La que se va queda inerte y sin ids mientras sale. */
@@ -246,7 +326,13 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
   useLayoutEffect(() => {
     const el = scope.current;
     if (!swap.current || swap.current.to !== view || reduce) return;
-    const { id } = swap.current;
+    const { id, kind, dir } = swap.current;
+    if (kind === "slide") {
+      el.style.opacity = "0";
+      animate(el, { opacity: [0, 1], transform: [`translateX(${dir * SHIFT}px)`, "translateX(0px)"] }, SLIDE_IN)
+        .then(() => { el.style.opacity = ""; el.style.transform = ""; });
+      return;
+    }
     el.style.opacity = "0";
     el.style.transform = ZOOMED[view];
     let alive = true;
@@ -266,7 +352,11 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
     if (present) return;
     if (reduce || !swap.current) return safeToRemove();
     const el = scope.current;
-    const { id, to } = swap.current;
+    const { id, to, kind, dir } = swap.current;
+    if (kind === "slide") {
+      animate(el, { opacity: 0, transform: `translateX(${-dir * SHIFT}px)` }, SLIDE_OUT).then(safeToRemove);
+      return;
+    }
     // El zoom y el fundido van a la vez en cuanto la nueva está lista: la nueva entra
     // encima mientras esta se aleja, sin esperar a que acabe su zoom
     Promise.all([
@@ -316,16 +406,24 @@ export default function Diary({ mobile }) {
   }, [settled]);
   // El cambio en curso se decide al renderizar, para que la vista nueva lo vea al montarse
   const lastView = useRef(s.stepsView);
-  const swapInfo = useRef({ current: null, channel: makeChannel() }).current;
+  // Lo que aparece después de montarse la página se anima; lo que ya estaba, no
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; }, []);
+  const swapInfo = useRef({ current: null, seq: 0, channel: makeChannel() }).current;
   // El zoom es solo entre mapa y diario; a las listas y desde ellas se cambia sin más
+  // Entre mapa y diario, el zoom; a las listas y desde ellas, un deslizamiento hacia el
+  // lado de la pestaña elegida
   if (lastView.current !== s.stepsView) {
-    swapInfo.current = reduce || !isStepsView(lastView.current) || !steps
-      ? null : { id: (swapInfo.current?.id ?? 0) + 1, to: s.stepsView };
+    const from = lastView.current, to = s.stepsView;
+    const id = ++swapInfo.seq;
+    swapInfo.current = reduce ? null
+      : isStepsView(from) && steps ? { id, to, kind: "zoom" }
+      : { id, to, kind: "slide", dir: Math.sign(TAB_ORDER.indexOf(to) - TAB_ORDER.indexOf(from)) };
   }
   useLayoutEffect(() => {
     if (lastView.current === s.stepsView) return;
     lastView.current = s.stepsView;
-    if (!swapInfo.current) return;
+    if (swapInfo.current?.kind !== "zoom") return;
     switching.current = true;
     setSwap(height.current);
   }, [s.stepsView]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -354,19 +452,21 @@ export default function Diary({ mobile }) {
         <WinStrip s={s} />
         <WinTabs s={s} />
         {/* Buscador y zona: solo para los pasos */}
-        {steps && (
-          <div className="win-tools">
-            <DiaryBar s={s} />
-            <ZoneSeals s={s} current={current} />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {steps && (
+            <WinTools key="tools" enter={mounted.current} reduce={reduce}>
+              <DiaryBar s={s} />
+              <ZoneSeals s={s} current={current} />
+            </WinTools>
+          )}
+        </AnimatePresence>
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>
             <AnimatePresence mode="popLayout" initial={false}
               onExitComplete={() => {
+                if (switching.current) endHeight.current = stageRef.current.offsetHeight;
                 switching.current = false;
-                endHeight.current = stageRef.current.offsetHeight;
                 setSwap(null);
                 focus.current = takeMapFocus();
                 setSettled(c => c + 1);

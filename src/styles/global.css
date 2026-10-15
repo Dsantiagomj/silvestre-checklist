@@ -1901,12 +1901,20 @@ header.is-scrolled .title-bar{
 /* Pestañas de la ventana: las vistas de los pasos y, tras una raya, las listas */
 .steps-view, .needs-view-tabs{ display:inline-flex; flex:none; padding:3px; border-radius:999px; border:1px solid var(--line-2); background:var(--inset); }
 .steps-view button, .needs-view-tabs button{
+  position:relative; z-index:1;
   display:inline-flex; align-items:center; gap:7px;
   padding:6px 16px; border:0; border-radius:999px; background:none; cursor:pointer; white-space:nowrap;
   font:700 13.5px var(--font-body); color:var(--txt-soft);
 }
 .steps-view button:hover, .needs-view-tabs button:hover{ color:var(--txt); }
-.steps-view button[aria-selected="true"], .needs-view-tabs button[aria-selected="true"]{ background:var(--amber); color:#142208; }
+.steps-view button[aria-selected="true"], .needs-view-tabs button[aria-selected="true"]{ color:#142208; }
+/* La marca de la pestaña activa: una píldora que se desliza de una pestaña a otra
+   (Diary.jsx la coloca bajo la elegida), por encima del fondo de los grupos y por
+   debajo del texto */
+.win-tab-pill{
+  position:absolute; left:0; top:0; z-index:0; width:0; height:0;
+  border-radius:999px; background:var(--amber); pointer-events:none;
+}
 .win-badge{
   min-width:20px; padding:1px 6px; border-radius:999px; text-align:center;
   background:var(--soon); color:var(--soon-on); font-size:11.5px; font-weight:800; font-variant-numeric:tabular-nums;
@@ -1951,7 +1959,7 @@ header.is-scrolled .title-bar{
   transition:width .6s cubic-bezier(.22,1,.36,1);
 }
 .win-strip .diary-next{ grid-area:next; white-space:nowrap; }
-.win-tabs{ display:flex; align-items:center; gap:14px; padding:12px 18px 0; }
+.win-tabs{ position:relative; isolation:isolate; display:flex; align-items:center; gap:14px; padding:12px 18px 0; }
 .win-tabs .needs-view-tabs{ position:relative; margin-left:14px; }
 .win-tabs .needs-view-tabs::before{ content:""; position:absolute; left:-15px; top:6px; bottom:6px; width:1px; background:var(--line-2); }
 .win-tabs:has(+ .steps-stage){ padding-bottom:12px; }
@@ -2630,9 +2638,14 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 :root{ interpolate-size:allow-keywords; }
 @keyframes enter-up{ from{ opacity:0; transform:translateY(8px); } }
 @keyframes enter-fade{ from{ opacity:0; } }
-.needs > *, .needs-panel{ animation:enter-up .32s cubic-bezier(.2,.8,.2,1) both; }
-@media (prefers-reduced-motion:reduce){
-  .needs > *, .needs-panel{ animation:none; }
+@keyframes badge-bump{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); } }
+@media (prefers-reduced-motion:no-preference){
+  /* Pestañas de la ventana: la píldora viaja hasta la elegida, el texto cambia de color
+     con ella y las insignias rebotan cuando cambia lo que falta */
+  .win-tab-pill.ready{ transition:transform .34s cubic-bezier(.2,.8,.2,1), width .34s cubic-bezier(.2,.8,.2,1), height .34s cubic-bezier(.2,.8,.2,1); }
+  .steps-view button, .needs-view-tabs button{ transition:color .2s ease; }
+  .win-badge{ transition:background-color .2s ease, color .2s ease; }
+  .win-badge.bump{ animation:badge-bump .42s cubic-bezier(.3,1.6,.5,1); }
 }
 
 /* Los 100 pasos. Todo dentro de no-preference: con movimiento reducido no hay nada */

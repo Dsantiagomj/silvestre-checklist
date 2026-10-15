@@ -1,4 +1,5 @@
 import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName, rowsOf } from "../../lib/resources.js";
+import { useLiveIds } from "../../lib/leaving.js";
 import {
   PAGE_SIZES, rowHave, rowUsed, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
   setShopTab, setShopView, soonSteps,
@@ -156,6 +157,7 @@ function Slots({ rows, band, s, q, later }) {
 
 /** OBJETOS NECESARIOS · inventario con buscador, categorías y la franja "Pronto". */
 export default function ItemsPanel({ searchRef }) {
+  const live = useLiveIds();
   const s = useAppState();
   const { q, bands, counts, total, matches } = itemsView(s);
   const soon = bands.find(b => b.id === "soon");
@@ -176,19 +178,19 @@ export default function ItemsPanel({ searchRef }) {
   const empty = !soonRows.length && !laterRows.length && !allRows.length && !usedRows.length;
 
   return (
-    <div className="needs-panel items-panel" id="items" role="tabpanel" aria-labelledby="tabItems">
+    <div className="needs-panel items-panel" id={live("items")} role="tabpanel" aria-labelledby={live("tabItems")}>
       <div className="needs-toolbar">
         <div className="needs-find">
           <svg className="needs-find-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" /><path d="M10.4 10.4 14 14" /></svg>
-          <input ref={searchRef} type="search" id="needsSearch" value={s.shopQuery} autoComplete="off"
+          <input ref={searchRef} type="search" id={live("needsSearch")} value={s.shopQuery} autoComplete="off"
             placeholder="Buscar objeto" aria-label="Buscar objeto"
             onChange={e => setShopQuery(e.target.value)}
             onKeyDown={e => { if (e.key === "Escape") setShopQuery(""); }} />
           <span className="needs-find-end">
             {q ? (
               <>
-                <span id="needsMatches"><b>{matches}</b> de {total}</span>
-                <button type="button" className="needs-find-x" id="needsSearchClear" aria-label="Borrar búsqueda"
+                <span id={live("needsMatches")}><b>{matches}</b> de {total}</span>
+                <button type="button" className="needs-find-x" id={live("needsSearchClear")} aria-label="Borrar búsqueda"
                   onClick={() => { setShopQuery(""); searchRef.current?.focus(); }}>×</button>
               </>
             ) : <kbd title="Atajo para buscar">/</kbd>}
@@ -207,7 +209,7 @@ export default function ItemsPanel({ searchRef }) {
           ))}
         </div>
         <label className="toggle">
-          <input type="checkbox" id="shopPendingToggle" checked={s.shopPendingOnly}
+          <input type="checkbox" id={live("shopPendingToggle")} checked={s.shopPendingOnly}
             onChange={e => setShopPendingOnly(e.target.checked)} />
           <span className="sw"></span>
           Solo pasos pendientes
@@ -230,10 +232,10 @@ export default function ItemsPanel({ searchRef }) {
           )}
 
           {soonRows.length > 0 && (
-            <section className="band soon" id="bandSoon" aria-labelledby="bandSoonTitle">
+            <section className="band soon" id={live("bandSoon")} aria-labelledby={live("bandSoonTitle")}>
               <div className="band-h">
                 <span className="band-pill">Pronto</span>
-                <b id="bandSoonTitle">Tus próximos pasos</b>
+                <b id={live("bandSoonTitle")}>Tus próximos pasos</b>
                 <em>· {soonRows.length} objetos</em>
                 <SoonChips chips={soon.chips} s={s} />
               </div>
@@ -242,7 +244,7 @@ export default function ItemsPanel({ searchRef }) {
           )}
 
           {laterRows.length > 0 && (
-            <section className="band later" id="bandLater" aria-label="Más adelante">
+            <section className="band later" id={live("bandLater")} aria-label="Más adelante">
               <p className="later-h">Más adelante · {laterRows.length} objetos</p>
               <Slots rows={laterView.rows} band="later" s={s} q={q} />
               {list && <Pager id="bandLater" total={laterRows.length} view={laterView} size={s.shopPageSize} />}
@@ -250,14 +252,14 @@ export default function ItemsPanel({ searchRef }) {
           )}
 
           {allRows.length > 0 && (
-            <section className="band all" id="bandAll" aria-label="Objetos">
+            <section className="band all" id={live("bandAll")} aria-label="Objetos">
               <Slots rows={allView.rows} band="all" s={s} q={q} />
               {list && <Pager id="bandAll" total={allRows.length} view={allView} size={s.shopPageSize} />}
             </section>
           )}
 
           {usedRows.length > 0 && (
-            <section className="band used" id="bandUsed" aria-label="Ya utilizados">
+            <section className="band used" id={live("bandUsed")} aria-label="Ya utilizados">
               <p className="later-h">Ya utilizados · {usedRows.length} objetos</p>
               <Slots rows={usedRows} band="used" s={s} q={q} />
             </section>
