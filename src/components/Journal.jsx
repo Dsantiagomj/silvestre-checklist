@@ -177,6 +177,13 @@ function Quests({ step, quests, loaded, s }) {
       setObjective(step.n, i, q.id, k, total, quests.length);
       if (k >= total && quests[i + 1]) setOpen(quests[i + 1].id, true);
     };
+    // «Misión hecha» la termina de una vez; hecha, vuelve a su inicio. Sin plegarla
+    const finished = at >= total;
+    const toggleDone = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      pick(finished ? 0 : total);
+    };
     return (
       <details className="q-item" key={q.id} open={opened.has(q.id)}
         onToggle={e => setOpen(q.id, e.currentTarget.open)}>
@@ -184,6 +191,9 @@ function Quests({ step, quests, loaded, s }) {
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
           {optional.has(q.n.toLowerCase()) && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
+          <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
+            disabled={!pick} title={!pick ? undefined : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
+            aria-label="Misión hecha" onClick={toggleDone}>✓<span className="q-done-txt"> Misión hecha</span></button>
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
