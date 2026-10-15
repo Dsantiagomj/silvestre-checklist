@@ -135,6 +135,28 @@ STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622,
 # habla con el General Dourak"): both before the red line, which is past Dazahk.
 SUBQUESTS = {2011: [2019, 2012]}
 
+# Quests a step names but cannot do. Step 53 is "hasta la misión 3" of "El guardián del
+# inmaculado", but its mission 2, "Hasta su último suspiro", starts past the fight with
+# Kumijo in mission 3 (Qa=2180&Qo>16870), where step 53 stops: step 56 does it.
+STEP_SKIP = {53: [2198]}
+
+
+# Quest -> the quest it starts from, where the achievement lists it before: it goes right
+# after it in every step that lists both. "Hasta su último suspiro" is mission 2 of "El
+# guardián del inmaculado" but starts in mission 3, "Réquiem por un yokai" (Qa=2180).
+QUEST_AFTER = {2198: 2180}
+
+
+def after_requirements(ids):
+    """The step's quests with each one of QUEST_AFTER right after the one it needs."""
+    out = list(ids)
+    for q, first in QUEST_AFTER.items():
+        if q in out and first in out and out.index(q) < out.index(first):
+            out.remove(q)
+            out.insert(out.index(first) + 1, q)
+    return out
+
+
 # Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
 # guide does them in another, (quest, stage) -> the new order, so the red line falls in
 # its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48; step
@@ -512,6 +534,7 @@ def main():
         ids = STEP_EXTRA.get(step["n"], []) + [q for q in ids if q not in STEP_EXTRA.get(step["n"], [])]
         given = {g for q in ids for g in SUBQUESTS.get(q, [])}
         ids = [x for q in ids if q not in given for x in [q] + SUBQUESTS.get(q, [])]
+        ids = after_requirements([q for q in ids if q not in STEP_SKIP.get(step["n"], [])])
         ids = [q for q in ids if q in quests or isinstance(q, str)]
         if ids:
             step_quests[str(step["n"])] = ids
