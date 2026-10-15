@@ -21,13 +21,13 @@ El paso 93 pesa **132 veces más** que el paso 4. La barra antigua los trataba i
 
 El peso de cada paso sale del nivel de las misiones que cubre (las de `src/data/quests.json`):
 
-- Cada misión vale 100 puntos por un multiplicador de dificultad: su nivel entre 100. Una de nivel 2 vale 2 puntos (×0,02), una de nivel 20 vale 20 (×0,2) y una de nivel 200 vale 200 (×2).
+- Cada misión vale 100 puntos por un multiplicador de dificultad, su nivel entre 100 (×0,02 a nivel 2, ×2 a nivel 200), y por un factor de duración, la raíz cuadrada de su número de objetivos: `nivel × √objetivos`. Una de nivel 180 con 4 objetivos vale 360 puntos; con 25, 900. La raíz evita que las larguísimas se coman el porcentaje: "La eterna cosecha" (339 objetivos, nivel 40) vale unos 736.
 - Una misión que sale en varios pasos (66 de las 351) reparte sus puntos a partes iguales entre ellos, así que nada cuenta dos veces. La misión de clase del paso 1 cuenta como nivel 20.
 - El peso del paso es la suma de lo que le toca de cada misión. Un paso sin misiones pesaría 0, así que tendría el peso de una misión de nivel 1 para que marcarlo siga contando (hoy todos tienen alguna).
 
 El nivel es el "Nivel mínimo" de la guía de la misión en Torrente Arcano cuando la página lo dice (251 misiones). Si no, el `levelMin` de DofusDB (100: 94 páginas no dicen nivel y 6 misiones no tienen guía). Las dos fuentes no coinciden casi nunca: en 234 de las 251 Torrente Arcano da un nivel más bajo (nunca más alto), a veces mucho ("La cólera de los dioses": 50 frente a 200). `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`.
 
-Total: **43 126 puntos**. Los pasos más pesados son el 61 (6,0 %), el 47 (5,5 %) y el 82 (5,2 %); el más ligero, el 6 (0,02 %). Con los pasos hechos en orden, el porcentaje va así: 0,8 % tras el 1, 2,6 % tras el 10, 12,7 % tras el 20, 32,8 % tras el 50, 57,6 % tras el 70, 85,4 % tras el 90 y 98,7 % tras el 99. El porcentaje se redondea a un decimal, pero solo marca 100 % con todo hecho y 0 % sin nada.
+Total: **160 468 puntos**. Los pasos más pesados son el 61 (6,6 %), el 82 (5,5 %) y el 93 (5,0 %); el más ligero, el 6 (0,01 %). Con los pasos hechos en orden, el porcentaje va así: 0,6 % tras el 1, 2,3 % tras el 10, 11,2 % tras el 20, 27,4 % tras el 50, 52,2 % tras el 70, 83,9 % tras el 90 y 98,5 % tras el 99. El porcentaje se redondea a un decimal, pero solo marca 100 % con todo hecho y 0 % sin nada.
 
 El conteo "X/100 pasos" se mantiene visible como stat secundario para los completistas, pero la barra principal es la ponderada.
 
@@ -250,7 +250,7 @@ dos versiones las pasaban sin cambios.
 
 ## Limitaciones honestas
 
-1. **El nivel mide la dificultad, no el tiempo**. El peso de un paso sale del nivel de sus misiones, no de lo que se tarda: una misión de nivel 200 de hablar con dos PNJ pesa igual que una de nivel 200 con tres mazmorras. Es una aproximación objetiva y reproducible, no una medida exacta del esfuerzo.
+1. **Los objetivos son una aproximación de la duración**. El peso sale del nivel y del número de objetivos de cada misión, no del tiempo real: un objetivo de hablar con un PNJ cuenta igual que uno de pasar una mazmorra. Es una medida objetiva y reproducible, no exacta del esfuerzo.
 
 2. **El progreso vive en localStorage** — sin sync a servidor / cuenta de usuario.
 
@@ -313,7 +313,7 @@ silvestre-checklist/
     ├── match_assets.py       ← empareja los 100 pasos con logros, jefes y misiones
     ├── build_assets_js.py    ← genera los datos de pasos y copia las imágenes
     ├── build_quests_js.py    ← resuelve cada paso a sus misiones
-    ├── build_weights.py      ← peso de cada paso para el porcentaje, por el nivel de sus misiones
+    ├── build_weights.py      ← peso de cada paso para el porcentaje: nivel × √objetivos de sus misiones
     ├── build_figures.py      ← mapa de inicio y figura del estandarte de cada paso
     ├── build_resources.py    ← objetos de cada paso desde la lista de torrentearcano
     ├── lists/                ← datos importados de torrentearcano y su compilado

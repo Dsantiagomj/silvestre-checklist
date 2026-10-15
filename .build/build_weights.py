@@ -1,8 +1,11 @@
 """Weigh each checklist step by the level of the quests it covers.
 
 How the progress percentage is weighted:
-  * Every quest is worth 100 points times a difficulty multiplier: its level / 100
-    (level 2 -> x0.02, level 20 -> x0.2, level 200 -> x2), so it is worth `level` points.
+  * Every quest is worth 100 points times a difficulty multiplier, its level / 100
+    (level 2 -> x0.02, level 20 -> x0.2, level 200 -> x2), times a length factor, the
+    square root of its number of objectives: level x sqrt(objectives) points. The level
+    says how hard it is, the objectives how long; the root keeps the very long ones
+    ("La eterna cosecha", 339 objectives) from eating the percentage.
   * A quest that appears in several steps has its points split equally between them,
     so nothing counts twice.
   * A step's weight is the sum of its quests' shares. A step with no quests would weigh
@@ -18,6 +21,7 @@ Run    : python3 -I .build/build_weights.py   (after build_quests_js.py)
 """
 import html
 import json
+import math
 import pathlib
 import re
 import subprocess
@@ -120,9 +124,13 @@ def main():
         for q in qs:
             shared[str(q)] = shared.get(str(q), 0) + 1
 
+    def objectives(q):
+        return max(1, sum(len(stage["o"]) for stage in quests[q]["s"]))
+
+    points = {q: level[q] * math.sqrt(objectives(q)) for q in used}
     weights = {}
     for n in sorted(step_quests):
-        w = sum(level[str(q)] / shared[str(q)] for q in step_quests[n])
+        w = sum(points[str(q)] / shared[str(q)] for q in step_quests[n])
         weights[str(n)] = round(max(w, MIN_WEIGHT), 3)
     OUT_JSON.write_text(json.dumps(weights, indent=0) + "\n")
 
