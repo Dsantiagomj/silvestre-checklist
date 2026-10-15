@@ -7,7 +7,7 @@ import PLANS from "../data/plans.json";
 import { CLOSED_BY, RESUMED_IN, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  closeSteps, closingPlan, loadQuests, pendingCloses, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  closeSteps, closingPlan, loadQuests, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -147,9 +147,10 @@ function Needs({ n, s }) {
 /**
  * Hasta dónde vas en cada misión, con el avance que guarda el overlay: las misiones
  * antes de la actual, hechas; en la actual, los objetivos antes del que toca; y
- * cualquiera pasada de su último objetivo. Con el paso hecho, todo. Una opcional solo
- * lleva lo suyo: ni el paso hecho ni pasar de largo la terminan. Devuelve el índice
- * (en la lista aplanada) del objetivo actual.
+ * cualquiera pasada de su último objetivo. Con el paso hecho, todo; también la que
+ * terminó otro paso hecho que la lleva (questDoneElsewhere). Una opcional solo lleva lo
+ * suyo: ni el paso hecho ni pasar de largo la terminan. Devuelve el índice (en la lista
+ * aplanada) del objetivo actual.
  */
 function progressOf(s, n, quests, i, q) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
@@ -157,7 +158,7 @@ function progressOf(s, n, quests, i, q) {
   const own = Math.min(s.questObj[q.id] || 0, total);
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
   if (q.kind === "optional") return s.questObj[q.id] != null || i === pos ? own : -1;
-  if (s.done[n] || i < pos || own >= total) return total;
+  if (s.done[n] || i < pos || own >= total || questDoneElsewhere(s, q.id, n)) return total;
   return i === pos ? own : -1;
 }
 
@@ -222,6 +223,8 @@ function Quests({ step, quests, loaded, s }) {
     const optional = q.kind === "optional";
     const at = progressOf(s, step.n, quests, i, q);
     const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
+    // Terminada en otro paso: sale hecha y aquí no se deshace (se deshace desmarcando ese)
+    const elsewhere = !optional && questDoneElsewhere(s, q.id, step.n);
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
@@ -246,7 +249,8 @@ function Quests({ step, quests, loaded, s }) {
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           {/* Las opcionales siempre lo llevan: es como se marcan */}
           {(optional || mandatory > 1) && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-            title={finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
+            disabled={!!elsewhere}
+            title={elsewhere ? `Completada en el paso ${elsewhere}` : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
             aria-label={finished ? "Misión completada" : "Completar misión"} onClick={toggleDone}>
             {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
@@ -262,7 +266,7 @@ function Quests({ step, quests, loaded, s }) {
           return (
             <Fragment key={j}>
               {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-              <Objectives route objs={stg.o} at={at - from} onPick={k => pick(from + k)}
+              <Objectives route objs={stg.o} at={at - from} onPick={elsewhere ? undefined : k => pick(from + k)}
                 stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
             </Fragment>
           );

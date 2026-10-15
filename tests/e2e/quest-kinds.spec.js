@@ -9,7 +9,9 @@ const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));
 // El mismo redondeo que el hero: un decimal
 const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
-const base = n => sum(Array.from({ length: n }, (_, i) => WEIGHTS[i + 1].w)); // pasos 1 a n hechos
+// Pasos 1 a n hechos. Con el 22 hecho, «Veneno de scorbuto para la prisión», que también
+// lleva el 36, cuenta allí como terminada
+const base = n => sum(Array.from({ length: n }, (_, i) => WEIGHTS[i + 1].w)) + (n >= 22 ? WEIGHTS[36].q[0] : 0);
 const heroPct = page => page.locator("#heroPct");
 const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
 const quest = (page, name) => page.locator("#journal .q-item", { hasText: name });
