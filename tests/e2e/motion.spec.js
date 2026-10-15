@@ -15,28 +15,20 @@ const running = (page, sel) => page.evaluate(s => {
   }).length;
 }, sel);
 
-test("ocultar y mostrar «Lo que necesitas» anima la altura y el contenido", async ({ page }) => {
-  await openApp(page);
-  await page.click("#needsCollapse");
-  expect(await running(page, "#needs")).toBeGreaterThan(0);
-  await expect(page.locator("#needsExpand")).toBeVisible();
-  await page.waitForTimeout(500);
-  await page.click("#needsExpand");
-  expect(await running(page, "#needs")).toBeGreaterThan(0);
-});
-
-test("cambiar de pestaña en «Lo que necesitas» anima el panel nuevo", async ({ page }) => {
-  await openApp(page);
+test("cambiar a la pestaña de objetos anima el panel nuevo", async ({ page }) => {
+  await openApp(page, null, { view: "prereqs" });
   await page.click("#tabItems");
   expect(await running(page, "#items")).toBeGreaterThan(0);
 });
 
-test("con movimiento reducido no hay animaciones al ocultar", async ({ page }) => {
+test("con movimiento reducido no hay animaciones al cambiar de pestaña", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openApp(page);
   await page.waitForTimeout(400);
-  await page.click("#needsCollapse");
-  expect(await running(page, "#needs")).toBe(0);
+  await page.click("#tabPrereqs");
+  expect(await running(page, "#diary")).toBe(0);
+  await page.click("#tabItems");
+  expect(await running(page, "#diary")).toBe(0);
 });
 
 test("cambiar de paso anima el escenario y el contenido del detalle", async ({ page }) => {
@@ -102,7 +94,7 @@ test("la lista fija no se mueve mientras se anima el cambio de paso", async ({ p
 const pops = page => page.evaluate(() => document.getAnimations().filter(a => a.animationName === "check-pop").length);
 
 test("marcar un prerrequisito o un objeto hace aparecer su ✓ con el mismo rebote", async ({ page }) => {
-  await openApp(page);
+  await openApp(page, null, { view: "prereqs" });
   await page.waitForTimeout(500);
   await page.click('#prereqs .pr-card[data-id="o1"]');
   expect(await pops(page)).toBeGreaterThan(0);

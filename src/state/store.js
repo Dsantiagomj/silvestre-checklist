@@ -18,7 +18,6 @@ export const LS = {
   guide: "silvestre:guide",
   itemsView: "silvestre:itemsView",
   itemsPageSize: "silvestre:itemsPageSize",
-  needsCollapsed: "silvestre:needsCollapsed",
   stepsView: "silvestre:stepsView",
 };
 
@@ -59,6 +58,15 @@ const readObj = key => {
 
 export const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
+// Pestañas de la ventana de pasos: las dos vistas de los pasos y las dos listas de lo
+// que necesitas. Se guarda la abierta con la clave de siempre (antes solo mapa o diario)
+export const WIN_TABS = ["map", "diary", "prereqs", "items"];
+export const isStepsView = v => v === "map" || v === "diary";
+const readStepsView = () => {
+  const v = localStorage.getItem(LS.stepsView);
+  return WIN_TABS.includes(v) ? v : "map";
+};
+
 /** Progreso guardado, migrado una sola vez si viene de la versión anterior de la guía. */
 function readProgress() {
   let done = readObj(LS.done);
@@ -77,7 +85,6 @@ function readProgress() {
 function initialState() {
   const { done, questPos } = readProgress();
   const prereqs = readObj(LS.prereqs);
-  const pendingPrereqs = ALL_PREREQS.filter(p => !prereqs[p.id]).length;
   return {
     done,
     prereqs,
@@ -85,14 +92,11 @@ function initialState() {
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de misión
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
-    // "Lo que necesitas" abre en prerrequisitos mientras falte alguno
-    needsTab: pendingPrereqs > 0 && Object.keys(done).length < STEPS.length ? "prereqs" : "items",
-    // Contraída a mano mientras la guía no está completa (al 100 % se contrae sola)
-    needsCollapsed: localStorage.getItem(LS.needsCollapsed) === "1",
     selectedStep: null,
     sheetOpen: false,
-    // Los 100 pasos como mapa del camino (por defecto) o como diario (lista + detalle)
-    stepsView: localStorage.getItem(LS.stepsView) === "diary" ? "diary" : "map",
+    // Pestaña de la ventana de pasos: mapa del camino (por defecto), diario (lista +
+    // detalle), prerrequisitos u objetos
+    stepsView: readStepsView(),
     // status: all | pending | done (las pestañas del diario)
     filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
@@ -217,9 +221,18 @@ export function applyTheme(t) {
   setState({ theme: t });
 }
 
+/**
+ * La última vista de los pasos (mapa o diario): a ella se vuelve al abrir un paso desde
+ * prerrequisitos u objetos. Sin ninguna aún, el diario, que es donde se lee el paso.
+ */
+let lastStepsView = isStepsView(state.stepsView) ? state.stepsView : "diary";
+
 export function selectStep(n) {
   if (n < 1 || n > STEPS.length) return;
-  setState({ selectedStep: n, ...(isMobile() ? { sheetOpen: true } : null) });
+  if (isMobile()) return setState({ selectedStep: n, sheetOpen: true });
+  // En escritorio el paso se ve en la ventana: si estaba en una lista, vuelve a los pasos
+  if (!isStepsView(state.stepsView)) setStepsView(lastStepsView);
+  setState({ selectedStep: n });
 }
 
 /** Desde el overlay: cambia el paso sin abrir la hoja móvil. */
@@ -232,6 +245,7 @@ export const clearSelection = () => setState({ selectedStep: null });
 
 export function setStepsView(view) {
   localStorage.setItem(LS.stepsView, view);
+  if (isStepsView(view)) lastStepsView = view;
   setState({ stepsView: view });
 }
 /**
@@ -308,16 +322,10 @@ export function setAllPrereqs(on) {
   setState({ prereqs: on ? Object.fromEntries(ALL_PREREQS.map(p => [p.id, true])) : {} });
 }
 
-// Lo que necesitas: pestaña activa y acceso desde el hero
-export const setNeedsTab = tab => setState({ needsTab: tab });
-export function setNeedsCollapsed(collapsed) {
-  localStorage.setItem(LS.needsCollapsed, collapsed ? "1" : "0");
-  setState({ needsCollapsed: collapsed });
-}
+/** Desde el hero: la ventana de pasos pasa a prerrequisitos u objetos y queda a la vista. */
 export function openNeeds(tab) {
-  setNeedsCollapsed(false);
-  setNeedsTab(tab);
-  document.getElementById("needs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  setStepsView(tab);
+  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -433,8 +441,7 @@ export function applySnapshot(snap) {
     questObj: snap.questObj || {},
     selectedStep: null,
     sheetOpen: false,
-    // Los 100 pasos como mapa del camino (por defecto) o como diario (lista + detalle)
-    stepsView: localStorage.getItem(LS.stepsView) === "diary" ? "diary" : "map",
+    stepsView: readStepsView(),
     shopEpoch: s.shopEpoch + 1,
   }));
   // La versión vanilla siempre reescribía las cinco claves, aunque no cambiaran.

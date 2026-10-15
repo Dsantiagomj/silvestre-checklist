@@ -2,9 +2,9 @@ import { expect } from "@playwright/test";
 
 /**
  * Abre la app con un progreso inicial opcional y recoge los errores de la página.
- * La vista por defecto de los pasos es el mapa; casi todas las pruebas trabajan sobre el
- * diario, así que empiezan en él salvo que la prueba elija otra (view: null deja la
- * de la app).
+ * La pestaña por defecto de la ventana de pasos es el mapa; casi todas las pruebas
+ * trabajan sobre el diario, así que empiezan en él salvo que la prueba elija otra
+ * ("map", "prereqs", "items"; view: null deja la de la app).
  */
 export async function openApp(page, seed = null, { view = "diary" } = {}) {
   const errors = [];
@@ -22,7 +22,8 @@ export async function openApp(page, seed = null, { view = "diary" } = {}) {
     }, seed);
     await page.reload();
   }
-  await expect(page.locator(view === "diary" ? ".diary-row" : ".map-node")).toHaveCount(100);
+  if (view === "prereqs" || view === "items") await expect(page.locator(`#${view}`)).toBeVisible();
+  else await expect(page.locator(view === "diary" ? ".diary-row" : ".map-node")).toHaveCount(100);
   return errors;
 }
 

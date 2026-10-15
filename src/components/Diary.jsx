@@ -7,12 +7,14 @@ import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
+import { ALL_ROWS } from "../lib/resources.js";
 import {
-  clearFilters, hasActiveFilters, nextPending, revealMapNode, selectStep, setSearch, setStatusFilter,
-  setStepsView, takeMapFocus,
+  clearFilters, hasActiveFilters, isStepsView, nextPending, ownedCount, prereqsPending, revealMapNode, selectStep,
+  setSearch, setStatusFilter, setStepsView, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
+import Needs from "./Needs.jsx";
 import StepMap, { mapPoint } from "./StepMap.jsx";
 import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
@@ -140,11 +142,78 @@ function DiaryBar({ s }) {
   );
 }
 
-// El mapa es la vista por defecto: se recorre el camino y se entra al diario de un paso
+// Pestañas de la ventana: las dos vistas de los pasos (el mapa es la de por defecto: se
+// recorre el camino y se entra al diario de un paso) y, aparte, lo que hay que reunir
 const VIEWS = [
   ["map", "Mapa", "stepsViewMap"],
   ["diary", "Diario", "stepsViewDiary"],
 ];
+const NEEDS = [
+  ["prereqs", "Prerrequisitos", "tabPrereqs", "prereqsCount", s => prereqsPending(s)],
+  ["items", "Objetos", "tabItems", "itemsCount", s => ALL_ROWS.length - ownedCount(s)],
+];
+
+function WinTab({ s, view, label, id, children }) {
+  const on = s.stepsView === view;
+  return (
+    <button type="button" role="tab" id={id} aria-selected={on} tabIndex={on ? 0 : -1}
+      onClick={() => setStepsView(view)}>{label}{children}</button>
+  );
+}
+
+/** Las cuatro pestañas; con las flechas se pasa de una a otra, como en una lista de pestañas. */
+function WinTabs({ s }) {
+  const onKey = e => {
+    const order = [...VIEWS, ...NEEDS].map(t => t[0]);
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    // Sin que la flecha llegue al teclado del diario, que cambiaría de paso
+    e.stopPropagation();
+    const list = e.currentTarget;
+    const next = order[(order.indexOf(s.stepsView) + step + order.length) % order.length];
+    setStepsView(next);
+    requestAnimationFrame(() => list.querySelector(`[aria-selected="true"]`)?.focus());
+  };
+  return (
+    <div className="win-tabs" role="tablist" aria-label="Ventana de pasos" onKeyDown={onKey}>
+      <div className="steps-view">
+        {VIEWS.map(([key, label, id]) => <WinTab key={key} s={s} view={key} label={label} id={id} />)}
+      </div>
+      <div className="needs-view-tabs">
+        {NEEDS.map(([key, label, id, countId, pending]) => {
+          const n = pending(s);
+          return (
+            <WinTab key={key} s={s} view={key} label={label} id={id}>
+              {/* Lo que falta; sin nada pendiente, una ✓ */}
+              <span className={"win-badge" + (n ? "" : " done")} id={countId}
+                aria-label={n ? `${n} pendientes` : "completo"}>{n || "✓"}</span>
+            </WinTab>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// "/" lleva al buscador de objetos desde cualquier parte de la página
+function useSlashToItems() {
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      e.preventDefault();
+      setStepsView("items");
+      requestAnimationFrame(() => {
+        const input = document.getElementById("needsSearch");
+        input?.focus();
+        input?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+}
 
 // Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual (0,3 s,
 // easeInOut, en la línea de duffus.fr) que hace de pantalla de carga. Del mapa al diario
@@ -210,13 +279,19 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
   );
 }
 
-/** 02 · Los 100 pasos: como diario (lista y detalle) o como mapa del camino. */
+/**
+ * Los 100 pasos: una ventana con los Dofus del camino y el progreso arriba y, en
+ * pestañas, el mapa del camino, el diario (lista y detalle), los prerrequisitos y los
+ * objetos.
+ */
 export default function Diary({ mobile }) {
   const s = useAppState();
+  useSlashToItems();
   const next = nextPending(s) ?? STEPS.length;
   // Sin nada elegido, el detalle abre el siguiente pendiente (en móvil vive en la hoja)
   const current = s.selectedStep ?? (mobile ? null : next);
   const map = s.stepsView === "map";
+  const steps = isStepsView(s.stepsView);
   // Cambiar de paso mueve lo de debajo con suavidad; el cambio de vista lo lleva el zoom
   const stageRef = useRef(null);
   const reduce = useReducedMotion();
@@ -238,40 +313,40 @@ export default function Diary({ mobile }) {
   // El cambio en curso se decide al renderizar, para que la vista nueva lo vea al montarse
   const lastView = useRef(s.stepsView);
   const swapInfo = useRef({ current: null, channel: makeChannel() }).current;
+  // El zoom es solo entre mapa y diario; a las listas y desde ellas se cambia sin más
   if (lastView.current !== s.stepsView) {
-    swapInfo.current = reduce ? null : { id: (swapInfo.current?.id ?? 0) + 1, to: s.stepsView };
+    swapInfo.current = reduce || !isStepsView(lastView.current) || !steps
+      ? null : { id: (swapInfo.current?.id ?? 0) + 1, to: s.stepsView };
   }
   useLayoutEffect(() => {
     if (lastView.current === s.stepsView) return;
     lastView.current = s.stepsView;
-    if (reduce) return;
+    if (!swapInfo.current) return;
     switching.current = true;
     setSwap(height.current);
   }, [s.stepsView]); // eslint-disable-line react-hooks/exhaustive-deps
   useLayoutEffect(() => { if (!switching.current) height.current = stageRef.current.offsetHeight; });
-  useHeightMorph(stageRef, map ? "map" : `diary-${current}`, { skip: () => switching.current });
+  useHeightMorph(stageRef, steps ? (map ? "map" : `diary-${current}`) : s.stepsView, { skip: () => switching.current });
   const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
   const origin = `${at.x}px ${at.y}px`;
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
-        <h2 className="section-title" id="diaryTitle"><span className="section-num">02</span>Los 100 pasos</h2>
+        <h2 className="section-title" id="diaryTitle">Los 100 pasos</h2>
       </div>
-      {/* Una sola ventana: los Dofus del camino y el progreso arriba, las vistas y, debajo,
-          los pasos */}
+      {/* Una sola ventana: los Dofus del camino y el progreso arriba, las pestañas y,
+          debajo, lo que se elija */}
       <div className="steps-win">
         <WinStrip s={s} />
-        <div className="win-tabs">
-          <div className="steps-view" role="group" aria-label="Vista">
-            {VIEWS.map(([key, label, id]) => (
-              <button key={key} type="button" id={id} aria-pressed={s.stepsView === key} onClick={() => setStepsView(key)}>{label}</button>
-            ))}
-          </div>
-        </div>
-        <div className="win-tools">
-          <DiaryBar s={s} />
-        </div>
-        <ZoneSeals s={s} current={current} />
+        <WinTabs s={s} />
+        {steps && (
+          <>
+            <div className="win-tools">
+              <DiaryBar s={s} />
+            </div>
+            <ZoneSeals s={s} current={current} />
+          </>
+        )}
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>
@@ -283,7 +358,9 @@ export default function Diary({ mobile }) {
                 setSettled(c => c + 1);
               }}>
               <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
-                {map ? (
+                {!steps ? (
+                  <Needs tab={s.stepsView} />
+                ) : map ? (
                   <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
                 ) : (
                   <DiaryWindow step={current}>
