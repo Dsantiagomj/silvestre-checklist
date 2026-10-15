@@ -29,6 +29,8 @@ test("al elegir un paso sale su ficha con la parada y lo que cierra", async ({ p
   await node(page, 34).click();
   const card = page.locator("#mapCard");
   await expect(card.locator(".map-card-title")).toContainText("34");
+  // La zona, sin el esfuerzo del paso
+  await expect(card.locator(".map-card-zone")).toHaveText("Reino de Amakna");
   // El 34 se resuelve solo: no hay dónde parar, solo lo que cierra
   await expect(card).not.toContainText("Hasta tener que pasar Lasoberaña");
   await expect(card).toContainText("Cierra también el 33");

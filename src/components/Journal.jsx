@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
-import { CALL_ICONS, HEADER_ICONS, OBJ_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
+import { STEPS, ZONE_COLOR } from "../data/steps.js";
+import { CALL_ICONS, OBJ_ICONS, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { MAP_IMG, groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
@@ -112,20 +112,6 @@ function Banner({ step }) {
   );
 }
 
-const TIERS = Object.keys(TIER_META);
-
-/** El esfuerzo del paso: relojes de arena del juego, de 1 (trivial) a 5 (épico). */
-function Effort({ tier }) {
-  const level = TIERS.indexOf(tier) + 1;
-  if (!level || !HEADER_ICONS?.reset) return null;
-  const label = TIER_META[tier].label;
-  return (
-    <span className="goal-effort" title={`Esfuerzo: ${label}`} aria-label={`Esfuerzo: ${label}`} role="img">
-      {TIERS.map((t, i) => <img key={t} src={imgUrl(HEADER_ICONS.reset)} alt="" className={i < level ? undefined : "off"} />)}
-    </span>
-  );
-}
-
 /**
  * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
  * Sandglass y, al pie, los pasos que cierra o donde se cierra.
@@ -153,7 +139,6 @@ function Goal({ step, done }) {
               ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
               : stepTitle(step)}
           </h2>
-          <Effort tier={step.effort} />
         </div>
       </div>
       <div className="goal-guide">

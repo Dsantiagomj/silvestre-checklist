@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { STEPS, TIER_META, ZONE_COLOR } from "../data/steps.js";
+import { STEPS, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, ZONE_IMG, assetsFor, imgUrl } from "../lib/assets.js";
 import { doneIcon, showcase, stepCalls, stepTitle } from "../lib/journal.js";
 import { clearSelection, openInDiary, selectStep, stepMatchesFilters, toggleStep } from "../state/store.js";
@@ -101,7 +101,7 @@ function Card({ step, pos, width, height, done }) {
         <button type="button" className="map-card-x" aria-label="Cerrar" onClick={clearSelection}>×</button>
       </div>
       <div className="map-card-bd">
-        <span className="map-card-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>{step.zone} · {TIER_META[step.effort].label}</span>
+        <span className="map-card-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>{step.zone}</span>
         <h3 className="map-card-title">{step.n} · {stepTitle(step)}</h3>
         {stops.map(([, text], i) => (
           <p key={i} className="map-card-line stop"><img src={imgUrl(CALL_ICONS.stop)} alt="" />{text}</p>
