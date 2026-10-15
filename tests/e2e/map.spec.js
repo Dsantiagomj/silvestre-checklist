@@ -313,3 +313,18 @@ test("con el teclado: Intro abre la ficha con el foco dentro y Escape lo devuelv
   await expect(page.locator("#mapCard")).toHaveCount(0);
   await expect(node(page, 12)).toBeFocused();
 });
+
+test("las barras de desplazamiento finas llevan los colores del tema, no los del sistema", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openMap(page);
+  const colors = sel => page.locator(sel).first().evaluate(el => getComputedStyle(el).scrollbarColor);
+  for (const theme of ["dark", "light"]) {
+    await page.evaluate(t => document.documentElement.setAttribute("data-theme", t), theme);
+    const [thumb, track] = await page.evaluate(() => {
+      const css = getComputedStyle(document.documentElement);
+      const probe = v => { const d = document.createElement("div"); d.style.color = `var(${v})`; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; };
+      return [probe("--line-2"), probe("--inset")];
+    });
+    expect(await colors(".step-map-scroll"), theme).toBe(`${thumb} ${track}`);
+  }
+});

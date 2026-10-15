@@ -607,6 +607,11 @@ footer small{ color:var(--line-warm); }
   border:2px solid var(--inset);
 }
 *::-webkit-scrollbar-thumb:hover{ background:var(--amber-2); }
+/* Con scrollbar-width (las barras finas), Chromium ignora ::-webkit-scrollbar y dibuja
+   la del sistema: estas llevan los mismos colores por la vía estándar */
+.step-map-scroll, .prereqs-panel, .items-body, .diary-detail, .diary-detail .journal-body{
+  scrollbar-color:var(--line-2) var(--inset);
+}
 
 /* ============================================================================
    CAPA DUFFUS · estructura y componentes nuevos
