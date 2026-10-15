@@ -67,10 +67,15 @@ test("el porcentaje suma cada misión hecha de un paso pendiente y la resta al d
   await btn.click();
   await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
   expect(pctOf(BASE + Q12[0])).toBeGreaterThan(pctOf(BASE));
-  // La siguiente se suma encima; deshacer la primera deshace las dos (el avance es lineal)
-  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  // La siguiente se suma encima
+  const tesor = page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn");
+  await tesor.click();
   await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
+  // Deshacer la primera resta solo esa: Tesorfanato sigue terminada, en el diario y en el %
   await btn.click();
+  await expect(tesor).toHaveAttribute("aria-pressed", "true");
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[1])}%`);
+  await tesor.click();
   await expect(heroPct(page)).toHaveText(`${pctOf(BASE)}%`);
 });
 
@@ -91,6 +96,9 @@ test("el avance del overlay mueve el porcentaje sin abrir el diario", async ({ p
   expect(await pctWith({ 12: 4 }, { 1510: 11 })).toBe(`${pctOf(BASE + sum(Q12.slice(0, 4)))}%`);
   // La última, pasada de su último objetivo: el paso entero, como marcarlo
   expect(await pctWith({ 12: 4 }, { 1510: 12 })).toBe(`${pctOf(BASE + WEIGHTS[12].w)}%`);
+  // Una misión terminada por delante de la actual (se terminó la 2.ª y se reinició la 1.ª)
+  // cuenta, igual que el diario la muestra hecha
+  expect(await pctWith({ 12: 0 }, { 1505: 11 })).toBe(`${pctOf(BASE + Q12[1])}%`);
   expect(await pctWith({})).toBe(`${pctOf(BASE)}%`);
 });
 
