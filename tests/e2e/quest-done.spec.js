@@ -102,3 +102,11 @@ test("en un paso hecho, «Misión hecha» sale hecho y no se pulsa", async ({ pa
     await expect(b).toHaveAttribute("aria-pressed", "true");
   }
 });
+
+test("un paso de una sola misión no lleva «Misión hecha»: lo hace «Paso hecho»", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="4"] .row-main');
+  await expect(page.locator("#journal .journal-num")).toHaveText("4");
+  await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator("#journal .q-done-btn")).toHaveCount(0);
+});
