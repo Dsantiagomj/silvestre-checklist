@@ -580,6 +580,23 @@ export function moveQuest(delta) {
 export function setObjective(n, qi, qid, k, total) {
   const list = questsOf(n);
   const next = nextWalked(list, qi);
+  // En un paso hecho todas sus obligatorias cuentan como completadas. Deshacer una lo
+  // desmarca: las demás quedan completadas de verdad y esa, donde se ha dejado
+  if (state.done[n] && list[qi]?.kind !== "optional") {
+    if (k >= total) return;
+    setState(s => {
+      const done = { ...s.done };
+      delete done[n];
+      const full = Object.fromEntries(list.filter(q => q.kind === "mandatory").map(q => [q.id, objCount(q)]));
+      return {
+        done,
+        questPos: { ...s.questPos, [n]: qi },
+        questObj: { ...s.questObj, ...full, [qid]: Math.max(0, k) },
+        shopEpoch: s.shopEpoch + 1,
+      };
+    });
+    return;
+  }
   setState(s => {
     // Deshacer una terminada que va por delante del avance no lo adelanta: las de antes
     // siguen como estaban (se terminó la 2.ª, se deshizo la 1.ª y luego la 2.ª)

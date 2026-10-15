@@ -209,7 +209,8 @@ function Quests({ step, quests, loaded, s }) {
     const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
-    const pick = s.done[step.n] && !optional ? null : k => {
+    // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
+    const pick = k => {
       setObjective(step.n, i, q.id, k, total);
       const next = quests[nextWalked(quests, i)];
       if (k >= total && !optional && next) setOpen(next.id, true);
@@ -230,7 +231,7 @@ function Quests({ step, quests, loaded, s }) {
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           {/* Las opcionales siempre lo llevan: es como se marcan */}
           {(optional || mandatory > 1) && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-            disabled={!pick} title={!pick ? undefined : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
+            title={finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
             aria-label={finished ? "Misión completada" : "Completar misión"} onClick={toggleDone}>
             {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
@@ -246,7 +247,7 @@ function Quests({ step, quests, loaded, s }) {
           return (
             <Fragment key={j}>
               {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-              <Objectives route objs={stg.o} at={at - from} onPick={pick && (k => pick(from + k))}
+              <Objectives route objs={stg.o} at={at - from} onPick={k => pick(from + k)}
                 stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
             </Fragment>
           );

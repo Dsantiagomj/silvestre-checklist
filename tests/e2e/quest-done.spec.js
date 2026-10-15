@@ -102,15 +102,38 @@ test("el avance del overlay mueve el porcentaje sin abrir el diario", async ({ p
   expect(await pctWith({})).toBe(`${pctOf(BASE)}%`);
 });
 
-test("en un paso hecho, el botón sale «Completada» y no se pulsa", async ({ page }) => {
+test("en un paso hecho, desmarcar una misión desmarca el paso y deja las demás completadas", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(12) });
   await openStep12(page);
   const btns = page.locator("#journal .q-item .q-done-btn");
   await expect(btns).toHaveCount(5);
   for (const b of await btns.all()) {
-    await expect(b).toBeDisabled();
+    await expect(b).toBeEnabled();
     await expect(b).toHaveAttribute("aria-pressed", "true");
   }
+  // Un clic de más en Tesorfanato: solo esa vuelve a su inicio, y el paso deja de estar hecho
+  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  expect(await btns.evaluateAll(els => els.map(e => e.getAttribute("aria-pressed")))).toEqual(["true", "false", "true", "true", "true"]);
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + sum(Q12) - Q12[1])}%`);
+  await expect(page.locator("#journal .journal-num")).toHaveText("12");
+  // Volver a completarla deja el paso hecho otra vez
+  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).toHaveClass(/\bdone\b/);
+});
+
+test("en un paso hecho, pulsar un medallón hecho vuelve a él y desmarca el paso", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(12) });
+  await openStep12(page);
+  const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
+  await cofre.locator("summary .q-name").click();
+  const rows = cofre.locator(".obj-list.route > .obj-row");
+  expect(await routeStates(rows)).toMatch(/^d+$/);
+  await rows.nth(2).locator(".obj-med").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  expect(await routeStates(rows)).toMatch(/^ddn-+$/);
+  // Las otras cuatro siguen completadas
+  await expect(page.locator("#journal .q-item .q-done-btn[aria-pressed=true]")).toHaveCount(4);
 });
 
 test("un paso de una sola misión no lleva «Completar»: lo hace «Paso hecho»", async ({ page }) => {
