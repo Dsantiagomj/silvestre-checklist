@@ -663,6 +663,10 @@ test("cada objeto de los pasos dice para qué misión es", async ({ page }) => {
   // En el título: el centro de la fila puede caer en la etiqueta que lleva a otro paso
   await page.click('.diary-row[data-n="5"] .row-title');
   await expect(page.locator('#journal .journal-needs .slot[data-id="384"] .slot-tip-quest')).toHaveText("«Las primeras impresiones son engañosas»");
+  // El 12: lo que piden las misiones previas a «Espionaje industrial»
+  await page.click('.diary-row[data-n="12"] .row-title');
+  await expect(page.locator('#journal .journal-needs .slot[data-id="15278"] .slot-tip-quest')).toHaveText("«El maleficio del cofre»");
+  await expect(page.locator('#journal .journal-needs .slot[data-id="9687"] .slot-tip-quest')).toHaveText("«Cofrología»");
 });
 
 test("el aviso de un objeto dice lo mismo en todas las secciones", async ({ page }) => {
