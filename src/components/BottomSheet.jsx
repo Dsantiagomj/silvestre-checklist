@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
-import { closeSheet, useAppState } from "../state/store.js";
+import { STEPS } from "../data/steps.js";
+import { closeSheet, selectStep, useAppState } from "../state/store.js";
 import Journal from "./Journal.jsx";
+import MapCard from "./MapCard.jsx";
 
 /** BOTTOM SHEET (mobile) */
 export default function BottomSheet({ mobile }) {
@@ -64,7 +66,11 @@ export default function BottomSheet({ mobile }) {
       <div className={"sheet" + (s.sheetOpen ? " open" : "")} id="sheet" role="dialog" aria-modal="true" aria-label="Detalle del paso" ref={sheetRef}>
         <div className="sheet-handle" id="sheetHandle" ref={handleRef}><div className="bar"></div></div>
         <div className="sheet-content" id="sheetContent">
-          {n != null && <Journal key={n} n={n} />}
+          {/* Desde el mapa, la ficha del paso; desde el diario, el detalle entero */}
+          {n != null && (s.stepsView === "map"
+            ? <MapCard key={n} step={STEPS[n - 1]} done={!!s.done[n]} questsLoaded={s.questsLoaded}
+              onGo={selectStep} onClose={closeSheet} className="is-sheet" id="mapCard" />
+            : <Journal key={n} n={n} />)}
         </div>
       </div>
     </>
