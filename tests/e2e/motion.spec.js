@@ -346,3 +346,52 @@ test("al final de la página, desplegar una misión no mueve nada ni cambia el t
   // Ni la página, ni la misión pulsada, ni la lista se mueven; la lista no cambia de altura
   expect([spread("y"), spread("sum"), spread("top"), spread("h")].every(d => d <= 1)).toBe(true);
 });
+
+/**
+ * El zoom entre mapa y diario fotograma a fotograma: cuánto tarda cada fotograma, dónde
+ * está la vista que llega (respecto a la que se va) y cuánto se ve.
+ */
+const sampleSwap = (page, click) => page.evaluate(async click => {
+  const t0 = performance.now();
+  document.querySelector(click).click();
+  const out = [];
+  let last = t0;
+  while (performance.now() - t0 < 1300) {
+    await new Promise(r => requestAnimationFrame(r));
+    const now = performance.now();
+    const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+    const enter = layers.find(l => !l.hasAttribute("inert"));
+    const leave = layers.find(l => l.hasAttribute("inert"));
+    out.push({
+      dt: now - last,
+      layers: layers.length,
+      // Las dos vistas, una encima de la otra: la que se va sale del flujo
+      offset: leave ? Math.abs(enter.offsetTop - leave.offsetTop) : 0,
+      opacity: parseFloat(getComputedStyle(enter).opacity),
+      onScreen: enter.getBoundingClientRect().top < innerHeight,
+    });
+    last = now;
+  }
+  return out;
+}, click);
+
+for (const [name, view, click] of [
+  ["del mapa al diario", "map", "#stepsViewDiary"],
+  ["del diario al mapa", "diary", "#stepsViewMap"],
+]) {
+  test(`${name}, la vista nueva aparece en el sitio de la vieja y el zoom no se atasca`, async ({ page }) => {
+    await openApp(page, null, { view });
+    await page.waitForLoadState("networkidle");
+    await page.evaluate(() => document.querySelector(".steps-win").scrollIntoView());
+    await page.waitForTimeout(400);
+    const frames = await sampleSwap(page, click);
+    const both = frames.filter(f => f.layers === 2);
+    expect(both.length).toBeGreaterThan(0);
+    // Mientras conviven, la que llega está en el mismo sitio que la que se va (no debajo)
+    expect(Math.max(...both.map(f => f.offset))).toBeLessThanOrEqual(1);
+    // Y se ve aparecer antes de que la vieja se quite: no salta al final
+    expect(both.some(f => f.onScreen && f.opacity > 0.5)).toBe(true);
+    // Sin parones: el umbral deja margen para la máquina cargada, no para un atasco
+    expect(Math.max(...frames.slice(1).map(f => f.dt))).toBeLessThan(150);
+  });
+}
