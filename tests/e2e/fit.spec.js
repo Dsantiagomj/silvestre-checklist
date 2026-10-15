@@ -82,7 +82,7 @@ for (const view of VIEWS) {
     await align(page);
     await page.waitForTimeout(400);
     const { scrollers, fixed } = SCROLL[view];
-    const watch = [".win-strip", ".win-tabs", ...(view === "map" || view === "diary" ? [".win-tools"] : []), ...fixed];
+    const watch = [".win-strip", ".win-tabs", ".win-tools", ...fixed];
     const snap = () => page.evaluate(sels => ({
       y: scrollY,
       tops: sels.map(s => Math.round(document.querySelector(s).getBoundingClientRect().top)),
