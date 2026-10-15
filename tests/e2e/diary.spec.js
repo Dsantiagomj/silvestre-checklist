@@ -876,3 +876,19 @@ test("la ventana de pasos muestra el progreso global y lleva al siguiente pendie
   await expect(page.locator("#winRoad")).toBeInViewport();
 });
 
+
+test("al recargar, la ventana sigue en el paso abierto; el hero, en el siguiente pendiente", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 10) });
+  await row(page, 50).locator(".row-main").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("50");
+  await page.reload();
+  await expect(page.locator("#journal .journal-num")).toHaveText("50");
+  await expect(row(page, 50)).toHaveAttribute("aria-current", "step");
+  await expect(page.locator("#heroNext .journal-num")).toHaveText("11");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:selectedStep")))).toBe(50);
+  // En el mapa también: abre la ficha del paso en el que estaba
+  await page.click("#stepsViewMap");
+  await expect(page.locator("#mapCard .journal-num")).toHaveText("50");
+  await page.reload();
+  await expect(page.locator("#mapCard .journal-num")).toHaveText("50");
+});

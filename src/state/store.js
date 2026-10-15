@@ -22,6 +22,7 @@ export const LS = {
   itemsView: "silvestre:itemsView",
   itemsPageSize: "silvestre:itemsPageSize",
   stepsView: "silvestre:stepsView",
+  selectedStep: "silvestre:selectedStep",
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -51,6 +52,10 @@ export function migrateProgress(done = {}, questPos = {}) {
   return out;
 }
 
+const readSelectedStep = () => {
+  const n = Number(localStorage.getItem(LS.selectedStep));
+  return Number.isInteger(n) && n >= 1 && n <= STEPS.length ? n : null;
+};
 const readObj = key => {
   try {
     return JSON.parse(localStorage.getItem(key) || "{}") || {};
@@ -95,7 +100,9 @@ function initialState() {
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de misión
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
-    selectedStep: null,
+    // El paso abierto en la ventana sobrevive a recargar: se puede ir por delante del
+    // siguiente pendiente. El hero sigue mostrando el siguiente pendiente
+    selectedStep: readSelectedStep(),
     sheetOpen: false,
     // Pestaña de la ventana de pasos: mapa del camino (por defecto), diario (lista +
     // detalle), prerrequisitos u objetos
@@ -125,6 +132,12 @@ const listeners = new Set();
 
 const PERSISTED = ["done", "prereqs", "owned", "questPos", "questObj"];
 
+function persistSelected(prev, next) {
+  if (next.selectedStep === prev.selectedStep) return;
+  if (next.selectedStep == null) localStorage.removeItem(LS.selectedStep);
+  else localStorage.setItem(LS.selectedStep, String(next.selectedStep));
+}
+
 function setState(patch) {
   const prev = state;
   const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
@@ -133,6 +146,7 @@ function setState(patch) {
   for (const k of PERSISTED) {
     if (next[k] !== prev[k]) localStorage.setItem(LS[k], JSON.stringify(next[k]));
   }
+  persistSelected(prev, next);
   listeners.forEach(l => l());
 }
 
