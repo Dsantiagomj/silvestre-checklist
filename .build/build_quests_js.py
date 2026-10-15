@@ -124,8 +124,13 @@ MISSING_OBJECTIVES = {565: [439]}
 # cuatro voluntades" finished (Qf=2122), which step 73 leaves at its 2nd objective: 87
 # finishes it (it closes 73, CLOSES in import_guide.py) and takes the other (TAKE_ONLY),
 # done in step 91.
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622, 623], 78: [434, 111, 121, 423],
-              80: [1782], 83: [624, 2010], 86: [626], 87: [2122, 2138], 89: [1903, 1917]}
+# Step 33's "La razón del más fuerte" needs "La eterna cosecha" in progress or finished
+# ((Qa=439|Qf=439)): 33 takes it (TAKE_ONLY), right before (QUEST_BEFORE); step 79 finishes
+# it. Step 38's red says "La sombra del reino" can be started during mission 3 ((Qa=1656
+# &Qo>9997)) and done any time before step 80; step 81's "La sombra de lo que era" needs
+# it finished (Qf=1665). 38 does it, right after "Esto parece el Sur" (QUEST_AFTER).
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 33: [439], 38: [1665], 40: [621], 52: [622, 623],
+              78: [434, 111, 121, 423], 80: [1782], 83: [624, 2010], 86: [626], 87: [2122, 2138], 89: [1903, 1917]}
 
 # Quests another quest gives on the way and that it waits for, right after it in every
 # step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos
@@ -146,16 +151,26 @@ STEP_SKIP = {53: [2198]}
 # guardián del inmaculado" but starts in mission 3, "Réquiem por un yokai" (Qa=2180).
 # "La huida es la mejor salida" (step 16) needs "Nuestros amigos los animalitos"
 # finished (Qf=1848), which the achievement lists after it.
-QUEST_AFTER = {2198: 2180, 1849: 1848}
+QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656}
+
+# Quest -> the quest that needs it, where it would go elsewhere: it goes right before it
+# in every step that lists both. Step 33 takes "La eterna cosecha" for "La razón del más
+# fuerte" (STEP_EXTRA).
+QUEST_BEFORE = {439: 2442}
 
 
 def after_requirements(ids):
-    """The step's quests with each one of QUEST_AFTER right after the one it needs."""
+    """The step's quests with each one of QUEST_AFTER right after the one it needs, and
+    each one of QUEST_BEFORE right before the one that needs it."""
     out = list(ids)
     for q, first in QUEST_AFTER.items():
         if q in out and first in out and out.index(q) < out.index(first):
             out.remove(q)
             out.insert(out.index(first) + 1, q)
+    for q, then in QUEST_BEFORE.items():
+        if q in out and then in out and out.index(q) != out.index(then) - 1:
+            out.remove(q)
+            out.insert(out.index(then), q)
     return out
 
 
@@ -235,7 +250,9 @@ def optional_missions(text, matched_on):
 # is listed by hand instead of parsed. Step 83 stops "justo después de pasar Dazahk
 # Martegel y obtener la misión: La biblia de los rencores": taken, done later. Step 87
 # takes "Toma de conciencia", which its two quests need in progress (STEP_EXTRA).
-TAKE_ONLY = {28: [1286], 83: [2013], 87: [2138]}
+# Step 33 takes "La eterna cosecha", which "La razón del más fuerte" needs in progress;
+# step 79 finishes it.
+TAKE_ONLY = {28: [1286], 33: [439], 83: [2013], 87: [2138]}
 
 
 def step_kinds(step, plan, achievements, ids):
