@@ -154,6 +154,13 @@ export const startMap = n => FIGURES[n]?.m ?? null;
 export const doneIcon = n => resolvedBoss(n)?.img || OBJ_ICONS.fight;
 
 
+/**
+ * Misión opcional -> paso que la termina sin cerrar el suyo. Nota del 93: «Con los cuatro
+ * sacrificios dropeados, se termina la misión opcional del inciso 7»: «Arma letal». El 7
+ * se hace sin ella (import_guide.py no lo cuenta como cierre).
+ */
+export const OPTIONAL_DONE_BY = { 1939: 93 };
+
 /** Paso -> paso posterior cuyo combate termina sus misiones (el verde de la guía). */
 export const CLOSED_BY = (() => {
   const out = {};

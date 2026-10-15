@@ -10,7 +10,7 @@ import WEIGHTS from "../data/weights.json";
 import { childrenOf, currentQuest, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
-import { list, resolvesHere, stopPoints } from "../lib/journal.js";
+import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -250,6 +250,9 @@ export function questDoneElsewhere(s, qid, except) {
   }
   return null;
 }
+
+/** El paso hecho que termina la misión opcional `qid` (OPTIONAL_DONE_BY), o null. */
+export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIONAL_DONE_BY[qid] : null);
 
 /**
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que

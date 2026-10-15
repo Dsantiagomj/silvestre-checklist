@@ -9,7 +9,7 @@ import {
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  closeSteps, closingPlan, getState, loadQuests, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -147,7 +147,8 @@ function Needs({ n, s }) {
  * antes de la actual, hechas; en la actual, los objetivos antes del que toca; y
  * cualquiera pasada de su último objetivo. Con el paso hecho, todo; también la que
  * terminó otro paso hecho que la lleva (questDoneElsewhere). Una opcional solo lleva lo
- * suyo: ni el paso hecho ni pasar de largo la terminan. Devuelve el índice (en la lista
+ * suyo: ni el paso hecho ni pasar de largo la terminan, pero sí el paso que la termina
+ * (optionalDoneBy). Devuelve el índice (en la lista
  * aplanada) del objetivo actual.
  */
 function progressOf(s, n, quests, i, q) {
@@ -155,7 +156,7 @@ function progressOf(s, n, quests, i, q) {
   // Hasta `total`: una misión terminada sale toda hecha
   const own = Math.min(s.questObj[q.id] || 0, total);
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
-  if (q.kind === "optional") return s.questObj[q.id] != null || i === pos ? own : -1;
+  if (q.kind === "optional") return optionalDoneBy(s, q.id) ? total : s.questObj[q.id] != null || i === pos ? own : -1;
   if (s.done[n] || i < pos || own >= total || questDoneElsewhere(s, q.id, n)) return total;
   return i === pos ? own : -1;
 }
@@ -265,7 +266,8 @@ function Quests({ step, quests, loaded, s }) {
     const at = progressOf(s, step.n, quests, i, q);
     const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
     // Terminada en otro paso: sale hecha y aquí no se deshace (se deshace desmarcando ese)
-    const elsewhere = !optional && questDoneElsewhere(s, q.id, step.n);
+    // Una opcional, si la termina otro paso hecho (OPTIONAL_DONE_BY: «Arma letal», en el 93)
+    const elsewhere = optional ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, step.n);
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso

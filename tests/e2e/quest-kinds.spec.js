@@ -211,3 +211,18 @@ test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más 
   await expect(page.locator(".diary-row[data-n=\"79\"]")).toHaveClass(/\bdone\b/);
   expect(errors).toEqual([]);
 });
+
+test("paso 7: con el 93 hecho, «Arma letal» sale completada en el 93 y el 7 no se marca", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": { 93: true } });
+  await openStep(page, 7);
+  const arma = quest(page, "Arma letal").locator(".q-done-btn");
+  await expect(arma).toHaveAttribute("aria-pressed", "true");
+  await expect(arma).toHaveAttribute("title", "Completada en el paso 93");
+  await expect(arma).toBeDisabled();
+  await expect(page.locator('.diary-row[data-n="7"]')).not.toHaveClass(/\bdone\b/);
+  // Sin el 93, se completa a mano como siempre
+  await page.locator('.diary-row[data-n="93"] .row-check').click();
+  await expect(arma).toHaveAttribute("aria-pressed", "false");
+  await expect(arma).toBeEnabled();
+  expect(errors).toEqual([]);
+});
