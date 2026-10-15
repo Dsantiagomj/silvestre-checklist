@@ -5,7 +5,7 @@ import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
-  CLOSED_BY, RESUMED_IN, doneIcon, list, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, doneIcon, list, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
@@ -244,7 +244,7 @@ function Quests({ step, quests, loaded, s }) {
   // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
   const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const notes = missionNotes(step);
-  const notesOf = q => notes.filter(x => x.name === q.n).map(x => x.text);
+  const notesOf = q => [...notes.filter(x => x.name === q.n).map(x => x.text), ...(QUEST_NOTES[step.n]?.[q.id] ? [QUEST_NOTES[step.n][q.id]] : [])];
   const items = quests.map((q, i) => {
     if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={opened.has(q.id)} setOpen={setOpen} />;
     let offset = 0;
@@ -312,7 +312,7 @@ function Quests({ step, quests, loaded, s }) {
       {grouped ? grouped.map(([name, img, count], g) => {
         const from = grouped.slice(0, g).reduce((a, x) => a + x[2], 0);
         return (
-          <div className="q-group" key={name}>
+          <div className="q-group" key={g}>
             <h4 className="q-group-head">
               {/* Las que no son de ningún logro llevan la «!» de misión */}
               {img ? <img src={imgUrl(img)} alt="" /> : <QuestMark className="q-group-mark" />}

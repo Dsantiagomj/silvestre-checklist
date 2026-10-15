@@ -24,7 +24,8 @@ async function openStep(page, n) {
 
 test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", async () => {
   const { STEP_QUESTS, STEP_QUEST_KINDS } = read("quests.json");
-  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 83: { 2013: "take" }, 87: { 2138: "take" } });
+  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 33: { 439: "take" },
+    83: { 2013: "take" }, 87: { 2138: "take" } });
   for (const [n, kinds] of Object.entries(STEP_QUEST_KINDS)) {
     const { w, q } = WEIGHTS[n];
     STEP_QUESTS[n].forEach((id, i) => { if (kinds[id]) expect(q[i]).toBe(0); });
@@ -34,7 +35,7 @@ test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", 
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
   expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
   expect(WEIGHTS[83].w).toBeCloseTo(2497.186, 3);
-  expect(TOTAL).toBeCloseTo(158982, 0);
+  expect(TOTAL).toBeCloseTo(159608, 0);
   // El id y los objetivos de cada misión, en el orden del paso
   expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
   expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);
@@ -181,5 +182,30 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
   await expect(birk.locator(".obj-stop")).toHaveCount(1);
   await expect(birk.locator(".obj-stop")).toContainText("Hasta justo después de pasar Dazahk Martegel");
   await expect(page.locator("#journal .obj-stop")).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más fuerte», que la pide; se termina en el 79", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": upTo(33) });
+  await openStep(page, 33);
+  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+    ["El dofus y el alquimista", "La eterna cosecha", "La razón del más fuerte", "Después de él, el diluvio", "Muchos cuerboks en la cabeza"]);
+  await expect(quest(page, "La eterna cosecha").locator(".q-take")).toHaveText("Solo tomarla");
+  await expect(page.locator("#journal .q-take")).toHaveCount(1);
+  // No vale nada en el 33
+  const at = WEIGHTS[33].ids.indexOf("439");
+  expect(at).toBe(1);
+  expect(WEIGHTS[33].q[at]).toBe(0);
+  // Con el 33 hecho, el 79 sigue pendiente: tenerla tomada no la termina
+  await openStep(page, 79);
+  await expect(page.locator("#journal .q-item .q-take")).toHaveCount(0);
+  const cosecha = quest(page, "La eterna cosecha");
+  await cosecha.locator("summary .q-name").click();
+  await expect(cosecha.locator(".obj-row.done")).toHaveCount(0);
+  await expect(cosecha.locator(".obj-med:not([disabled])").first()).toBeVisible();
+  await expect(page.locator(".diary-row[data-n=\"79\"]")).not.toHaveClass(/\bdone\b/);
+  // Y «Paso hecho» en el 79 la termina
+  await page.locator("#toggleBtn").click();
+  await expect(page.locator(".diary-row[data-n=\"79\"]")).toHaveClass(/\bdone\b/);
   expect(errors).toEqual([]);
 });

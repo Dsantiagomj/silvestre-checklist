@@ -1220,3 +1220,22 @@ test("las paradas del 54 y del 85 caen en el combate: la kitsu de nueve colas y 
   await stepData(page, 85);
   await expect(questItem(page, "Inclemencias").locator(`${line} + .obj-row`)).toHaveText(/Vence a 1 x Ilyzaelle/);
 });
+
+test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una nota: se puede hacer hasta el paso 80", async ({ page }) => {
+  const FIGURES = JSON.parse(readFileSync(new URL("../../src/data/figures.json", import.meta.url), "utf8"));
+  const errors = await openApp(page);
+  expect((await stepData(page, 38)).quests).toEqual(
+    ["Extinción de los fuegos", "Esto parece el Sur", "La sombra del reino", "La bruja mala del Este"]);
+  const sombra = questItem(page, "La sombra del reino");
+  // Obligatoria: ni opcional ni solo tomarla, y con su «Completar»
+  await expect(sombra.locator(".q-optional, .q-take")).toHaveCount(0);
+  await expect(sombra.locator(".q-done-btn")).toHaveCount(1);
+  await sombra.locator("summary .q-name").click();
+  const note = sombra.locator(".q-note");
+  await expect(note).toHaveText("Se puede hacer en cualquier momento antes del paso 80.");
+  await note.locator('.step-ref[data-n="80"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("80");
+  // El estandarte sigue siendo el de Meriana, que empieza el paso
+  expect(FIGURES[38].f.name).toBe("Meriana");
+  expect(errors).toEqual([]);
+});

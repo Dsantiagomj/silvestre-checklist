@@ -85,6 +85,15 @@ const EXTRA_NOTES = {
 };
 
 /**
+ * Notas escritas a mano dentro de una misión del paso: paso -> { id de la misión: texto }.
+ * Van con las de missionNotes. En el 38, «La sombra del reino»: el rojo dice que se puede
+ * lanzar en la misión 3 y hacer en cualquier punto hasta antes del inciso 80.
+ */
+export const QUEST_NOTES = {
+  38: { 1665: "Se puede hacer en cualquier momento antes del paso 80." },
+};
+
+/**
  * Avisos que muestra el detalle. Un paso con verde se resuelve en sí mismo: su rojo
  * no es dónde parar sino dónde se retoma (la línea verde de la ruta), así que no va
  * como aviso; lo que añade tras su primera frase ("Retomar sala 5 como…") queda como nota.
@@ -317,7 +326,9 @@ export function stopPoint(step, quests) {
     const byArea = o => word.test(norm(o.a || ""));
     const tries = dungeon ? [byArea] : /pasar la mazmorra/i.test(text) ? [byText, byArea] : [byText];
     for (const match of tries) {
-      for (const q of quests) {
+      // Las de solo tomarla no se hacen: «La eterna cosecha», tomada en el 33, también
+      // nombra a Lasoberaña
+      for (const q of quests.filter(x => x.kind !== "take")) {
         const index = q.s.flatMap(stg => stg.o).findIndex(match);
         if (index >= 0) return { quest: q.id, index, text };
       }
