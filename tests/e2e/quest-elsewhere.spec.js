@@ -168,3 +168,40 @@ test("marcar el 93 termina «Los tótems de Maimane», donde para el 92, y el 92
   await expect(page.locator("#toastTxt")).toHaveText("El 92 sigue pendiente: le faltan 3 misiones anteriores.");
   expect((await readLS(page, "silvestre:questObjective"))["2425"]).toBe(6);
 });
+
+test("el 87 termina «Las cuatro voluntades», que el 73 deja a medias, y deja tomada «Toma de conciencia» antes de sus dos misiones", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": doneOf([86]), "silvestre:questPos": { 73: 1 } });
+  await expect(row(page, 73).locator(".row-closed")).toHaveText("se cierra en el 87");
+  await expect(row(page, 87).locator(".row-closes")).toHaveText("cierra el 72, 73, 85, 86");
+  // Por el título: la etiqueta de la fila lleva al 72
+  await row(page, 87).locator(".row-title").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("87");
+  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+  // Se hacen de una en una: la 4 («La guerra de Cania…») y luego la 3, la de Ilyzaelle
+  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(["Las cuatro voluntades", "Toma de conciencia",
+    "La guerra de Cania no se llevará a cabo", "El juicio de la Muerte"]);
+  await expect(quest(page, "Toma de conciencia").locator(".q-take")).toHaveText("Solo tomarla");
+  // La guía no lo dice: una nota explica por qué el 87 termina la misión del 73
+  await expect(page.locator("#journal .call.note", { hasText: "Las cuatro voluntades" }).locator('.step-ref[data-n="73"]')).toHaveCount(1);
+  await expect(quest(page, "La guerra de Cania no se llevará a cabo").locator(".obj-stop, .obj-resume")).toHaveCount(0);
+  await expect(page.locator("#journal :is(.obj-stop, .obj-resume)")).toHaveCount(1);
+  await expect(quest(page, "El juicio de la Muerte").locator(":is(.obj-stop, .obj-resume) + .obj-row"))
+    .toHaveText(/Entrégale a Maestro Cuerbok.*Fuego devorador/);
+  // «Hecho» en el 87 termina «Las cuatro voluntades» y, con lo de antes hecho, el 73
+  await page.locator("#toggleBtn").click();
+  await expect(row(page, 87)).toHaveClass(/\bdone\b/);
+  await expect(row(page, 73)).toHaveClass(/\bdone\b/);
+  const objs = await readLS(page, "silvestre:questObjective");
+  expect(objs["2122"]).toBe(18);
+  // «Toma de conciencia» se hace en el 91: el 87 no la termina
+  expect(objs["2138"]).toBeUndefined();
+  await expect(row(page, 91)).not.toHaveClass(/\bdone\b/);
+  expect(errors).toEqual([]);
+});
+
+test("con el 87 hecho, «Las cuatro voluntades» sale completada en el 73", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([87]) });
+  await openStep(page, 73);
+  await doneIn(page, "Las cuatro voluntades", 87);
+  await pending(page, "Los senderos de la guerra");
+});

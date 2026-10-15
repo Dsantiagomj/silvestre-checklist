@@ -73,11 +73,15 @@ function ownMarks(step) {
 
 /**
  * Notas escritas a mano, para lo que la guía no dice. En el 64, por qué se llega hasta
- * la cerveza fuerte (STOP_AT) y no solo hasta la taberna.
+ * la cerveza fuerte (STOP_AT) y no solo hasta la taberna. En el 87, por qué termina la
+ * misión del 73 (closes a mano en import_guide.py).
  */
 const EXTRA_NOTES = {
   64: "Para empezar la misión 2, «Dos alientos, una inspiración» (paso 66), hay que llegar hasta entregarle"
     + " la cerveza fuerte a Pandawelo. «De la mano» se termina en el paso 67, con el logro completo.",
+  87: "Sus dos misiones piden tener tomada «Toma de conciencia», que se hace en el paso 91, y esta pide"
+    + " terminada «Las cuatro voluntades», que el paso 73 deja a medias: se termina aquí. Las dos misiones"
+    + " se hacen de una en una.",
 };
 
 /**
