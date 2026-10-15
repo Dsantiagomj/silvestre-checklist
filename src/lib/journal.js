@@ -31,12 +31,44 @@ export function optionalMissions(step) {
  * es el del logro y no el del paso (en el 27 es la 2.ª del logro y va primera).
  */
 function namedOptional(step) {
-  const marks = step.marks || [];
+  const marks = ownMarks(step);
   const opt = optionalMissions(step);
   if (opt.length !== 1) return marks;
   return marks.map(([kind, text]) => (kind === "note" && /^opcional pero útil\.?$/i.test(text.trim())
     ? [kind, `La misión «${opt[0].name}» es opcional pero útil.`]
     : [kind, text]));
+}
+
+/**
+ * Una nota que empieza por «Misión N: Nombre.» habla de esa misión (las del 93 y la del
+ * 94: «Misión 1: El dragón blanco. (Se pasa Miauvisor y se dropea el tótem de
+ * sorpresa)»). N es el número de la misión en el logro, el de `m` en plans.json, como en
+ * optionalMissions; el nombre de la guía puede venir mal escrito («Nordalia»). Devuelve
+ * { name, text }: el nombre de la misión como sale en la lista y el texto sin el prefijo
+ * ni el paréntesis que lo envuelve. O null.
+ */
+const MISSION_NOTE = /^Misión (\d+):\s*([^.]+)\.\s*(\S[\s\S]*)$/;
+function missionNote(step, text) {
+  const m = text.match(MISSION_NOTE);
+  if (!m) return null;
+  const named = (PLANS[step.n] || []).filter(e => e.t === "a").map(e => e.m[Number(m[1]) - 1]).filter(Boolean);
+  const name = named.find(x => norm(x) === norm(m[2])) || named[0];
+  return name ? { name, text: m[3].replace(/^\(([\s\S]*)\)$/, "$1").trim() } : null;
+}
+
+/** Las notas del paso que van dentro de su misión (missionNote): [{ name, text }]. */
+export const missionNotes = step => (step.marks || [])
+  .filter(([kind]) => kind === "note").map(([, text]) => missionNote(step, text)).filter(Boolean);
+
+/**
+ * Los avisos sin las notas que van dentro de su misión ni la que solo las presenta,
+ * acabada en dos puntos («A medida que se realiza el logro…, se actualizan algunas
+ * misiones:»).
+ */
+function ownMarks(step) {
+  const marks = step.marks || [];
+  const inQuest = marks.map(([kind, text]) => kind === "note" && !!missionNote(step, text));
+  return marks.filter(([kind, text], i) => !inQuest[i] && !(kind === "note" && /:$/.test(text.trim()) && inQuest[i + 1]));
 }
 
 /**
