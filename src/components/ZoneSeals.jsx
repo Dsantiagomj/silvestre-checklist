@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { STEPS, ZONES, ZONE_COLOR } from "../data/steps.js";
 import { BRAND_ICON, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { setZone } from "../state/store.js";
@@ -27,19 +28,54 @@ function Seal({ zone, label, img, done, total, active, here, onClick }) {
   );
 }
 
-/** Sellos de zona: el paisaje de cada una con un anillo de avance. Filtran el diario. */
+/**
+ * Zona: un botón con la zona elegida y su avance que despliega los sellos (el paisaje de
+ * cada zona con un anillo de avance). Elegir uno filtra los pasos y lo cierra; también
+ * se cierra con Escape o pulsando fuera.
+ */
 export default function ZoneSeals({ s, current }) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef(null);
   const active = s.filters.zones[0] ?? null;
   const hereZone = current != null ? STEPS[current - 1].zone : null;
   const doneIn = z => STEPS.filter(st => st.zone === z && s.done[st.n]).length;
+  const allDone = STEPS.filter(st => s.done[st.n]).length;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = e => { if (!boxRef.current?.contains(e.target)) setOpen(false); };
+    // En captura y antes que nadie: Escape cierra el desplegable, no el paso abierto
+    const onKey = e => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [open]);
+
+  const pick = z => { setZone(z); setOpen(false); };
   return (
-    <div className="seals" id="zoneSeals" role="group" aria-label="Zonas">
-      <Seal label="Todas" img={BRAND_ICON} done={STEPS.filter(st => s.done[st.n]).length} total={STEPS.length}
-        active={active == null} onClick={() => setZone(null)} />
-      {ZONES.map(z => (
-        <Seal key={z} zone={z} label={z} img={ZONE_IMG[z]?.thumb} done={doneIn(z)} total={TOTAL[z]}
-          active={active === z} here={z === hereZone} onClick={() => setZone(z)} />
-      ))}
+    <div className="zone-menu" ref={boxRef}>
+      <button type="button" className="zone-btn" id="zoneBtn" aria-expanded={open} aria-controls="zoneSeals"
+        onClick={() => setOpen(o => !o)}>
+        Zona: <b>{active ?? "Todas"}</b> · {active ? doneIn(active) : allDone}/{active ? TOTAL[active] : STEPS.length}
+        <span className="zone-caret" aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="zone-pop seals" id="zoneSeals" role="group" aria-label="Zonas">
+          <Seal label="Todas" img={BRAND_ICON} done={allDone} total={STEPS.length}
+            active={active == null} onClick={() => pick(null)} />
+          {ZONES.map(z => (
+            <Seal key={z} zone={z} label={z} img={ZONE_IMG[z]?.thumb} done={doneIn(z)} total={TOTAL[z]}
+              active={active === z} here={z === hereZone} onClick={() => pick(z)} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

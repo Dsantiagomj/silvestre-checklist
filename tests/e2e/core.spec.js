@@ -60,8 +60,10 @@ test("los prerrequisitos tienen icono y se marcan", async ({ page }) => {
 
 test("los filtros de zona y la búsqueda dejan en la lista solo lo que coincide", async ({ page }) => {
   await openApp(page);
+  await page.click("#zoneBtn");
   await page.locator("#zoneSeals .seal").nth(1).click();
   await expect.poll(() => page.locator(".diary-row").count()).toBeLessThan(100);
+  await page.click("#zoneBtn");
   await page.locator("#zoneSeals .seal").first().click();
   await expect(page.locator(".diary-row")).toHaveCount(100);
   await page.fill("#searchInput", "Blanco marfil");

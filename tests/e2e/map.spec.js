@@ -57,8 +57,10 @@ test("los pasos cuyo combate cierra otros llevan la insignia de su jefe", async 
 
 test("los sellos y la búsqueda apagan en el mapa lo que no coincide", async ({ page }) => {
   await openMap(page);
+  await page.click("#zoneBtn");
   await page.click('#zoneSeals .seal[data-zone="Astrub"]');
   await expect(page.locator(".map-node.dimmed")).toHaveCount(98);
+  await page.click("#zoneBtn");
   await page.locator("#zoneSeals .seal").first().click();
   await expect(page.locator(".map-node.dimmed")).toHaveCount(0);
 });
@@ -138,6 +140,7 @@ test("nada sobresale recortado: ni el Dofus del primer paso ni el marcador de zo
   const room = (inner, outer) => page.evaluate(([i, o]) =>
     Math.round(document.querySelector(i).getBoundingClientRect().top - document.querySelector(o).getBoundingClientRect().top), [inner, outer]);
   expect(await room('.map-node[data-n="1"] .node-egg', ".step-map")).toBeGreaterThanOrEqual(6);
+  await page.click("#zoneBtn");
   await page.locator(".seal.here").hover();
   await page.waitForTimeout(300);
   expect(await room(".seal.here .seal-pin", "#zoneSeals")).toBeGreaterThanOrEqual(2);

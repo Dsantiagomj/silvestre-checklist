@@ -109,9 +109,16 @@ test("las pestañas filtran pendientes, hechos y todos", async ({ page }) => {
   await expect(page.locator(".diary-row")).toHaveCount(100);
 });
 
-test("los sellos de zona muestran su avance y filtran la lista", async ({ page }) => {
+test("el desplegable de zona muestra los sellos con su avance y filtra la lista", async ({ page }) => {
   // Astrub son los pasos 2 y 3
   await openApp(page, { "silvestre:done": range(1, 3) });
+  const btn = page.locator("#zoneBtn");
+  // Cerrado: solo el botón, con la zona elegida y su avance
+  await expect(btn).toHaveText(/Zona: Todas · 3\/100/);
+  await expect(btn).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#zoneSeals")).toHaveCount(0);
+  await btn.click();
+  await expect(btn).toHaveAttribute("aria-expanded", "true");
   const seals = page.locator("#zoneSeals .seal");
   await expect(seals).toHaveCount(18);
   await expect(seals.first()).toContainText("Todas");
@@ -119,21 +126,40 @@ test("los sellos de zona muestran su avance y filtran la lista", async ({ page }
   const astrub = page.locator('#zoneSeals .seal[data-zone="Astrub"]');
   await expect(astrub.locator(".seal-count")).toHaveText("2/2");
   await expect(astrub).toHaveClass(/full/);
-  const frigost = page.locator('#zoneSeals .seal[data-zone="Isla de Frigost"]');
-  await frigost.click();
-  await expect(frigost).toHaveAttribute("aria-pressed", "true");
+  // Elegir una zona filtra la lista y cierra el desplegable
+  await page.locator('#zoneSeals .seal[data-zone="Isla de Frigost"]').click();
+  await expect(page.locator("#zoneSeals")).toHaveCount(0);
+  await expect(btn).toHaveText(/Zona: Isla de Frigost · 0\/16/);
   await expect(page.locator(".diary-row")).toHaveCount(16);
   await expect(page.locator(".diary-row .row-zone").first()).toHaveText("Isla de Frigost");
   // Otra zona sustituye a la anterior; «Todas» vuelve a la lista entera
+  await btn.click();
+  await expect(page.locator('#zoneSeals .seal[data-zone="Isla de Frigost"]')).toHaveAttribute("aria-pressed", "true");
   await astrub.click();
   await expect(page.locator(".diary-row")).toHaveCount(2);
+  await btn.click();
   await seals.first().click();
   await expect(page.locator(".diary-row")).toHaveCount(100);
+});
+
+test("el desplegable de zona se cierra con Escape o pulsando fuera", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click("#zoneBtn");
+  await expect(page.locator("#zoneSeals")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#zoneSeals")).toHaveCount(0);
+  // Escape cierra el desplegable, no el paso abierto
+  await expect(page.locator("#journal .journal-num")).toHaveText("34");
+  await page.click("#zoneBtn");
+  await page.locator("#diaryTitle").click();
+  await expect(page.locator("#zoneSeals")).toHaveCount(0);
 });
 
 test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click("#zoneBtn");
   await expect(page.locator('#zoneSeals .seal[data-zone="Reino de Amakna"]')).toHaveClass(/here/);
   await expect(page.locator("#zoneSeals .seal.here")).toHaveCount(1);
   // Se marca con un marcador de ubicación encima del medallón, no con otro anillo:
@@ -142,6 +168,7 @@ test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
   await expect(here.locator(".seal-pin")).toBeVisible();
   await expect.poll(() => here.locator(".seal-ring").evaluate(el => getComputedStyle(el).outlineStyle)).toBe("none");
   await here.click();
+  await page.click("#zoneBtn");
   await expect(here).toHaveAttribute("aria-pressed", "true");
   const [pin, ring] = await Promise.all([here.locator(".seal-pin").boundingBox(), here.locator(".seal-ring").boundingBox()]);
   // El marcador queda por encima del medallón (y de su anillo de filtro, 3px), sin taparlo
