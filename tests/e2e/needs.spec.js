@@ -474,7 +474,8 @@ test("lo cogido para un paso se descuenta de la cantidad de «Pronto»", async (
   await expect(agua.locator(".q")).toHaveText("11");
   // Cogida para el paso 13 desde el diario: quedan 10 y sigue sin estar completa
   await page.click("#stepsViewDiary");
-  await page.click('.diary-row[data-n="13"] .row-main');
+  // En el título: el centro de la fila puede caer en la etiqueta que lleva a otro paso
+  await page.click('.diary-row[data-n="13"] .row-title');
   const inJournal = page.locator('#journal .journal-needs .slot[data-id="311"] .slot-main');
   await inJournal.click();
   await page.click("#tabItems");
@@ -640,7 +641,8 @@ test("cada objeto de los pasos dice para qué misión es", async ({ page }) => {
   await expect(page.locator('#bandSoon .slot[data-id="2268"] .slot-tip-quest')).toHaveText("«Un péndulo para guiar sus pasos»");
   // Y en el detalle del paso 5, la misión que lo consume (DofusDB y su guía)
   await page.click("#stepsViewDiary");
-  await page.click('.diary-row[data-n="5"] .row-main');
+  // En el título: el centro de la fila puede caer en la etiqueta que lleva a otro paso
+  await page.click('.diary-row[data-n="5"] .row-title');
   await expect(page.locator('#journal .journal-needs .slot[data-id="384"] .slot-tip-quest')).toHaveText("«Las primeras impresiones son engañosas»");
 });
 
