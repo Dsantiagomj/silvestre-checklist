@@ -169,7 +169,7 @@ test("el hero no repite lo que hay que reunir: eso lo cuentan las pestañas de l
   await openApp(page, SEED);
   await expect(page.locator(".hero-visual #statDone")).toHaveText("3");
   await expect(page.locator(".hero-reqs, #heroWarn, #heroItems, #statPre, #statOwned")).toHaveCount(0);
-  await expect(page.locator("#prereqsCount")).toHaveText("20");
+  await expect(page.locator("#prereqsCount")).toHaveText("19");
 });
 
 test("el hero es el siguiente paso: su estandarte, su título y lo que pide", async ({ page }) => {
@@ -282,7 +282,7 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
   await expect(page.locator("#items .slot:not(.owned)")).toHaveCount(0);
   // El diálogo de reinicio cuenta lo mismo que se ve en la página
   await page.click("#resetBtn");
-  await expect(page.locator("#rdNPre")).toHaveText("21");
+  await expect(page.locator("#rdNPre")).toHaveText("20");
 });
 
 test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async ({ page }) => {

@@ -128,7 +128,7 @@ export const PREREQS_LOGROS = [
   { id: "l11", text: "Isla de Pandala: misión \"El despertar de Pandala\"." },
   { id: "l7", text: "Archipiélago wabbit: misión \"Intrusión en el territorio wabbit\"." },
   { id: "l8", text: "Isla de Moon: Logro \"Pan Koko Mío\", misión 1: Ida sin vuelta." },
-  { id: "l9", text: "Isla de Frigost: Logro \"Frío al cubo\", misión 1: La tierra banquisa." },
+  // Sin "Frío al cubo", misión 1: La tierra banquisa: es la primera misión del paso 23
   { id: "l12", text: "Misiones de mundo: Logro \"Ángeles y demonios\", misión 1: Limpieza general, misión 2: Luisito, fab'huritu, eres muy malito. (Opcionales pero útiles)" },
 ];
 

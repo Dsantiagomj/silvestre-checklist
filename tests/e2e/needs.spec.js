@@ -3,7 +3,7 @@ import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const ALL_PREREQS = Object.fromEntries(
-  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l9", "l10", "l11", "l12", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3"].map(id => [id, true]));
+  ["l1", "l2", "l3", "l4", "l5", "l6", "l7", "l8", "l10", "l11", "l12", "o1", "o2", "o3", "o4", "o5", "o6", "h1", "h2", "h3"].map(id => [id, true]));
 // Pasos 1 a 40 hechos y prerrequisitos completos: lo siguiente son los pasos 41 a 45
 const MID = { "silvestre:done": range(1, 40), "silvestre:prereqs": ALL_PREREQS };
 // La ventana de pasos abierta en la pestaña de prerrequisitos
@@ -23,7 +23,7 @@ test("prerrequisitos y objetos son pestañas de la ventana de pasos, con lo que 
   const tabs = page.locator("#diary .steps-win [role=tab]");
   await expect(tabs).toHaveText([/Mapa/, /Diario/, /Prerrequisitos/, /Objetos/]);
   // Cada una dice cuántos le faltan
-  await expect(page.locator("#prereqsCount")).toHaveText("21");
+  await expect(page.locator("#prereqsCount")).toHaveText("20");
   await expect(page.locator("#itemsCount")).toHaveText("422");
   await page.click("#tabPrereqs");
   await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
@@ -43,10 +43,10 @@ test("prerrequisitos y objetos son pestañas de la ventana de pasos, con lo que 
 
 test("los prerrequisitos son tarjetas que se marcan, con sus objetos debajo", async ({ page }) => {
   await openPre(page);
-  await expect(page.locator("#prereqs .pr-card")).toHaveCount(21);
+  await expect(page.locator("#prereqs .pr-card")).toHaveCount(20);
   await page.click('.pr-card[data-id="o1"]');
   await expect(page.locator('.pr-card[data-id="o1"]')).toHaveClass(/\bdone\b/);
-  await expect(page.locator("#prereqsCount")).toHaveText("20");
+  await expect(page.locator("#prereqsCount")).toHaveText("19");
   // Los 17 objetos que piden los prerrequisitos
   await expect(page.locator("#prereqs .slot")).toHaveCount(19);
 });
@@ -57,7 +57,7 @@ test("marcar todo y limpiar en prerrequisitos, con deshacer", async ({ page }) =
   // Sin nada pendiente, la pestaña lleva una ✓ en vez del número
   await expect(page.locator("#prereqsCount")).toHaveText("✓");
   await page.click("#needsClear");
-  await expect(page.locator("#prereqsCount")).toHaveText("21");
+  await expect(page.locator("#prereqsCount")).toHaveText("20");
   await page.click("#toastAction");
   await expect(page.locator("#prereqsCount")).toHaveText("✓");
 });
@@ -205,7 +205,7 @@ test("el buscador es ancho y los controles van juntos a la izquierda", async ({ 
 
 test("un aviso explica qué hacen marcar todo y limpiar en cada pestaña", async ({ page }) => {
   await openPre(page);
-  await expect(page.locator("#needsHint")).toContainText("21 prerrequisitos");
+  await expect(page.locator("#needsHint")).toContainText("20 prerrequisitos");
   await page.click("#tabItems");
   await expect(page.locator("#needsHint")).toContainText("lo que ves");
   await expect(page.locator("#needsHint")).toContainText("solo quita lo que marcaste a mano");
@@ -244,7 +244,7 @@ test("en la lista el nombre largo se corta y no tapa la cantidad", async ({ brow
 
 test("las tarjetas de prerrequisitos separan zona, título y nivel, con iconos grandes", async ({ page }) => {
   await openPre(page, { "silvestre:prereqs": { l1: true, l3: true } });
-  await expect(page.locator(".pr-group h3").first()).toContainText("2/12");
+  await expect(page.locator(".pr-group h3").first()).toContainText("2/11");
   const otomai = page.locator('.pr-card[data-id="l4"]');
   await expect(otomai.locator(".pr-zone")).toHaveText("Isla de Otomaï");
   await expect(otomai.locator(".pr-title")).toHaveText('Logro "El gran Guarrok". (Completo)');
@@ -379,7 +379,9 @@ test("los prerrequisitos siguen la lista actual de Torrente Arcano", async ({ pa
   await expect(card("l12").locator(".pr-tag.optional")).toHaveText("Opcional");
   // Van en el mismo orden que en la guía
   const ids = await page.locator("#prereqs .pr-group").first().locator(".pr-card").evaluateAll(els => els.map(e => e.dataset.id));
-  expect(ids).toEqual(["l1", "l2", "l3", "l4", "l5", "l10", "l6", "l11", "l7", "l8", "l9", "l12"]);
+  expect(ids).toEqual(["l1", "l2", "l3", "l4", "l5", "l10", "l6", "l11", "l7", "l8", "l12"]);
+  // «La tierra banquisa» es la primera misión del paso 23: no se repite como prerrequisito
+  await expect(card("l9")).toHaveCount(0);
 });
 
 test("los prerrequisitos recomiendan empezar el Dofus Ocre cuanto antes", async ({ page }) => {
@@ -421,7 +423,7 @@ test("cada prerrequisito lleva el icono de lo que pide: misión o logro completo
   await openPre(page);
   const card = id => page.locator(`#prereqs .pr-card[data-id="${id}"]`);
   // Piden misiones concretas (aunque sean de un logro): la «!» del juego
-  for (const id of ["l5", "l10", "l6", "l11", "l7", "l8", "l9", "l12"]) {
+  for (const id of ["l5", "l10", "l6", "l11", "l7", "l8", "l12"]) {
     await expect(card(id).locator(".pr-icons .quest-mark"), id).toHaveCount(1);
     await expect(card(id).locator(".pr-icons img"), id).toHaveCount(0);
   }
@@ -472,7 +474,7 @@ test("marcar un objeto no completa su prerrequisito: se puede comprar antes", as
   await page.locator('#prereqs .slot[data-id="421"] .slot-main').click();
   await expect(page.locator('#prereqs .slot[data-id="421"]')).toHaveClass(/owned/);
   await expect(page.locator('#prereqs .pr-card[data-id="l11"]')).not.toHaveClass(/done/);
-  await expect(page.locator("#prereqsCount")).toHaveText("21");
+  await expect(page.locator("#prereqsCount")).toHaveText("20");
 });
 
 test("lo cogido para un paso se descuenta de la cantidad de «Pronto»", async ({ page }) => {
@@ -509,7 +511,7 @@ test("los prerrequisitos con guía en Torrente Arcano la enlazan; abrirla no los
   // Al logro, aunque el prerrequisito pida solo algunas de sus misiones
   await expect(guide("l5")).toHaveAttribute("href", "https://www.torrentearcano.com/turbera-maldita");
   await expect(guide("l5")).toHaveAttribute("target", "_blank");
-  for (const [id, slug] of [["l4", "el-gran-guarrok"], ["l10", "altos-vuelos"], ["l8", "pan-koko-mio"], ["l9", "frio-al-cubo"], ["l12", "angeles-y-demonios"]]) {
+  for (const [id, slug] of [["l4", "el-gran-guarrok"], ["l10", "altos-vuelos"], ["l8", "pan-koko-mio"], ["l12", "angeles-y-demonios"]]) {
     await expect(guide(id)).toHaveAttribute("href", `https://www.torrentearcano.com/${slug}`);
   }
   // Los que son una misión suelta enlazan la guía de la misión
