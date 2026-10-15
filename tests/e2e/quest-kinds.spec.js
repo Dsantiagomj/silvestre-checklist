@@ -153,14 +153,14 @@ test("el overlay entra en «Arma letal» y salta «Luces y sombras»", async ({ 
   await openApp(page, { "silvestre:done": upTo(6) });
   await openStep(page, 7);
   const [ov] = await Promise.all([context.waitForEvent("page"), page.click("#overlayBtn")]);
-  await expect(ov.locator(".ov-qhead .ov-title")).toHaveText("La cólera de los dioses", { timeout: 10_000 });
+  await expect(ov.locator(".ov-qname")).toHaveText("La cólera de los dioses", { timeout: 10_000 });
   await ov.click('[data-q="1"]');
-  await expect(ov.locator(".ov-qhead .ov-title")).toHaveText("Arma letal");
+  await expect(ov.locator(".ov-qname")).toHaveText("Arma letal");
 
   await page.bringToFront();
   await openStep(page, 28);
-  await expect(ov.locator(".ov-qhead .ov-title")).toHaveText("Pesca en aguas congeladas");
-  await expect(ov.locator(".ov-switch")).toContainText("Misión 1 / 1");
+  await expect(ov.locator(".ov-qname")).toHaveText("Pesca en aguas congeladas");
+  await expect(ov.locator(".ov-meta")).toContainText("misión 1 de 1");
   await expect(ov.locator('[data-q="1"]')).toBeDisabled();
 });
 

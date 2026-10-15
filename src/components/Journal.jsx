@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, createContext, useContext, useEffect, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { childrenOf, groupsOf, questsOf } from "../lib/quests.js";
@@ -20,6 +20,12 @@ import Banner from "./Banner.jsx";
 // Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
 // que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
 // también hay que hacer es una misión y lleva la «!» del juego
+/**
+ * A qué paso llevan los incisos de la guía y los botones de paso. En la página,
+ * selectStep; el overlay pone overlayGo, que cambia su paso y no el de la página.
+ */
+export const StepGo = createContext(selectStep);
+
 const CALL = {
   stop: { label: "Hasta dónde llegar" },
   done: { label: "Lo que se resuelve" },
@@ -33,11 +39,12 @@ const CALL = {
 
 /** Texto de la guía con sus misiones y logros enlazados y los incisos como pasos. */
 function RichText({ text }) {
+  const go = useContext(StepGo);
   return linkify(text).map((part, i) =>
     part.href ? (
       <a key={i} className="guide-link" href={part.href} target="_blank" rel="noopener">{part.t}</a>
     ) : part.step ? (
-      <button key={i} type="button" className="step-ref" data-n={part.step} onClick={() => selectStep(part.step)}>{part.t}</button>
+      <button key={i} type="button" className="step-ref" data-n={part.step} onClick={() => go(part.step)}>{part.t}</button>
     ) : (
       part.t
     ));
@@ -50,10 +57,6 @@ function RichText({ text }) {
 function Goal({ step, done }) {
   const plan = PLANS[step.n] || [];
   const head = plan.find(e => e.t === "a");
-  const closedIn = !done && CLOSED_BY[step.n];
-  // Donde se retoma va antes de donde se termina: la guía retoma antes de cerrar (58: 59 y 61)
-  const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
-  const calls = stepCalls(step);
   return (
     <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
@@ -70,6 +73,24 @@ function Goal({ step, done }) {
           <h2 className="journal-title">{stepTitle(step)}</h2>
         </div>
       </div>
+      <GuideCalls step={step} done={done} />
+    </div>
+  );
+}
+
+/**
+ * El texto de la guía y sus avisos, con dónde se retoman y se terminan sus misiones.
+ * Lo usan el objetivo del diario y la pestaña «Guía» del overlay.
+ */
+export function GuideCalls({ step, done }) {
+  const go = useContext(StepGo);
+  const plan = PLANS[step.n] || [];
+  const closedIn = !done && CLOSED_BY[step.n];
+  // Donde se retoma va antes de donde se termina: la guía retoma antes de cerrar (58: 59 y 61)
+  const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
+  const calls = stepCalls(step);
+  return (
+    <>
       <div className="goal-guide">
         {OBJ_ICONS.free && <img src={imgUrl(OBJ_ICONS.free)} alt="" />}
         <div>
@@ -86,7 +107,7 @@ function Goal({ step, done }) {
               {resumedIn.map((m, i) => (
                 <Fragment key={m}>
                   {i > 0 && (i === resumedIn.length - 1 ? " y " : ", ")}
-                  <button type="button" className="step-ref" data-n={m} onClick={() => selectStep(m)}>{m}</button>
+                  <button type="button" className="step-ref" data-n={m} onClick={() => go(m)}>{m}</button>
                 </Fragment>
               ))}.
             </Call>
@@ -94,17 +115,17 @@ function Goal({ step, done }) {
           {closedIn && (
             <Call step={step} kind="closedin">
               Sus misiones se terminan en el paso{" "}
-              <button type="button" className="step-ref" data-n={closedIn} onClick={() => selectStep(closedIn)}>{closedIn}</button>.
+              <button type="button" className="step-ref" data-n={closedIn} onClick={() => go(closedIn)}>{closedIn}</button>.
             </Call>
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 /** Un aviso de la guía (rojo, verde o azul) con su medallón. */
-function Call({ step, kind, text, children }) {
+export function Call({ step, kind, text, children }) {
   return (
     <div className={`call ${kind}`}>
       <i aria-hidden="true">
@@ -127,7 +148,7 @@ function Call({ step, kind, text, children }) {
  * «Objetos necesarios». Pulsar una la marca como cogida para este paso (y allí se ve);
  * el icono de la esquina copia el nombre para el mercadillo.
  */
-function Needs({ n, s }) {
+export function Needs({ n, s }) {
   const rows = rowsOf(n).map(row => ({ ...row, steps: [n] }));
   if (!rows.length) return null;
   return (
@@ -174,7 +195,7 @@ function TakeOnly({ q, notes, open, setOpen }) {
         <span className="q-take" title="No hace falta hacerla">Solo tomarla</span>
         <span className="q-lv">{`Niv. ${q.lv}`}</span>
         {missionGuide(q.n) && (
-          <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
+          <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
         )}
       </summary>
       <QuestStart q={q} />
@@ -223,7 +244,7 @@ function QuestStart({ q }) {
 }
 
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
-function Quests({ step, quests, loaded, s }) {
+export function Quests({ step, quests, loaded, s }) {
   // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
   // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso)
   const [opened, setOpened] = useState(() => new Set());
@@ -252,9 +273,11 @@ function Quests({ step, quests, loaded, s }) {
     .filter(c => c.items.length);
   // Llevar a una hija: se despliega y se pone a la vista. Sin desplazamiento suave: lo
   // cortaba la altura de la misión al abrirse
+  // El requestAnimationFrame de la ventana de la misión: en el overlay, la de la página
+  // puede estar en segundo plano y no llegar
   const toKid = (id, el) => {
     setOpen(id, true);
-    requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
+    el.ownerDocument.defaultView.requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
       ?.scrollIntoView({ block: "start" }));
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
@@ -299,7 +322,7 @@ function Quests({ step, quests, loaded, s }) {
             {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
-            <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
+            <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
           )}
         </summary>
         <QuestStart q={q} />
@@ -343,14 +366,24 @@ function Quests({ step, quests, loaded, s }) {
   );
 }
 
+/** El triángulo de los botones de paso, dibujado: el ◀ de texto sale como emoji en algunos sistemas. */
+export function Tri({ dir }) {
+  return (
+    <svg className="tri" viewBox="0 0 10 10" aria-hidden="true">
+      <path d={dir === "prev" ? "M8 1.5v7L2 5z" : "M2 1.5v7L8 5z"} />
+    </svg>
+  );
+}
+
 /**
  * Barra final, con los botones planos del juego: el paso anterior, «Paso hecho» (que
  * marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del paso
  * cierra otros que siguen pendientes, el mismo botón termina lo que les queda («Hecho,
  * y termina el 33»): uno aparte se perdía al avanzar y lo cerrado quedaba pendiente.
  */
-function Actions({ step, s }) {
+export function Actions({ step, s }) {
   const n = step.n;
+  const go = useContext(StepGo);
   // En la vista que se va (zoom hacia el mapa) los botones no llevan id
   const live = !useLeaving();
   const done = !!s.done[n];
@@ -361,13 +394,13 @@ function Actions({ step, s }) {
   function finish() {
     if (closes.length) closeSteps(n, closes);
     else toggleStep(n);
-    if (next != null) selectStep(next);
+    if (next != null) go(next);
   }
   const label = closes.length ? `✓ Hecho, y termina el ${list(closes)}` : "✓ Paso hecho";
   return (
     <div className="journal-cta">
       <button type="button" className="gbtn" id={live ? "prevBtn" : undefined} disabled={n === 1} aria-label={`Paso ${n - 1}`}
-        onClick={() => selectStep(n - 1)}>◀ {n > 1 ? n - 1 : ""}</button>
+        onClick={() => go(n - 1)}><Tri dir="prev" /> {n > 1 ? n - 1 : ""}</button>
       <div className="journal-cta-main">
         <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={live ? "toggleBtn" : undefined}
           title={done ? undefined : (closes.length ? `Termina lo que queda del ${list(closes)}, que este paso cierra` : "Marca el paso")
@@ -377,7 +410,7 @@ function Actions({ step, s }) {
         </button>
       </div>
       <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
-        onClick={() => selectStep(n + 1)}>{n < STEPS.length ? n + 1 : ""} ▶</button>
+        onClick={() => go(n + 1)}>{n < STEPS.length ? n + 1 : ""} <Tri dir="next" /></button>
     </div>
   );
 }

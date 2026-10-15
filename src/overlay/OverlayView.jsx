@@ -1,16 +1,27 @@
 import { useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { assetsFor, imgUrl } from "../lib/assets.js";
-import { MAP_IMG, coordLabel, currentQuest, locationFor } from "../lib/quests.js";
+import { MAP_IMG, coordLabel, currentQuest, locationFor, questsOf } from "../lib/quests.js";
+import { rowsOf } from "../lib/resources.js";
+import { stepCalls, stepTitle } from "../lib/journal.js";
 import {
-  moveObjective, moveQuest, overlayGo, overlayStep, progressPct, toggleStep, useAppState,
+  moveObjective, moveQuest, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
-import { CoordChip, Objectives, ReqBlock } from "../components/StepParts.jsx";
+import { Objectives } from "../components/StepParts.jsx";
+import { Actions, Call, GuideCalls, Needs, Quests, Tri } from "../components/Journal.jsx";
+import { WinBadge } from "../components/Diary.jsx";
+
+const TAB_KEY = "silvestre:overlayTab";
+const TABS = [["now", "Ahora"], ["quests", "Misiones"], ["items", "Objetos"], ["guide", "Guía"]];
+const readTab = () => {
+  const t = localStorage.getItem(TAB_KEY);
+  return TABS.some(([k]) => k === t) ? t : "now";
+};
 
 /** Mapa del objetivo; si DofusDB no tiene la imagen, la figura desaparece. */
-function MapFigure({ loc, where }) {
+function MapFigure({ loc }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
+  const where = [loc.a, loc.x != null ? `[${coordLabel(loc.x, loc.y)}]` : ""].filter(Boolean).join(" · ");
   return (
     <figure className="ov-map">
       <img src={`${MAP_IMG}${loc.m}.jpg`} alt="Mapa del objetivo" loading="lazy" onError={() => setFailed(true)} />
@@ -19,104 +30,172 @@ function MapFigure({ loc, where }) {
   );
 }
 
-function QuestView({ n, a, cur, s }) {
-  // Se cuentan las misiones que se hacen: las de solo tomarla no salen
-  const { walked, at, q, objs, k } = cur;
-  const more = at < walked.length - 1;
-  const now = objs[k];
-  const upcoming = objs.slice(k + 1, k + 4);
-  const loc = locationFor(cur);
-  const where = loc ? [loc.a, loc.x != null ? `[${coordLabel(loc.x, loc.y)}]` : ""].filter(Boolean).join(" · ") : "";
-  const last = k >= objs.length - 1;
+/** "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. */
+function QuestMeta({ cur }) {
+  const { at, walked, objs, k } = cur;
+  return (
+    <p className="ov-meta">
+      Objetivo {k + 1} / {objs.length} · misión{" "}
+      <button type="button" className="ov-q" data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior"
+        onClick={() => moveQuest(-1)}><Tri dir="prev" /></button>
+      {at + 1} de {walked.length}
+      <button type="button" className="ov-q" data-q="1" disabled={!(at < walked.length - 1)} aria-label="Misión siguiente"
+        onClick={() => moveQuest(1)}><Tri dir="next" /></button>
+    </p>
+  );
+}
+
+/** El objetivo actual, como en la ruta del diario: medallón del juego, zona, lo que se entrega y su /travel. */
+function NowCard({ cur }) {
+  return (
+    <div className="ov-now" data-qid={cur.q.id}>
+      <Objectives route objs={[cur.objs[cur.k]]} at={0} />
+    </div>
+  );
+}
+
+/**
+ * La parada roja del paso, siempre que la tenga: se ve antes de llegar a la misión que
+ * la lleva, que es cuando sirve. stepCalls ya quita el rojo de un paso que se resuelve
+ * en sí mismo (ahí es donde se retoma) y deja la parada que queda tras el verde.
+ */
+const stopsOf = step => stepCalls(step).filter(([kind]) => kind === "stop").map(([, text]) => text);
+
+function StopLines({ step }) {
+  return stopsOf(step).map((text, i) => (
+    <p key={i} className="ov-stop"><b>Parar:</b> {text}</p>
+  ));
+}
+
+function Mini({ n, step, cur, s, setMode }) {
+  const resolves = !cur && stepCalls(step).filter(([kind]) => kind === "done");
   return (
     <>
-      <div className="ov-card ov-qhead">
-        <div className="ov-icon">{a.icon ? <img src={imgUrl(a.icon.src)} alt="" /> : <b>{n}</b>}</div>
-        <div className="ov-qmeta">
-          <p className="ov-title">{q.n}</p>
-          <div className="ov-chips">
-            {q.st?.npc && <span className="ov-chip">{`💬 ${q.st.npc}`}</span>}
-            <span className="ov-chip">{`◎ Nv. ${q.lv}`}</span>
-            {q.st?.a && <span className="ov-chip">{`📍 ${q.st.a}`}</span>}
-            <CoordChip x={q.st?.x} y={q.st?.y} />
-          </div>
+      <header className="ov-head">
+        <span className="ov-num">{n}</span>
+        <div className="ov-head-txt">
+          <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
+          {cur ? <QuestMeta cur={cur} /> : <p className="ov-meta">{step.zone}</p>}
         </div>
+        <b className="ov-pct">{progressPct(s)}%</b>
+      </header>
+      <div className="ov-scroll ov-mini-body">
+        {/* Dónde parar, arriba: en una ventana baja se ve sin desplazar */}
+        <StopLines step={step} />
+        {cur && <NowCard cur={cur} />}
+        {resolves && resolves.map(([, text], i) => <p key={i} className="ov-resolve"><b>Se resuelve:</b> {text}</p>)}
       </div>
-      <div className="ov-switch">
-        <button data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior" onClick={() => moveQuest(-1)}>‹</button>
-        <span>Misión <b>{at + 1}</b> / {walked.length} <span className="muted">· Paso {n}</span></span>
-        <button data-q="1" disabled={!more} aria-label="Misión siguiente" onClick={() => moveQuest(1)}>›</button>
-      </div>
-      <ReqBlock n={n} open={false} s={s} />
-      {/* key: una imagen nueva vuelve a intentarlo aunque la anterior fallara */}
-      {loc && <MapFigure key={loc.m} loc={loc} where={where} />}
-      {now && (
-        <div className="ov-card ov-obj">
-          <span className="ov-bang">!</span>
-          <div className="ov-obj-body">
-            <p className="ov-label">Objetivo <span className="muted">· {k + 1} / {objs.length}</span></p>
-            <div className="ov-objbar"><span style={{ width: `${((k + 1) / objs.length) * 100}%` }}></span></div>
-            <Objectives objs={[now]} />
-          </div>
-        </div>
-      )}
-      {upcoming.length > 0 && (
-        <div className="ov-card ov-next">
-          <p className="ov-label muted">Después</p>
-          <Objectives objs={upcoming} />
-        </div>
-      )}
-      <div className="ov-stagenav">
-        <button data-ob="-1" disabled={!(k > 0)} onClick={() => moveObjective(-1)}>‹</button>
-        <button data-ob="1" disabled={last && !more} onClick={() => moveObjective(1)}>
-          {last ? (more ? "Siguiente misión ›" : "Misión completa") : "Siguiente objetivo ›"}
+      <nav className="ov-bar" aria-label="Overlay">
+        <button type="button" className="gbtn" disabled={n === 1} aria-label={`Paso ${n - 1}`} onClick={() => overlayGo(n - 1)}>
+          <Tri dir="prev" />
         </button>
-      </div>
+        <button type="button" className="gbtn go" disabled={!cur} onClick={() => moveObjective(1)}
+          title="Da el objetivo por hecho y pasa al siguiente; tras el último, termina la misión">✓ Hecho, siguiente</button>
+        <button type="button" className="gbtn" disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`} onClick={() => overlayGo(n + 1)}>
+          <Tri dir="next" />
+        </button>
+        <button type="button" className="gbtn ov-mode" onClick={() => setMode("full")} title="Ver el paso entero">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5" /></svg>
+          Ver todo
+        </button>
+      </nav>
     </>
   );
 }
 
-/** Contenido del overlay: el paso en curso, su misión y el objetivo actual. */
-export default function OverlayView() {
+/** «Ahora»: dónde parar y qué se resuelve, el objetivo actual, los dos siguientes y su mapa. */
+function NowTab({ step, cur, loaded }) {
+  const calls = stepCalls(step).filter(([kind]) => kind === "stop" || kind === "done");
+  const after = cur ? cur.objs.slice(cur.k + 1, cur.k + 3) : [];
+  const loc = cur && locationFor(cur);
+  return (
+    <>
+      {calls.length > 0 && (
+        <div className="goal-calls ov-calls">
+          {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
+        </div>
+      )}
+      {cur ? (
+        <>
+          <section className="ov-sec">
+            <h3 className="ov-label">{cur.q.n}</h3>
+            <QuestMeta cur={cur} />
+            <NowCard cur={cur} />
+          </section>
+          {after.length > 0 && (
+            <section className="ov-sec ov-after">
+              <h3 className="ov-label">Después</h3>
+              <Objectives route objs={after} />
+            </section>
+          )}
+          {/* key: una imagen nueva vuelve a intentarlo aunque la anterior fallara */}
+          {loc?.m && <MapFigure key={loc.m} loc={loc} />}
+        </>
+      ) : (
+        <p className="asset-note">{loaded ? "Este paso no tiene misiones que recorrer." : "Cargando misiones…"}</p>
+      )}
+    </>
+  );
+}
+
+function Full({ n, step, cur, s, setMode }) {
+  const [tab, setTabState] = useState(readTab);
+  const setTab = t => {
+    localStorage.setItem(TAB_KEY, t);
+    setTabState(t);
+  };
+  const rows = rowsOf(n);
+  const left = rows.filter(row => !rowHave(s, { ...row, steps: [n] }, [n])).length;
+  return (
+    <>
+      <header className="ov-head ov-full-head">
+        <span className="ov-num">{n}</span>
+        <div className="ov-head-txt">
+          <p className="ov-title">{stepTitle(step)}</p>
+          <span className="ov-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><i aria-hidden="true"></i>{step.zone}</span>
+        </div>
+        <b className="ov-pct">{progressPct(s)}%</b>
+        <button type="button" className="gbtn ov-mode" onClick={() => setMode("mini")} title="Volver a la tira sobre el juego">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 6.5h-4v-4M9.5 6.5l4-4M2.5 9.5h4v4M6.5 9.5l-4 4" /></svg>
+          Reducir
+        </button>
+      </header>
+      <div className="ov-tabs" role="tablist" aria-label="Overlay">
+        {TABS.map(([key, label]) => (
+          <button key={key} type="button" role="tab" aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
+            onClick={() => setTab(key)}>
+            {label}{key === "items" && rows.length > 0 && <WinBadge n={left} />}
+          </button>
+        ))}
+      </div>
+      <div className="ov-scroll ov-tab-body journal-body" role="tabpanel">
+        {tab === "now" && <NowTab step={step} cur={cur} loaded={s.questsLoaded} />}
+        {tab === "quests" && <Quests step={step} quests={s.questsLoaded ? questsOf(n) : []} loaded={s.questsLoaded} s={s} />}
+        {tab === "items" && (rows.length ? <Needs n={n} s={s} /> : <p className="asset-note">Este paso no pide objetos.</p>)}
+        {tab === "guide" && (
+          <div className="journal-goal ov-guide">
+            <GuideCalls step={step} done={!!s.done[n]} />
+          </div>
+        )}
+      </div>
+      <Actions step={step} s={s} />
+    </>
+  );
+}
+
+/**
+ * Contenido del overlay. En mini, una tira sobre el juego con el objetivo actual y dónde
+ * parar; en completo, el paso entero en pestañas, con las piezas del diario.
+ */
+export default function OverlayView({ mode, setMode }) {
   const s = useAppState();
   const n = overlayStep(s);
   const step = STEPS[n - 1];
-  const a = assetsFor(n) || {};
-  const done = !!s.done[n];
-  const pct = progressPct(s);
   const cur = s.questsLoaded ? currentQuest(n, s.questPos, s.questObj) : null;
-
+  const View = mode === "full" ? Full : Mini;
   return (
-    <div className="ov">
-      <div className="ov-top">
-        <span className="ov-chip" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><span className="dot"></span>{step.zone}</span>
-        {done && <span className="ov-chip done">✓ Hecho</span>}
-        <div className="bar-outer"><div className="bar-fill" style={{ width: `${pct}%` }}></div></div>
-        <b>{pct}%</b>
-      </div>
-      {cur ? <QuestView n={n} a={a} cur={cur} s={s} /> : (
-        <>
-          <div className="ov-card ov-qhead">
-            <div className="ov-icon">{a.icon ? <img src={imgUrl(a.icon.src)} alt="" /> : <b>{n}</b>}</div>
-            <div>
-              <p className="ov-title">Paso {n} <span className="muted">/ {STEPS.length}</span></p>
-              {a.icon?.from === "item" && <div className="ov-chips"><span className="ov-chip">{`🎁 ${a.icon.label}`}</span></div>}
-            </div>
-          </div>
-          <ReqBlock n={n} open={false} s={s} />
-        </>
-      )}
-      <details className="ov-card ov-guide" open={!cur}>
-        <summary>Indicaciones de la guía · Paso {n}</summary>
-        <div className="ov-text">{step.text}</div>
-      </details>
-      <div className="ov-actions">
-        <button data-go={n - 1} disabled={!(n > 1)} aria-label="Paso anterior" onClick={() => overlayGo(n - 1)}>←</button>
-        <button className={"ov-toggle" + (done ? " is-done" : "")} data-toggle="" onClick={() => toggleStep(n)}>
-          {done ? "Desmarcar paso" : "Marcar paso hecho"}
-        </button>
-        <button data-go={n + 1} disabled={!(n < STEPS.length)} aria-label="Paso siguiente" onClick={() => overlayGo(n + 1)}>→</button>
-      </div>
+    <div className={`ov journal ov-${mode}`} data-mode={mode}>
+      <View n={n} step={step} cur={cur} s={s} setMode={setMode} />
     </div>
   );
 }

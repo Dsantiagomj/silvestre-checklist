@@ -188,8 +188,8 @@ const NEEDS = [
 
 const TAB_ORDER = [...VIEWS, ...NEEDS].map(t => t[0]);
 
-/** Lo que falta en una lista; sin nada pendiente, una ✓. Rebota al cambiar. */
-function WinBadge({ n, id }) {
+/** Lo que falta en una lista; sin nada pendiente, una ✓. Rebota al cambiar. También en el overlay. */
+export function WinBadge({ n, id }) {
   const ref = useRef(null);
   const last = useRef(n);
   useLayoutEffect(() => {
