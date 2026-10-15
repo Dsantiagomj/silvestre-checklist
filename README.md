@@ -293,14 +293,24 @@ dos versiones las pasaban sin cambios.
 
 ## Despliegue
 
-`npm run build` deja en `dist/` un sitio estático de unos 6.7 MB, de los que 5.8 MB son
-imágenes. Se puede subir tal cual a cualquier hosting estático: Netlify, GitHub Pages o
-Cloudflare Pages. Las misiones (`quests`, 95 KB comprimidas) van en un archivo aparte que solo
-se descarga cuando hace falta.
+La app se publica en GitHub Pages: https://dsantiagomj.github.io/silvestre-checklist/
 
-Ya no es viable pegarlo en un bloque de Squarespace: son varios archivos y una carpeta de
-imágenes. Para enlazarlo desde torrentearcano.com, lo práctico es un enlace o un iframe
-apuntando al sitio desplegado.
+Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, construye con
+`BASE_PATH=/silvestre-checklist/` (la ruta del sitio en Pages) y publica `dist/`. En local y
+en las pruebas `BASE_PATH` no se pasa y la app vive en la raíz. Para comprobar un build como
+el de Pages:
+
+```bash
+BASE_PATH=/silvestre-checklist/ npm run build
+BASE_PATH=/silvestre-checklist/ npx vite preview --port 4318
+APP_URL=http://127.0.0.1:4318/silvestre-checklist/ npx playwright test
+```
+
+`dist/` pesa unos 15 MB, casi todo imágenes del juego. Las misiones (`quests.json`) van en un
+archivo aparte que solo se descarga cuando hace falta.
+
+El progreso se guarda en el navegador, por dominio: si el sitio cambia de dirección, cada
+cual pierde su avance salvo que haya guardado una copia de seguridad.
 
 ---
 
