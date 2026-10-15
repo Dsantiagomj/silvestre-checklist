@@ -54,6 +54,11 @@ TEXT_MISSIONS = ["Flovoración", "La sombra del reino"]
 # Our own missionUrlOverrides, for names the guide misspells: step 92 writes "Los tótems
 # de Maimame", and the page is the one of "Los tótems de Maimane".
 MISSION_URLS = {"Los tótems de Maimame": SITE + "los-totems-de-maimane"}
+# Achievements the text names that achievementLinks lacks: step 1 "incluye también el logro
+# "En marcha hacia la aventura" y el logro "Un ciudadano modelo"". Both pages answer;
+# "Respuestas para todo", a quest of the first one, has none.
+EXTRA_ACHIEVEMENTS = {"En marcha hacia la aventura": SITE + "en-marcha-hacia-la-aventura",
+                      "Un ciudadano modelo": SITE + "un-ciudadano-modelo"}
 
 
 def js_object(html, name):
@@ -148,7 +153,7 @@ def answers(url, tries=4):
 def main(page):
     html = pathlib.Path(page).read_text(encoding="utf-8")
     texts = js_template_array(html, "steps")
-    achievements = js_object(html, "achievementLinks")
+    achievements = {**EXTRA_ACHIEVEMENTS, **js_object(html, "achievementLinks")}
     overrides = {**js_object(html, "missionUrlOverrides"), **MISSION_URLS}
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS + TEXT_MISSIONS}
     pages = site_pages()

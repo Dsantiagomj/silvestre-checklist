@@ -1191,3 +1191,14 @@ test("los nombres de misión de la guía no arrastran el «)» que cierra el res
   await expect(page.locator("#journal .call.stop a.guide-link", { hasText: "La biblia de los rencores" }))
     .toHaveAttribute("href", "https://www.torrentearcano.com/la-biblia-de-los-rencores");
 });
+
+test("en el 1, los dos logros que incluye enlazan a su guía; «Respuestas para todo», sin página, no", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 1);
+  const includes = page.locator("#journal .call.includes");
+  await expect(includes.locator("a.guide-link", { hasText: "En marcha hacia la aventura" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/en-marcha-hacia-la-aventura");
+  await expect(includes.locator("a.guide-link", { hasText: "Un ciudadano modelo" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/un-ciudadano-modelo");
+  await expect(questItem(page, "Respuestas para todo").locator(".q-guide")).toHaveCount(0);
+});
