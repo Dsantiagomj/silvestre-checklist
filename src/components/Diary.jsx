@@ -54,15 +54,16 @@ const Row = memo(function Row({ step, done, current }) {
         <span className="row-num">{n}</span>
         <span className="row-text">
           <span className="row-title">{stepTitle(step)}</span>
-          <span className="row-sub">
-            <span className="row-zone">{step.zone}</span>
-            {closedBy && <span className="row-closed" title={`Ir al paso ${closedBy}`} onClick={go(closedBy)}>se cierra en el {closedBy}</span>}
-            {closes && (
-              <span className="row-closes" title={`Ir al paso ${closes[0]}`} onClick={go(closes[0])}>
-                cierra el {closes.join(", ")}
-              </span>
-            )}
-          </span>
+          <span className="row-sub"><span className="row-zone">{step.zone}</span></span>
+        </span>
+        {/* A la derecha: dónde se cierra o qué cierra, y lo que se gana */}
+        <span className="row-tags">
+          {closedBy && <span className="row-closed" title={`Ir al paso ${closedBy}`} onClick={go(closedBy)}>se cierra en el {closedBy}</span>}
+          {closes && (
+            <span className="row-closes" title={`Ir al paso ${closes[0]}`} onClick={go(closes[0])}>
+              cierra el {closes.join(", ")}
+            </span>
+          )}
         </span>
         <span className="row-art" aria-hidden="true">
           {art && <img src={imgUrl(art.img)} alt={art.name} title={art.name} loading="lazy" decoding="async" />}
