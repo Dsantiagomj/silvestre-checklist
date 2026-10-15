@@ -105,7 +105,7 @@ test("si el paso cierra otros pendientes, «Hecho» termina lo que les queda y l
   await expect(row(page, 34)).toHaveClass(/done/);
   // El 33 tiene tres misiones antes de su parada: sigue pendiente
   await expect(row(page, 33)).not.toHaveClass(/done/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones anteriores.");
+  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones.");
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
   await page.click("#toastAction");
   await expect(row(page, 33)).toHaveClass(/done/);
@@ -124,7 +124,7 @@ test("un paso que cierra varios los nombra todos en «Hecho» y avisa de los que
   // El 27 solo tenía pendiente lo de tras su parada (la otra es opcional); el 25 y el 26, no
   for (const n of [27, 28]) await expect(row(page, n)).toHaveClass(/done/);
   for (const n of [25, 26]) await expect(row(page, n)).not.toHaveClass(/done/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 25 y el 26 siguen pendientes: les faltan misiones anteriores.");
+  await expect(page.locator("#toastTxt")).toHaveText("El 25 y el 26 siguen pendientes: les faltan misiones.");
   await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 25 y 26");
   await page.click("#toastAction");
   for (const n of [25, 26]) await expect(row(page, n)).toHaveClass(/done/);

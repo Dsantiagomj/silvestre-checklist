@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "../data/weights.json";
-import { currentQuest, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, questsData, questsOf } from "../lib/quests.js";
+import { childrenOf, currentQuest, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { list, resolvesHere, stopPoints } from "../lib/journal.js";
@@ -173,35 +173,70 @@ const CLOSERS = {};
 for (const st of STEPS) for (const c of st.closes || []) (CLOSERS[c] ??= []).push(st.n);
 
 /**
- * Misión -> pasos que la llevan como obligatoria, y paso -> las que deja a medias: la de
- * su parada roja y las de después, salvo que el paso se resuelva en sí mismo (lleva
- * verde). Necesita las misiones (las paradas se sitúan en sus objetivos): se calcula una
- * vez, cuando llegan.
+ * Lo que el paso deja a medias: solo las misiones donde cae una parada roja, no las de
+ * después, que la guía termina en el mismo paso (el 52 termina «El S.L.I.P. está que
+ * arde» tras la parada de «Almacén de avituallamiento»). En un paso que se resuelve en sí
+ * mismo (lleva verde), su rojo es donde se retoma: queda abierta la parada que deja el
+ * verde («…hasta tener que pasar Kodámade») o, si otro paso lo cierra y el verde no
+ * deja ninguna, las de su rojo (el 84 pasa Mizz Frizz y su misión sigue hasta Klim, en
+ * el 94). Una madre cuya hija del paso queda abierta, también: sus objetivos esperan a la
+ * hija (en el 68, «Cuando el despertar…» espera a «La última muralla»). `later` son las
+ * paradas que no termina el paso que cierra este, sino uno posterior que lleva la misión
+ * (STOP_AT con `later`), con el objetivo donde paran: { id: índice }.
+ */
+function openOf(st, quests) {
+  const stops = stopPoints(st, quests);
+  const own = !resolvesHere(st) ? stops
+    : stops.some(p => p.followUp) ? stops.filter(p => p.followUp || p.later)
+    : CLOSERS[st.n] ? stops : stops.filter(p => p.later);
+  const mandatory = new Set(quests.filter(q => q.kind === "mandatory").map(q => String(q.id)));
+  const open = new Set(own.map(p => String(p.quest)).filter(id => mandatory.has(id)));
+  const later = Object.fromEntries(own.filter(p => p.later).map(p => [String(p.quest), p.index]));
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const q of quests) {
+      const id = String(q.id);
+      if (!mandatory.has(id) || open.has(id)) continue;
+      if ((childrenOf(q.id) || []).some(([, kids]) => kids.some(k => open.has(String(k))))) {
+        open.add(id);
+        grew = true;
+      }
+    }
+  }
+  return { open, later, stops };
+}
+
+/**
+ * Misión -> pasos que la llevan como obligatoria, y paso -> lo que deja a medias (openOf).
+ * Necesita las misiones (las paradas se sitúan en sus objetivos): se calcula una vez,
+ * cuando llegan.
  */
 let questIndex = null;
 function questIndexOf() {
   if (questIndex || !questsData()) return questIndex;
   const steps = {};
   const open = {};
+  const later = {};
   for (const st of STEPS) {
     const quests = questsOf(st.n);
-    const at = stopPoints(st, quests).map(p => quests.findIndex(q => q.id === p.quest)).filter(i => i >= 0);
-    const from = !resolvesHere(st) && at.length ? Math.min(...at) : Infinity;
-    quests.forEach((q, i) => {
-      if (q.kind !== "mandatory") return;
-      (steps[q.id] ??= []).push(st.n);
-      if (i >= from) (open[st.n] ??= new Set()).add(String(q.id));
+    const o = openOf(st, quests);
+    if (o.open.size) open[st.n] = o.open;
+    later[st.n] = o.later;
+    quests.forEach(q => {
+      if (q.kind === "mandatory") (steps[q.id] ??= []).push(st.n);
     });
   }
-  return (questIndex = { steps, open });
+  return (questIndex = { steps, open, later });
 }
 
 /**
  * La misión `qid`, terminada en otro paso que la lleva: hecho y sin dejarla a medias, o
  * dejándola a medias pero con hechos también los pasos que lo cierran. Devuelve el paso
- * donde se terminó (el que cierra, en el segundo caso) o null. Sin las misiones cargadas
- * no se sabe dónde paran los pasos: null, y el porcentaje la suma cuando llegan (el hero
- * se vuelve a pintar al cambiar `questsLoaded`).
+ * donde se terminó (el que cierra, en el segundo caso) o null. Una que el paso deja para
+ * uno posterior (`later`) no la terminan los que lo cierran: la termina ese paso, que
+ * también la lleva. Sin las misiones cargadas no se sabe dónde paran los pasos: null, y
+ * el porcentaje la suma cuando llegan (el hero se vuelve a pintar al cambiar
+ * `questsLoaded`).
  */
 export function questDoneElsewhere(s, qid, except) {
   const idx = questIndexOf();
@@ -209,6 +244,7 @@ export function questDoneElsewhere(s, qid, except) {
   for (const m of idx.steps[qid] || []) {
     if (m === except || !s.done[m]) continue;
     if (!idx.open[m]?.has(String(qid))) return m;
+    if (String(qid) in idx.later[m]) continue;
     const by = CLOSERS[m] || [];
     if (by.length && by.every(c => s.done[c])) return by.at(-1);
   }
@@ -428,30 +464,31 @@ const objCount = q => q.s.reduce((a, stg) => a + stg.o.length, 0);
 
 /**
  * Lo que un paso termina de los que cierra: no el paso entero, sino lo que este dejó a
- * medias, la misión de su parada roja y las que se hacen después (ni opcionales ni de
- * solo tomarla). Las de antes se hacen en el propio paso, y no todo el mundo sigue la
- * guía en orden. Devuelve esas misiones ({ id: objetivos }), los pasos que con ellas
- * quedan hechos y los que siguen pendientes con las obligatorias que les faltan.
+ * medias (openOf), las misiones donde cae su parada roja (ni opcionales ni de solo
+ * tomarla). Las demás se hacen en el propio paso, también las de después de la parada, y
+ * no todo el mundo sigue la guía en orden. Una parada que termina un paso posterior
+ * (`later`) no la termina este: cuenta como hecha si se llegó a ella. Devuelve esas
+ * misiones ({ id: objetivos }), los pasos que con ellas quedan hechos y los que siguen
+ * pendientes con las obligatorias que les faltan.
  */
 export function closingPlan(s, closes) {
   const out = { questObj: {}, done: [], pending: [] };
   for (const c of closes) {
     const quests = questsOf(c);
-    const at = stopPoints(STEPS[c - 1], quests).map(p => quests.findIndex(q => q.id === p.quest)).filter(i => i >= 0);
+    const { open, later, stops } = openOf(STEPS[c - 1], quests);
     // Sin las misiones (llegan en diferido) o sin parada que situar no se sabe qué deja
     // el paso a medias: se marca entero, como siempre
-    if (!at.length) {
+    if (!stops.some(p => quests.some(q => q.id === p.quest))) {
       out.done.push(c);
       continue;
     }
-    const from = Math.min(...at);
-    quests.forEach((q, i) => {
-      if (i >= from && q.kind === "mandatory") out.questObj[q.id] = objCount(q);
+    quests.forEach(q => {
+      if (open.has(String(q.id)) && !(String(q.id) in later)) out.questObj[q.id] = objCount(q);
     });
     // Hecha como en el diario y en el porcentaje: pasada de largo o en su último objetivo
     const pos = Math.min(s.questPos[c] || 0, quests.length - 1);
     const missing = quests.filter((q, i) => q.kind === "mandatory" && i >= pos
-      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < objCount(q) && !questDoneElsewhere(s, q.id, c));
+      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
     if (missing.length) out.pending.push({ n: c, missing });
     else out.done.push(c);
   }
@@ -462,15 +499,15 @@ export function closingPlan(s, closes) {
 export function pendingText(pending) {
   if (pending.length > 1) {
     const els = list(pending.map(p => `el ${p.n}`));
-    return `E${els.slice(1)} siguen pendientes: les faltan misiones anteriores.`;
+    return `E${els.slice(1)} siguen pendientes: les faltan misiones.`;
   }
   const { n, missing } = pending[0];
-  return `El ${n} sigue pendiente: ${missing.length > 1 ? `le faltan ${missing.length} misiones anteriores` : `falta «${missing[0].n}»`}.`;
+  return `El ${n} sigue pendiente: ${missing.length > 1 ? `le faltan ${missing.length} misiones` : `falta «${missing[0].n}»`}.`;
 }
 
 /**
  * «Hecho» en un paso que cierra otros: marca n y termina lo que les queda (closingPlan).
- * Los que aún tienen misiones anteriores sin hacer siguen pendientes y un aviso lo dice,
+ * Los que aún tienen misiones sin hacer siguen pendientes y un aviso lo dice,
  * con la opción de marcarlos. Va después del aviso del Dofus: este pide algo, y la
  * franja ya celebra el Dofus.
  */

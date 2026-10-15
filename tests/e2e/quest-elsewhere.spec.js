@@ -42,8 +42,9 @@ const LEFT_62 = ["Dragones y chapuzonas", "Altar del Norte", "El salvaje salvaje
 test("las misiones que un paso hecho termina salen completadas en otro paso, y vuelven al desmarcarlo", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": doneOf([38]) });
   await openStep(page, 62);
-  for (const name of ["Extinción de los fuegos", "Esto parece el Sur", "La bruja mala del Este"]) await doneIn(page, name, 38);
-  for (const name of LEFT_62) await pending(page, name);
+  for (const name of ["Extinción de los fuegos", "Esto parece el Sur"]) await doneIn(page, name, 38);
+  // «La bruja mala del Este» se queda en la bendición de Viti, que da una misión del 39
+  for (const name of ["La bruja mala del Este", ...LEFT_62]) await pending(page, name);
   // Sus medallones tampoco se pulsan
   const fuegos = quest(page, "Extinción de los fuegos");
   await fuegos.locator("summary .q-name").click();
@@ -51,11 +52,11 @@ test("las misiones que un paso hecho termina salen completadas en otro paso, y v
   await expect(fuegos.locator(".obj-med:not([disabled])")).toHaveCount(0);
   // El porcentaje las cuenta en el 62
   const q = WEIGHTS[62].q;
-  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(WEIGHTS[38].w + q[1] + q[2] + q[3])}%`);
+  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(WEIGHTS[38].w + q[1] + q[2])}%`);
   // Desmarcar el 38 las deja pendientes otra vez
   await row(page, 38).locator(".row-check").click();
   await expect(row(page, 38)).not.toHaveClass(/\bdone\b/);
-  for (const name of ["Extinción de los fuegos", "Esto parece el Sur", "La bruja mala del Este"]) await pending(page, name);
+  for (const name of ["Extinción de los fuegos", "Esto parece el Sur"]) await pending(page, name);
   await expect(page.locator("#heroPct")).toHaveText("0%");
   expect(errors).toEqual([]);
 });
@@ -104,10 +105,10 @@ test("en el 55 salen completadas las misiones que terminan el 33, el 44 y el 54"
 
 test("marcar el paso que termina lo último que le faltaba a otro marca también ese", async ({ page }) => {
   // Todo lo del 62 hecho en otros pasos salvo lo del 58; «Oración en los tiempos de cólera»,
-  // que solo lleva el 62, terminada
+  // que solo lleva el 62, terminada, y «La bruja mala del Este», que el 38 deja para el 62, también
   await openApp(page, {
     "silvestre:done": doneOf([32, 37, 38, 39, 48, 50, 51, 61]),
-    "silvestre:questObjective": { 1663: 13 },
+    "silvestre:questObjective": { 1663: 13, 1657: 13 },
   });
   await openStep(page, 62);
   await pending(page, "La bendición de Foluk");
@@ -166,7 +167,7 @@ test("marcar el 93 termina «Los tótems de Maimane», donde para el 92, y el 92
   await page.locator("#toggleBtn").click();
   await expect(row(page, 93)).toHaveClass(/\bdone\b/);
   await expect(row(page, 92)).not.toHaveClass(/\bdone\b/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 92 sigue pendiente: le faltan 3 misiones anteriores.");
+  await expect(page.locator("#toastTxt")).toHaveText("El 92 sigue pendiente: le faltan 3 misiones.");
   expect((await readLS(page, "silvestre:questObjective"))["2425"]).toBe(6);
 });
 
@@ -227,4 +228,68 @@ test("el 63 se retoma en el 81, donde Golosotrón da el recurso que le falta; es
   // No marca nada: el 63 sigue pendiente con el 81 hecho
   await expect(row(page, 63)).not.toHaveClass(/\bdone\b/);
   await expect(page.locator("#journal .call.closedin")).toHaveCount(0);
+});
+
+test("tras la parada solo queda abierta la misión que la lleva: el 66 termina «Tinta espectacular» del 65, no la que va después", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": doneOf([64]) });
+  await openStep(page, 66);
+  await page.locator("#toggleBtn").click();
+  await expect(row(page, 66)).toHaveClass(/\bdone\b/);
+  // «La epopeya del monje peregrino» va tras la parada, pero se termina en el propio 65
+  await expect(row(page, 65)).not.toHaveClass(/\bdone\b/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 65 sigue pendiente: falta «La epopeya del monje peregrino».");
+  const objs = await readLS(page, "silvestre:questObjective");
+  expect(objs["2204"]).toBe(27);
+  expect(objs["2158"]).toBeUndefined();
+  expect(errors).toEqual([]);
+});
+
+test("en el 68 queda abierta «La última muralla» y su madre, que la espera; las de después las termina el 68", async ({ page }) => {
+  await openApp(page);
+  await openStep(page, 72);
+  await page.locator("#toggleBtn").click();
+  await expect(row(page, 72)).toHaveClass(/\bdone\b/);
+  await expect(row(page, 68)).not.toHaveClass(/\bdone\b/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 68 sigue pendiente: le faltan 2 misiones.");
+  const objs = await readLS(page, "silvestre:questObjective");
+  expect([objs["2406"], objs["2407"], objs["2408"], objs["2160"]]).toEqual([4, 30, undefined, undefined]);
+});
+
+test("una madre que espera a una hija de otro paso para ahí en rojo: la termina un paso posterior que la lleva", async ({ page }) => {
+  const errors = await openApp(page, { "silvestre:done": doneOf([38, 39, 48]) });
+  // 38: «La bruja mala del Este» se retoma en verde tras los monstruos y para ante la bendición de Viti
+  await openStep(page, 38);
+  const bruja = quest(page, "La bruja mala del Este");
+  await bruja.locator("summary .q-name").click();
+  await expect(bruja.locator(".obj-resume + .obj-row")).toHaveText(/Vence 7 x Harpirata/);
+  await expect(bruja.locator(".obj-stop")).toHaveText("Hasta obtener la bendición de Viti: la da «La bendición de Viti», en el paso 39");
+  await expect(bruja.locator(".obj-stop + .obj-row")).toHaveText(/Obtén la bendición de Viti/);
+  // Con el 38, el 39 y el 48 hechos, en el 62 sigue pendiente: la termina el 62
+  await openStep(page, 62);
+  await doneIn(page, "La bendición de Viti", 48);
+  await pending(page, "La bruja mala del Este");
+  // 92: «Un legado atormentado» da «Los tótems de Maimane» y no fabrica la runa sin su tótem
+  await openStep(page, 92);
+  const legado = quest(page, "Un legado atormentado");
+  await legado.locator("summary .q-name").click();
+  await expect(legado.locator(".obj-kids")).toHaveText("Aquí se hace «Los tótems de Maimane»");
+  await expect(legado.locator(".obj-kids + .obj-stop")).toHaveText("Hasta tener que dropear los 6 tótems");
+  await expect(legado.locator(".obj-stop + .obj-row")).toHaveText(/Fabrica 1 Runa de armonía/);
+  expect(errors).toEqual([]);
+});
+
+test("«Hecho» en el 93 termina «Los tótems de Maimane» pero no «Un legado atormentado», que termina el 98", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([91]), "silvestre:questPos": { 92: 2 }, "silvestre:questObjective": { 2423: 2 } });
+  await openStep(page, 93);
+  await page.locator("#toggleBtn").click();
+  await expect(row(page, 93)).toHaveClass(/\bdone\b/);
+  // Lo de antes de la parada, hecho: el 92 queda hecho
+  await expect(row(page, 92)).toHaveClass(/\bdone\b/);
+  const objs = await readLS(page, "silvestre:questObjective");
+  expect(objs["2425"]).toBe(6);
+  expect(objs["2423"]).toBe(2);
+  // En el 98, «Un legado atormentado» sigue pendiente; «Los tótems de Maimane», hecha
+  await openStep(page, 98);
+  await doneIn(page, "Los tótems de Maimane", 93);
+  await pending(page, "Un legado atormentado");
 });

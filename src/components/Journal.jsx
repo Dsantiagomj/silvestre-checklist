@@ -240,7 +240,8 @@ function Quests({ step, quests, loaded, s }) {
   const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1]
     .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
-  const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
+  // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
+  const stops = stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
   // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
   const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const notes = missionNotes(step);

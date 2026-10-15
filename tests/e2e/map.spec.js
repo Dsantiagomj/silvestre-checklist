@@ -138,7 +138,7 @@ test("la ficha del paso: estandarte, título, lo que se gana, la parada y lo que
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).toHaveClass(/done/);
   await expect(node(page, 33)).not.toHaveClass(/done/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones anteriores.");
+  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones.");
   expect((await readLS(page, "silvestre:questObjective"))["2444"]).toBe(12);
   // Pulsar el aviso es pulsar fuera: la ficha se cierra
   await page.click("#toastAction");
