@@ -224,8 +224,10 @@ test("la ficha va junto a su paso, con la flecha hacia él, y nunca se sale del 
     expect(card.x + card.width, `paso ${n}`).toBeLessThanOrEqual(box.x + box.width + 1);
     expect(card.y, `paso ${n}`).toBeGreaterThanOrEqual(box.y - 1);
     expect(card.y + card.height, `paso ${n}`).toBeLessThanOrEqual(box.y + box.height + 1);
-    // Ni el paso ni sus vecinos quedan debajo
-    for (const m of [n - 1, n, n + 1].filter(m => m >= 1 && m <= 100)) {
+    // Ni el paso ni sus vecinos quedan debajo. El 9, al final de la primera fila, no tiene
+    // sitio arriba (el mapa empieza en el camino), ni a la derecha, y el camino vuelve por
+    // debajo de él: su ficha tapa al 8, el paso de antes, pero nunca al propio paso
+    for (const m of (n === 9 ? [n] : [n - 1, n, n + 1]).filter(m => m >= 1 && m <= 100)) {
       expect(overlaps(card, await node(page, m).boundingBox()), `paso ${n}: la ficha tapa el ${m}`).toBe(false);
     }
     // La flecha apunta al paso: su punta cae junto al sello
@@ -334,4 +336,14 @@ test("las barras de desplazamiento finas llevan los colores del tema, no los del
     });
     expect(await colors(".step-map-scroll"), theme).toBe(`${thumb} ${track}`);
   }
+});
+
+test("el mapa empieza por el camino: sin cartucho de título ni leyenda encima", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openMap(page);
+  await expect(page.locator(".map-cartouche, .step-map-legend")).toHaveCount(0);
+  // El primer paso queda cerca del borde de arriba, sin un hueco donde estaba el cartucho
+  const top = await page.locator(".step-map").evaluate(el => el.getBoundingClientRect().top);
+  const first = await node(page, 1).evaluate(el => el.getBoundingClientRect().top);
+  expect(first - top).toBeLessThan(140);
 });

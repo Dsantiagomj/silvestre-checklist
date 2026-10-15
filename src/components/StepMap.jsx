@@ -11,10 +11,8 @@ import MapCard from "./MapCard.jsx";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const ROW_H = 132;
-// Arriba, el cartucho con el título y la leyenda. En escritorio deja además sitio para
-// abrir encima la ficha de los pasos de la primera fila (en sus esquinas el vecino va
-// debajo y al lado, así que solo queda arriba)
-const topFor = w => (w >= 560 ? 300 : 176);
+// Arriba, lo justo para el «Estás aquí» del primer paso
+const topFor = w => (w >= 560 ? 84 : 72);
 // Abajo, el final del camino: el Dofus Silvestre. Y, en escritorio, sitio para abrir
 // debajo la ficha de los pasos de la última fila
 const bottomFor = w => (w >= 560 ? 300 : 170);
@@ -276,24 +274,6 @@ const Nodes = memo(function Nodes({ pos, done, filters, here, selected, onPick }
   });
 });
 
-/** El cartucho del mapa: su título, lo andado y la leyenda. */
-function Cartouche({ done, eggs }) {
-  return (
-    <header className="map-cartouche">
-      <span className="map-cartouche-kicker">Mapa de la aventura</span>
-      <h3 className="map-cartouche-title">El camino del Silvestre</h3>
-      <p className="map-cartouche-count">{done}/{STEPS.length} pasos andados · {eggs}/{DOFUS_ROAD.length} Dofus</p>
-      <p className="map-cartouche-help">Pasa el ratón por un paso para verlo; púlsalo para abrir su ficha.</p>
-      <div className="step-map-legend" aria-hidden="true">
-        <span><i className="lg-walked"></i>Lo andado</span>
-        <span><i className="lg-here"></i>Estás aquí</span>
-        <span><i className="lg-egg"></i>Dofus del camino</span>
-        <span><i className="lg-boss"></i>Se pasa un jefe</span>
-      </div>
-    </header>
-  );
-}
-
 // Hasta dónde estaba desplazado el mapa: al volver del diario sigue donde se dejó
 // (null: aún no se ha abierto)
 let lastScroll = null;
@@ -349,7 +329,6 @@ export default function StepMap({ s, current, mobile }) {
   const here = nextPending(s);
   // Lo andado: del primer paso al último hecho
   const lastDone = STEPS.reduce((m, st) => (s.done[st.n] ? st.n : m), 0);
-  const doneCount = STEPS.filter(st => s.done[st.n]).length;
   const sel = selected != null ? STEPS[selected - 1] : null;
 
   // Un clic de teclado (detail 0) deja el foco en la ficha
@@ -392,7 +371,6 @@ export default function StepMap({ s, current, mobile }) {
             )}
           </>
         )}
-        <Cartouche done={doneCount} eggs={DOFUS_ROAD.filter(d => s.done[d.step]).length} />
         <div className={"map-end" + (s.done[STEPS.length] ? " done" : "")}>
           {BRAND_ICON && <img src={imgUrl(BRAND_ICON)} alt="" loading="lazy" decoding="async" />}
           <span className="map-end-label">Fin del camino</span>
