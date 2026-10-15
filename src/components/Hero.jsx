@@ -242,8 +242,7 @@ export default function Hero() {
                 aria-label="Cómo se calcula el porcentaje">i</button>
               <span className="pct-note" id="pctNote" role="tooltip">
                 No todos los pasos valen lo mismo: cuentan más los que tienen misiones de más
-                nivel y más largas. Por eso el porcentaje no es pasos hechos entre 100. Las misiones
-                que terminas ya suman, aunque no hayas marcado su paso.
+                nivel y más largas.
               </span>
             </span>
             <small>{obtained ? "¡Obtenido!" : "Obtención"} · <b id="statDone">{done}</b>/{STEPS.length} pasos</small>

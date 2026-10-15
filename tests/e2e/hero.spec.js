@@ -267,7 +267,7 @@ test("el ponderado es una nota del porcentaje", async ({ page }) => {
   await expect(page.locator("#pctNote")).toBeHidden();
   await info.hover();
   await expect(page.locator("#pctNote")).toBeVisible();
-  await expect(page.locator("#pctNote")).toContainText("nivel");
+  await expect(page.locator("#pctNote")).toHaveText("No todos los pasos valen lo mismo: cuentan más los que tienen misiones de más nivel y más largas.");
 });
 
 test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", async ({ page }) => {
