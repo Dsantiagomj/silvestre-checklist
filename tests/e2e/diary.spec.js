@@ -1239,3 +1239,31 @@ test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una n
   expect(FIGURES[38].f.name).toBe("Meriana");
   expect(errors).toEqual([]);
 });
+
+test("las misiones que la guía deja a medias y no retoma lo dicen dentro: 13, 15 y 83", async ({ page }) => {
+  await openApp(page);
+  const text = "La guía no la retoma: para el Silvestre basta con llegar hasta aquí.";
+  for (const [n, name] of [[13, "El daño de Búril"], [15, "Su nombre es Ninguno"], [83, "Birk, hija de Bork"]]) {
+    await stepData(page, n);
+    const q = questItem(page, name);
+    await q.locator("summary .q-name").click();
+    await expect(q.locator(".q-note")).toHaveText(text);
+    await expect(page.locator("#journal .q-note")).toHaveCount(1);
+  }
+});
+
+test("el consejo «En el logro X, misión N: Nombre. = …» va dentro de esa misión, sin ese principio", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 77);
+  await expect(page.locator("#journal .goal-calls .call.tip")).toHaveCount(0);
+  const muerte = questItem(page, "Muerte y renovación");
+  await muerte.locator("summary .q-name").click();
+  await expect(muerte.locator(".q-note")).toHaveText(
+    "Se puede encadenar la parte de matar monstruos de la zona con las primeras 4 salas de las mazmorras de Corrupción.");
+  // Con el icono y el rótulo de consejo, no el de nota
+  await expect(muerte.locator(".q-note img")).toHaveAttribute("title", "Consejo");
+  // Lo mismo en el 75 y el 76
+  await stepData(page, 75);
+  await expect(questItem(page, "El barco con esclavos").locator(".q-note")).toContainText("Se puede encadenar");
+  await expect(page.locator("#journal .goal-calls .call.tip")).toHaveCount(0);
+});

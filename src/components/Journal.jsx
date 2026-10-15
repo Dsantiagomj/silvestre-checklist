@@ -185,13 +185,13 @@ function TakeOnly({ q, notes, open, setOpen }) {
 }
 
 /**
- * Las notas de la guía que hablan de esta misión («Misión 1: El dragón blanco. (Se pasa
+ * Las notas y los consejos de la guía que hablan de esta misión («Misión 1: El dragón blanco. (Se pasa
  * Miauvisor…)», missionNotes): arriba, junto a dónde empieza, sin el «Misión N: Nombre.».
  */
 function QuestNotes({ notes }) {
-  return notes.map((text, i) => (
+  return notes.map(({ text, kind = "note" }, i) => (
     <p key={i} className="q-note">
-      {CALL_ICONS.note && <img src={imgUrl(CALL_ICONS.note)} alt="" title="Nota" />}
+      {CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" title={CALL[kind].label} />}
       <span><RichText text={text} /></span>
     </p>
   ));
@@ -257,7 +257,7 @@ function Quests({ step, quests, loaded, s }) {
     requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
       ?.scrollIntoView({ block: "start" }));
   };
-  const notesOf = q => [...notes.filter(x => x.name === q.n).map(x => x.text), ...(QUEST_NOTES[step.n]?.[q.id] ? [QUEST_NOTES[step.n][q.id]] : [])];
+  const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
   const items = quests.map((q, i) => {
     if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={opened.has(q.id)} setOpen={setOpen} />;
     let offset = 0;
