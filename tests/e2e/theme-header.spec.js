@@ -184,3 +184,18 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
     }, { timeout: 3_000, message: sel }).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+test("los textos con contorno lo dibujan con sombras, sin -webkit-text-stroke (en algunos navegadores raya el interior de las letras)", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="83"] .row-main');
+  await expect(page.locator("#journal .journal-title")).toBeVisible();
+  for (const sel of [".logo i", "#journal .journal-num", "#journal .journal-title", "#journal .journal-show-name", ".egg-pct-row > b"]) {
+    const [stroke, shadows] = await page.locator(sel).first().evaluate(el => {
+      const s = getComputedStyle(el);
+      return [s.webkitTextStrokeWidth, (s.textShadow.match(/rgb/g) || []).length];
+    });
+    expect(stroke, sel).toBe("0px");
+    // Un anillo de sombras alrededor más la sombra dura de abajo
+    expect(shadows, sel).toBeGreaterThanOrEqual(5);
+  }
+});
