@@ -10,12 +10,17 @@ How the progress percentage is weighted:
     so nothing counts twice.
   * A step's weight is the sum of its quests' shares. A step with no quests would weigh
     nothing: it gets the weight of one level-1 quest so marking it still counts.
+  * Before a step is marked, each of its finished quests already counts its share. So
+    the app can tell without loading quests.json, every step also lists its quests'
+    shares in order, and the id and number of objectives of its last quest (the one
+    that is finished when its objective index reaches that number).
 
 Level source: the guide page on Torrente Arcano when it states one ("Nivel mínimo N"
 under "Prerrequisitos"); otherwise DofusDB's `levelMin` (`lv` in quests.json).
 
 Reads  : src/data/{quests,guides}.json
-Writes : src/data/weights.json ({step number: weight})
+Writes : src/data/weights.json ({step number: {"w": weight, "q": [share of each quest],
+                                 "id": last quest id, "o": its objectives}})
 Caches : .build/data/ta_levels.json  ({url: {"level": n | null, "pre": text}})
 Run    : python3 -I .build/build_weights.py   (after build_quests_js.py)
 """
@@ -128,11 +133,17 @@ def main():
         return max(1, sum(len(stage["o"]) for stage in quests[q]["s"]))
 
     points = {q: level[q] * math.sqrt(objectives(q)) for q in used}
-    weights = {}
+    weights, steps = {}, {}
     for n in sorted(step_quests):
-        w = sum(points[str(q)] / shared[str(q)] for q in step_quests[n])
-        weights[str(n)] = round(max(w, MIN_WEIGHT), 3)
-    OUT_JSON.write_text(json.dumps(weights, indent=0) + "\n")
+        qs = step_quests[n]
+        shares = [points[str(q)] / shared[str(q)] for q in qs]
+        weights[str(n)] = round(max(sum(shares), MIN_WEIGHT), 3)
+        steps[str(n)] = {"w": weights[str(n)], "q": [round(x, 3) for x in shares]}
+        if qs:
+            # Lo que tiene el diario por objetivos: los de verdad, sin el mínimo de 1
+            steps[str(n)].update(id=str(qs[-1]), o=sum(len(stage["o"]) for stage in quests[str(qs[-1])]["s"]))
+    OUT_JSON.write_text("{\n" + ",\n".join(f'"{n}": {json.dumps(v, separators=(",", ":"))}'
+                                            for n, v in steps.items()) + "\n}\n")
 
     # Report
     ta = [q for q in used if source[q] == "ta"]

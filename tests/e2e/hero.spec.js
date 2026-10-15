@@ -115,10 +115,12 @@ test("el peso de una misión es su nivel por la raíz de sus objetivos", async (
   const read = f => JSON.parse(readFileSync(new URL(`../../src/data/${f}`, import.meta.url), "utf8"));
   const weights = read("weights.json");
   // 29 y 30: una misión cada uno, de nivel 110 (mínimo en Torrente Arcano), con 2 y 7 objetivos
-  expect(weights["29"]).toBeCloseTo(110 * Math.sqrt(2), 1);
-  expect(weights["30"]).toBeCloseTo(110 * Math.sqrt(7), 1);
+  expect(weights["29"].w).toBeCloseTo(110 * Math.sqrt(2), 1);
+  expect(weights["30"].w).toBeCloseTo(110 * Math.sqrt(7), 1);
   // «La eterna cosecha» (paso 79, 339 objetivos) pesa mucho, pero la raíz lo contiene
-  expect(weights["79"]).toBeCloseTo(40 * Math.sqrt(339), 0);
+  expect(weights["79"].w).toBeCloseTo(40 * Math.sqrt(339), 0);
+  // Lo que vale cada misión del paso suma lo que vale el paso
+  for (const { w, q } of Object.values(weights)) expect(q.reduce((a, p) => a + p, 0)).toBeCloseTo(w, 1);
 });
 
 test("el porcentaje pesa cada paso por el nivel de sus misiones", async ({ page }) => {
