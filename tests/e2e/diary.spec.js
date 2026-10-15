@@ -1176,3 +1176,18 @@ test("el estandarte no crece con el texto: el del 93 mide lo mismo que el del 12
     expect(Math.abs(tall.top - usual.top)).toBeLessThanOrEqual(1);
   }
 });
+
+test("los nombres de misión de la guía no arrastran el «)» que cierra el resaltado, y enlazan en su aviso", async ({ page }) => {
+  const GUIDES = JSON.parse(readFileSync(new URL("../../src/data/guides.json", import.meta.url), "utf8"));
+  const unbalanced = Object.keys(GUIDES.missions).filter(k => (k.match(/\)/g) || []).length > (k.match(/\(/g) || []).length);
+  expect(unbalanced).toEqual([]);
+  await openApp(page);
+  // 54: «(Se debe también completar la misión del Bosque maléfico: … misión 2: Detenla si puedes)»
+  await stepData(page, 54);
+  await expect(page.locator("#journal .call.must a.guide-link", { hasText: "Detenla si puedes" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/detenla-si-puedes");
+  // 83: «(Hasta justo después de pasar Dazahk Martegel y obtener la misión: La biblia de los rencores)»
+  await stepData(page, 83);
+  await expect(page.locator("#journal .call.stop a.guide-link", { hasText: "La biblia de los rencores" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/la-biblia-de-los-rencores");
+});
