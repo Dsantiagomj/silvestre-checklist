@@ -132,9 +132,11 @@ test("la ficha del paso: estandarte, título, lo que se gana, la parada y lo que
   await expect(card.locator(".map-card-line.later")).toContainText("Se termina más adelante");
   await card.locator('.map-card-line.later .step-chip[data-n="34"]').click();
   await expect(card.locator(".journal-num")).toHaveText("34");
-  // Marcar y desmarcar
+  // Marcar (con el 33, que cierra) y desmarcar
+  await expect(card.locator(".map-card-done")).toHaveText("✓ Hecho, con el 33");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).toHaveClass(/done/);
+  await expect(node(page, 33)).toHaveClass(/done/);
   await expect(card.locator(".map-card-done")).toHaveText("Desmarcar");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).not.toHaveClass(/done/);
