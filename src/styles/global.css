@@ -2835,6 +2835,22 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 }
 /* El nombre no ocupa todo el ancho, para que la etiqueta vaya pegada a él */
 .q-name:has(+ .q-optional){ flex:0 1 auto; }
+/* «Misión hecha»: un botón plano del juego, pequeño; hecha, con el verde de los medallones */
+.q-done-btn{
+  flex:none; padding:3px 9px; border-radius:4px; cursor:pointer;
+  background:var(--gw-btn); border:1px solid var(--gw-btn-line); color:var(--gw-btn-ink);
+  font:700 11px var(--font-display); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 1px 2px rgba(0,0,0,.3);
+  transition:filter .15s ease, background-color .15s ease, border-color .15s ease;
+}
+.q-done-btn:hover:not(:disabled){ filter:brightness(1.12); }
+.q-done-btn:disabled{ cursor:default; }
+.q-done-btn.is-done{
+  background:color-mix(in srgb, #8fd13a 16%, transparent); border-color:#7ea83a; color:#8fd13a; box-shadow:none;
+}
+/* Con el detalle estrecho, solo la ✓: el nombre de la misión no se parte en dos líneas */
+@media (max-width:1100px){ .q-done-txt{ display:none; } .q-done-btn{ padding:2px 7px; font-size:13px; } }
+[data-theme="light"] .q-done-btn.is-done{ background:color-mix(in srgb, #4e8f1b 12%, transparent); border-color:#4e8f1b; color:#3d7414; }
 
 /* Misiones de varios logros: un título por logro */
 .q-group + .q-group{ margin-top:14px; }
