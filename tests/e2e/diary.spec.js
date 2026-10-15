@@ -15,6 +15,9 @@ test("el diario lista los 100 pasos seguidos, sin capítulos por Dofus", async (
   await expect(row(page, 34).locator(".row-num")).toHaveText("34");
   await expect(row(page, 34).locator(".row-title")).toHaveText("El árbol que esconde el bosque");
   await expect(row(page, 34).locator(".row-zone")).toContainText("Reino de Amakna");
+  // Sin el esfuerzo del paso: ni en la fila ni en la ficha del mapa
+  await expect(page.locator(".row-effort")).toHaveCount(0);
+  await expect(page.locator(".diary-row", { hasText: /Trivial|Corto|Medio|Largo|Épico/ })).toHaveCount(0);
 });
 
 test("sin nada seleccionado, el detalle muestra el siguiente pendiente", async ({ page }) => {
@@ -621,16 +624,12 @@ test("una misión que da el PNJ de cada clase lo dice, y el paso no pone a uno c
   await expect(page.locator("#journal .q-item", { hasText: "De la mano" }).locator(".q-start")).toContainText("Pandawelo");
 });
 
-test("la cabecera es corta: esfuerzo con relojes de arena, «Incluye» en una línea y «Necesitas» en el cuerpo", async ({ page }) => {
+test("la cabecera es corta: sin esfuerzo, «Incluye» en una línea y «Necesitas» en el cuerpo", async ({ page }) => {
   await openApp(page);
   await stepData(page, 1);
   const goal = page.locator("#journal .journal-goal");
-  // Sin etiquetas: el esfuerzo son relojes de arena junto al título (largo: 4 de 5)
-  await expect(goal.locator(".journal-meta, .badge")).toHaveCount(0);
-  const effort = goal.locator(".goal-effort");
-  await expect(effort).toHaveAttribute("title", "Esfuerzo: Largo");
-  await expect(effort.locator("img")).toHaveCount(5);
-  await expect(effort.locator("img.off")).toHaveCount(1);
+  // Sin etiquetas ni relojes de arena: bajo el título no se dice el esfuerzo
+  await expect(goal.locator(".journal-meta, .badge, .goal-effort")).toHaveCount(0);
   // «Incluye», una línea bajo el texto de la guía
   await expect(goal.locator(".goal-calls .call.includes b")).toHaveText("Incluye");
   // «Necesitas» vuelve al cuerpo, antes de las misiones
@@ -746,8 +745,6 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
   await expect(goal.locator(".goal-line, .goal-lines")).toHaveCount(0);
   await expect(goal.locator(".journal-base.is-source")).toContainText("hasta llegar a la misión 7");
   await expect(page.locator("#journal .step-line, #journal .tier-diamonds")).toHaveCount(0);
-  // El esfuerzo, en su propia línea bajo el título
-  expect(await goal.locator(".goal-effort").evaluate(el => el.closest(".journal-title"))).toBeNull();
   // El número y la zona, en el estandarte
   await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
   await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");

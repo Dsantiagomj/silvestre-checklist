@@ -4,7 +4,7 @@ import { useAnimate } from "motion/react-mini";
 import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
-import { STEPS, TIER_META } from "../data/steps.js";
+import { STEPS } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
@@ -67,7 +67,6 @@ const Row = memo(function Row({ step, done, current }) {
         <span className="row-art" aria-hidden="true">
           {art && <img src={imgUrl(art.img)} alt={art.name} title={art.name} loading="lazy" decoding="async" />}
         </span>
-        <span className="row-effort">{TIER_META[step.effort].label}</span>
       </button>
     </li>
   );

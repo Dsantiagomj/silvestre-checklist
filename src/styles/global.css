@@ -2170,7 +2170,7 @@ header.is-scrolled .title-bar{
 }
 .row-main{
   flex:1; min-width:0;
-  display:grid; grid-template-columns:34px 26px minmax(0, 1fr) 28px 46px; align-items:center; gap:10px;
+  display:grid; grid-template-columns:34px 26px minmax(0, 1fr) 28px; align-items:center; gap:10px;
   padding:7px 10px 7px 8px; border:0; border-radius:8px; background:none;
   color:inherit; font:inherit; text-align:left; cursor:pointer;
 }
@@ -2192,7 +2192,6 @@ header.is-scrolled .title-bar{
   font-size:10.5px; font-weight:700; color:var(--accent-ink);
 }
 .row-art img{ display:block; width:28px; height:28px; object-fit:contain; }
-.row-effort{ font-size:12px; color:var(--txt-mute); text-align:right; }
 .diary-row.done .row-title{ color:var(--txt-mute); }
 .diary-row.done .row-thumb{ filter:grayscale(.8) brightness(.6); }
 .diary-row.done .row-art{ opacity:.5; }
@@ -2281,10 +2280,6 @@ header.is-scrolled .title-bar{
   display:grid; place-items:center; background:#e9c56b; color:#2a1d0a; border:2px solid #141712;
   font:900 12px var(--font-body); cursor:help;
 }
-/* El esfuerzo: relojes de arena del juego, encendidos hasta su nivel */
-.goal-effort{ display:inline-flex; gap:1px; margin-top:5px; cursor:help; }
-.goal-effort img{ width:18px; height:18px; object-fit:contain; filter:drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
-.goal-effort img.off{ opacity:.2; filter:grayscale(1); }
 /* Los avisos de la guía en la cabecera: una línea por aviso, con su icono en un círculo
    de su color y el rótulo pequeño delante; sin panel */
 .goal-calls{ display:flex; flex-direction:column; gap:7px; padding-top:10px; border-top:1px dashed #3d3322; }
@@ -2510,8 +2505,6 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .goal-calls{ border-top-color:#d5c8a6; }
 [data-theme="light"] .goal-calls .call{ color:#3b3324; }
 [data-theme="light"] .goal-ach .is-complete{ border-color:#f4ebd3; }
-[data-theme="light"] .goal-effort img{ filter:none; }
-[data-theme="light"] .goal-effort img.off{ opacity:.28; }
 [data-theme="light"] .goal-guide-label{ color:#8a6510; }
 [data-theme="light"] .journal-goal .journal-base{ color:#5e5240; }
 [data-theme="light"] .journal-goal .guide-link, [data-theme="light"] .journal-goal .step-ref{ color:#3b2a10; border-bottom-color:#8a6510; }
@@ -2579,7 +2572,6 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 }
 @media (max-width:600px){
   .row-main{ grid-template-columns:30px 22px minmax(0, 1fr) 26px; gap:8px; }
-  .row-effort{ display:none; }
   .journal-top{ grid-template-columns:132px minmax(0,1fr); gap:14px; padding:14px 16px; }
   .journal-banner{ min-height:240px; padding:12px 8px 34px; }
   .journal-num{ font-size:40px; }
