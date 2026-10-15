@@ -14,7 +14,6 @@ import {
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
-import { prefersReducedMotion } from "../lib/motion.js";
 import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
 
@@ -249,11 +248,12 @@ function Quests({ step, quests, loaded, s }) {
   const kidsOf = q => (childrenOf(q.id) || [])
     .map(([index, ids]) => ({ index, items: ids.map(id => quests.find(x => x.id === id)).filter(x => x && x.kind !== "take") }))
     .filter(c => c.items.length);
-  // Llevar a una hija: se despliega y se pone a la vista
+  // Llevar a una hija: se despliega y se pone a la vista. Sin desplazamiento suave: lo
+  // cortaba la altura de la misión al abrirse
   const toKid = (id, el) => {
     setOpen(id, true);
     requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
-      ?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" }));
+      ?.scrollIntoView({ block: "start" }));
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n).map(x => x.text), ...(QUEST_NOTES[step.n]?.[q.id] ? [QUEST_NOTES[step.n][q.id]] : [])];
   const items = quests.map((q, i) => {
