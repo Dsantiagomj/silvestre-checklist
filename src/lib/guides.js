@@ -13,7 +13,8 @@ const QUESTS = byName(GUIDES.quests || {});
 // Los nombres largos primero: "Ocre de ámbar" antes que una misión que lo contenga
 const NAMES = [...Object.entries(GUIDES.missions), ...Object.entries(GUIDES.achievements)]
   .sort((a, b) => b[0].length - a[0].length);
-const INCISOS = /incisos?\s+(\d+(?:\s*(?:,|y)\s*\d+)*)/gi;
+// "inciso 78", "incisos 5 y 22" y, en las notas escritas a mano, "paso 66"
+const INCISOS = /\b(?:incisos?|pasos?)\s+(\d+(?:\s*(?:,|y)\s*\d+)*)/gi;
 
 export const missionGuide = name => MISSIONS.get(norm(name)) || QUESTS.get(norm(name)) || null;
 export const achievementGuide = name => ACHIEVEMENTS.get(norm(name)) || null;
