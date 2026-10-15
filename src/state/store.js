@@ -4,7 +4,9 @@
 // ============================================================================
 import { useSyncExternalStore } from "react";
 import { prefersReducedMotion } from "../lib/motion.js";
-import { STEPS, ALL_PREREQS, PREVIOUS_STEPS, TIER_POINTS, TOTAL_PTS } from "../data/steps.js";
+import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
+// El peso de cada paso: el nivel de sus misiones (.build/build_weights.py)
+import WEIGHTS from "../data/weights.json";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 
@@ -144,8 +146,19 @@ export const useAppState = () => useSyncExternalStore(subscribe, getState);
 // ============================================================================
 export const isDone = (s, n) => !!s.done[n];
 export const doneCount = s => STEPS.filter(st => s.done[st.n]).length;
-export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? TIER_POINTS[st.effort] : 0), 0);
-export const progressPct = s => (TOTAL_PTS ? Math.round((donePts(s) / TOTAL_PTS) * 1000) / 10 : 0);
+const weight = n => WEIGHTS[n] ?? 1;
+const TOTAL_PTS = STEPS.reduce((a, st) => a + weight(st.n), 0);
+export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : 0), 0);
+/**
+ * Lo hecho, pesado por el nivel de las misiones de cada paso, con un decimal: 100 solo
+ * con todo hecho y 0 solo sin nada (un paso ligero no se pierde en el redondeo).
+ */
+export const progressPct = s => {
+  const pts = donePts(s);
+  if (!pts) return 0;
+  if (pts >= TOTAL_PTS) return 100;
+  return Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL_PTS) * 1000) / 10));
+};
 // Terminar la guía implica tener los prerrequisitos y los objetos, aunque no se marcaran a mano
 export const guideComplete = s => doneCount(s) === STEPS.length;
 export const isPrereqDone = (s, id) => guideComplete(s) || !!s.prereqs[id];

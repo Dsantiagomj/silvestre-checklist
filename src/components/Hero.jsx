@@ -195,8 +195,9 @@ export default function Hero() {
               <button type="button" className="pct-info" id="pctInfo" aria-describedby="pctNote"
                 aria-label="Cómo se calcula el porcentaje">i</button>
               <span className="pct-note" id="pctNote" role="tooltip">
-                Ponderado por esfuerzo: un logro completo cuenta más que una misión corta,
-                así que el porcentaje no es solo pasos hechos entre 100.
+                Cada paso vale según el nivel de sus misiones: una de nivel 200 cuenta cien veces
+                más que una de nivel 2, y la que sale en varios pasos se reparte entre ellos. Por
+                eso el porcentaje no es solo pasos hechos entre 100.
               </span>
             </span>
             <small>{obtained ? "¡Obtenido!" : "Obtención"} · <b id="statDone">{done}</b>/{STEPS.length} pasos</small>
