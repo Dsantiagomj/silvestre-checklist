@@ -973,3 +973,10 @@ test("al recargar, la ventana sigue en el paso abierto; el hero, en el siguiente
   await page.reload();
   await expect(page.locator("#mapCard .journal-num")).toHaveText("50");
 });
+
+test("en el paso 38, «La sombra del reino» enlaza a su guía", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 38);
+  await expect(page.locator('#journal .call.note a.guide-link', { hasText: "La sombra del reino" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/la-sombra-del-reino");
+});

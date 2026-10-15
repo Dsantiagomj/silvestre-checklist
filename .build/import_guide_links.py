@@ -48,8 +48,9 @@ MISSION = re.compile(
 # (build_quests_js.py) links to the page that lists each class's quest.
 EXTRA_MISSIONS = ["Misión de clase"]
 # Missions the text names without the "misión: X" form, so MISSION misses them:
-# step 100 says "Se debe hacer la misión Flovoración en algún punto de esta".
-TEXT_MISSIONS = ["Flovoración"]
+# step 100 says "Se debe hacer la misión Flovoración en algún punto de esta", step 38
+# "se puede lanzar la misión La sombra del reino".
+TEXT_MISSIONS = ["Flovoración", "La sombra del reino"]
 
 
 def js_object(html, name):
