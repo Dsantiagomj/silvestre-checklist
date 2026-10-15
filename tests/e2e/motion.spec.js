@@ -524,3 +524,55 @@ test("con movimiento reducido las pestañas cambian al instante", async ({ page 
   await expect(page.locator(".win-tools")).toHaveCount(0, { timeout: 150 });
   expect(await page.locator(".win-tab-pill").evaluate(el => getComputedStyle(el).transitionDuration)).toBe("0s");
 });
+
+test("el desplegable de zona se abre y se cierra con una animación", async ({ page }) => {
+  await openApp(page);
+  await page.waitForTimeout(300);
+  await page.click("#zoneBtn");
+  expect(await page.locator("#zoneSeals").evaluate(el => el.getAnimations().length)).toBeGreaterThan(0);
+  await page.waitForTimeout(400);
+  // Al cerrarse sigue un momento, apagándose, y luego se va
+  const closing = await page.evaluate(async () => {
+    document.getElementById("zoneBtn").click();
+    await new Promise(r => requestAnimationFrame(r));
+    const pop = document.querySelector(".zone-pop");
+    return pop ? pop.getAnimations().length : -1;
+  });
+  expect(closing).toBeGreaterThan(0);
+  await expect(page.locator(".zone-pop")).toHaveCount(0, { timeout: 1500 });
+  await expect(page.locator("#zoneBtn")).toHaveAttribute("aria-expanded", "false");
+});
+
+test("con movimiento reducido el desplegable de zona se abre y se cierra al instante", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openApp(page);
+  await page.click("#zoneBtn");
+  expect(await page.locator("#zoneSeals").evaluate(el => el.getAnimations().length)).toBe(0);
+  await page.click("#zoneBtn");
+  await expect(page.locator(".zone-pop")).toHaveCount(0, { timeout: 150 });
+});
+
+test("con el filtro Pendientes, la fila marcada se pliega en vez de desaparecer de golpe", async ({ page }) => {
+  await openApp(page);
+  await page.click("#diaryTabPending");
+  await expect(page.locator(".diary-row")).toHaveCount(100);
+  await page.waitForTimeout(300);
+  const seen = await page.evaluate(async () => {
+    const row = document.querySelector('.diary-row[data-n="5"]');
+    row.querySelector(".row-check").click();
+    await new Promise(r => requestAnimationFrame(r));
+    await new Promise(r => setTimeout(r, 380));
+    const still = document.querySelector('.diary-row[data-n="5"]');
+    return { still: !!still, anims: still ? still.getAnimations().length : 0, h: still?.offsetHeight ?? 0 };
+  });
+  // Se queda un momento (se ve la ✓) y se pliega
+  expect(seen.still).toBe(true);
+  expect(seen.anims).toBeGreaterThan(0);
+  await expect(page.locator(".diary-row")).toHaveCount(99, { timeout: 2000 });
+});
+
+test("cambiar de filtro en la lista no espera a que se plieguen las filas", async ({ page }) => {
+  await openApp(page, { "silvestre:done": { 1: true, 2: true } });
+  await page.click("#diaryTabDone");
+  await expect(page.locator(".diary-row")).toHaveCount(2, { timeout: 200 });
+});
