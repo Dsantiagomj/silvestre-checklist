@@ -28,11 +28,13 @@ export function itemsView(s) {
   if (s.shopSort === "soon") {
     const chips = soonSteps(s);
     const soon = chips.filter(n => STEPS_WITH_ITEMS.includes(n));
+    // Por paso, en el orden de la guía: prerrequisitos, 1, 2, 3… Un objeto que piden
+    // varios pasos va en el primero que lo pide (sort es estable: dentro de un paso se
+    // queda el orden por categoría). Igual en «Más adelante»
+    const byStep = (a, b) => Math.min(...a.steps) - Math.min(...b.steps);
     bands = [
-      // Por paso, en el orden de la guía: prerrequisitos, 1, 2, 3… (sort es estable:
-      // dentro de un paso se queda el orden por categoría)
-      { id: "soon", chips, rows: aggregate(soon, had, used).sort((a, b) => Math.min(...a.steps) - Math.min(...b.steps)) },
-      { id: "later", rows: aggregate(STEPS_WITH_ITEMS.filter(n => !soon.includes(n)), had, used) },
+      { id: "soon", chips, rows: aggregate(soon, had, used).sort(byStep) },
+      { id: "later", rows: aggregate(STEPS_WITH_ITEMS.filter(n => !soon.includes(n)), had, used).sort(byStep) },
       ...usedBand,
     ];
   } else {

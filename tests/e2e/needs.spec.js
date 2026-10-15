@@ -552,6 +552,15 @@ test("«Pronto» son los prerrequisitos y 5 pasos, y avanza al completar pasos",
   await expect(chips(page)).toHaveText(["3", "4", "5", "6", "7"]);
 });
 
+test("«Más adelante» también va por paso: cada objeto en el primer paso que lo pide", async ({ page }) => {
+  await openItems(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
+  const firsts = await page.locator("#bandLater .slot").evaluateAll(els => els.map(el => Number(el.dataset.first)));
+  expect(firsts.length).toBeGreaterThan(20);
+  expect(firsts).toEqual([...firsts].sort((a, b) => a - b));
+  // Después de los próximos pasos: el primero de «Más adelante» es posterior a ellos
+  expect(firsts[0]).toBeGreaterThan(8);
+});
+
 test("en «Pronto» los objetos van por paso: prerrequisitos, 1, 2, 3…", async ({ page }) => {
   await openItems(page);
   const order = (await badges(page)).map(b => (b === "Pre" ? 0 : Number(b)));

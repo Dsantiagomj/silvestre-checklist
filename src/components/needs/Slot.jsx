@@ -129,7 +129,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   if (list) {
     const extra = [row.g, row.n || typeLine(row)].filter(Boolean).join(" · ");
     return (
-      <div className={cls} data-id={row.k}>
+      <div className={cls} data-id={row.k} data-first={first}>
         <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}>
           <span className="slot-check" aria-hidden="true"></span>
           {art}
@@ -151,7 +151,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   }
 
   return (
-    <div className={cls} data-id={row.k} onPointerEnter={placeTip} onFocus={placeTip}>
+    <div className={cls} data-id={row.k} data-first={first} onPointerEnter={placeTip} onFocus={placeTip}>
       <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}
         aria-label={`${rowName(row)}, ${partial ? `faltan ${qtyText}` : rowQty(row)}${have ? ", conseguido" : ""}`}>
         {art}
