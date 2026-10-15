@@ -47,6 +47,9 @@ MISSION = re.compile(
 # Missions the app lists that the guide text never names: the generic class quest row
 # (build_quests_js.py) links to the page that lists each class's quest.
 EXTRA_MISSIONS = ["Misión de clase"]
+# Missions the text names without the "misión: X" form, so MISSION misses them:
+# step 100 says "Se debe hacer la misión Flovoración en algún punto de esta".
+TEXT_MISSIONS = ["Flovoración"]
 
 
 def js_object(html, name):
@@ -135,7 +138,7 @@ def main(page):
     texts = js_template_array(html, "steps")
     achievements = js_object(html, "achievementLinks")
     overrides = js_object(html, "missionUrlOverrides")
-    wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS}
+    wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS + TEXT_MISSIONS}
     pages = site_pages()
     for name in prereq_names("Logro"):
         url = page_for(name, {}, pages)
