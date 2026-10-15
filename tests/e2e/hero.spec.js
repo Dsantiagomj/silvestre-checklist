@@ -114,8 +114,9 @@ test("con movimiento reducido el Dofus cambia sin animación", async ({ page }) 
 test("el peso de una misión es su nivel por la raíz de sus objetivos", async () => {
   const read = f => JSON.parse(readFileSync(new URL(`../../src/data/${f}`, import.meta.url), "utf8"));
   const weights = read("weights.json");
-  // 29 y 30: una misión cada uno, de nivel 110 (mínimo en Torrente Arcano), con 2 y 7 objetivos
-  expect(weights["29"].w).toBeCloseTo(110 * Math.sqrt(2), 1);
+  // 29 y 30: misiones de nivel 110 (mínimo en Torrente Arcano); las tres de Mel del 29 con 2
+  // objetivos cada una, la del 30 con 7
+  expect(weights["29"].w).toBeCloseTo(3 * 110 * Math.sqrt(2), 1);
   expect(weights["30"].w).toBeCloseTo(110 * Math.sqrt(7), 1);
   // «La eterna cosecha» (paso 79, 339 objetivos) pesa mucho, pero la raíz lo contiene
   expect(weights["79"].w).toBeCloseTo(40 * Math.sqrt(339), 0);
