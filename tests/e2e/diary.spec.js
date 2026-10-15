@@ -737,6 +737,27 @@ test("las paradas revisadas en las guías caen en su objetivo, también cuando u
   await expect(objs).toHaveText([/Tynril/, /Morsagüino/, /Funoroshi/, /Vuelve a ver/]);
 });
 
+test("la línea del 61 va en el combate contra Cil, no en «Hoticili»; el 50 y el 58 dejan sus jefes pendientes tras ella", async ({ page }) => {
+  await openApp(page);
+  const quest = name => page.locator("#journal .q-item", { has: page.locator(".q-name").getByText(name, { exact: true }) });
+  const line = ":is(.obj-stop, .obj-resume)";
+  // 61: «Hasta tener que pasar Cil» es el combate de «Un frío que hiela las piedras»
+  await stepData(page, 61);
+  await expect(quest("Un frío que hiela las piedras").locator(`${line} + .obj-row`)).toHaveText(/Vence a 1 x Cil en el mapa/);
+  await expect(quest("Curiosos testigos").locator(line)).toHaveCount(0);
+  await expect(page.locator(`#journal ${line}`)).toHaveCount(1);
+  // 50: pasa Roca negra (Ben el Ripata), Kimbo y Obsidiantre; Sfinter Cell queda tras la línea
+  await stepData(page, 50);
+  const thomahon = quest("La bendición de Thomahon");
+  await expect(thomahon.locator(".obj-row")).toHaveText([/Ben el Ripata/, /Kimbo/, /Obsidiantre/, /Sfinter Cell/, /Vuelve a ver/]);
+  await expect(thomahon.locator(`${line} + .obj-row`)).toHaveText(/Vence a 1 x Sfinter Cell/);
+  // 58: pasa Perfósil; Kanígrula y Cil quedan tras la línea
+  await stepData(page, 58);
+  const foluk = quest("La bendición de Foluk");
+  await expect(foluk.locator(".obj-row")).toHaveText([/Perfósil/, /Kanígrula/, /Cil/, /Vuelve a ver/]);
+  await expect(foluk.locator(`${line} + .obj-row`)).toHaveText(/Vence a 1 x Kanígrula/);
+});
+
 test("si el verde sigue «hasta tener que pasar X», esa nueva parada sale en rojo (paso 43, Kodámade)", async ({ page }) => {
   await openApp(page);
   await stepData(page, 43);

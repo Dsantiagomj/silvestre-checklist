@@ -114,8 +114,10 @@ STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782]
 
 # Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
 # guide does them in another, (quest, stage) -> the new order, so the red line falls in
-# its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48.
-OBJECTIVE_ORDER = {(1660, 0): [1, 2, 0, 3]}
+# its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48; step
+# 50 passes Roca negra (Ben el Ripata), Kimbo and Obsidiantre and leaves Sfinter Cell
+# for step 51.
+OBJECTIVE_ORDER = {(1660, 0): [1, 2, 0, 3], (1661, 0): [1, 2, 3, 0, 4]}
 
 # An objective any of several quests completes is no single quest: it becomes one
 # generic row instead of the first match. The one per class in "Un ciudadano modelo"
