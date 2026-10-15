@@ -2342,16 +2342,19 @@ header.is-scrolled .title-bar{
 .map-card-line b{ margin-right:4px; font:800 10px var(--font-display); letter-spacing:.12em; text-transform:uppercase; }
 .map-card-line.stop b{ color:#e05a4f; }
 .map-card-line.done b{ color:var(--walked); }
-.map-card-line.later b{ color:#6fa8dc; }
+.map-card-line.later b,
+.map-card-line.resumed b{ color:#6fa8dc; }
 [data-theme="light"] .map-card-line.stop b{ color:#b8334b; }
-[data-theme="light"] .map-card-line.later b{ color:#2f6aa3; }
+[data-theme="light"] .map-card-line.later b,
+[data-theme="light"] .map-card-line.resumed b{ color:#2f6aa3; }
 .step-chip{
   display:inline-grid; place-items:center; min-width:24px; height:20px; margin:0 2px; padding:0 6px;
   border-radius:999px; border:1.5px solid var(--walked); background:color-mix(in srgb, var(--walked) 18%, transparent);
   color:inherit; font:400 12px/1 'Lilita One', var(--font-display); cursor:pointer; vertical-align:1px;
 }
 .step-chip:hover{ background:var(--walked); color:#10200a; }
-.map-card-line.later .step-chip{ border-color:#6fa8dc; background:color-mix(in srgb, #6fa8dc 18%, transparent); }
+.map-card-line.later .step-chip,
+.map-card-line.resumed .step-chip{ border-color:#6fa8dc; background:color-mix(in srgb, #6fa8dc 18%, transparent); }
 .map-card-meta{ margin:0; font-size:12px; font-weight:700; color:var(--parch-soft); }
 .map-card-cta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
 .map-card-cta button{
@@ -2586,7 +2589,8 @@ header.is-scrolled .title-bar{
 .goal-calls .call i .quest-mark{ width:12px; height:17px; }
 .goal-calls .call b{ display:inline; margin:0 6px 0 0; font-size:10px; letter-spacing:.14em; }
 .goal-calls .call b + *{ display:inline; }
-.call.closedin{ --call:#c9a24a; }
+.call.closedin,
+.call.resumedin{ --call:#c9a24a; }
 .goal-ach .quest-mark{ height:34px; }
 .journal-title{ margin:2px 0 0; font-size:28px; line-height:1.08; color:#f3ecd2; }
 .journal-title a{ color:inherit; text-decoration:none; }

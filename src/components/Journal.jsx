@@ -4,7 +4,7 @@ import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, RESUMED_IN, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   closeSteps, closingPlan, loadQuests, pendingCloses, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -25,6 +25,7 @@ const CALL = {
   must: { label: "También hay que" },
   tip: { label: "Consejo" },
   note: { label: "Nota" },
+  resumedin: { label: "Se retoma más adelante" },
   closedin: { label: "Se termina más adelante" },
 };
 
@@ -49,6 +50,8 @@ function Goal({ step, done }) {
   const achs = plan.filter(e => e.t === "a");
   const head = achs[0];
   const closedIn = !done && CLOSED_BY[step.n];
+  // Donde se retoma va antes de donde se termina: la guía retoma antes de cerrar (58: 59 y 61)
+  const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
   const calls = stepCalls(step);
   return (
     <div className="journal-goal">
@@ -76,9 +79,20 @@ function Goal({ step, done }) {
           <p className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></p>
         </div>
       </div>
-      {(calls.length > 0 || closedIn) && (
+      {(calls.length > 0 || closedIn || resumedIn.length > 0) && (
         <div className="goal-calls">
           {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
+          {resumedIn.length > 0 && (
+            <Call step={step} kind="resumedin">
+              Sus misiones se retoman en el paso{" "}
+              {resumedIn.map((m, i) => (
+                <Fragment key={m}>
+                  {i > 0 && (i === resumedIn.length - 1 ? " y " : ", ")}
+                  <button type="button" className="step-ref" data-n={m} onClick={() => selectStep(m)}>{m}</button>
+                </Fragment>
+              ))}.
+            </Call>
+          )}
           {closedIn && (
             <Call step={step} kind="closedin">
               Sus misiones se terminan en el paso{" "}
@@ -99,6 +113,7 @@ function Call({ step, kind, text, children }) {
         {kind === "must" ? <QuestMark />
           : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
           : kind === "closedin" ? <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
+          : kind === "resumedin" ? <img src={imgUrl(OBJ_ICONS.map)} alt="" />
           : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
       </i>
       <div>

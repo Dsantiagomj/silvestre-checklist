@@ -107,6 +107,16 @@ export const CLOSED_BY = (() => {
   return out;
 })();
 
+/**
+ * Paso -> pasos posteriores que actualizan su misión sin terminarla ("se actualiza la
+ * misión del inciso 53"): allí se retoma. Solo se muestra; no marca nada.
+ */
+export const RESUMED_IN = (() => {
+  const out = {};
+  for (const step of STEPS) for (const n of step.updates || []) (out[n] ??= []).push(step.n);
+  return out;
+})();
+
 /** El siguiente pendiente a partir de n; si no queda ninguno después, el primero que quede. */
 export function nextPendingAfter(done, n) {
   const after = STEPS.find(st => st.n > n && !done[st.n]);
