@@ -10,6 +10,7 @@ import WEIGHTS from "../data/weights.json";
 import { currentQuest, loadQuests as loadQuestsData, nextWalked, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
+import { list, stopPoints } from "../lib/journal.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -366,6 +367,73 @@ export function markSteps(ns) {
   const before = state.done;
   setState(s => ({ done: { ...s.done, ...Object.fromEntries(ns.map(n => [n, true])) }, shopEpoch: s.shopEpoch + 1 }));
   celebrateDofus(before);
+}
+
+/** Los pasos que n cierra y siguen pendientes (ninguno si n ya está hecho). */
+export const pendingCloses = (s, n) => (s.done[n] ? [] : (STEPS[n - 1]?.closes || []).filter(c => !s.done[c]));
+
+const objCount = q => q.s.reduce((a, stg) => a + stg.o.length, 0);
+
+/**
+ * Lo que un paso termina de los que cierra: no el paso entero, sino lo que este dejó a
+ * medias, la misión de su parada roja y las que se hacen después (ni opcionales ni de
+ * solo tomarla). Las de antes se hacen en el propio paso, y no todo el mundo sigue la
+ * guía en orden. Devuelve esas misiones ({ id: objetivos }), los pasos que con ellas
+ * quedan hechos y los que siguen pendientes con las obligatorias que les faltan.
+ */
+export function closingPlan(s, closes) {
+  const out = { questObj: {}, done: [], pending: [] };
+  for (const c of closes) {
+    const quests = questsOf(c);
+    const at = stopPoints(STEPS[c - 1], quests).map(p => quests.findIndex(q => q.id === p.quest)).filter(i => i >= 0);
+    // Sin las misiones (llegan en diferido) o sin parada que situar no se sabe qué deja
+    // el paso a medias: se marca entero, como siempre
+    if (!at.length) {
+      out.done.push(c);
+      continue;
+    }
+    const from = Math.min(...at);
+    quests.forEach((q, i) => {
+      if (i >= from && q.kind === "mandatory") out.questObj[q.id] = objCount(q);
+    });
+    // Hecha como en el diario y en el porcentaje: pasada de largo o en su último objetivo
+    const pos = Math.min(s.questPos[c] || 0, quests.length - 1);
+    const missing = quests.filter((q, i) => q.kind === "mandatory" && i >= pos
+      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < objCount(q));
+    if (missing.length) out.pending.push({ n: c, missing });
+    else out.done.push(c);
+  }
+  return out;
+}
+
+/** "El 5 sigue pendiente: falta «…».", "El 25 y el 26 siguen pendientes: les faltan…" */
+export function pendingText(pending) {
+  if (pending.length > 1) {
+    const els = list(pending.map(p => `el ${p.n}`));
+    return `E${els.slice(1)} siguen pendientes: les faltan misiones anteriores.`;
+  }
+  const { n, missing } = pending[0];
+  return `El ${n} sigue pendiente: ${missing.length > 1 ? `le faltan ${missing.length} misiones anteriores` : `falta «${missing[0].n}»`}.`;
+}
+
+/**
+ * «Hecho» en un paso que cierra otros: marca n y termina lo que les queda (closingPlan).
+ * Los que aún tienen misiones anteriores sin hacer siguen pendientes y un aviso lo dice,
+ * con la opción de marcarlos. Va después del aviso del Dofus: este pide algo, y la
+ * franja ya celebra el Dofus.
+ */
+export function closeSteps(n, closes) {
+  const plan = closingPlan(state, closes);
+  const before = state.done;
+  setState(s => ({
+    done: { ...s.done, [n]: true, ...Object.fromEntries(plan.done.map(c => [c, true])) },
+    questObj: { ...s.questObj, ...plan.questObj },
+    shopEpoch: s.shopEpoch + 1,
+  }));
+  celebrateDofus(before);
+  if (!plan.pending.length) return;
+  const ns = plan.pending.map(p => p.n);
+  showToast(pendingText(plan.pending), `Las hice, marcar el ${list(ns)}`, () => markSteps(ns));
 }
 
 /** "¡Dofus Esmeralda obtenido!", "¡Piñata de pino obtenida!", "¡Dofus Marfil y Dofus Ébano obtenidos!" */
