@@ -205,3 +205,17 @@ test("con el 87 hecho, «Las cuatro voluntades» sale completada en el 73", asyn
   await doneIn(page, "Las cuatro voluntades", 87);
   await pending(page, "Los senderos de la guerra");
 });
+
+test("«Hasta su último suspiro» no va en el 53, que para antes de Kumijo, sino en el 56 tras «Réquiem por un yokai»", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([53]) });
+  // Empieza pasado el combate contra Kumijo (Qo>16870), y el 53 para justo antes
+  await openStep(page, 53);
+  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(["Maldita desaparición", "Réquiem por un yokai"]);
+  await openStep(page, 56);
+  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+    ["Maldita desaparición", "Réquiem por un yokai", "Hasta su último suspiro"]);
+  // Con el 53 hecho solo sale completada la misión de antes de su parada
+  await doneIn(page, "Maldita desaparición", 53);
+  await pending(page, "Réquiem por un yokai");
+  await pending(page, "Hasta su último suspiro");
+});
