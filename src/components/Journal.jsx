@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
-import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
+import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import { CLOSED_BY, RESUMED_IN, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
@@ -47,8 +47,7 @@ function RichText({ text }) {
  */
 function Goal({ step, done }) {
   const plan = PLANS[step.n] || [];
-  const achs = plan.filter(e => e.t === "a");
-  const head = achs[0];
+  const head = plan.find(e => e.t === "a");
   const closedIn = !done && CLOSED_BY[step.n];
   // Donde se retoma va antes de donde se termina: la guía retoma antes de cerrar (58: 59 y 61)
   const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
@@ -65,11 +64,8 @@ function Goal({ step, done }) {
           {step.complete && <span className="is-complete" title="Logro completo">✓</span>}
         </span>
         <div>
-          <h2 className="journal-title">
-            {head && achievementGuide(head.name) && achs.length === 1
-              ? <a href={achievementGuide(head.name)} target="_blank" rel="noopener">{stepTitle(step)}</a>
-              : stepTitle(step)}
-          </h2>
+          {/* Sin enlace: la guía del logro ya va enlazada en el texto de la guía */}
+          <h2 className="journal-title">{stepTitle(step)}</h2>
         </div>
       </div>
       <div className="goal-guide">

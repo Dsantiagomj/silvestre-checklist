@@ -40,6 +40,9 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   const j = page.locator("#journal");
   await expect(j.locator(".journal-num")).toHaveText("34");
   await expect(j.locator(".journal-title")).toHaveText("El árbol que esconde el bosque");
+  // El título no enlaza: la guía del logro ya va enlazada en el texto de la guía
+  await expect(j.locator(".journal-title a")).toHaveCount(0);
+  await expect(j.locator('.journal-base a[href="https://www.torrentearcano.com/el-arbol-que-esconde-el-bosque"]')).toHaveCount(1);
   await expect(j.locator(".journal-show-name")).toHaveText("Silvosse");
   await expect(j.locator(".journal-base")).toHaveText(/hasta la misión 2: Arak-hais, ¿dónde vais\?$/);
   // Se resuelve en el mismo paso: sin aviso rojo, la línea verde va en la ruta
