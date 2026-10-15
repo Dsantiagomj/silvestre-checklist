@@ -216,16 +216,19 @@ export const STOP_AT = {
     ["Inmunda putrefacción", "Entrégale a Fhang: 20 x Mildiu de Pandala"]],
   // "tienes que entrar a la mazmorra y llegar a la sala 4"
   47: [["Una nueva lección que enseñar", "Descubre el mapa: Trastero del Taller de Tanukui San"]],
-  // Falta Sfinter cell para volver al discípulo
-  50: [["La bendición de Thomahon", "Vuelve a ver a Discípulo de Thomahon"]],
+  // "Se pasa Roca negra, Obsidiantre y Kimbo…, quedando pendiente Sfinter cell": Sfinter
+  // Cell va el último de los cuatro combates (OBJECTIVE_ORDER)
+  50: [["La bendición de Thomahon", "Vence a 1 x Sfinter Cell"]],
   // "lo primero que tienes que hacer es pasar la mazmorra Sfinter Cell para dropear una Bandana"
   51: [["Objetivo: Bandana", "Encuentra la bandana de Tugtora"]],
   // La pócima sale de terminar "El S.L.I.P. está que arde"
   52: [["Almacén de avituallamiento", "Enséñale a Asselo: 1 x Pócima del S.L.I.P."]],
-  // Faltan Kanígrula y Cil para volver al discípulo
-  58: [["La bendición de Foluk", "Vuelve a ver a Discípulo de Foluk"]],
+  // "Se pasa Perfósil…, dejando pendiente Kanigrula y Cil": van tras Perfósil
+  58: [["La bendición de Foluk", "Vence a 1 x Kanígrula"]],
   // "tienes que pasar la mazmorra de Kanígrula y vencer a la jefa"
   59: [["La triquiñuela del cuerno", "Consigue grasa mamaria de kanig"]],
+  // "Hasta tener que pasar Cil": el combate de la mazmorra, no el mapa de su entrada
+  61: [["Un frío que hiela las piedras", "Vence a 1 x Cil"]],
   // "farmear Tejaiss hasta dropear 10 de esos corazones"
   63: [["Misión solución", "Entrégale a Marta Angaha: 10 x Corazón de tejaiss"]],
   // La guía dice "hasta poder entrar en la taberna", pero la misión 2 (paso 66) pide
@@ -298,9 +301,11 @@ export function stopPoint(step, quests) {
     const name = norm((boss || dungeon)[1]);
     // Dentro de la mazmorra: por la zona (el texto puede nombrarla sin estar dentro,
     // como "Llave del Laboratorio de Brumen Tinctorias"). "Pasar la mazmorra X" busca
-    // antes en el texto y, si ningún objetivo la nombra, en la zona
-    const byText = o => norm(o.t).includes(name);
-    const byArea = o => norm(o.a || "").includes(name);
+    // antes en el texto y, si ningún objetivo la nombra, en la zona. Siempre por palabras
+    // enteras: "Cil" no es la "cil" de "Hoticili"
+    const word = new RegExp(`(?<![a-z0-9])${escapeRe(name)}(?![a-z0-9])`);
+    const byText = o => word.test(norm(o.t));
+    const byArea = o => word.test(norm(o.a || ""));
     const tries = dungeon ? [byArea] : /pasar la mazmorra/i.test(text) ? [byText, byArea] : [byText];
     for (const match of tries) {
       for (const q of quests) {
@@ -311,6 +316,8 @@ export function stopPoint(step, quests) {
   }
   return null;
 }
+
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Números de paso en una frase: "33", "25, 26 y 27". */
 export const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
