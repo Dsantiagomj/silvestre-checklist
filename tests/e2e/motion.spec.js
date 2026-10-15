@@ -588,3 +588,36 @@ test("cambiar de filtro en la lista no espera a que se plieguen las filas", asyn
   await page.click("#diaryTabDone");
   await expect(page.locator(".diary-row")).toHaveCount(2, { timeout: 200 });
 });
+
+/**
+ * Cambiar a una lista (o volver) es un fundido en dos tiempos: la vista que se va se
+ * apaga del todo antes de que se vea la que llega, y la que llega no salta de sitio
+ * una vez visible (la barra del buscador ya se ha plegado o desplegado).
+ */
+for (const [from, to] of [["#stepsViewDiary", "#tabPrereqs"], ["#tabPrereqs", "#tabItems"], ["#tabItems", "#stepsViewMap"]]) {
+  test(`de ${from} a ${to} las vistas no se superponen ni saltan`, async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(s => document.querySelector(s).click(), from);
+    await page.waitForTimeout(900);
+    await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+    const frames = await page.evaluate(async sel => {
+      const out = [];
+      document.querySelector(sel).click();
+      const t0 = performance.now();
+      while (performance.now() - t0 < 900) {
+        await new Promise(r => requestAnimationFrame(r));
+        const layers = [...document.querySelectorAll(".steps-layer")].map(el => ({
+          op: parseFloat(getComputedStyle(el).opacity), top: Math.round(el.getBoundingClientRect().top), leaving: el.hasAttribute("inert"),
+        }));
+        out.push(layers);
+      }
+      return out;
+    }, to);
+    // Nunca dos capas visibles a la vez
+    const overlap = frames.filter(ls => ls.filter(l => l.op > 0.05).length > 1);
+    expect(overlap.length).toBe(0);
+    // La que llega, una vez visible, no cambia de altura en la página
+    const tops = frames.map(ls => ls.find(l => !l.leaving && l.op > 0.05)?.top).filter(t => t != null);
+    expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(12);
+  });
+}

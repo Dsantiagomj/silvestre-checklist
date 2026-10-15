@@ -315,13 +315,13 @@ function WinTools({ enter, reduce, children }) {
   };
   // Al llegar, antes de pintarse: se despliega desde cero
   useLayoutEffect(() => {
-    if (enter && !reduce) ref.current.animate(frames(), { duration: 280, easing: EASE });
+    if (enter && !reduce) ref.current.animate(frames(), { duration: OUT_MS, easing: EASE });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Al irse, se pliega y luego se quita
   useEffect(() => {
     if (present) return;
     if (reduce) return safeToRemove();
-    ref.current.animate(frames().reverse(), { duration: 220, easing: EASE, fill: "forwards" })
+    ref.current.animate(frames().reverse(), { duration: OUT_MS, easing: EASE, fill: "forwards" })
       .finished.then(safeToRemove, safeToRemove);
   }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="win-tools" ref={ref} inert={!present}>{children}</div>;
@@ -335,12 +335,14 @@ function WinTools({ enter, reduce, children }) {
 const ZOOM = { duration: 0.3, ease: "easeInOut" };
 const ZOOMED = { map: "scale(1.15)", diary: "scale(0.94)" };     // de dónde llega cada vista
 const LEAVING = { map: "scale(0.9)", diary: "scale(1.15)" };     // a dónde va la que se va
-// Cambio de pestaña con las listas: la vieja se aparta hacia un lado y se apaga deprisa;
-// la nueva llega desde el lado de su pestaña un instante después. Así no se mezclan
-// dos listas a media opacidad
-const SHIFT = 28;
-const SLIDE_IN = { duration: 0.3, delay: 0.07, ease: [0.2, 0.8, 0.2, 1] };
-const SLIDE_OUT = { duration: 0.15, ease: [0.4, 0, 1, 1] };
+// Cambio de pestaña con las listas: un fundido en dos tiempos. La vieja se aparta un
+// poco hacia un lado y se apaga del todo (en ese tiempo la barra del buscador se pliega
+// o se despliega); solo entonces llega la nueva desde el lado de su pestaña. Nunca se
+// ven dos vistas a la vez ni salta nada una vez visible
+const SHIFT = 12;
+const OUT_MS = 140;
+const SLIDE_OUT = { duration: OUT_MS / 1000, ease: [0.4, 0, 1, 1] };
+const SLIDE_IN = { duration: 0.24, delay: OUT_MS / 1000 + 0.02, ease: [0.2, 0.8, 0.2, 1] };
 
 /** El cambio en curso: { id, to, kind: "zoom" | "slide", dir } y el canal por el que la nueva avisa a la vieja. */
 const SwapContext = createContext(null);
@@ -367,6 +369,7 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
     const { id, kind, dir } = swap.current;
     if (kind === "slide") {
       el.style.opacity = "0";
+      el.style.transform = `translateX(${dir * SHIFT}px)`;
       animate(el, { opacity: [0, 1], transform: [`translateX(${dir * SHIFT}px)`, "translateX(0px)"] }, SLIDE_IN)
         .then(() => { el.style.opacity = ""; el.style.transform = ""; });
       return;
