@@ -706,9 +706,12 @@ test("el paso 78 lleva las misiones de orden hasta la 4 y el 80 empieza por «La
   const quest = page.locator("#journal .q-item", { hasText: "Maestro de los Pergaminos" });
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Encuentra la estatuilla de Sumens");
   expect((await stepData(page, 80)).quests.slice(0, 2)).toEqual(["La última piedra", "Alma máster"]);
-  // El 89, la misión de orden 5, que da Elviana Tirips
-  expect((await stepData(page, 89)).quests).toEqual(["Aprendizaje: Guardián del conocimiento"]);
+  // El 89, la misión de orden 5, que da Elviana Tirips y pide nivel de alineamiento 100: antes
+  // va la misión 100 de Bonta, «El exorcista» (el 85 llega a la 99). El estandarte sigue
+  // siendo el de la misión de orden
+  expect((await stepData(page, 89)).quests).toEqual(["El exorcista", "Aprendizaje: Guardián del conocimiento"]);
   expect(await figure(page)).toBe("Inicia el paso:Elviana Tirips");
+  await expect(page.locator("#journal .journal-title")).toContainText("Misión de orden 5");
 });
 
 test("el paso 12 lleva las misiones que exige «Espionaje industrial» antes de ella", async ({ page }) => {
@@ -729,8 +732,13 @@ test("las misiones de «Abono de peaje» van en el paso que las pide, antes de l
   // «Llama, amigo y entra» pide «Canozzirujana»; «La guardia muere…», «Allá arriba, en el pico helado…»
   expect((await stepData(page, 83)).quests.slice(0, 2)).toEqual(["Canozzirujana", "Llama, amigo y entra"]);
   expect((await stepData(page, 86)).quests).toEqual(["Allá arriba, en el pico helado...", "La guardia muere, pero no se rinde"]);
-  // Van bajo su logro
+  // Van bajo su logro, y el estandarte sigue en la misión del paso
   await expect(page.locator("#journal .q-group-name").first()).toHaveText("Abono de peaje");
+  expect(await figure(page)).toBe("Inicia el paso:Pescador del Día sin Fin");
+  for (const [n, who] of [[31, "Germán Onelsako"], [40, "Hipólito Thermya"], [52, "Eko Lojista"], [83, "Jemor Monte"]]) {
+    await stepData(page, n);
+    expect(await figure(page)).toBe(`Inicia el paso:${who}`);
+  }
 });
 
 test("el 29 lleva las tres misiones de Mel que nombra y el 100, «Flovoración» tras la misión del logro", async ({ page }) => {

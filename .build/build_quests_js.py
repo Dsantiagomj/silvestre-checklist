@@ -106,7 +106,9 @@ MISSING_OBJECTIVES = {565: [439]}
 # de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
 # previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
 # mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
-# order quest 5 of the same line, which requires the 4th (need.quests). Step 12's
+# order quest 5 of the same line, which requires the 4th (need.quests) and alignment
+# level 100 (Pa>99): before it goes Bonta mission 100, "El exorcista" (Pa=99&Qf=1901),
+# since step 85 stops at mission 99. Step 12's
 # "Espionaje industrial" requires "El maleficio del cofre" (after "Cofrología" and
 # "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=). Step 83's "Birk, hija de Bork" requires
 # "Llama, amigo y entra", mission 1 of "Allá bajo la montaña" (Qf=2010).
@@ -119,7 +121,7 @@ MISSING_OBJECTIVES = {565: [439]}
 # 86: "La guardia muere, pero no se rinde", for "Allá arriba, en el pico helado...".
 # They ask for nothing among themselves, so "Allá en la montaña..." stays out.
 STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622, 623], 78: [434, 111, 121, 423],
-              80: [1782], 83: [624, 2010], 86: [626], 89: [1917]}
+              80: [1782], 83: [624, 2010], 86: [626], 89: [1903, 1917]}
 
 # Quests another quest gives on the way and that it waits for, right after it in every
 # step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos

@@ -9,6 +9,8 @@ from DOFUS_ROAD, before any of these):
      with no start, the first NPC it sends you to. A first quest whose NPC depends on
      the class (step 7) shows none.
   STEP_FIGURE sets the figure by hand where there is nothing better (step 7).
+  FIGURE_QUEST picks the quest that stands for a step that opens with quests it only
+  needs (its map too).
   3. Nothing: the app falls back to the boss the step resolves.
 
 Figures are rendered by Ankama's look renderer and mirrored into public/img/npcs/.
@@ -59,6 +61,13 @@ CURATED = {
 STEP_FIGURE = {
     "7": ("diosa-feca", "Diosa Feca", "La cólera de los dioses", "{4841}"),
 }
+
+
+# Step -> the quest whose start stands for the step, where the step opens with quests
+# it only needs (STEP_EXTRA in build_quests_js.py) and the banner is the step's own: the
+# Frigost lines after their "Abono de peaje" dungeon, and the order quest 5 after
+# Bonta mission 100.
+FIGURE_QUEST = {"31": 592, "40": 593, "52": 595, "83": 2010, "86": 1910, "89": 1917}
 
 
 def _get(url, raw=False, tries=4):
@@ -121,6 +130,8 @@ def main():
 
     starts = {}
     for n, ids in app["STEP_QUESTS"].items():
+        if n in FIGURE_QUEST:
+            ids = ids[ids.index(FIGURE_QUEST[n]):]
         found = [sp for sp in (start_of(q) for q in ids if q != "clase") if sp]
         # A first quest that depends on the class has no one NPC or map: none is shown
         if found and not found[0].get("cls"):
