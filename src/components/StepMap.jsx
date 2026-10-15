@@ -118,9 +118,16 @@ function Card({ step, pos, width, height, done }) {
   );
 }
 
+// Hasta dónde estaba desplazado el mapa: al volver del diario sigue donde se dejó
+// (null: aún no se ha abierto)
+let lastScroll = null;
+/** Lo desplazado del mapa (en escritorio, dentro de su marco): el zoom entre vistas lo descuenta. */
+export const mapScrollTop = () => lastScroll || 0;
+
 /** El camino de los 100 pasos: un sello por paso con el paisaje de su zona. */
 export default function StepMap({ s, current, mobile }) {
   const boxRef = useRef(null);
+  const scrollRef = useRef(null);
   const [width, setWidth] = useState(0);
 
   useLayoutEffect(() => {
@@ -131,47 +138,64 @@ export default function StepMap({ s, current, mobile }) {
     return () => ro.disconnect();
   }, []);
 
+  // En escritorio el mapa se desplaza dentro de la ventana. Al volver, donde se dejó; la
+  // primera vez, con el paso actual a la vista. Antes de pintarse: sin saltos
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    const box = scrollRef.current;
+    if (placed.current || !width || box.scrollHeight <= box.clientHeight) return;
+    placed.current = true;
+    if (lastScroll != null) box.scrollTop = lastScroll;
+    else if (current != null) {
+      const at = layout(width).pos[current - 1];
+      if (at.y + NODE_R > box.clientHeight) box.scrollTop = at.y - box.clientHeight / 2;
+    }
+    lastScroll = box.scrollTop;
+  }, [width]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { pos, height } = width ? layout(width) : { pos: [], height: 600 };
   const selected = s.selectedStep;
   const sel = selected != null ? STEPS[selected - 1] : null;
   const zone = current != null ? ZONE_IMG[STEPS[current - 1].zone] : null;
 
   return (
-    <div className="step-map" ref={boxRef} style={{ height }}>
-      {zone && <div className="step-map-bg" style={{ backgroundImage: `url(${imgUrl(zone.img)})` }} aria-hidden="true"></div>}
-      {width > 0 && (
-        <>
-          <svg className="step-map-path" width={width} height={height} aria-hidden="true">
-            <polyline points={pos.map(p => `${p.x},${p.y}`).join(" ")} />
-            {sel?.closes?.map(c => <path key={c} className="map-arc" d={arcPath(pos[c - 1], pos[sel.n - 1])} />)}
-          </svg>
-          {STEPS.map((st, i) => {
-            const n = st.n;
-            const road = ROAD_AT[n];
-            const boss = st.closes && assetsFor(n)?.bosses?.[0];
-            const thumb = ZONE_IMG[st.zone]?.thumb;
-            const cls = "map-node" + (s.done[n] ? " done" : "") + (n === current ? " current" : "") +
-              (road ? " dofus" : "") + (stepMatchesFilters(s, st) ? "" : " dimmed");
-            return (
-              <button key={n} type="button" className={cls} data-n={n}
-                style={{ left: pos[i].x, top: pos[i].y, "--zone-color": ZONE_COLOR[st.zone], backgroundImage: thumb ? `url(${imgUrl(thumb)})` : undefined }}
-                aria-label={`Paso ${n}: ${stepTitle(st)}${s.done[n] ? " (hecho)" : ""}`}
-                aria-current={n === current ? "step" : undefined}
-                onClick={() => selectStep(n)}>
-                {road && <img className="node-egg" src={imgUrl(road.img)} alt="" />}
-                <span className="node-num">{n}</span>
-                {boss && <img className="node-boss" src={imgUrl(boss.img)} alt="" title={`Al pasar ${boss.name} se cierran otros pasos`} />}
-              </button>
-            );
-          })}
-          {!mobile && sel && (
-            <Card key={sel.n} step={sel} pos={pos} width={width} height={height} done={!!s.done[sel.n]} />
-          )}
-        </>
-      )}
-      <div className="step-map-legend" aria-hidden="true">
-        <span><i className="lg-egg"></i>Dofus del camino</span>
-        <span><i className="lg-boss"></i>Su combate cierra otros pasos</span>
+    <div className="step-map-scroll" ref={scrollRef} onScroll={e => { lastScroll = e.currentTarget.scrollTop; }}>
+      <div className="step-map" ref={boxRef} style={{ height }}>
+        {zone && <div className="step-map-bg" style={{ backgroundImage: `url(${imgUrl(zone.img)})` }} aria-hidden="true"></div>}
+        {width > 0 && (
+          <>
+            <svg className="step-map-path" width={width} height={height} aria-hidden="true">
+              <polyline points={pos.map(p => `${p.x},${p.y}`).join(" ")} />
+              {sel?.closes?.map(c => <path key={c} className="map-arc" d={arcPath(pos[c - 1], pos[sel.n - 1])} />)}
+            </svg>
+            {STEPS.map((st, i) => {
+              const n = st.n;
+              const road = ROAD_AT[n];
+              const boss = st.closes && assetsFor(n)?.bosses?.[0];
+              const thumb = ZONE_IMG[st.zone]?.thumb;
+              const cls = "map-node" + (s.done[n] ? " done" : "") + (n === current ? " current" : "") +
+                (road ? " dofus" : "") + (stepMatchesFilters(s, st) ? "" : " dimmed");
+              return (
+                <button key={n} type="button" className={cls} data-n={n}
+                  style={{ left: pos[i].x, top: pos[i].y, "--zone-color": ZONE_COLOR[st.zone], backgroundImage: thumb ? `url(${imgUrl(thumb)})` : undefined }}
+                  aria-label={`Paso ${n}: ${stepTitle(st)}${s.done[n] ? " (hecho)" : ""}`}
+                  aria-current={n === current ? "step" : undefined}
+                  onClick={() => selectStep(n)}>
+                  {road && <img className="node-egg" src={imgUrl(road.img)} alt="" />}
+                  <span className="node-num">{n}</span>
+                  {boss && <img className="node-boss" src={imgUrl(boss.img)} alt="" title={`Al pasar ${boss.name} se cierran otros pasos`} />}
+                </button>
+              );
+            })}
+            {!mobile && sel && (
+              <Card key={sel.n} step={sel} pos={pos} width={width} height={height} done={!!s.done[sel.n]} />
+            )}
+          </>
+        )}
+        <div className="step-map-legend" aria-hidden="true">
+          <span><i className="lg-egg"></i>Dofus del camino</span>
+          <span><i className="lg-boss"></i>Su combate cierra otros pasos</span>
+        </div>
       </div>
     </div>
   );

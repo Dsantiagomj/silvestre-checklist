@@ -9,13 +9,13 @@ import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import {
-  clearFilters, hasActiveFilters, isStepsView, nextPending, ownedCount, prereqsPending, revealMapNode, selectStep,
-  setSearch, setStatusFilter, setStepsView, takeMapFocus,
+  clearFilters, hasActiveFilters, isMobile, isStepsView, nextPending, ownedCount, prereqsPending, revealMapNode, selectStep,
+  setSearch, setStatusFilter, setStepsView, showStepsWindow, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
 import Needs from "./Needs.jsx";
-import StepMap, { mapPoint } from "./StepMap.jsx";
+import StepMap, { mapPoint, mapScrollTop } from "./StepMap.jsx";
 import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import SearchField from "./SearchField.jsx";
@@ -90,8 +90,9 @@ const Row = memo(function Row({ step, done, current, instant }) {
 });
 
 /**
- * La ventana del diario (lista y detalle): un panel del alto de la pantalla en el que
- * cada lado se desplaza por dentro. Al cambiar de paso, el detalle vuelve arriba.
+ * La ventana del diario (lista y detalle): en escritorio llena lo que deja la cabecera
+ * de la ventana y cada lado se desplaza por dentro. Al cambiar de paso, el detalle
+ * vuelve arriba.
  */
 function DiaryWindow({ step, children }) {
   const ref = useRef(null);
@@ -272,7 +273,8 @@ function WinTabs({ s }) {
   );
 }
 
-// "/" lleva al buscador de objetos desde cualquier parte de la página
+// "/" lleva al buscador de objetos desde cualquier parte de la página. En escritorio el
+// buscador va fijo en la ventana: se lleva la ventana entera a la vista
 function useSlashToItems() {
   useEffect(() => {
     const onKey = e => {
@@ -282,8 +284,13 @@ function useSlashToItems() {
       setStepsView("items");
       requestAnimationFrame(() => {
         const input = document.getElementById("needsSearch");
-        input?.focus();
-        input?.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (isMobile()) {
+          input?.focus();
+          input?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        input?.focus({ preventScroll: true });
+        showStepsWindow();
       });
     };
     document.addEventListener("keydown", onKey);
@@ -417,11 +424,15 @@ export default function Diary({ mobile }) {
   const current = s.selectedStep ?? (mobile ? null : next);
   const map = s.stepsView === "map";
   const steps = isStepsView(s.stepsView);
-  // Cambiar de paso mueve lo de debajo con suavidad; el cambio de vista lo lleva el zoom
+  // En móvil la ventana sigue el flujo de la página: cambiar de paso o de pestaña mueve
+  // lo de debajo con suavidad y el cambio de vista lo lleva el zoom. En escritorio la
+  // ventana tiene el alto de la pantalla y la vista llena lo que queda: no hay alturas
+  // que animar
   const stageRef = useRef(null);
   const reduce = useReducedMotion();
-  // Mientras conviven las dos vistas la sección guarda la altura de antes (minHeight) y
-  // no se anima la altura: recalcular la página en cada fotograma daba tirones
+  const flow = mobile;
+  // En móvil, mientras conviven las dos vistas la sección guarda la altura de antes
+  // (minHeight) y no se anima la altura: recalcular la página en cada fotograma daba tirones
   const [swap, setSwap] = useState(null);
   const switching = useRef(false);
   const height = useRef(0);
@@ -466,12 +477,14 @@ export default function Diary({ mobile }) {
     const from = endHeight.current;
     endHeight.current = null;
     const el = stageRef.current;
-    if (swap != null || from == null || reduce || Math.abs(from - el.offsetHeight) < 2) return;
+    if (swap != null || from == null || reduce || !flow || Math.abs(from - el.offsetHeight) < 2) return;
     morphHeight(el, from);
   }, [swap]); // eslint-disable-line react-hooks/exhaustive-deps
-  useHeightMorph(stageRef, steps ? (map ? "map" : `diary-${current}`) : s.stepsView, { skip: () => switching.current });
+  useHeightMorph(stageRef, steps ? (map ? "map" : `diary-${current}`) : s.stepsView, { skip: () => switching.current || !flow });
+  // El centro del zoom, el sello del paso en pantalla: en escritorio, descontando lo
+  // desplazado dentro del mapa
   const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
-  const origin = `${at.x}px ${at.y}px`;
+  const origin = `${at.x}px ${at.y - (flow ? 0 : mapScrollTop())}px`;
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
@@ -492,7 +505,7 @@ export default function Diary({ mobile }) {
           )}
         </AnimatePresence>
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
-          style={swap != null ? { minHeight: swap } : undefined}>
+          style={swap != null && flow ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>
             <AnimatePresence mode="popLayout" initial={false}
               onExitComplete={() => {
