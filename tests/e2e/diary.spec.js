@@ -689,6 +689,13 @@ test("las misiones de un paso con varios logros van agrupadas por logro", async 
   await expect(groups.locator(".q-group-name")).toHaveText(["En marcha hacia la aventura", "Un ciudadano modelo", "¿Pero dónde están los dofus?"]);
   await expect(groups.locator(".q-item")).toHaveCount(16);
   expect(await groups.evaluateAll(gs => gs.map(g => g.querySelectorAll(".q-item").length))).toEqual([5, 6, 5]);
+  // Todos los títulos llevan el icono de su logro, también los que el texto no nombra
+  for (const n of [1, 12, 52]) {
+    await stepData(page, n);
+    const heads = page.locator("#journal .q-group-head");
+    expect(await heads.count()).toBeGreaterThan(1);
+    await expect(heads.locator("img")).toHaveCount(await heads.count());
+  }
   // Un paso de un solo logro, sin títulos
   await stepData(page, 17);
   await expect(page.locator("#journal .q-group-name")).toHaveCount(0);
