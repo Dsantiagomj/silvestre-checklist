@@ -386,12 +386,6 @@ export function setAllPrereqs(on) {
   setState({ prereqs: on ? Object.fromEntries(ALL_PREREQS.map(p => [p.id, true])) : {} });
 }
 
-/** Desde el hero: la ventana de pasos pasa a prerrequisitos u objetos y queda a la vista. */
-export function openNeeds(tab) {
-  setStepsView(tab);
-  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 
 // Filtros
 const setFilters = patch => setState(s => ({ filters: { ...s.filters, ...patch } }));

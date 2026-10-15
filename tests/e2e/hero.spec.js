@@ -2,10 +2,23 @@ import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
-const heroBg = page => page.locator(".hero").evaluate(el => getComputedStyle(el).getPropertyValue("--hero-bg"));
+const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 
-test("el fondo del hero es un mapa distinto en cada tema", async ({ page }) => {
-  await openApp(page);
+const FIGURES = JSON.parse(readFileSync(new URL("../../src/data/figures.json", import.meta.url), "utf8"));
+const heroBg = page => page.locator(".hero-bg-img").last().evaluate(el => el.style.backgroundImage);
+
+test("el fondo del hero es el mapa del juego donde empieza el siguiente paso", async ({ page }) => {
+  await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
+  // El mapa grande (escala 1) de su primera misión; debajo, el paisaje de la zona
+  await expect.poll(() => heroBg(page)).toContain(`maps/1/${FIGURES[4].m}.jpg`);
+  // Al marcar el paso, el fondo pasa al mapa del siguiente
+  await page.locator('.diary-row[data-n="4"] .row-check').click();
+  await expect.poll(() => heroBg(page)).toContain(`maps/1/${FIGURES[5].m}.jpg`);
+  await expect(page.locator(".hero-bg-img")).toHaveCount(1);
+});
+
+test("con la guía terminada el fondo es un mapa distinto en cada tema", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(100) });
   // Oscuro: Refugio Silvestre. Claro: Mazmorra de los Escarahojas, un bosque de día.
   await expect.poll(() => heroBg(page)).toContain("223350028");
   await page.click("#themeBtn");
@@ -25,11 +38,13 @@ const SEED = {
   "silvestre:owned": { 14635: true, 32079: true },
 };
 
-test("el hero ocupa todo el ancho y casi toda la pantalla", async ({ page }) => {
+test("el hero ocupa todo el ancho y deja asomar la ventana de los pasos", async ({ page }) => {
   await openApp(page);
   const box = await page.locator(".hero").boundingBox();
   expect(box.width).toBe(1440);
-  expect(box.height).toBeGreaterThanOrEqual(900 * 0.72);
+  // Como mucho el 70 % de la pantalla (y 620 px): sin bajar ya asoma la ventana
+  expect(box.height).toBeLessThanOrEqual(Math.min(900 * 0.7, 620) + 1);
+  expect(await page.locator(".steps-win").evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(900);
 });
 
 test("el anillo marca el progreso y el Dofus sigue apagado hasta el final", async ({ page }) => {
@@ -45,8 +60,6 @@ test("el anillo marca el progreso y el Dofus sigue apagado hasta el final", asyn
   await expect(page.locator(".egg-body .egg-on")).toHaveCount(0);
   await expect(page.locator(".egg-body .egg-off")).toHaveAttribute("src", /items\/23036\.png$/);
 });
-
-const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 
 test("con el paso 99 hecho, en el anillo está la Piñata de pino", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(99) });
@@ -138,36 +151,90 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   // Sin siguiente paso ni nada que reunir: el hero se queda con el título y el huevo.
   // Los Dofus del camino viven en la ventana de los pasos, todos conseguidos
   await expect(page.locator("#heroNext")).toHaveCount(0);
-  await expect(page.locator(".hero-reqs")).toHaveCount(0);
+  await expect(page.locator(".hero .journal-banner")).toHaveCount(0);
   await expect(page.locator(".hero .road-dofus")).toHaveCount(0);
+  // El título vuelve a ser el protagonista, grande, con la descripción de la página
+  await expect(page.locator("h1")).toHaveCount(1);
+  await expect(page.locator(".hero h1.hero-title")).toHaveText("Checklist del Dofus Silvestre");
+  expect(await page.locator(".hero h1").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(34);
+  await expect(page.locator(".hero-sub")).toContainText("Los 100 pasos para obtener el Dofus Silvestre");
   await expect(page.locator("#winRoad .road-dofus.obtained")).toHaveCount(12);
   await expect(page.locator("#winRoad .road-count")).toHaveText("12/12");
   await expect(page.locator("#diaryNext")).toBeDisabled();
 });
 
-test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page }) => {
+test("el hero no repite lo que hay que reunir: eso lo cuentan las pestañas de la ventana", async ({ page }) => {
   await openApp(page, SEED);
-  await expect(page.locator("#statDone")).toHaveText("3");
-  await expect(page.locator("#statPre")).toHaveText("1");
-  await expect(page.locator("#statOwned")).toHaveText("4");
-  // Pendiente no es un error: la tarjeta queda neutra (sin rojo) y abre su sección
-  await expect(page.locator("#heroWarn")).not.toHaveClass(/\b(warn|complete)\b/);
-  expect(await page.locator("#heroWarn .hero-req-name").evaluate(el => getComputedStyle(el).color))
-    .toBe(await page.locator("#heroItems .hero-req-name").evaluate(el => getComputedStyle(el).color));
-  await page.click("#heroWarn");
-  await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#needs")).toBeInViewport();
+  await expect(page.locator(".hero-visual #statDone")).toHaveText("3");
+  await expect(page.locator(".hero-reqs, #heroWarn, #heroItems, #statPre, #statOwned")).toHaveCount(0);
+  await expect(page.locator("#prereqsCount")).toHaveText("20");
 });
 
-test("la tarjeta de siguiente paso lleva a su detalle", async ({ page }) => {
+test("el hero es el siguiente paso: su estandarte, su título y lo que pide", async ({ page }) => {
   await openApp(page, SEED);
-  await expect(page.locator("#heroNext")).toContainText("Paso 4");
-  // La misma figura que su estandarte en el diario: el 4 la empieza Maytesé Nyhil
-  await expect(page.locator("#heroNext .hero-next-art img")).toHaveAttribute("src", /npcs\/npc-\d+\.png$/);
-  await expect(page.locator("#heroNext .hero-next-art img")).toHaveAttribute("title", "Maytesé Nyhil");
+  const step = page.locator("#heroNext");
+  // Una sola h1, pequeña: el título de la página es la antesala del paso
+  await expect(page.locator("h1")).toHaveCount(1);
+  await expect(page.locator(".hero-eyebrow")).toContainText("Checklist del Dofus Silvestre");
+  await expect(page.locator(".hero-eyebrow")).toContainText("siguiente paso");
+  expect(await page.locator("h1").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeLessThan(16);
+  // El mismo estandarte que su detalle: número, zona y figura (el 4 lo empieza Maytesé Nyhil)
+  await expect(step.locator(".journal-banner .journal-num")).toHaveText("4");
+  await expect(step.locator(".journal-banner .banner-zone")).toHaveText("Krosmoz");
+  await expect(step.locator(".journal-show img")).toHaveAttribute("src", /npcs\/npc-\d+\.png$/);
+  await expect(step.locator(".journal-show-name")).toHaveText("Maytesé Nyhil");
+  await expect(step.locator(".journal-show-label")).toHaveText("Inicia el paso");
+  // Una línea con la zona y, cuando cargan, cuántas misiones tiene
+  await expect(step.locator(".hero-step-meta")).toContainText("Krosmoz");
+  await expect(step.locator(".hero-step-meta")).toContainText(/\d+ misi(ón|ones)/, { timeout: 15_000 });
+  // Continuar lleva a su detalle, con el mismo título
+  const title = await step.locator(".hero-step-title").innerText();
+  await expect(page.locator("#heroNextGo")).toHaveText("Continuar con el paso 4 →");
   await page.click("#heroNextGo");
   await expect(page.locator('.diary-row[data-n="4"]')).toHaveAttribute("aria-current", "step");
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
+  await expect(page.locator("#journal .journal-title")).toHaveText(title);
+});
+
+test("el hero dice los objetos que pide el paso y su aviso de la guía", async ({ page }) => {
+  // El paso 1 pide objetos; ninguno marcado
+  await openApp(page);
+  const step = page.locator("#heroNext");
+  await expect(step.locator(".journal-num")).toHaveText("1");
+  await expect(step.locator(".hero-step-meta")).toContainText(/\d+ objetos? que reunir/);
+  // El 22 tiene verde: lo que se resuelve, en una sola línea
+  await openApp(page, { "silvestre:done": upTo(21) });
+  const call = step.locator(".hero-call");
+  await expect(call).toHaveCount(1);
+  await expect(call).toHaveClass(/\b(stop|done)\b/);
+  expect(await call.evaluate(el => getComputedStyle(el).whiteSpace)).toBe("nowrap");
+});
+
+test("al marcar un paso el hero pasa al siguiente con un fundido, pero no al cargar", async ({ page }) => {
+  await openApp(page, SEED);
+  const running = () => page.evaluate(() => [...document.querySelectorAll(".hero-step, .hero-bg-img")]
+    .flatMap(el => el.getAnimations()).length);
+  // Al cargar, el paso ya está en su sitio, sin fundido
+  expect(await running()).toBe(0);
+  // Marcar el 4: los dos pasos se cruzan un momento y queda el 5
+  const during = await page.evaluate(() => new Promise(resolve => {
+    document.querySelector('.diary-row[data-n="4"] .row-check').click();
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve(document.querySelectorAll(".hero-step").length)));
+  }));
+  expect(during).toBe(2);
+  await expect(page.locator(".hero-step")).toHaveCount(1);
+  await expect(page.locator("#heroNext .journal-num")).toHaveText("5");
+  await expect(page.locator("#heroNextGo")).toHaveCount(1);
+});
+
+test("con movimiento reducido el hero cambia de paso sin fundido", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openApp(page, SEED);
+  await page.locator('.diary-row[data-n="4"] .row-check').click();
+  await expect(page.locator("#heroNext .journal-num")).toHaveText("5");
+  await expect(page.locator(".hero-step")).toHaveCount(1);
+  expect(await page.evaluate(() => [...document.querySelectorAll(".hero-step, .hero-bg-img")]
+    .flatMap(el => el.getAnimations()).length)).toBe(0);
 });
 
 test("el parallax y el ambiente respetan el movimiento reducido", async ({ browser }) => {
@@ -190,13 +257,8 @@ test("el parallax y el ambiente respetan el movimiento reducido", async ({ brows
   }
 });
 
-test("la descripción explica la página y el ponderado es una nota del porcentaje", async ({ page }) => {
+test("el ponderado es una nota del porcentaje", async ({ page }) => {
   await openApp(page);
-  const sub = page.locator(".hero-sub");
-  await expect(sub).toHaveText("Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.");
-  // El eyebrow da crédito a Sandglass; los "100 pasos" ya los dicen título y descripción
-  await expect(page.locator(".hero-eyebrow")).toHaveText("Guía de Sandglass");
-  await expect(sub).not.toContainText("ponderado");
   // La nota se asocia al porcentaje y aparece al pasar el ratón o con el foco
   const info = page.locator("#pctInfo");
   await expect(info).toHaveAttribute("aria-describedby", "pctNote");
@@ -204,22 +266,6 @@ test("la descripción explica la página y el ponderado es una nota del porcenta
   await info.hover();
   await expect(page.locator("#pctNote")).toBeVisible();
   await expect(page.locator("#pctNote")).toContainText("nivel");
-});
-
-test("los pasos van con el progreso y los requisitos van aparte", async ({ page }) => {
-  await openApp(page, SEED);
-  await expect(page.locator(".hero-visual #statDone")).toHaveText("3");
-  const reqs = page.locator(".hero-reqs");
-  await expect(reqs).toContainText("Lo que necesitas");
-  await expect(reqs.locator("#statPre")).toHaveText("1");
-  await expect(reqs.locator("#statOwned")).toHaveText("4");
-});
-
-test("objetos necesarios lleva a su sección", async ({ page }) => {
-  await openApp(page);
-  await page.click("#heroItems");
-  await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#needs")).toBeInViewport();
 });
 
 test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", async ({ page }) => {

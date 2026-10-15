@@ -10,13 +10,18 @@ const SEED = {
 };
 
 test("el diálogo muestra los conteos reales y exige elegir algo", async ({ page }) => {
+  // Los objetos cuentan lo mismo que la pestaña: conseguidos = todos - pendientes. Sin
+  // progreso, la pestaña dice cuántos son en total
+  await openApp(page);
+  const total = Number(await page.locator("#itemsCount").textContent());
   await openApp(page, SEED);
+  const pending = Number(await page.locator("#itemsCount").textContent());
   await page.click("#resetBtn");
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator("#rdNSteps")).toHaveText("5");
   await expect(page.locator("#rdNPre")).toHaveText("2");
-  // Los objetos cuentan lo mismo que en el hero; la posición del overlay no es una opción
-  await expect(page.locator("#rdNOwned")).toHaveText(await page.locator("#statOwned").textContent());
+  expect(Number(await page.locator("#rdNOwned").textContent())).toBe(total - pending);
+  // La posición del overlay no es una opción
   await expect(page.locator('#resetDialog input[name="overlay"]')).toHaveCount(0);
   await page.uncheck('#resetDialog input[name="steps"]');
   await page.uncheck('#resetDialog input[name="prereqs"]');
@@ -51,14 +56,14 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   expect(Object.keys(backup.data).sort()).toEqual(["done", "guide", "owned", "prereqs", "questObj", "questPos"]);
   expect(backup.data.guide).toBe(4); // la numeración de pasos con la que se guardó
 
-  const ownedBefore = await page.locator("#statOwned").textContent();
+  const ownedBefore = await page.locator("#itemsCount").textContent();
   await page.uncheck('#resetDialog input[name="owned"]');
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
   await expect(page.locator(".diary-row.done")).toHaveCount(0);
   // Lo que no se elige se conserva: también los objetos que cubrían los pasos borrados.
   // Con los pasos se va su avance objetivo a objetivo
-  await expect(page.locator("#statOwned")).toHaveText(ownedBefore);
+  await expect(page.locator("#itemsCount")).toHaveText(ownedBefore);
   expect(await readLS(page, "silvestre:owned")).toMatchObject({ 421: true, 306: true });
   expect(await readLS(page, "silvestre:questObjective")).toEqual({});
 
@@ -131,13 +136,12 @@ test("con la guía completa, conservar los objetos los deja marcados al reinicia
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   await page.click("#resetBtn");
-  const n = await page.locator("#rdNOwned").textContent();
-  const total = `${n}/${n}`;
   await page.locator('#resetDialog input[name="owned"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
   await expect(page.locator(".diary-row.done")).toHaveCount(0);
-  await expect(page.locator("#heroItems .hero-req-count")).toHaveText(total);
+  // Todos siguen conseguidos: a la pestaña no le falta ninguno
+  await expect(page.locator("#itemsCount")).toHaveText("✓");
 });
 
 test("reiniciar los pasos borra también el avance de las misiones, y deshacer lo devuelve", async ({ page }) => {

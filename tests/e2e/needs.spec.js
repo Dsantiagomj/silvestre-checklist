@@ -162,17 +162,6 @@ test("marcar todo y limpiar actúan sobre lo que se ve", async ({ page }) => {
   await expect(page.locator("#items .slot.owned")).toHaveCount(0);
 });
 
-test("las tarjetas del hero abren su pestaña", async ({ page }) => {
-  await openApp(page, MID);
-  await page.click("#heroWarn");
-  await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#needs")).toBeInViewport();
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.click("#heroItems");
-  await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator("#needs")).toBeInViewport();
-});
-
 test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
@@ -282,7 +271,6 @@ test("el contador de objetos usa el mismo total que la lista", async ({ page }) 
   const total = await page.locator('.needs-cat[data-cat="todo"] .n').textContent();
   // La pestaña dice cuántos faltan: todos
   await expect(page.locator("#itemsCount")).toHaveText(total);
-  await expect(page.locator("#heroItems .hero-req-count")).toHaveText(`0/${total}`);
 });
 
 test("la lista se pagina: 25 por defecto, se puede cambiar y se recuerda", async ({ page }) => {
@@ -361,9 +349,9 @@ test("el crédito a Sandglass encabeza las dos pestañas", async ({ page }) => {
   await expect(page.locator(".pr-intro")).toHaveCount(0);
 });
 
-test("las tarjetas del hero y el atajo / cambian la ventana desde el mapa", async ({ page }) => {
+test("las pestañas y el atajo / cambian la ventana desde el mapa", async ({ page }) => {
   await openApp(page, MID, { view: "map" });
-  await page.click("#heroItems");
+  await page.click("#tabItems");
   await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
   await page.click("#stepsViewMap");
   await expect(page.locator(".map-node")).toHaveCount(100);
