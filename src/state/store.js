@@ -9,6 +9,7 @@ import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
 import WEIGHTS from "../data/weights.json";
 import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
+import { DOFUS_ROAD } from "../lib/assets.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -113,6 +114,9 @@ function initialState() {
     shopEpoch: 0,
     questsLoaded: questsData() != null,
     toast: { seq: 0, visible: false, text: "", actionLabel: "", ms: 8000 },
+    // Los Dofus del camino recién conseguidos al marcar (los celebra la franja de la
+    // ventana). Solo cambia al marcar: ni al cargar ni al restaurar una copia
+    dofusWon: { seq: 0, steps: [] },
   };
 }
 
@@ -299,17 +303,41 @@ export function openInDiary(n) {
 export const closeSheet = () => setState({ sheetOpen: false });
 
 export function toggleStep(n) {
+  const before = state.done;
   setState(s => {
     const done = { ...s.done };
     if (done[n]) delete done[n];
     else done[n] = true;
     return { done, shopEpoch: s.shopEpoch + 1 };
   });
+  celebrateDofus(before);
 }
 
 /** Marca varios pasos a la vez (los que cierra un mismo combate). */
 export function markSteps(ns) {
+  const before = state.done;
   setState(s => ({ done: { ...s.done, ...Object.fromEntries(ns.map(n => [n, true])) }, shopEpoch: s.shopEpoch + 1 }));
+  celebrateDofus(before);
+}
+
+/** "¡Dofus Esmeralda obtenido!", "¡Piñata de pino obtenida!", "¡Dofus Marfil y Dofus Ébano obtenidos!" */
+export function dofusWonText(road) {
+  const names = road.map(d => d.name);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
+  const ending = names.length > 1 ? "obtenidos" : /^Piñata/.test(names[0]) ? "obtenida" : "obtenido";
+  return `¡${list} ${ending}!`;
+}
+
+/**
+ * Si al marcar se ha conseguido algún Dofus del camino que no se tenía, lo anuncia: la
+ * franja de la ventana lo enciende (dofusWon) y un aviso lo dice, aunque la franja no
+ * esté a la vista.
+ */
+function celebrateDofus(before) {
+  const won = DOFUS_ROAD.filter(d => !before[d.step] && state.done[d.step]);
+  if (!won.length) return;
+  setState(s => ({ dofusWon: { seq: s.dofusWon.seq + 1, steps: won.map(d => d.step) } }));
+  showToast(dofusWonText(won), "", null, 4500);
 }
 
 export function goToNextPending() {
