@@ -120,13 +120,9 @@ test("«Siguiente» de la franja deja la ventana entera a la vista", async ({ pa
   await expect.poll(async () => fits(await boxes(page)), { timeout: 4000 }).toBe(true);
 });
 
-test("las tarjetas del hero dejan la ventana entera a la vista", async ({ page }) => {
+test("«Continuar» del hero deja la ventana entera a la vista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click("#heroItems");
-  await expect(page.locator("#tabItems")).toHaveAttribute("aria-selected", "true");
-  await expect.poll(async () => fits(await boxes(page)), { timeout: 4000 }).toBe(true);
-  await page.evaluate(() => scrollTo(0, 0));
   await page.click("#heroNextGo");
   await expect.poll(async () => fits(await boxes(page)), { timeout: 4000 }).toBe(true);
 });

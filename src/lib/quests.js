@@ -2,6 +2,8 @@
 // Misiones de cada paso (src/data/quests.json, cargado en diferido)
 // ---------------------------------------------------------------------------
 export const MAP_IMG = "https://api.dofusdb.fr/img/maps/0.5/";
+/** El mismo mapa a escala 1 (1910 px de ancho), para fondos a todo el ancho. */
+export const MAP_IMG_HD = "https://api.dofusdb.fr/img/maps/1/";
 export const OBJ_ICON = { npc: "💬", fight: "⚔️", bring: "🎒", map: "🧭", craft: "🔨", free: "•" };
 
 let data = null;

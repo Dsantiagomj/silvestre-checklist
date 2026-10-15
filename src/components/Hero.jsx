@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { ALL_PREREQS, STEPS } from "../data/steps.js";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
+import { STEPS } from "../data/steps.js";
 import {
-  doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
-  openNeeds, useAppState,
+  doneCount, isMobile, nextPending, progressPct, rowHave, selectStep, useAppState,
 } from "../state/store.js";
-import { BRAND_ICON, DOFUS_ROAD, HERO_BG, HERO_ICONS, imgUrl } from "../lib/assets.js";
-import { ALL_ROWS } from "../lib/resources.js";
-import { bannerFigure } from "../lib/journal.js";
+import { BRAND_ICON, CALL_ICONS, DOFUS_ROAD, HERO_BG, ZONE_IMG, imgUrl } from "../lib/assets.js";
+import { MAP_IMG_HD, questsOf } from "../lib/quests.js";
+import { rowsOf } from "../lib/resources.js";
+import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
+import Banner from "./Banner.jsx";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
 // Posiciones y ritmos fijos (no aleatorios) para que el render sea estable.
@@ -19,18 +21,6 @@ const FX = [
 
 // Parallax: el mapa baja a este ritmo respecto al scroll (0 = fijo con la página)
 const PARALLAX = 0.35;
-
-/** Nombre corto de un paso: lo primero entrecomillado del texto de Sandglass. */
-function stepTitle(step) {
-  const quoted = step.text.match(/["«]([^"»]+)["»]/);
-  return quoted ? quoted[1].replace(/[.\s]+$/, "") : step.zone;
-}
-
-/** "hasta la misión 7" si el paso solo cubre parte de un logro. */
-function stepScope(step) {
-  const m = step.text.match(/hasta (?:llegar a )?la misi[oó]n (\d+)/i);
-  return m ? `hasta la misión ${m[1]}` : null;
-}
 
 function goToStep(n) {
   selectStep(n);
@@ -75,37 +65,107 @@ function useMorph(stage) {
   return from;
 }
 
-/** HERO inmersivo: mapa a pantalla completa con parallax, el huevo como progreso */
+// Los avisos de la guía que valen para el hero: dónde parar (rojo) o lo que se resuelve (verde)
+const CALL_LABEL = { stop: "Hasta dónde llegar", done: "Lo que se resuelve" };
+
+/**
+ * El paso en una línea, con lo que sale barato: su zona, dónde empieza y, si ya cargaron
+ * las misiones, cuántas son; y los objetos que aún hay que reunir para él.
+ */
+function stepFacts(s, step, fig) {
+  const quests = s.questsLoaded ? questsOf(step.n) : null;
+  const st = quests?.[0]?.st;
+  const facts = [step.zone];
+  if (st?.cls) facts.push("Empieza en el templo de tu clase");
+  // El PNJ solo si no es ya la figura del estandarte
+  else if (st?.npc && st.npc !== fig?.name) facts.push(`Empieza con ${st.npc}${st.a ? ` en ${st.a}` : ""}`);
+  else if (st?.a) facts.push(`Empieza en ${st.a}`);
+  if (quests?.length) facts.push(`${quests.length} ${quests.length === 1 ? "misión" : "misiones"}`);
+  const left = rowsOf(step.n).filter(row => !rowHave(s, row, [step.n])).length;
+  if (left) facts.push(`${left} ${left === 1 ? "objeto" : "objetos"} que reunir`);
+  return facts;
+}
+
+/**
+ * El siguiente paso: su estandarte (el mismo que su detalle) y, al lado, su título, lo
+ * que pide, su primer aviso de la guía y «Continuar». El que se va en el fundido no
+ * lleva ids ni se puede pulsar.
+ */
+function HeroStep({ s, step }) {
+  const live = useIsPresent();
+  const fig = bannerFigure(step.n);
+  const call = stepCalls(step).find(([kind]) => CALL_LABEL[kind]);
+  const icon = call && (call[0] === "done" ? doneIcon(step.n) : CALL_ICONS.stop);
+  return (
+    <div className="hero-step-in" id={live ? "heroNext" : undefined} inert={!live}>
+      <Banner step={step} className="hero-banner" />
+      <div className="hero-step-copy">
+        <h2 className="hero-step-title">{stepTitle(step)}</h2>
+        <p className="hero-step-meta">
+          {stepFacts(s, step, fig).map((fact, i) => <Fragment key={i}>{i > 0 && " "}<span>{fact}</span></Fragment>)}
+        </p>
+        {call && (
+          <p className={`hero-call ${call[0]}`} title={call[1]}>
+            {icon && <img src={imgUrl(icon)} alt="" />}
+            <b>{CALL_LABEL[call[0]]}:</b> {call[1]}
+          </p>
+        )}
+        <button type="button" className="hero-next-go" id={live ? "heroNextGo" : undefined} onClick={() => goToStep(step.n)}>
+          Continuar con el paso {step.n} →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// El fundido entre un paso y el siguiente (y entre sus mapas): el que llega sube un poco
+const EASE_OUT = [0.2, 0.8, 0.2, 1];
+const swap = still => ({
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: still ? 0 : 0.5, ease: EASE_OUT, delay: still ? 0 : 0.12 } },
+  exit: { opacity: 0, y: -6, transition: { duration: still ? 0 : 0.28, ease: "easeIn" } },
+});
+const fade = still => ({
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: still ? 0 : 0.7, ease: "easeOut" } },
+  exit: { opacity: 0, transition: { duration: still ? 0 : 0.7, ease: "easeIn" } },
+});
+
+/**
+ * HERO: el siguiente paso, en grande, sobre el mapa del juego donde empieza; a la
+ * derecha, el huevo como progreso. Con la guía terminada, el título y el huevo obtenido.
+ */
 export default function Hero() {
   const s = useAppState();
   const pct = progressPct(s);
   const done = doneCount(s);
-  const pendingPrereqs = prereqsPending(s);
-  const owned = ownedCount(s);
-  const totalItems = ALL_ROWS.length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
-  // La misma figura que el estandarte del paso en el diario (el Dofus que da, la figura
-  // de su logro, el PNJ que lo empieza o su jefe)
-  const nextFig = next ? bannerFigure(next) : null;
   const obtained = pct >= 100;
   const stage = eggStage(s);
   const morph = useMorph(stage);
-  // Un mapa por tema: el claro es un bosque de día, que se lee sin velo encima
-  const heroMap = HERO_BG?.[s.theme] ?? null;
+  const still = useReducedMotion();
+  // Fondo: el mapa (grande) donde empieza el siguiente paso; si no carga, el paisaje de su
+  // zona y, por debajo, el mapa del tema. Sin siguiente paso, el del tema: el claro es un
+  // bosque de día, que se lee sin velo encima
+  const map = next && startMap(next);
+  const zone = nextStep && ZONE_IMG[nextStep.zone];
+  const themeMap = HERO_BG?.[s.theme];
+  const bg = [map && `url("${MAP_IMG_HD}${map}.jpg")`, zone && `url("${imgUrl(zone.img)}")`,
+    themeMap && `url("${imgUrl(themeMap)}")`].filter(Boolean).join(", ");
 
   const heroRef = useRef(null);
   const bgRef = useRef(null);
 
   // Parallax del mapa, solo mientras el hero está a la vista y sin movimiento reducido
   useEffect(() => {
-    const bg = bgRef.current;
+    const bgEl = bgRef.current;
     let frame = 0;
     const update = () => {
       frame = 0;
-      if (prefersReducedMotion()) { bg.style.transform = ""; return; }
+      if (prefersReducedMotion()) { bgEl.style.transform = ""; return; }
       const y = Math.min(window.scrollY, heroRef.current.offsetHeight);
-      bg.style.transform = `translate3d(0, ${y * PARALLAX}px, 0) scale(1.08)`;
+      bgEl.style.transform = `translate3d(0, ${y * PARALLAX}px, 0) scale(1.08)`;
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
@@ -114,9 +174,18 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="hero" aria-label="Progreso global" ref={heroRef}
-      style={heroMap ? { "--hero-bg": `url("${imgUrl(heroMap)}")` } : undefined}>
-      <div className="hero-bg" ref={bgRef} aria-hidden="true"></div>
+    <section className={"hero" + (nextStep ? "" : " is-complete")} aria-label="Progreso global" ref={heroRef}>
+      {/* Lo casi negro de los mapas (el vacío alrededor de la sala), transparente */}
+      <svg className="hero-defs" aria-hidden="true" focusable="false">
+        <filter id="heroKnockout" colorInterpolationFilters="sRGB">
+          <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  6 6 6 0 -0.3" />
+        </filter>
+      </svg>
+      <div className="hero-bg" ref={bgRef} aria-hidden="true">
+        <AnimatePresence initial={false}>
+          {bg && <motion.div key={bg} className="hero-bg-img" style={{ backgroundImage: bg }} {...fade(still)} />}
+        </AnimatePresence>
+      </div>
       <div className="hero-veil" aria-hidden="true"></div>
       <div className="hero-fx" aria-hidden="true">
         {FX.map(([x, delay, dur, size], i) => (
@@ -125,56 +194,30 @@ export default function Hero() {
       </div>
 
       <div className="hero-inner">
-        <div className="hero-copy">
-          <p className="hero-eyebrow">Guía de Sandglass</p>
-          <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
-          <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
-
-          {/* Con la guía terminada ya no hay siguiente paso ni nada que reunir: el hero se
-              queda con el título y el huevo obtenido */}
-          {nextStep && (
-            <>
-              <div className="hero-next" id="heroNext">
-                <div className="hero-next-art">
-                  {nextFig ? <img src={imgUrl(nextFig.img)} alt="" title={nextFig.name} /> : <b>{next}</b>}
-                </div>
-                <div className="hero-next-meta">
-                  <p className="hero-next-kicker">Siguiente · Paso {next}</p>
-                  <p className="hero-next-name">{stepTitle(nextStep)}</p>
-                  <p className="hero-next-sub">{[nextStep.zone, stepScope(nextStep)].filter(Boolean).join(" · ")}</p>
-                </div>
-                <button className="hero-next-go" id="heroNextGo" onClick={() => goToStep(next)}>Continuar →</button>
-              </div>
-
-              {/* Requisitos del Dofus: van aparte de los pasos, que son el progreso */}
-              <div className="hero-reqs" role="group" aria-labelledby="heroReqsTitle">
-                <p className="hero-reqs-title" id="heroReqsTitle">Lo que necesitas</p>
-                <div className="hero-reqs-grid">
-                  <button className={"hero-req" + (pendingPrereqs === 0 ? " complete" : "")} id="heroWarn" onClick={() => openNeeds("prereqs")}
-                    aria-label={pendingPrereqs > 0
-                      ? `Prerrequisitos: ${prereqsDone(s)} de ${ALL_PREREQS.length}, ${pendingPrereqs} pendientes. Ver prerrequisitos`
-                      : "Prerrequisitos completos. Ver prerrequisitos"}>
-                    {HERO_ICONS?.prereqs && <img src={imgUrl(HERO_ICONS.prereqs)} alt="" />}
-                    <span className="hero-req-meta">
-                      <span className="hero-req-name">Prerrequisitos</span>
-                      <span className="hero-req-count"><b id="statPre">{prereqsDone(s)}</b>/{ALL_PREREQS.length}</span>
-                    </span>
-                    <span className="hero-req-bar"><i style={{ width: `${(prereqsDone(s) / ALL_PREREQS.length) * 100}%` }}></i></span>
-                  </button>
-                  <button className={"hero-req" + (owned === totalItems ? " complete" : "")} id="heroItems" onClick={() => openNeeds("items")}
-                    aria-label={`Objetos necesarios: ${owned} de ${totalItems} conseguidos. Ver objetos`}>
-                    {HERO_ICONS?.items && <img src={imgUrl(HERO_ICONS.items)} alt="" />}
-                    <span className="hero-req-meta">
-                      <span className="hero-req-name">Objetos necesarios</span>
-                      <span className="hero-req-count"><b id="statOwned">{owned}</b>/{totalItems}</span>
-                    </span>
-                    <span className="hero-req-bar"><i style={{ width: `${(owned / totalItems) * 100}%` }}></i></span>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        {nextStep ? (
+          <div className="hero-main">
+            {/* El título de la página, pequeño: la antesala del paso */}
+            <div className="hero-eyebrow">
+              <h1>Checklist del Dofus Silvestre</h1>
+              <span aria-hidden="true">·</span>
+              <span>siguiente paso</span>
+            </div>
+            <div className="hero-stage">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div key={next} className="hero-step" {...swap(still)}>
+                  <HeroStep s={s} step={nextStep} />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        ) : (
+          // Con la guía terminada ya no hay siguiente paso: el título y el huevo obtenido
+          <div className="hero-copy">
+            <p className="hero-eyebrow">Guía de Sandglass</p>
+            <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
+            <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
+          </div>
+        )}
 
         <div className="hero-visual">
           <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph ? " morphing" : "")} data-stage={stage}
