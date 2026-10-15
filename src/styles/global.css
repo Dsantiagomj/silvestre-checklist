@@ -2598,8 +2598,6 @@ header.is-scrolled .title-bar{
 .call.resumedin{ --call:#c9a24a; }
 .goal-ach .quest-mark{ height:34px; }
 .journal-title{ margin:2px 0 0; font-size:28px; line-height:1.08; color:#f3ecd2; }
-.journal-title a{ color:inherit; text-decoration:none; }
-.journal-title a:hover{ text-decoration:underline; text-decoration-thickness:2px; }
 .journal-base{ margin:12px 0; font-size:15px; line-height:1.6; color:var(--txt); }
 /* El texto de la guía: un rótulo pequeño con el libro del juego y el texto en letra
    normal; los enlaces se distinguen por el punteado, sin flecha */
