@@ -33,8 +33,15 @@ test("el verde dice qué otros pasos se cierran; lo que solo se actualiza no cue
   expect(step(59).closes).toEqual([11]);
   expect(step(54).closes).toBeUndefined();
   expect(step(43).closes).toBeUndefined();
+  // También una nota azul que lo dice tal cual: «se termina la misión del inciso 92», no
+  // «un recurso necesario para terminar la misión del inciso 63» (81) ni la opcional del 7
+  expect(step(93).closes).toEqual([92]);
+  expect(step(93).updates).toEqual([84]);
+  expect(step(94).closes).toEqual([84]);
+  expect(step(81).closes).toBeUndefined();
+  expect(step(97).closes).toBeUndefined();
   const pairs = STEPS.filter(s => s.closes).map(s => [s.n, s.closes]);
-  expect(pairs).toHaveLength(20);
+  expect(pairs).toHaveLength(22);
   // Siempre se cierran pasos anteriores
   for (const [n, closes] of pairs) for (const c of closes) expect(c).toBeLessThan(n);
 });
