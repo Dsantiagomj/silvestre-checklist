@@ -151,7 +151,9 @@ test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page })
 test("la tarjeta de siguiente paso lleva a su detalle", async ({ page }) => {
   await openApp(page, SEED);
   await expect(page.locator("#heroNext")).toContainText("Paso 4");
-  await expect(page.locator("#heroNext img")).toHaveCount(0); // el paso 4 no tiene arte: usa su número
+  // La misma figura que su estandarte en el diario: el 4 la empieza Maytesé Nyhil
+  await expect(page.locator("#heroNext .hero-next-art img")).toHaveAttribute("src", /npcs\/npc-\d+\.png$/);
+  await expect(page.locator("#heroNext .hero-next-art img")).toHaveAttribute("title", "Maytesé Nyhil");
   await page.click("#heroNextGo");
   await expect(page.locator('.diary-row[data-n="4"]')).toHaveAttribute("aria-current", "step");
   await expect(page.locator("#journal .journal-num")).toHaveText("4");

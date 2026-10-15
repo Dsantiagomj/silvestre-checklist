@@ -8,7 +8,7 @@ import {
 import Slot from "./Slot.jsx";
 import SearchField from "../SearchField.jsx";
 
-const SORTS = [["soon", "Pronto primero"], ["qty", "Cantidad"], ["az", "A–Z"]];
+const SORTS = [["soon", "Por paso"], ["qty", "Cantidad"], ["az", "A–Z"]];
 const CATS = [["todo", "Todo"], ...CATEGORIES];
 const byName = (a, b) => rowName(a).localeCompare(rowName(b), "es");
 
@@ -40,7 +40,7 @@ export function itemsView(s) {
     rows.sort(s.shopSort === "az" ? byName : (a, b) => (b.a[0][1] - a.a[0][1]) || byName(a, b));
     bands = [{ id: "all", rows }, ...usedBand];
   }
-  // Recuentos por objeto distinto: Pepita en "Pronto" y en "Más adelante" cuenta una vez
+  // Recuentos por objeto distinto: Pepita en "Tus próximos pasos" y en "Más adelante" cuenta una vez
   const all = new Map();
   for (const b of bands) for (const r of b.rows) all.set(r.k, r);
   const counts = { todo: 0 };
@@ -61,7 +61,7 @@ export function itemsView(s) {
 }
 
 /**
- * Los pasos de «Pronto». Cada uno se marca cuando todo lo que pide está reunido; uno
+ * Los pasos de «Tus próximos pasos». Cada uno se marca cuando todo lo que pide está reunido; uno
  * que no pide nada se atenúa (marcarlo diría que está hecho).
  */
 function SoonChips({ chips, s }) {
@@ -163,7 +163,7 @@ function Slots({ rows, band, s, q, later }) {
   );
 }
 
-/** OBJETOS NECESARIOS · inventario con buscador, categorías y la franja "Pronto". */
+/** OBJETOS NECESARIOS · inventario con buscador, categorías y la franja "Tus próximos pasos". */
 export default function ItemsPanel({ searchRef }) {
   const live = useLiveIds();
   const s = useAppState();
@@ -229,7 +229,6 @@ export default function ItemsPanel({ searchRef }) {
           {soonRows.length > 0 && (
             <section className="band soon" id={live("bandSoon")} aria-labelledby={live("bandSoonTitle")}>
               <div className="band-h">
-                <span className="band-pill">Pronto</span>
                 <b id={live("bandSoonTitle")}>Tus próximos pasos</b>
                 <em>· {soonRows.length} objetos</em>
                 <SoonChips chips={soon.chips} s={s} />
