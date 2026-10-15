@@ -1,8 +1,8 @@
-import { createContext, memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, usePresence, useReducedMotion } from "motion/react";
 import { useAnimate } from "motion/react-mini";
 import { makeChannel, whenReady } from "../lib/viewSwap.js";
-import { useHeightMorph } from "../lib/motion.js";
+import { morphHeight, useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
@@ -232,11 +232,15 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
   const [present, safeToRemove] = usePresence();
   const swap = useContext(SwapContext);
   const [scope, animate] = useAnimate();
-  const setRef = el => {
+  // Estable: una función nueva en cada render haría que React soltara la ref (null) y la
+  // volviera a poner en cada commit, y AnimatePresence (popLayout) la lee justo en medio.
+  // Sin ella no saca del flujo la vista que se va: la nueva quedaba debajo, fuera de la
+  // pantalla, y aparecía de golpe al terminar
+  const setRef = useCallback(el => {
     scope.current = el;
     if (typeof ref === "function") ref(el);
     else if (ref) ref.current = el;
-  };
+  }, [ref]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // La que llega: invisible y en su sitio de partida hasta estar lista, luego aparece
   useLayoutEffect(() => {
@@ -257,18 +261,18 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
     return () => { alive = false; swap.channel.ready(id); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // La que se va: hace su zoom, espera a la nueva y se desvanece mientras esta aparece
+  // La que se va: hace su zoom y, cuando la nueva está lista, se desvanece mientras esta aparece
   useEffect(() => {
     if (present) return;
     if (reduce || !swap.current) return safeToRemove();
     const el = scope.current;
     const { id, to } = swap.current;
-    (async () => {
-      await animate(el, { transform: LEAVING[to] }, ZOOM);
-      await swap.channel.when(id);
-      await animate(el, { opacity: 0 }, ZOOM);
-      safeToRemove();
-    })();
+    // El zoom y el fundido van a la vez en cuanto la nueva está lista: la nueva entra
+    // encima mientras esta se aleja, sin esperar a que acabe su zoom
+    Promise.all([
+      animate(el, { transform: LEAVING[to] }, ZOOM),
+      swap.channel.when(id).then(() => animate(el, { opacity: 0 }, ZOOM)),
+    ]).then(safeToRemove);
   }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -326,6 +330,16 @@ export default function Diary({ mobile }) {
     setSwap(height.current);
   }, [s.stepsView]); // eslint-disable-line react-hooks/exhaustive-deps
   useLayoutEffect(() => { if (!switching.current) height.current = stageRef.current.offsetHeight; });
+  // Al acabar el zoom la sección suelta la altura de antes: si la vista nueva es más baja
+  // (del mapa al diario) lo de debajo sube con suavidad en vez de saltar
+  const endHeight = useRef(null);
+  useLayoutEffect(() => {
+    const from = endHeight.current;
+    endHeight.current = null;
+    const el = stageRef.current;
+    if (swap != null || from == null || reduce || Math.abs(from - el.offsetHeight) < 2) return;
+    morphHeight(el, from);
+  }, [swap]); // eslint-disable-line react-hooks/exhaustive-deps
   useHeightMorph(stageRef, steps ? (map ? "map" : `diary-${current}`) : s.stepsView, { skip: () => switching.current });
   const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
   const origin = `${at.x}px ${at.y}px`;
@@ -352,6 +366,7 @@ export default function Diary({ mobile }) {
             <AnimatePresence mode="popLayout" initial={false}
               onExitComplete={() => {
                 switching.current = false;
+                endHeight.current = stageRef.current.offsetHeight;
                 setSwap(null);
                 focus.current = takeMapFocus();
                 setSettled(c => c + 1);

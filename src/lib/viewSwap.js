@@ -51,19 +51,26 @@ const preload = url => {
   return decoded(img);
 };
 
+/** Todas las url() de un background-image con varias capas. */
+const urlsOf = bg => [...bg.matchAll(/url\(["']?(.+?)["']?\)/g)].map(m => m[1]);
+/**
+ * Solo se espera lo que sirve la propia página. Lo de fuera (el mapa del juego de
+ * DofusDB, sobre el paisaje del paso) puede tardar casi un segundo: esperarlo dejaba el
+ * zoom parado; llega encima del paisaje, que ya hace de fondo mientras tanto.
+ */
+const local = url => new URL(url, location.href).origin === location.origin;
+
 /**
  * Espera a que la vista que llega esté lista para verse: su maquetación hecha (la lista
  * ya colocada en el paso), las imágenes que van a quedar a la vista (también los
- * paisajes, que son fondos) y, en el diario, las misiones.
+ * paisajes, que son fondos) y, en el diario, las misiones. Las imágenes de fuera, no.
  */
 export async function whenReady(root, view) {
   await frame();
   await frame();
   const visible = [...root.querySelectorAll("img, [style*='background-image']")].filter(inView);
-  const images = visible.filter(el => el.tagName === "IMG").map(decoded);
-  const backgrounds = [...new Set(visible
-    .map(el => el.style.backgroundImage.match(/url\(["']?(.+?)["']?\)/)?.[1])
-    .filter(Boolean))].map(preload);
+  const images = visible.filter(el => el.tagName === "IMG" && local(el.src)).map(decoded);
+  const backgrounds = [...new Set(visible.flatMap(el => urlsOf(el.style.backgroundImage)).filter(local))].map(preload);
   const quests = view === "diary" ? loadQuests() : null;
   await Promise.race([
     Promise.all([...images, ...backgrounds, quests]),
