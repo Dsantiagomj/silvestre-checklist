@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { STEPS } from "./data/steps.js";
 import {
-  clearSelection, closeSheet, getState, isMobile, loadQuests, selectStep, toggleStep,
+  clearSelection, closeSheet, closeSteps, getState, isMobile, loadQuests, pendingCloses, selectStep, toggleStep,
 } from "./state/store.js";
 import { useMediaQuery } from "./lib/useMediaQuery.js";
 import Header from "./components/Header.jsx";
@@ -15,14 +15,18 @@ import OverlayWindow, { useOverlayWindow } from "./overlay/OverlayWindow.jsx";
 
 // Keyboard nav
 function onKeyDown(e) {
-  const { selectedStep } = getState();
+  const s = getState();
+  const { selectedStep } = s;
   if (selectedStep == null) return;
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   if (e.key === "ArrowLeft" && selectedStep > 1) selectStep(selectedStep - 1);
   if (e.key === "ArrowRight" && selectedStep < STEPS.length) selectStep(selectedStep + 1);
   if (e.key === " " || e.key === "Enter") {
     e.preventDefault();
-    toggleStep(selectedStep);
+    // Como «Hecho»: si el paso cierra otros pendientes, termina lo que les queda
+    const closes = pendingCloses(s, selectedStep);
+    if (closes.length) closeSteps(selectedStep, closes);
+    else toggleStep(selectedStep);
   }
   if (e.key === "Escape") {
     if (isMobile()) closeSheet();

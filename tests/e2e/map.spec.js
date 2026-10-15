@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const node = (page, n) => page.locator(`.map-node[data-n="${n}"]`);
@@ -132,11 +132,18 @@ test("la ficha del paso: estandarte, título, lo que se gana, la parada y lo que
   await expect(card.locator(".map-card-line.later")).toContainText("Se termina más adelante");
   await card.locator('.map-card-line.later .step-chip[data-n="34"]').click();
   await expect(card.locator(".journal-num")).toHaveText("34");
-  // Marcar (con el 33, que cierra) y desmarcar
-  await expect(card.locator(".map-card-done")).toHaveText("✓ Hecho, con el 33");
+  // Marcar termina lo que queda del 33, que cierra; sin sus misiones anteriores sigue
+  // pendiente y el aviso deja marcarlo. Luego, desmarcar
+  await expect(card.locator(".map-card-done")).toHaveText("✓ Hecho, y termina el 33");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).toHaveClass(/done/);
+  await expect(node(page, 33)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones anteriores.");
+  expect((await readLS(page, "silvestre:questObjective"))["2444"]).toBe(12);
+  // Pulsar el aviso es pulsar fuera: la ficha se cierra
+  await page.click("#toastAction");
   await expect(node(page, 33)).toHaveClass(/done/);
+  await node(page, 34).click();
   await expect(card.locator(".map-card-done")).toHaveText("Desmarcar");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).not.toHaveClass(/done/);

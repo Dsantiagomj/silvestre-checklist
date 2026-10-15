@@ -1,8 +1,16 @@
+import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
+const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
+const sum = xs => xs.reduce((a, x) => a + x, 0);
+const TOTAL = sum(Object.values(WEIGHTS).map(x => x.w));
+// El mismo redondeo que el hero: un decimal
+const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
+/** Las misiones del paso abierto, ya cargadas (llegan en diferido). */
+const waitQuests = page => expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 
 test("el diario lista los 100 pasos seguidos, sin capítulos por Dofus", async ({ page }) => {
   await openApp(page);
@@ -82,29 +90,102 @@ test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ pag
   expect((await readLS(page, "silvestre:done"))["34"]).toBe(true);
 });
 
-test("si el paso cierra otros pendientes, «Hecho» los marca a la vez y luego avanza", async ({ page }) => {
+test("si el paso cierra otros pendientes, «Hecho» termina lo que les queda y luego avanza", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
   await row(page, 34).locator(".row-main").click();
+  await waitQuests(page);
   // Un solo botón: no hay uno aparte que se pierda al avanzar
   await expect(page.locator("#closesBtn")).toHaveCount(0);
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, con el 33");
-  await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca también el 33, que este paso cierra, y abre el 35");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 33");
+  await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Termina lo que queda del 33, que este paso cierra, y abre el 35");
   await page.click("#toggleBtn");
-  await expect(row(page, 33)).toHaveClass(/done/);
   await expect(row(page, 34)).toHaveClass(/done/);
+  // El 33 tiene tres misiones antes de su parada: sigue pendiente
+  await expect(row(page, 33)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones anteriores.");
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
+  await page.click("#toastAction");
+  await expect(row(page, 33)).toHaveClass(/done/);
   // Con lo cerrado ya hecho, vuelve a ser «Paso hecho»
   await row(page, 34).locator(".row-main").click();
   await page.click("#toggleBtn");
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
 });
 
-test("un paso que cierra varios los nombra todos en «Hecho»", async ({ page }) => {
+test("un paso que cierra varios los nombra todos en «Hecho» y avisa de los que siguen pendientes", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 24) });
   await row(page, 28).locator(".row-main").click();
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, con el 25, 26 y 27");
+  await waitQuests(page);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 25, 26 y 27");
   await page.click("#toggleBtn");
-  for (const n of [25, 26, 27, 28]) await expect(row(page, n)).toHaveClass(/done/);
+  // El 27 solo tenía pendiente lo de tras su parada (la otra es opcional); el 25 y el 26, no
+  for (const n of [27, 28]) await expect(row(page, n)).toHaveClass(/done/);
+  for (const n of [25, 26]) await expect(row(page, n)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 25 y el 26 siguen pendientes: les faltan misiones anteriores.");
+  await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 25 y 26");
+  await page.click("#toastAction");
+  for (const n of [25, 26]) await expect(row(page, n)).toHaveClass(/done/);
+});
+
+// El 22 cierra el 5: «¿Dónde se ha ido la 7.ª compañía?» lleva la parada del 5 y se
+// termina en el 22; «Las primeras impresiones son engañosas» se hace en el propio 5
+const BUT_5 = () => {
+  const done = range(1, 21);
+  delete done[5];
+  return done;
+};
+const questBtn = (page, name) => page.locator("#journal .q-item", { hasText: name }).locator(".q-done-btn");
+
+test("«Hecho» en el 22 termina la misión del 5 tras su parada y avisa de la que falta", async ({ page }) => {
+  await openApp(page, { "silvestre:done": BUT_5() });
+  await row(page, 22).locator(".row-main").click();
+  await waitQuests(page);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 5");
+  await page.click("#toggleBtn");
+  await expect(row(page, 22)).toHaveClass(/done/);
+  await expect(row(page, 5)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 5 sigue pendiente: falta «Las primeras impresiones son engañosas».");
+  await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 5");
+  await expect(page.locator("#journal .journal-num")).toHaveText("23");
+  const obj = await readLS(page, "silvestre:questObjective");
+  expect(obj["703"]).toBe(8);
+  expect(obj["894"]).toBeUndefined();
+  await page.click("#toastAction");
+  await expect(row(page, 5)).toHaveClass(/done/);
+});
+
+test("con lo anterior del 5 ya hecho, «Hecho» en el 22 marca el 5 sin avisar", async ({ page }) => {
+  await openApp(page, { "silvestre:done": BUT_5(), "silvestre:questObjective": { 894: 11 } });
+  await row(page, 22).locator(".row-main").click();
+  await waitQuests(page);
+  await page.click("#toggleBtn");
+  for (const n of [5, 22]) await expect(row(page, n)).toHaveClass(/done/);
+  await expect(page.locator("#toast")).not.toHaveClass(/show/);
+});
+
+test("lo que termina el 22 en el 5 se ve en su detalle y suma al porcentaje", async ({ page }) => {
+  await openApp(page, { "silvestre:done": BUT_5() });
+  const base = sum(Object.keys(BUT_5()).map(n => WEIGHTS[n].w));
+  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base)}%`);
+  await row(page, 22).locator(".row-main").click();
+  await waitQuests(page);
+  await page.click("#toggleBtn");
+  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base + WEIGHTS[22].w + WEIGHTS[5].q[1])}%`);
+  await row(page, 5).locator(".row-main").click();
+  await waitQuests(page);
+  await expect(questBtn(page, "7.ª compañía")).toHaveAttribute("aria-pressed", "true");
+  await expect(questBtn(page, "Las primeras impresiones")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("Intro sobre un paso que cierra otros hace lo mismo que «Hecho»", async ({ page }) => {
+  await openApp(page, { "silvestre:done": BUT_5() });
+  await row(page, 22).locator(".row-main").click();
+  await waitQuests(page);
+  await page.keyboard.press("Enter");
+  await expect(row(page, 22)).toHaveClass(/done/);
+  await expect(row(page, 5)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 5 sigue pendiente: falta «Las primeras impresiones son engañosas».");
+  expect((await readLS(page, "silvestre:questObjective"))["703"]).toBe(8);
 });
 
 test("la casilla de cada fila marca el paso sin cambiar lo que se ve", async ({ page }) => {

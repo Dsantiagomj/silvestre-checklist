@@ -4,7 +4,7 @@ import { CALL_ICONS, DOFUS_ROAD, OBJ_ICONS, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, doneIcon, list, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
 import { questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
-import { loadQuests, markSteps, openInDiary, toggleStep, useAppState } from "../state/store.js";
+import { closeSteps, loadQuests, openInDiary, pendingCloses, toggleStep, useAppState } from "../state/store.js";
 import Banner from "./Banner.jsx";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
@@ -36,9 +36,9 @@ function Line({ kind, icon, label, children }) {
 export default function MapCard({ step, done, questsLoaded, onGo, onClose, className = "", children, ...rest }) {
   const titleId = useId();
   const n = step.n;
-  // Lo que el paso cierra y sigue pendiente se marca con él, como en el diario
+  // Lo que el paso cierra y sigue pendiente se termina con él, como en el diario
   const s = useAppState();
-  const closes = done ? [] : (step.closes || []).filter(c => !s.done[c]);
+  const closes = pendingCloses(s, n);
   // Las misiones (para contarlas) llegan en diferido: se piden al abrir la ficha
   useEffect(loadQuests, []);
   const egg = ROAD_AT[n];
@@ -79,8 +79,8 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
         {meta && <p className="map-card-meta">{meta}</p>}
         <div className="map-card-cta">
           <button type="button" className={"map-card-done" + (done ? " is-done" : "")}
-            onClick={() => (closes.length ? markSteps([n, ...closes]) : toggleStep(n))}>
-            {done ? "Desmarcar" : closes.length ? `✓ Hecho, con el ${list(closes)}` : "✓ Hecho"}
+            onClick={() => (closes.length ? closeSteps(n, closes) : toggleStep(n))}>
+            {done ? "Desmarcar" : closes.length ? `✓ Hecho, y termina el ${list(closes)}` : "✓ Hecho"}
           </button>
           <button type="button" className="map-card-open" onClick={() => openInDiary(n)}>Abrir en el diario →</button>
         </div>
