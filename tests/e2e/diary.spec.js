@@ -568,6 +568,11 @@ test("las paradas revisadas en las guías caen en su objetivo, también cuando u
   // El 43 para en dos misiones
   await after(43, "El sauce del paseante", /Entrégale a Surivitna.*Esporas soporíferas/);
   await after(43, "Inmunda putrefacción", /Entrégale a Fhang.*Mildiu de Pandala/);
+
+  // El 39 pasa Tynril y Morsagüino y deja Funoroshi para el 48: Funoroshi va tras la línea
+  await after(39, "La bendición de Viti", /Vence a 1 x Funoroshi/);
+  const objs = page.locator("#journal .q-item", { hasText: "La bendición de Viti" }).locator(".obj-row");
+  await expect(objs).toHaveText([/Tynril/, /Morsagüino/, /Funoroshi/, /Vuelve a ver/]);
 });
 
 test("si el verde sigue «hasta tener que pasar X», esa nueva parada sale en rojo (paso 43, Kodámade)", async ({ page }) => {
