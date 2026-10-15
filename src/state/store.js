@@ -276,13 +276,36 @@ export function takeMapFocus() {
   mapFocus = null;
   return n;
 }
-/** Deja a la vista el sello del paso n, solo si no lo está ya. */
+/**
+ * Deja a la vista el sello del paso n, solo si no lo está ya. En escritorio el mapa se
+ * desplaza dentro de la ventana: se mueve el mapa, no la página (que solo baja hasta
+ * la ventana si esta no se ve entera). En móvil el mapa va en la página.
+ */
 export function revealMapNode(n) {
   const node = document.querySelector(`.map-node[data-n="${n}"]`);
-  const r = node?.getBoundingClientRect();
-  if (r && (r.top < 80 || r.bottom > innerHeight)) {
-    node.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
+  if (!node) return;
+  const behavior = prefersReducedMotion() ? "auto" : "smooth";
+  const r = node.getBoundingClientRect();
+  const box = node.closest(".step-map-scroll");
+  if (box && box.scrollHeight > box.clientHeight + 1) {
+    const b = box.getBoundingClientRect();
+    let shift = 0;
+    if (r.top < b.top + 40 || r.bottom > b.bottom - 40) {
+      const top = Math.min(Math.max(0, box.scrollTop + r.top - b.top - (b.height - r.height) / 2), box.scrollHeight - box.clientHeight);
+      shift = top - box.scrollTop;
+      box.scrollTo({ top, behavior });
+    }
+    // Donde quedará el sello: si ni así se ve, la página baja hasta la ventana
+    const head = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+    if (r.top - shift < head || r.bottom - shift > innerHeight) showStepsWindow();
+    return;
   }
+  if (r.top < 80 || r.bottom > innerHeight) node.scrollIntoView({ behavior, block: "center" });
+}
+
+/** Lleva la página hasta la ventana de los pasos, que queda entera a la vista en escritorio. */
+export function showStepsWindow() {
+  document.getElementById("diary")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
 }
 
 export function showOnMap(n) {

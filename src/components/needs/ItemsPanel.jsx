@@ -111,9 +111,14 @@ function pageNumbers(page, pages) {
 function Pager({ id, total, view, size }) {
   const go = page => {
     setShopPage(page);
-    // Si la cabecera de la lista quedó arriba, se vuelve a ella
+    // Si la cabecera de la lista quedó arriba, se vuelve a ella: en escritorio dentro de
+    // la lista, que se desplaza por dentro de la ventana; en móvil, en la página
     const top = document.getElementById(id);
-    if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ behavior: "smooth", block: "start" });
+    const box = top?.closest(".items-body");
+    if (box && box.scrollHeight > box.clientHeight + 1) {
+      const above = top.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      if (above < 0) box.scrollTo({ top: box.scrollTop + above, behavior: "smooth" });
+    } else if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   return (
     <nav className="pager" aria-label="Páginas de la lista">

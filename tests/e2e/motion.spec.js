@@ -108,7 +108,7 @@ test("marcar un prerrequisito o un objeto hace aparecer su ✓ con el mismo rebo
 test("las secciones entran al hacer scroll", async ({ page }) => {
   await openApp(page);
   const reveal = await page.locator("#diary").evaluate(el =>
-    el.getAnimations().some(a => a.animationName === "reveal" && a.timeline && !(a.timeline instanceof DocumentTimeline)));
+    el.getAnimations().some(a => /^reveal/.test(a.animationName) && a.timeline && !(a.timeline instanceof DocumentTimeline)));
   expect(reveal).toBe(true);
 });
 
@@ -263,22 +263,29 @@ test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page })
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, null, { view: null });
   await page.waitForLoadState("networkidle");
-  // El mapa con el paso 1 a la vista, como al bajar hasta él
-  await page.evaluate(() => scrollTo(0, document.querySelector(".steps-stage").getBoundingClientRect().top + scrollY - 200));
-  await page.click('.map-node[data-n="1"]');
-  const before = await page.evaluate(() => scrollY);
+  // La ventana a la vista y, dentro, el mapa desplazado hasta el paso 40
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+  await page.locator(".step-map-scroll").evaluate(el => {
+    el.scrollTop = el.querySelector('.map-node[data-n="40"]').offsetTop - el.clientHeight / 2;
+  });
+  await page.click('.map-node[data-n="40"]');
+  const where = () => page.evaluate(() => ({ page: scrollY, map: document.querySelector(".step-map-scroll").scrollTop }));
+  const before = await where();
+  expect(before.map).toBeGreaterThan(0);
   // Cada ida y vuelta, dos segundos fotograma a fotograma: el desplazamiento suave se ve entero
   const settle = () => page.evaluate(async () => {
     const t0 = performance.now();
     while (performance.now() - t0 < 2000) await new Promise(r => requestAnimationFrame(r));
   });
-  await page.click("#mapCard .map-card-open");
+  // Clics sin Playwright, que desplazaría el mapa para dejar entera a la vista la ficha
+  await page.locator("#mapCard .map-card-open").evaluate(el => el.click());
   await settle();
-  await page.click(".journal-to-map");
+  await page.locator(".journal-to-map").evaluate(el => el.click());
   await settle();
-  // El paso ya estaba a la vista: nada que desplazar
-  const after = await page.evaluate(() => scrollY);
-  expect(Math.abs(after - before)).toBeLessThan(4);
+  // El paso ya estaba a la vista: ni la página ni el mapa se desplazan
+  const after = await where();
+  expect(Math.abs(after.page - before.page)).toBeLessThan(4);
+  expect(Math.abs(after.map - before.map)).toBeLessThan(4);
 });
 
 /** Posición de la lista en cada fotograma mientras se pulsan las cabeceras indicadas. */
@@ -446,7 +453,11 @@ test("las pestañas de las listas se cruzan deslizándose hacia el lado de la pe
   expect(fromDiary.enterX).toBeGreaterThan(0);
 });
 
-test("al cambiar de pestaña la ventana cambia de alto poco a poco", async ({ page }) => {
+test("en móvil, al cambiar de pestaña la ventana cambia de alto poco a poco", async ({ browser }) => {
+  // En escritorio la ventana tiene siempre el alto de la pantalla (fit.spec.js); en
+  // móvil sigue el flujo de la página y su altura se anima
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
   await openApp(page, null, { view: "diary" });
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(400);
@@ -465,6 +476,7 @@ test("al cambiar de pestaña la ventana cambia de alto poco a poco", async ({ pa
   // Pasa por alturas intermedias en vez de saltar de una a otra
   const between = new Set(heights.filter(h => h > Math.min(from, to) + 10 && h < Math.max(from, to) - 10));
   expect(between.size).toBeGreaterThanOrEqual(3);
+  await ctx.close();
 });
 
 test("la marca de la pestaña activa se desliza hasta la pestaña nueva", async ({ page }) => {

@@ -52,6 +52,18 @@ function typeLine(row) {
 }
 
 /**
+ * El aviso va debajo de la casilla; si debajo no cabe dentro de la lista que se desplaza
+ * (en escritorio, al final de la lista de la ventana o del cuerpo del paso), sube encima.
+ */
+function placeTip(e) {
+  const slot = e.currentTarget;
+  const box = slot.closest(".items-body, .prereqs-panel, .journal-body");
+  const room = box && box.scrollHeight > box.clientHeight + 1
+    ? box.getBoundingClientRect().bottom - slot.getBoundingClientRect().bottom : Infinity;
+  slot.classList.toggle("tip-up", room < 130);
+}
+
+/**
  * Casilla de inventario: un objeto (o sus alternativas) con su cantidad.
  * Pulsarla lo marca como conseguido; el icono de la esquina copia el nombre para
  * buscarlo en el mercadillo. En pantallas táctiles, mantenerla pulsada lo copia.
@@ -139,7 +151,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   }
 
   return (
-    <div className={cls} data-id={row.k}>
+    <div className={cls} data-id={row.k} onPointerEnter={placeTip} onFocus={placeTip}>
       <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}
         aria-label={`${rowName(row)}, ${partial ? `faltan ${qtyText}` : rowQty(row)}${have ? ", conseguido" : ""}`}>
         {art}

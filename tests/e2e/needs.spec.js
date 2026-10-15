@@ -10,6 +10,11 @@ const MID = { "silvestre:done": range(1, 40), "silvestre:prereqs": ALL_PREREQS }
 const openPre = (page, seed = null) => openApp(page, seed, { view: "prereqs" });
 // Y en la de objetos
 const openItems = (page, seed = null) => openApp(page, seed, { view: "items" });
+/**
+ * La ventana entera a la vista, sin desplazamiento suave: un clic a mitad de camino
+ * caería en otro sitio. En escritorio su barra de herramientas va fija dentro.
+ */
+const showWindow = page => page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
 
 test("prerrequisitos y objetos son pestañas de la ventana de pasos, con lo que falta", async ({ page }) => {
   await openApp(page);
@@ -578,7 +583,7 @@ test("con el filtro apagado, «Ya utilizados» muestra lo gastado y el resto, lo
   await openItems(page, { "silvestre:done": range(1, 13), "silvestre:prereqs": ALL_PREREQS });
   // A la vista antes de pulsar: el desplazamiento de la página es suave y el clic
   // caería a mitad de camino
-  await page.locator("#shopPendingToggle").scrollIntoViewIfNeeded();
+  await showWindow(page);
   await page.locator("#shopPendingToggle").uncheck({ force: true });
   const used = page.locator("#bandUsed");
   await expect(used.locator(".later-h")).toContainText("Ya utilizados");
@@ -592,7 +597,7 @@ test("con el filtro apagado, «Ya utilizados» muestra lo gastado y el resto, lo
     .compareDocumentPosition(document.getElementById("bandUsed")) & Node.DOCUMENT_POSITION_FOLLOWING));
   expect(below).toBe(true);
   // Al encender el filtro desaparece
-  await page.locator("#shopPendingToggle").scrollIntoViewIfNeeded();
+  await showWindow(page);
   await page.locator("#shopPendingToggle").check({ force: true });
   await expect(used).toHaveCount(0);
 });
@@ -609,30 +614,30 @@ test("cada objeto de los prerrequisitos dice para qué prerrequisito es", async 
   await expect(page.locator('#bandSoon .slot[data-id="7904"] .slot-tip-when').first()).toHaveText("Para «El cementerio primitivo»");
 });
 
-test("el aviso de un objeto queda por encima de la sección siguiente", async ({ page }) => {
+test("el aviso de un objeto al final de la lista se ve entero", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openPre(page);
-  // La última fila de objetos de los prerrequisitos: su aviso cae sobre la nota de abajo
+  // La última fila de objetos de los prerrequisitos, al fondo de la lista que se
+  // desplaza dentro de la ventana: debajo no cabe y el aviso sube encima
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+  await page.locator(".prereqs-panel").evaluate(el => el.scrollTo(0, el.scrollHeight));
   const slot = page.locator("#prereqs .slot").last();
-  await slot.scrollIntoViewIfNeeded();
-  await page.evaluate(() => scrollBy(0, 200));
   await slot.locator(".slot-main").hover();
   const tip = slot.locator(".slot-tip");
   await expect(tip).toBeVisible();
   await page.waitForTimeout(500);
-  const onTop = await tip.evaluate(el => {
+  const seen = await tip.evaluate(el => {
     // El aviso no recibe el ratón (pointer-events: none) y elementFromPoint lo saltaría
     el.style.pointerEvents = "auto";
     const r = el.getBoundingClientRect();
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.bottom - 6);
-    return el.contains(hit);
+    return [r.top + 6, r.bottom - 6].map(y => el.contains(document.elementFromPoint(r.left + r.width / 2, y)));
   });
-  expect(onTop).toBe(true);
+  expect(seen).toEqual([true, true]);
 });
 
 test("en «Ya utilizados» el aviso también dice para qué prerrequisito era", async ({ page }) => {
   await openItems(page, { "silvestre:prereqs": ALL_PREREQS });
-  await page.locator("#shopPendingToggle").scrollIntoViewIfNeeded();
+  await showWindow(page);
   await page.locator("#shopPendingToggle").uncheck({ force: true });
   await expect(page.locator('#bandUsed .slot[data-id^="8918@"] .slot-tip').first()).toContainText("«Altos vuelos»");
   await expect(page.locator('#bandUsed .slot[data-id="1019"] .slot-tip')).toContainText("«Pan Koko Mío»");
@@ -656,7 +661,7 @@ test("el aviso de un objeto dice lo mismo en todas las secciones", async ({ page
   const lines = loc => loc.evaluate(el => [...el.children].map(c => `${c.className}|${c.textContent}`));
   const prereqTip = await lines(page.locator('#prereqs .slot[data-id="421"] .slot-tip'));
   await page.click("#tabItems");
-  await page.locator("#shopPendingToggle").scrollIntoViewIfNeeded();
+  await showWindow(page);
   await page.locator("#shopPendingToggle").uncheck({ force: true });
   const usedTip = await lines(page.locator('#bandUsed .slot[data-id="421"] .slot-tip'));
   expect(usedTip).toEqual(prereqTip);

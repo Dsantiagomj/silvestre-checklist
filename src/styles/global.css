@@ -1817,6 +1817,8 @@ header.is-scrolled .title-bar{
   /* display:none y no visibility: oculto no debe ocupar sitio ni ensanchar la página */
   display:none; pointer-events:none;
 }
+/* Sin sitio debajo, dentro de la lista que se desplaza (Slot.jsx): encima */
+.slot.tip-up .slot-tip{ top:auto; bottom:calc(100% + 6px); }
 .slot-tip b{ display:block; color:var(--txt); font-size:12.5px; }
 .slot-tip span{ display:block; }
 .slot-tip-when{ color:var(--soon-ink); }
@@ -2008,6 +2010,47 @@ header.is-scrolled .title-bar{
 .zone-pop .seal{ min-width:0; }
 .steps-win .step-map{ margin:0; border-width:1px 0 0; border-radius:0 0 16px 16px; }
 .steps-win .diary-window{ border-width:1px 0 0; border-radius:0 0 16px 16px; }
+/* La ventana cabe en la pantalla. En escritorio la sección (título y ventana) mide lo
+   que queda bajo la cabecera de la página, con 12px arriba (scroll-margin-top) y 12px
+   abajo: al ir a ella se ve entera. La cabecera de la ventana (los Dofus del camino,
+   las pestañas y el buscador) no se desplaza nunca; la vista de debajo se lleva el
+   resto y lo que no cabe se desplaza por dentro: la lista y el cuerpo del paso en el
+   diario, el camino en el mapa y las listas en Prerrequisitos y Objetos. En pantallas
+   muy bajas manda min-height: la ventana deja de caber y entonces sí se baja la página.
+   En móvil todo sigue el flujo de la página (el detalle vive en la hoja inferior) */
+@media (min-width:901px){
+  .diary{
+    display:flex; flex-direction:column; min-height:560px;
+    height:calc(100vh - var(--header-h) - 24px);
+    height:calc(100dvh - var(--header-h) - 24px);
+  }
+  .diary-head{ flex:none; }
+  .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
+  .win-strip, .win-tabs, .win-tools{ flex:none; }
+  /* Recortada siempre: el zoom entre mapa y diario no se sale por encima de la cabecera */
+  .steps-stage{ flex:1; min-height:0; display:flex; flex-direction:column; overflow:clip; border-radius:0 0 16px 16px; }
+  .steps-layer{ flex:1; min-height:0; display:flex; flex-direction:column; }
+  .steps-layer > *{ flex:1; min-height:0; }
+  /* El mapa: el camino se desplaza dentro de su marco, que se queda la raya de arriba */
+  .step-map-scroll{
+    overflow:auto; overscroll-behavior:contain; scrollbar-width:thin;
+    border-top:1px solid var(--line-warm); border-radius:0 0 16px 16px;
+  }
+  .steps-win .step-map-scroll .step-map{ min-height:100%; border-top-width:0; }
+  /* Prerrequisitos y Objetos: la explicación, los botones y la barra de herramientas
+     quedan fijos; la lista se desplaza hasta los bordes de la ventana */
+  .needs{ display:flex; flex-direction:column; padding-bottom:0; border-radius:0 0 16px 16px; overflow:clip; }
+  .needs-intro, .needs-bar{ flex:none; }
+  .needs-panel{ flex:1; min-height:0; }
+  .prereqs-panel, .items-body{
+    overflow:auto; overscroll-behavior:contain; scrollbar-width:thin;
+    margin:0 -18px; padding:0 18px 18px;
+  }
+  .items-panel{ display:flex; flex-direction:column; }
+  .items-panel .needs-toolbar{ flex:none; }
+  .items-body{ flex:1; min-height:0; }
+  .needs-cats{ top:0; }
+}
 /* Sin sitio para todo en una fila: los huevos bajan a la suya */
 @media (max-width:1100px){
   .win-strip{ grid-template-columns:auto minmax(0, 1fr) auto; grid-template-areas:"head prog next" "eggs eggs eggs"; }
@@ -2191,12 +2234,11 @@ header.is-scrolled .title-bar{
 .seal-pin circle{ fill:var(--bg); }
 .seal.here .seal-name{ color:var(--accent-ink); }
 
-/* El diario es un panel del alto de la pantalla: la lista y el detalle se desplazan
-   cada uno por dentro. Así desplegar misiones no cambia la altura de la página y la
-   lista no se mueve nunca */
+/* El diario llena lo que deja la cabecera de la ventana (ver «La ventana cabe en la
+   pantalla», más abajo): la lista y el detalle se desplazan cada uno por dentro. Así
+   desplegar misiones no cambia la altura de la página y la lista no se mueve nunca */
 .diary-window{
-  display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr);
-  height:calc(100vh - var(--header-h) - 24px); min-height:520px; overflow:clip;
+  display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip;
 }
 
 .diary-side{
@@ -2626,7 +2668,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   .journal-show img{ animation:none; }
 }
 @media (max-width:900px){
-  .diary-window{ grid-template-columns:1fr; height:auto; min-height:0; }
+  .diary-window{ grid-template-columns:1fr; }
   .diary-side{ border-right:0; }
   .diary-detail{ overflow:visible; }
   .diary-list{ overflow:visible; }
@@ -2743,6 +2785,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 /* El resto de la página: la misma ✓ con rebote al marcar y las secciones que entran
    al hacer scroll (scroll-driven, sin JavaScript; donde no se soporta, no pasa nada) */
 @keyframes reveal{ from{ opacity:0; transform:translateY(28px); } }
+@keyframes reveal-fade{ from{ opacity:0; } }
 @media (prefers-reduced-motion:no-preference){
   .pr-card.done::after, .slot.owned .slot-main::after{ animation:check-pop .35s cubic-bezier(.3,1.6,.5,1) both; }
   .slot-art{ transition:opacity .3s ease, filter .3s ease; }
@@ -2752,5 +2795,8 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
       animation-timeline:view();
       animation-range:entry 0% entry 40%;
     }
+    /* La ventana de los pasos solo aparece, sin moverse: ir a ella (Siguiente, el hero…)
+       la deja justo bajo la cabecera, y a medio desplazar caería unos píxeles más arriba */
+    .diary{ animation-name:reveal-fade; }
   }
 }
