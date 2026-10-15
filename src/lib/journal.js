@@ -48,17 +48,29 @@ function namedOptional(step) {
  * ni el paréntesis que lo envuelve. O null.
  */
 const MISSION_NOTE = /^Misión (\d+):\s*([^.]+)\.\s*(\S[\s\S]*)$/;
+// «En el logro "Vivir así es morir de corrupción", misión 3: Muerte y renovación. = Se
+// puede encadenar…» (consejos del 75, el 76 y el 77): el logro, el número y el nombre
+const LOGRO_NOTE = /^En el logro "([^"]+)", misión (\d+):\s*([^.]+)\.\s*=?\s*(\S[\s\S]*)$/;
 function missionNote(step, text) {
   const m = text.match(MISSION_NOTE);
-  if (!m) return null;
-  const named = (PLANS[step.n] || []).filter(e => e.t === "a").map(e => e.m[Number(m[1]) - 1]).filter(Boolean);
-  const name = named.find(x => norm(x) === norm(m[2])) || named[0];
-  return name ? { name, text: m[3].replace(/^\(([\s\S]*)\)$/, "$1").trim() } : null;
+  const l = !m && text.match(LOGRO_NOTE);
+  if (!m && !l) return null;
+  const [ach, num, said, rest] = m ? [null, m[1], m[2], m[3]] : [l[1], l[2], l[3], l[4]];
+  const named = (PLANS[step.n] || []).filter(e => e.t === "a" && (!ach || norm(e.name) === norm(ach)))
+    .map(e => e.m[Number(num) - 1]).filter(Boolean);
+  const name = named.find(x => norm(x) === norm(said)) || named[0];
+  return name ? { name, text: rest.replace(/^\(([\s\S]*)\)$/, "$1").trim() } : null;
 }
 
-/** Las notas del paso que van dentro de su misión (missionNote): [{ name, text }]. */
+// Los avisos que pueden hablar de una misión e ir dentro de ella: notas y consejos
+const IN_QUEST = new Set(["note", "tip"]);
+
+/** Las notas y consejos del paso que van dentro de su misión (missionNote): [{ name, text, kind }]. */
 export const missionNotes = step => (step.marks || [])
-  .filter(([kind]) => kind === "note").map(([, text]) => missionNote(step, text)).filter(Boolean);
+  .filter(([kind]) => IN_QUEST.has(kind)).map(([kind, text]) => {
+    const note = missionNote(step, text);
+    return note && { ...note, kind };
+  }).filter(Boolean);
 
 /**
  * Los avisos sin las notas que van dentro de su misión ni la que solo las presenta,
@@ -67,7 +79,7 @@ export const missionNotes = step => (step.marks || [])
  */
 function ownMarks(step) {
   const marks = step.marks || [];
-  const inQuest = marks.map(([kind, text]) => kind === "note" && !!missionNote(step, text));
+  const inQuest = marks.map(([kind, text]) => IN_QUEST.has(kind) && !!missionNote(step, text));
   return marks.filter(([kind, text], i) => !inQuest[i] && !(kind === "note" && /:$/.test(text.trim()) && inQuest[i + 1]));
 }
 
@@ -84,6 +96,8 @@ const EXTRA_NOTES = {
     + " se hacen de una en una.",
 };
 
+const LEFT = "La guía no la retoma: para el Silvestre basta con llegar hasta aquí.";
+
 /**
  * Notas escritas a mano dentro de una misión del paso: paso -> { id de la misión: texto }.
  * Van con las de missionNotes. En el 38, «La sombra del reino»: el rojo dice que se puede
@@ -91,6 +105,12 @@ const EXTRA_NOTES = {
  */
 export const QUEST_NOTES = {
   38: { 1665: "Se puede hacer en cualquier momento antes del paso 80." },
+  // Misiones que la guía deja a medias y no retoma. Ninguna misión ni logro que pide la guía
+  // las necesita terminadas (startCriterion Qf= en DofusDB, logros completos): «Birk, hija
+  // de Bork» solo pide «El daño de Búril» a medias (Torrente Arcano)
+  13: { 1869: LEFT },
+  15: { 1736: LEFT },
+  83: { 2011: LEFT },
 };
 
 /**
