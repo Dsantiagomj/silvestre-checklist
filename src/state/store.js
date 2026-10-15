@@ -104,7 +104,7 @@ function initialState() {
     filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
     shopPendingOnly: true,
-    shopSort: "soon",   // soon (Pronto primero) | qty | az
+    shopSort: "soon",   // soon (Por paso) | qty | az
     shopView: localStorage.getItem(LS.itemsView) === "list" ? "list" : "grid",
     shopPageSize: readPageSize(),
     shopPage: 0,
@@ -193,7 +193,7 @@ const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`];
 
 /**
  * Los próximos pasos pendientes (los prerrequisitos primero si faltan). Son la
- * franja "Pronto" de los objetos: lo que hay que reunir ya.
+ * franja "Tus próximos pasos" de los objetos: lo que hay que reunir ya.
  */
 export function soonSteps(s, count = 5) {
   const out = ALL_PREREQS.every(p => isPrereqDone(s, p.id)) ? [] : [PREREQ_STEP];
@@ -418,7 +418,7 @@ export function setShopPageSize(size) {
 export const setShopPage = page => setState({ shopPage: page });
 
 /**
- * Marca o desmarca filas de objetos para sus pasos (row.steps). Una fila de "Pronto"
+ * Marca o desmarca filas de objetos para sus pasos (row.steps). Una fila de "Tus próximos pasos"
  * marca solo esa parte ("clave#paso"); lo marcado como objeto entero se respeta y,
  * al desmarcar una parte, se reparte en los pasos que quedan.
  */

@@ -4,8 +4,9 @@ import {
   doneCount, isMobile, nextPending, ownedCount, prereqsDone, prereqsPending, progressPct, selectStep,
   openNeeds, useAppState,
 } from "../state/store.js";
-import { BRAND_ICON, DOFUS_ROAD, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, DOFUS_ROAD, HERO_BG, HERO_ICONS, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS } from "../lib/resources.js";
+import { bannerFigure } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
@@ -84,7 +85,9 @@ export default function Hero() {
   const totalItems = ALL_ROWS.length;
   const next = nextPending(s);
   const nextStep = next ? STEPS[next - 1] : null;
-  const nextIcon = next ? assetsFor(next)?.icon : null;
+  // La misma figura que el estandarte del paso en el diario (el Dofus que da, la figura
+  // de su logro, el PNJ que lo empieza o su jefe)
+  const nextFig = next ? bannerFigure(next) : null;
   const obtained = pct >= 100;
   const stage = eggStage(s);
   const morph = useMorph(stage);
@@ -133,7 +136,7 @@ export default function Hero() {
             <>
               <div className="hero-next" id="heroNext">
                 <div className="hero-next-art">
-                  {nextIcon ? <img src={imgUrl(nextIcon.src)} alt="" /> : <b>{next}</b>}
+                  {nextFig ? <img src={imgUrl(nextFig.img)} alt="" title={nextFig.name} /> : <b>{next}</b>}
                 </div>
                 <div className="hero-next-meta">
                   <p className="hero-next-kicker">Siguiente · Paso {next}</p>

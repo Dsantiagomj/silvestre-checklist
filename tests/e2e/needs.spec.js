@@ -62,6 +62,13 @@ test("marcar todo y limpiar en prerrequisitos, con deshacer", async ({ page }) =
   await expect(page.locator("#prereqsCount")).toHaveText("✓");
 });
 
+test("el orden por paso se llama «Por paso» y la banda no repite «Pronto»", async ({ page }) => {
+  await openApp(page, null, { view: "items" });
+  await expect(page.locator('.needs-sort [data-sort="soon"]')).toHaveText("Por paso");
+  await expect(page.locator("#items .band-pill")).toHaveCount(0);
+  await expect(page.locator("#items", { hasText: /Pronto/ })).toHaveCount(0);
+});
+
 test("Pronto reúne lo de los próximos 5 pasos y reparte las cantidades", async ({ page }) => {
   await openApp(page, MID, { view: "items" });
   const soon = page.locator("#bandSoon");
