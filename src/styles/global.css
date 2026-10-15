@@ -2022,6 +2022,41 @@ header.is-scrolled .title-bar{
   .zone-btn{ padding:0 11px; }
   .zone-pop.seals{ grid-template-columns:repeat(5, minmax(0, 1fr)); width:calc(100vw - 50px); padding:24px 8px 12px; }
 }
+/* Un Dofus recién conseguido (WinStrip.jsx, clase "won"): el huevo se enciende desde el
+   gris con un rebote, un destello dorado se abre detrás y un brillo lo cruza; la cuenta
+   sube de un salto. Solo al marcar su paso, nunca al cargar */
+.road-dofus{ position:relative; }
+.road-dofus::before, .road-dofus::after{ content:""; position:absolute; pointer-events:none; opacity:0; }
+.road-dofus::before{
+  inset:-10px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,236,170,.85) 0%, rgba(246,215,122,.45) 35%, transparent 68%);
+}
+/* El brillo, recortado con la silueta del propio huevo (--egg, en WinStrip.jsx) */
+.road-dofus::after{
+  inset:4px;
+  background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.85) 50%, transparent 65%) no-repeat;
+  background-size:250% 100%;
+  -webkit-mask:var(--egg) center / contain no-repeat; mask:var(--egg) center / contain no-repeat;
+}
+[data-theme="light"] .road-dofus::before{ background:radial-gradient(circle, rgba(255,214,110,.9) 0%, rgba(214,160,40,.4) 38%, transparent 68%); }
+@keyframes egg-won{
+  0%{ transform:scale(.7); filter:grayscale(1) brightness(.4); }
+  35%{ transform:scale(1.32) translateY(-4px); filter:drop-shadow(0 0 14px rgba(255,226,140,.95)) brightness(1.45); }
+  60%{ transform:scale(.94); }
+  80%{ transform:scale(1.05); }
+  100%{ transform:scale(1); }
+}
+@keyframes egg-burst{ 0%{ opacity:0; transform:scale(.3); } 25%{ opacity:1; } 100%{ opacity:0; transform:scale(1.9); } }
+@keyframes egg-shine{ 0%{ opacity:1; background-position:120% 0; } 100%{ opacity:1; background-position:-30% 0; } }
+@keyframes count-tick{ 0%{ transform:translateY(0); } 30%{ transform:translateY(-6px) scale(1.18); color:var(--accent-ink); } 100%{ transform:none; } }
+@media (prefers-reduced-motion:no-preference){
+  .road-dofus.won{ z-index:1; }
+  .road-dofus.won img{ animation:egg-won .9s cubic-bezier(.3,1.4,.5,1) both; }
+  .road-dofus.won::before{ animation:egg-burst .8s ease-out both; }
+  .road-dofus.won::after{ animation:egg-shine .55s ease-in-out .3s both; }
+  .road-count{ display:inline-block; transform-origin:left bottom; }
+  .road-count.tick{ animation:count-tick .5s cubic-bezier(.3,1.5,.5,1); }
+}
 @media (prefers-reduced-motion:reduce){ .win-bar i, .road-dofus, .road-dofus img{ transition:none; } }
 
 /* Mapa: los 100 pasos como un camino que serpentea; cada sello lleva el paisaje de su zona */
