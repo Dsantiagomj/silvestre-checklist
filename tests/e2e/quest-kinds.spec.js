@@ -32,10 +32,10 @@ test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", 
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
   expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
   expect(TOTAL).toBeCloseTo(160137.5, 0);
-  // El id y los objetivos son los de la última misión obligatoria
-  expect([WEIGHTS[7].id, WEIGHTS[7].o]).toEqual(["1938", 4]);
-  expect([WEIGHTS[27].id, WEIGHTS[27].o]).toEqual(["543", 7]);
-  expect([WEIGHTS[28].id, WEIGHTS[28].o]).toEqual(["577", 11]);
+  // El id y los objetivos de cada misión, en el orden del paso
+  expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
+  expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);
+  expect([WEIGHTS[28].ids, WEIGHTS[28].os]).toEqual([["577", "1286"], [11, 3]]);
 });
 
 test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Completar»", async ({ page }) => {

@@ -23,7 +23,7 @@ under "Prerrequisitos"); otherwise DofusDB's `levelMin` (`lv` in quests.json).
 
 Reads  : src/data/{quests,guides}.json
 Writes : src/data/weights.json ({step number: {"w": weight, "q": [share of each quest],
-                                 "id": last mandatory quest id, "o": its objectives}})
+                                 "ids": [quest ids], "os": [their objective counts]}})
 Caches : .build/data/ta_levels.json  ({url: {"level": n | null, "pre": text}})
 Run    : python3 -I .build/build_weights.py   (after build_quests_js.py)
 """
@@ -144,12 +144,11 @@ def main():
         qs = step_quests[n]
         shares = [points[str(q)] / shared[str(q)] if mandatory(n, q) else 0 for q in qs]
         weights[str(n)] = round(max(sum(shares), MIN_WEIGHT), 3)
-        steps[str(n)] = {"w": weights[str(n)], "q": [round(x, 3) for x in shares]}
-        needed = [q for q in qs if mandatory(n, q)]
-        if needed:
-            # Lo que tiene el diario por objetivos: los de verdad, sin el mínimo de 1
-            last = str(needed[-1])
-            steps[str(n)].update(id=last, o=sum(len(stage["o"]) for stage in quests[last]["s"]))
+        # Cada misión con su id y sus objetivos (los del diario, sin el mínimo de 1): una
+        # misión terminada cuenta aunque el avance del paso vaya por detrás de ella
+        steps[str(n)] = {"w": weights[str(n)], "q": [round(x, 3) for x in shares],
+                         "ids": [str(q) for q in qs],
+                         "os": [sum(len(stage["o"]) for stage in quests[str(q)]["s"]) for q in qs]}
     OUT_JSON.write_text("{\n" + ",\n".join(f'"{n}": {json.dumps(v, separators=(",", ":"))}'
                                             for n, v in steps.items()) + "\n}\n")
 

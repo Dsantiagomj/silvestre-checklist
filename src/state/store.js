@@ -168,17 +168,13 @@ const weight = n => WEIGHTS[n]?.w ?? 1;
 const TOTAL_PTS = STEPS.reduce((a, st) => a + weight(st.n), 0);
 /**
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
- * el diario: las de antes de la actual, hechas, y la última obligatoria (`id`), pasada
- * de su último objetivo. Las opcionales y las de solo tomarla valen 0.
+ * el diario: las de antes de la actual y cualquiera pasada de su último objetivo, aunque
+ * vaya por delante. Las opcionales y las de solo tomarla valen 0.
  */
 function questPts(s, n) {
-  const { q = [], id, o } = WEIGHTS[n] || {};
-  if (!q.length) return 0;
+  const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
   const pos = Math.min(s.questPos[n] || 0, q.length - 1);
-  // Tras la última obligatoria solo quedan misiones que valen 0
-  const last = q.findLastIndex(p => p > 0);
-  const lastDone = (s.questObj[id] || 0) >= o;
-  return q.reduce((a, p, i) => a + (i < pos || (i === last && lastDone) ? p : 0), 0);
+  return q.reduce((a, p, i) => a + (i < pos || (s.questObj[ids[i]] || 0) >= os[i] ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -494,11 +490,16 @@ export function moveQuest(delta) {
 export function setObjective(n, qi, qid, k, total) {
   const list = questsOf(n);
   const next = nextWalked(list, qi);
-  setState(s => ({
-    questPos: list[qi]?.kind === "optional" ? s.questPos
-      : { ...s.questPos, [n]: k >= total && next >= 0 ? next : qi },
-    questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
-  }));
+  setState(s => {
+    // Deshacer una terminada que va por delante del avance no lo adelanta: las de antes
+    // siguen como estaban (se terminó la 2.ª, se deshizo la 1.ª y luego la 2.ª)
+    const undo = k < total && (s.questObj[qid] || 0) >= total;
+    const at = k >= total && next >= 0 ? next : undo ? Math.min(s.questPos[n] || 0, qi) : qi;
+    return {
+      questPos: list[qi]?.kind === "optional" ? s.questPos : { ...s.questPos, [n]: at },
+      questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
+    };
+  });
 }
 
 export function moveObjective(delta) {

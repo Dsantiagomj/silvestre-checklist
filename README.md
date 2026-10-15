@@ -39,7 +39,7 @@ Al lado se sigue viendo "X/100 pasos" para quien prefiera contar pasos.
 - Las misiones opcionales y las de solo tomarla valen 0 en su paso (`STEP_QUEST_KINDS` en `quests.json`). Sin ellas, el 7 pasa de 864 a 100 puntos, el 27 de 677 a 265 y el 28 de 607 a 365.
 - Una misión compartida (66 de las 351) reparte sus puntos a partes iguales entre los pasos que la piden. Un paso sin misiones valdría lo de una misión de nivel 1 (hoy todos tienen alguna).
 - `.build/build_weights.py` baja cada guía una sola vez (`.build/data/ta_levels.json`) y escribe `src/data/weights.json`, que usa `progressPct` en `src/state/store.js`. Total: 160 138 puntos.
-- Cada paso de `weights.json` lleva su peso (`w`), lo que vale cada una de sus misiones en orden, ya repartida (`q`), y el id y el número de objetivos de la última obligatoria (`id`, `o`). En un paso sin marcar, `donePts` suma las misiones anteriores a la actual (`questPos`, el mismo avance del overlay y del diario) y la última obligatoria cuando su objetivo (`questObj`) llega a `o`. No hace falta cargar `quests.json`. El 100 % sigue pidiendo los 100 pasos marcados.
+- Cada paso de `weights.json` lleva su peso (`w`), lo que vale cada una de sus misiones en orden, ya repartida (`q`), y el id y el número de objetivos de cada una (`ids`, `os`). En un paso sin marcar, `donePts` suma las misiones anteriores a la actual (`questPos`, el mismo avance del overlay y del diario) y cualquier otra cuyo objetivo (`questObj`) llegue a su total, aunque vaya por delante: cuenta lo mismo que el diario muestra hecho. Deshacer una misión terminada que va por delante no adelanta el avance. No hace falta cargar `quests.json`. El 100 % sigue pidiendo los 100 pasos marcados.
 
 </details>
 
