@@ -155,3 +155,16 @@ test("en móvil la ventana sigue el flujo de la página, sin alto fijo", async (
   expect(await page.locator(".diary-list").evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
   await ctx.close();
 });
+
+for (const [w, h] of SIZES) {
+  test(`a ${w}×${h}, al cuerpo del paso le queda sitio para leer las misiones`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await openApp(page);
+    await page.click('.diary-row[data-n="1"] .row-title');
+    await align(page);
+    await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
+    // En pantallas bajas el estandarte y la franja se compactan: el cuerpo, al menos 200 px
+    const body = await page.locator("#journal .journal-body").evaluate(el => el.clientHeight);
+    expect(body).toBeGreaterThanOrEqual(200);
+  });
+}
