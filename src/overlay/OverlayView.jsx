@@ -20,7 +20,9 @@ function MapFigure({ loc, where }) {
 }
 
 function QuestView({ n, a, cur, s }) {
-  const { list, i, q, objs, k } = cur;
+  // Se cuentan las misiones que se hacen: las de solo tomarla no salen
+  const { walked, at, q, objs, k } = cur;
+  const more = at < walked.length - 1;
   const now = objs[k];
   const upcoming = objs.slice(k + 1, k + 4);
   const loc = locationFor(cur);
@@ -41,9 +43,9 @@ function QuestView({ n, a, cur, s }) {
         </div>
       </div>
       <div className="ov-switch">
-        <button data-q="-1" disabled={!(i > 0)} aria-label="Misión anterior" onClick={() => moveQuest(-1)}>‹</button>
-        <span>Misión <b>{i + 1}</b> / {list.length} <span className="muted">· Paso {n}</span></span>
-        <button data-q="1" disabled={!(i < list.length - 1)} aria-label="Misión siguiente" onClick={() => moveQuest(1)}>›</button>
+        <button data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior" onClick={() => moveQuest(-1)}>‹</button>
+        <span>Misión <b>{at + 1}</b> / {walked.length} <span className="muted">· Paso {n}</span></span>
+        <button data-q="1" disabled={!more} aria-label="Misión siguiente" onClick={() => moveQuest(1)}>›</button>
       </div>
       <ReqBlock n={n} open={false} s={s} />
       {/* key: una imagen nueva vuelve a intentarlo aunque la anterior fallara */}
@@ -66,8 +68,8 @@ function QuestView({ n, a, cur, s }) {
       )}
       <div className="ov-stagenav">
         <button data-ob="-1" disabled={!(k > 0)} onClick={() => moveObjective(-1)}>‹</button>
-        <button data-ob="1" disabled={last && i >= list.length - 1} onClick={() => moveObjective(1)}>
-          {last ? (i < list.length - 1 ? "Siguiente misión ›" : "Misión completa") : "Siguiente objetivo ›"}
+        <button data-ob="1" disabled={last && !more} onClick={() => moveObjective(1)}>
+          {last ? (more ? "Siguiente misión ›" : "Misión completa") : "Siguiente objetivo ›"}
         </button>
       </div>
     </>

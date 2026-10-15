@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "../data/weights.json";
-import { currentQuest, loadQuests as loadQuestsData, questsData } from "../lib/quests.js";
+import { currentQuest, loadQuests as loadQuestsData, nextWalked, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 
@@ -154,14 +154,17 @@ const weight = n => WEIGHTS[n]?.w ?? 1;
 const TOTAL_PTS = STEPS.reduce((a, st) => a + weight(st.n), 0);
 /**
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
- * el diario: las de antes de la actual, hechas, y la última, pasada de su último objetivo.
+ * el diario: las de antes de la actual, hechas, y la última obligatoria (`id`), pasada
+ * de su último objetivo. Las opcionales y las de solo tomarla valen 0.
  */
 function questPts(s, n) {
   const { q = [], id, o } = WEIGHTS[n] || {};
   if (!q.length) return 0;
   const pos = Math.min(s.questPos[n] || 0, q.length - 1);
-  const last = pos === q.length - 1 && (s.questObj[id] || 0) >= o;
-  return q.slice(0, last ? q.length : pos).reduce((a, p) => a + p, 0);
+  // Tras la última obligatoria solo quedan misiones que valen 0
+  const last = q.findLastIndex(p => p > 0);
+  const lastDone = (s.questObj[id] || 0) >= o;
+  return q.reduce((a, p, i) => a + (i < pos || (i === last && lastDone) ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -463,18 +466,23 @@ export function moveQuest(delta) {
   const n = overlayStep(state);
   const cur = currentQuest(n, state.questPos, state.questObj);
   if (!cur) return;
-  const i = Math.max(0, Math.min(cur.list.length - 1, cur.i + delta));
+  // Entre las que se hacen: las de solo tomarla se saltan
+  const i = cur.walked[Math.max(0, Math.min(cur.walked.length - 1, cur.at + delta))];
   setState(s => ({ questPos: { ...s.questPos, [n]: i } }));
 }
 
 /**
  * Desde el diario: deja la misión `qi` del paso `n` en su objetivo `k` (los de antes,
  * hechos). Pasado el último (`k` = `total`), la misión queda terminada y el paso sigue
- * con su siguiente misión. Es el mismo avance que lleva el overlay.
+ * con su siguiente misión que se hace. Es el mismo avance que lleva el overlay. Una
+ * opcional guarda solo su objetivo: no mueve la misión en curso.
  */
-export function setObjective(n, qi, qid, k, total, count) {
+export function setObjective(n, qi, qid, k, total) {
+  const list = questsOf(n);
+  const next = nextWalked(list, qi);
   setState(s => ({
-    questPos: { ...s.questPos, [n]: k >= total && qi + 1 < count ? qi + 1 : qi },
+    questPos: list[qi]?.kind === "optional" ? s.questPos
+      : { ...s.questPos, [n]: k >= total && next >= 0 ? next : qi },
     questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
   }));
 }

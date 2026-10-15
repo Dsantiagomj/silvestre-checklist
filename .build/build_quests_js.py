@@ -11,13 +11,17 @@ How a step maps to quests:
   * Explicit "misión N" references take exactly those.
   * "(Completo)" or no numbers takes the whole achievement.
   * Quests matched directly by name (kind "quest") are added as they are.
+  * Each quest of a step has a kind (STEP_QUEST_KINDS, only the ones that are not
+    mandatory): "optional" when the guide says "misión N (opcional pero útil)", and
+    "take" for the ones it only asks to have taken (TAKE_ONLY).
   * "Alineamiento Bontariano: Misión N" maps to the Bontarian alignment quest
     whose start criterion is `Ps=1&Pa=N-1` (side Bonta, alignment level N-1).
     The step covers the run from the previous alignment step's mission, which
     was left paused, up to N.
 
 Reads  : .build/data/{step_assets,achievements,quests}.json
-Writes : src/data/quests.json (STEP_QUESTS and QUESTS; the app loads it lazily)
+Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS and QUESTS;
+         the app loads it lazily)
 Caches : .build/data/lookup_<kind>.json  (names and map positions from the API)
 Run    : python3 -I .build/build_quests_js.py   (after match_assets.py)
 """
@@ -131,6 +135,40 @@ UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
 NUMBERED = re.compile(r"misi[oó]n(?:es)?\s+(\d+)", re.I)
 LOGRO = re.compile(r"\blogro\b", re.I)
 INCLUDES = re.compile(r"\bincluye\b", re.I)
+
+
+OPTIONAL = re.compile(r"misi[oó]n\s+(\d+)\s+\(opcional pero útil\)", re.I)
+
+
+def optional_missions(text, matched_on):
+    """Mission numbers the guide calls "misión N (opcional pero útil)" for the achievement
+    named at `matched_on`. Only the full step text says it: the base text drops it."""
+    pos = text.find(matched_on)
+    if pos < 0:
+        return []
+    nxt = LOGRO.search(text, pos + 1)
+    return [int(n) for n in OPTIONAL.findall(text[pos:nxt.start() if nxt else len(text)])]
+
+
+# Quests the guide only asks to have taken, not to do. Step 28: "En este punto se debe
+# tomar la misión de la Isla de Frigost: Logro "La cantera de hielo", misión 4: Luces y
+# sombras. No es necesario hacerla, solo tenerla tomada." Its wording is unique, so it
+# is listed by hand instead of parsed.
+TAKE_ONLY = {28: [1286]}
+
+
+def step_kinds(step, plan, achievements, ids):
+    """{quest id: kind} for the step's quests that are not mandatory."""
+    kinds = {}
+    for entry in plan:
+        for k in entry.get("opt", []):
+            ordered = achievement_quests(achievements[entry["id"]])
+            if 0 < k <= len(ordered) and ordered[k - 1] in ids:
+                kinds[str(ordered[k - 1])] = "optional"
+    for q in TAKE_ONLY.get(step["n"], []):
+        if q in ids:
+            kinds[str(q)] = "take"
+    return kinds
 
 
 def missions_for(text, start):
@@ -248,8 +286,13 @@ def step_plan(step, achievements, marks, quests, images):
         segment = base[pos:nxt.start() if nxt else len(base)]
         wanted = missions_for(base, pos)
         mode = "all" if wanted is None else "upto" if UNTIL.search(segment) else "some"
-        found.append((pos, {"t": "a", "id": a["id"], "name": ach["name"]["es"], "img": images.get(a["id"]),
-                            "m": names, "mode": mode, "on": wanted or []}))
+        entry = {"t": "a", "id": a["id"], "name": ach["name"]["es"], "img": images.get(a["id"]),
+                 "m": names, "mode": mode, "on": wanted or []}
+        # Las opcionales: el diario las nombra en la nota y quests.json les da su tipo
+        opt = optional_missions(step["text"], a["matched_on"])
+        if opt:
+            entry["opt"] = opt
+        found.append((pos, entry))
     return [entry for _, entry in sorted(found, key=lambda f: f[0])]
 
 
@@ -325,7 +368,7 @@ def main():
     plans = {}
     marks = read_marks()
     prev_align = 1
-    step_quests = {}
+    step_quests, step_kinds_out = {}, {}
     for step in report:
         plan = step_plan(step, achievements, marks, quests, images)
         if plan:
@@ -344,6 +387,9 @@ def main():
         ids = [q for q in ids if q in quests or q == CLASS_QUEST]
         if ids:
             step_quests[str(step["n"])] = ids
+            kinds = step_kinds(step, plan, achievements, ids)
+            if kinds:
+                step_kinds_out[str(step["n"])] = kinds
     used = sorted({q for ids in step_quests.values() for q in ids if q != CLASS_QUEST})
     step_groups = quest_groups(step_quests, achievements, images)
 
@@ -445,7 +491,8 @@ def main():
 
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups, "QUESTS": out_quests}) + "\n")
+    OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups,
+                                    "STEP_QUEST_KINDS": step_kinds_out, "QUESTS": out_quests}) + "\n")
     OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
@@ -454,6 +501,7 @@ def main():
     print(f"plans.json       : {OUT_PLANS.stat().st_size // 1024} KB, {len(plans)} pasos con tarjeta")
     print(f"pasos con misión : {len(step_quests)}/100")
     print(f"pasos agrupados  : {len(step_groups)} (misiones de varios logros)")
+    print(f"no obligatorias  : {step_kinds_out}")
     print(f"misiones         : {len(out_quests)}")
     print(f"objetivos        : {len(objs)} ({len(located)} con ubicación)")
     print(f"con NPC inicial  : {sum(1 for q in out_quests.values() if q['st'] and q['st'].get('npc'))}")

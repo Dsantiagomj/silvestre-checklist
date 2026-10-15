@@ -18,14 +18,12 @@ export function stepTitle(step) {
 
 /**
  * Misiones que la guía marca "misión N (opcional pero útil): Nombre" (pasos 7 y 27):
- * [{ k, name }], con el nombre de la misión tal como sale en el logro si se conoce.
+ * [{ k, name }], con el nombre de la misión tal como sale en el logro. Las lee el build
+ * (`opt` en plans.json), el mismo que les da su tipo en quests.json.
  */
 export function optionalMissions(step) {
-  const plan = (PLANS[step.n] || []).find(e => e.t === "a");
-  return [...step.text.matchAll(/misi[oó]n (\d+) \(opcional pero útil\):?\s*([^,(]+)/gi)].map(m => {
-    const k = Number(m[1]);
-    return { k, name: plan?.m[k - 1] || m[2].replace(/["“”.]/g, "").trim() };
-  });
+  return (PLANS[step.n] || []).filter(e => e.t === "a")
+    .flatMap(e => (e.opt || []).map(k => ({ k, name: e.m[k - 1] })));
 }
 
 /**

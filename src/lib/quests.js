@@ -33,21 +33,38 @@ export function loadQuests(onLoad) {
 /** Los logros de las misiones del paso, si son varios: [[nombre, icono, cuántas], …] en orden. */
 export const groupsOf = n => (data?.STEP_GROUPS?.[n] || null);
 
+/**
+ * Lo que pide la guía de cada misión del paso (build_quests_js.py): "mandatory" (por
+ * defecto), "optional" ("opcional pero útil": no cuenta ni la marca «Paso hecho") o
+ * "take" (basta con tenerla tomada: no se hace).
+ */
+export const questKind = (n, id) => data?.STEP_QUEST_KINDS?.[n]?.[id] || "mandatory";
+
 export const questsOf = n =>
-  data ? (data.STEP_QUESTS[n] || []).map(id => ({ id, ...data.QUESTS[id] })) : [];
+  data ? (data.STEP_QUESTS[n] || []).map(id => ({ id, kind: questKind(n, id), ...data.QUESTS[id] })) : [];
+
+/** La siguiente misión que se hace tras la `i` (las de solo tomarla no), o -1. */
+export const nextWalked = (list, i) => list.findIndex((q, j) => j > i && q.kind !== "take");
 
 // Casi todas las misiones (313 de 344) tienen una sola etapa con una docena de
 // objetivos, así que el overlay avanza objetivo a objetivo sobre la lista aplanada.
 export const flatObjectives = q => q.s.flatMap((stg, j) => stg.o.map(o => ({ ...o, stage: j })));
 
+/**
+ * La misión en curso del paso. El overlay recorre las que se hacen (las opcionales
+ * también); las de solo tomarla se saltan. `at` y `walk` son su puesto y cuántas hay.
+ */
 export function currentQuest(n, questPos, questObj) {
   const list = questsOf(n);
-  if (!list.length) return null;
-  const i = Math.min(questPos[n] || 0, list.length - 1);
+  const walked = list.map((q, j) => j).filter(j => list[j].kind !== "take");
+  if (!walked.length) return null;
+  const pos = Math.min(questPos[n] || 0, list.length - 1);
+  // Un avance guardado sobre una de solo tomarla vuelve a la anterior que se hace
+  const i = walked.findLast(j => j <= pos) ?? walked[0];
   const q = list[i];
   const objs = flatObjectives(q);
   const k = Math.min(questObj[q.id] || 0, Math.max(objs.length - 1, 0));
-  return { list, i, q, objs, k };
+  return { list, i, q, objs, k, walked, at: walked.indexOf(i) };
 }
 
 /** Dónde se hace el objetivo k: el suyo o, si no tiene, el último conocido antes. */
