@@ -4,7 +4,7 @@ import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { groupsOf, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, doneIcon, nextPendingAfter, optionalMissions, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, doneIcon, list, nextPendingAfter, optionalMissions, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -27,8 +27,6 @@ const CALL = {
   note: { label: "Nota" },
   closedin: { label: "Se termina más adelante" },
 };
-
-const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
 
 /** Texto de la guía con sus misiones y logros enlazados y los incisos como pasos. */
 function RichText({ text }) {
@@ -250,35 +248,33 @@ function Quests({ step, quests, loaded, s }) {
 /**
  * Barra final, con los botones planos del juego: el paso anterior, «Paso hecho» (que
  * marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del paso
- * cierra otros que siguen pendientes, ofrece marcarlos también.
+ * cierra otros que siguen pendientes, el mismo botón los marca a la vez («Hecho, con
+ * el 33»): uno aparte se perdía al avanzar y lo cerrado quedaba pendiente.
  */
 function Actions({ step, s }) {
   const n = step.n;
   // En la vista que se va (zoom hacia el mapa) los botones no llevan id
   const live = !useLeaving();
   const done = !!s.done[n];
-  const next = done ? null : nextPendingAfter({ ...s.done, [n]: true }, n);
-  const closes = (step.closes || []).filter(c => !s.done[c]);
+  const closes = done ? [] : (step.closes || []).filter(c => !s.done[c]);
+  const next = done ? null : nextPendingAfter({ ...s.done, [n]: true, ...Object.fromEntries(closes.map(c => [c, true])) }, n);
   function finish() {
-    toggleStep(n);
+    if (closes.length) markSteps([n, ...closes]);
+    else toggleStep(n);
     if (next != null) selectStep(next);
   }
+  const label = closes.length ? `✓ Hecho, con el ${list(closes)}` : "✓ Paso hecho";
   return (
     <div className="journal-cta">
       <button type="button" className="gbtn" id={live ? "prevBtn" : undefined} disabled={n === 1} aria-label={`Paso ${n - 1}`}
         onClick={() => selectStep(n - 1)}>◀ {n > 1 ? n - 1 : ""}</button>
       <div className="journal-cta-main">
         <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={live ? "toggleBtn" : undefined}
-          title={done ? undefined : next != null ? `Marca el paso y abre el ${next}` : "Marca el paso"}
+          title={done ? undefined : (closes.length ? `Marca también el ${list(closes)}, que este paso cierra` : "Marca el paso")
+            + (next != null ? `${closes.length ? "," : ""} y abre el ${next}` : "")}
           onClick={done ? () => toggleStep(n) : finish}>
-          {done ? "Desmarcar" : "✓ Paso hecho"}
+          {done ? "Desmarcar" : label}
         </button>
-        {closes.length > 0 && (
-          <button type="button" className="gbtn" id={live ? "closesBtn" : undefined} title={`Este paso también cierra el ${list(closes)}`}
-            onClick={() => markSteps(closes)}>
-            Marcar el {list(closes)} también
-          </button>
-        )}
       </div>
       <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
         onClick={() => selectStep(n + 1)}>{n < STEPS.length ? n + 1 : ""} ▶</button>

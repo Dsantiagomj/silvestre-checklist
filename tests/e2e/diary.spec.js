@@ -71,7 +71,8 @@ test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota",
 });
 
 test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ page }) => {
-  await openApp(page, { "silvestre:done": range(1, 32) });
+  // Con el 33 hecho, el 34 ya no cierra nada pendiente
+  await openApp(page, { "silvestre:done": range(1, 33) });
   await row(page, 34).locator(".row-main").click();
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
   await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca el paso y abre el 35");
@@ -81,15 +82,29 @@ test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ pag
   expect((await readLS(page, "silvestre:done"))["34"]).toBe(true);
 });
 
-test("si el paso cierra otros pendientes, ofrece marcarlos también", async ({ page }) => {
+test("si el paso cierra otros pendientes, «Hecho» los marca a la vez y luego avanza", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
   await row(page, 34).locator(".row-main").click();
-  await expect(page.locator("#closesBtn")).toHaveText("Marcar el 33 también");
-  await page.click("#closesBtn");
-  await expect(row(page, 33)).toHaveClass(/done/);
+  // Un solo botón: no hay uno aparte que se pierda al avanzar
   await expect(page.locator("#closesBtn")).toHaveCount(0);
-  // Sigue en el mismo paso
-  await expect(page.locator("#journal .journal-num")).toHaveText("34");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, con el 33");
+  await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca también el 33, que este paso cierra, y abre el 35");
+  await page.click("#toggleBtn");
+  await expect(row(page, 33)).toHaveClass(/done/);
+  await expect(row(page, 34)).toHaveClass(/done/);
+  await expect(page.locator("#journal .journal-num")).toHaveText("35");
+  // Con lo cerrado ya hecho, vuelve a ser «Paso hecho»
+  await row(page, 34).locator(".row-main").click();
+  await page.click("#toggleBtn");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
+});
+
+test("un paso que cierra varios los nombra todos en «Hecho»", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 24) });
+  await row(page, 28).locator(".row-main").click();
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, con el 25, 26 y 27");
+  await page.click("#toggleBtn");
+  for (const n of [25, 26, 27, 28]) await expect(row(page, n)).toHaveClass(/done/);
 });
 
 test("la casilla de cada fila marca el paso sin cambiar lo que se ve", async ({ page }) => {

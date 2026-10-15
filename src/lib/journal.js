@@ -256,3 +256,6 @@ export function stopPoint(step, quests) {
   }
   return null;
 }
+
+/** Números de paso en una frase: "33", "25, 26 y 27". */
+export const list = ns => (ns.length > 1 ? `${ns.slice(0, -1).join(", ")} y ${ns.at(-1)}` : String(ns[0]));
