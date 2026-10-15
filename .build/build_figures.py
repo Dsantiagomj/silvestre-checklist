@@ -65,9 +65,9 @@ STEP_FIGURE = {
 
 # Step -> the quest whose start stands for the step, where the step opens with quests
 # it only needs (STEP_EXTRA in build_quests_js.py) and the banner is the step's own: the
-# Frigost lines after their "Abono de peaje" dungeon, and the order quest 5 after
-# Bonta mission 100.
-FIGURE_QUEST = {"31": 592, "40": 593, "52": 595, "83": 2010, "86": 1910, "89": 1917}
+# Frigost lines after their "Abono de peaje" dungeon, the order quest 5 after Bonta
+# mission 100, and step 87's own quests after the ones of steps 73 and 91 it needs.
+FIGURE_QUEST = {"31": 592, "40": 593, "52": 595, "83": 2010, "86": 1910, "87": 2137, "89": 1917}
 
 
 def _get(url, raw=False, tries=4):

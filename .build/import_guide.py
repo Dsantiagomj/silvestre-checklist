@@ -27,7 +27,8 @@ marks count too, but only when they say it outright ("se termina la misión del 
 92", "se actualiza la misión del inciso 84", in step 93's notes): advice that names a
 step in passing ("un recurso necesario para terminar la misión del inciso 63") does
 not. Nor does a step's optional mission ("se termina la misión opcional del inciso 7"):
-the step is done without it.
+the step is done without it. CLOSES adds by hand what a step finishes and its text does
+not say (step 87 finishes step 73's mission).
 
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
@@ -146,9 +147,16 @@ def clauses(raw):
             yield from (c for c in CLAUSE.split(clean(body)) if STATED.match(c))
 
 
+# Earlier steps a step finishes that its text does not name. Step 87 finishes "Las
+# cuatro voluntades", which step 73 leaves at its 2nd objective: its quests need
+# "Toma de conciencia", which needs it finished.
+CLOSES = {87: [73]}
+
+
 def closes(n, raw):
-    """Earlier steps finished by this step's marks (not their optional missions)."""
-    found = []
+    """Earlier steps finished by this step's marks (not their optional missions), and
+    the ones CLOSES adds."""
+    found = list(CLOSES.get(n, []))
     for clause in clauses(raw):
         if re.search(r"termin|complet", clause) and not re.search(r"actualiza|opcional", clause):
             after = re.search(r"incisos?\s+(.*)", clause)

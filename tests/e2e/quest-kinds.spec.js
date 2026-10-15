@@ -24,7 +24,7 @@ async function openStep(page, n) {
 
 test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", async () => {
   const { STEP_QUESTS, STEP_QUEST_KINDS } = read("quests.json");
-  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 83: { 2013: "take" } });
+  expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 83: { 2013: "take" }, 87: { 2138: "take" } });
   for (const [n, kinds] of Object.entries(STEP_QUEST_KINDS)) {
     const { w, q } = WEIGHTS[n];
     STEP_QUESTS[n].forEach((id, i) => { if (kinds[id]) expect(q[i]).toBe(0); });

@@ -120,8 +120,12 @@ MISSING_OBJECTIVES = {565: [439]}
 # for "Hace fresco, pero no importa"; 83: "Llama, amigo y entra", for "Canozzirujana";
 # 86: "La guardia muere, pero no se rinde", for "Allá arriba, en el pico helado...".
 # They ask for nothing among themselves, so "Allá en la montaña..." stays out.
+# Step 87's two quests need "Toma de conciencia" taken (Qa=2138), and it needs "Las
+# cuatro voluntades" finished (Qf=2122), which step 73 leaves at its 2nd objective: 87
+# finishes it (it closes 73, CLOSES in import_guide.py) and takes the other (TAKE_ONLY),
+# done in step 91.
 STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622, 623], 78: [434, 111, 121, 423],
-              80: [1782], 83: [624, 2010], 86: [626], 89: [1903, 1917]}
+              80: [1782], 83: [624, 2010], 86: [626], 87: [2122, 2138], 89: [1903, 1917]}
 
 # Quests another quest gives on the way and that it waits for, right after it in every
 # step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos
@@ -205,8 +209,9 @@ def optional_missions(text, matched_on):
 # tomar la misión de la Isla de Frigost: Logro "La cantera de hielo", misión 4: Luces y
 # sombras. No es necesario hacerla, solo tenerla tomada." Its wording is unique, so it
 # is listed by hand instead of parsed. Step 83 stops "justo después de pasar Dazahk
-# Martegel y obtener la misión: La biblia de los rencores": taken, done later.
-TAKE_ONLY = {28: [1286], 83: [2013]}
+# Martegel y obtener la misión: La biblia de los rencores": taken, done later. Step 87
+# takes "Toma de conciencia", which its two quests need in progress (STEP_EXTRA).
+TAKE_ONLY = {28: [1286], 83: [2013], 87: [2138]}
 
 
 def step_kinds(step, plan, achievements, ids):
@@ -223,7 +228,13 @@ def step_kinds(step, plan, achievements, ids):
     return kinds
 
 
-def missions_for(text, start, names=()):
+# Steps whose missions go in the order the text names them, not the achievement's. Step
+# 87: "misión 4: La guerra de cania…, misión 3: El juicio de la muerte"; they can only be
+# done one at a time (startCriterion Qa!), and the 3rd is the one that waits for Ilyzaelle.
+IN_TEXT_ORDER = {87}
+
+
+def missions_for(text, start, names=(), in_text_order=False):
     """Mission numbers referenced in the text segment that starts at `start`.
 
     The segment runs until the next "Logro" mention, so numbers are attributed to
@@ -240,6 +251,8 @@ def missions_for(text, start, names=()):
     if not nums:
         wanted = [m.strip().lower() for m in BY_NAME.findall(segment)]
         nums = [i + 1 for i, name in enumerate(names) if name and name.lower() in wanted]
+    if in_text_order:
+        return list(dict.fromkeys(nums)) or None
     return sorted(set(nums)) or None
 
 
@@ -291,7 +304,7 @@ def step_quest_ids(step, achievements, marks, quests):
             pos = base.find(a["matched_on"])
             if pos >= 0:
                 names = [quests[q]["name"]["es"] if q in quests else None for q in ordered]
-                wanted = missions_for(base, pos, names)
+                wanted = missions_for(base, pos, names, step["n"] in IN_TEXT_ORDER)
                 main.append((pos, ordered if wanted is None else pick(wanted)))
                 continue
             # Only in a note: the missions it names, or the whole achievement when the
