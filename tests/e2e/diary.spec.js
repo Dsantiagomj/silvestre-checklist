@@ -717,6 +717,22 @@ test("el paso 12 lleva las misiones que exige «Espionaje industrial» antes de 
     "Las grandes galerías", "Espionaje industrial"]);
 });
 
+test("las misiones de «Abono de peaje» van en el paso que las pide, antes de la misión que las exige", async ({ page }) => {
+  await openApp(page);
+  // «Prefiere morir en el mar» pide «Antimonárquico» y «Las joyas de la corona»
+  expect((await stepData(page, 31)).quests).toEqual(["Antimonárquico", "Las joyas de la corona", "Prefiere morir en el mar"]);
+  // «Calefacción a bajo coste» y «En busca de Javi Vito» piden «Duerme y tendrás un pastel»
+  expect((await stepData(page, 40)).quests).toEqual(["Duerme y tendrás un pastel", "Calefacción a bajo coste", "En busca de Javi Vito"]);
+  // «Quién saca beneficio del jalamut» pide «Lavandería automática»; «Almacén de avituallamiento», «Hace fresco…»
+  expect((await stepData(page, 52)).quests).toEqual(["Lavandería automática", "Hace fresco, pero no importa",
+    "Quién saca beneficio del jalamut", "Almacén de avituallamiento", "El S.L.I.P. está que arde"]);
+  // «Llama, amigo y entra» pide «Canozzirujana»; «La guardia muere…», «Allá arriba, en el pico helado…»
+  expect((await stepData(page, 83)).quests.slice(0, 2)).toEqual(["Canozzirujana", "Llama, amigo y entra"]);
+  expect((await stepData(page, 86)).quests).toEqual(["Allá arriba, en el pico helado...", "La guardia muere, pero no se rinde"]);
+  // Van bajo su logro
+  await expect(page.locator("#journal .q-group-name").first()).toHaveText("Abono de peaje");
+});
+
 test("el 29 lleva las tres misiones de Mel que nombra y el 100, «Flovoración» tras la misión del logro", async ({ page }) => {
   await openApp(page);
   // «Misión: La pesca de Mel, Misión: Mel odiosa, Misión: Mel, o «dramática».», en ese orden

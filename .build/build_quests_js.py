@@ -110,7 +110,16 @@ MISSING_OBJECTIVES = {565: [439]}
 # "Espionaje industrial" requires "El maleficio del cofre" (after "Cofrología" and
 # "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=). Step 83's "Birk, hija de Bork" requires
 # "Llama, amigo y entra", mission 1 of "Allá bajo la montaña" (Qf=2010).
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782], 83: [2010], 89: [1917]}
+# "Abono de peaje" is in no step, but the Frigost lines ask for its quests (Qf=), each
+# one the run of a dungeon: each goes in the step of the first quest that asks for it.
+# 31: "Prefiere morir en el mar" asks for "Antimonárquico" and "Las joyas de la corona";
+# 40: "Calefacción a bajo coste", for "Duerme y tendrás un pastel"; 52: "Quién saca
+# beneficio del jalamut", for "Lavandería automática", and "Almacén de avituallamiento",
+# for "Hace fresco, pero no importa"; 83: "Llama, amigo y entra", for "Canozzirujana";
+# 86: "La guardia muere, pero no se rinde", for "Allá arriba, en el pico helado...".
+# They ask for nothing among themselves, so "Allá en la montaña..." stays out.
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622, 623], 78: [434, 111, 121, 423],
+              80: [1782], 83: [624, 2010], 86: [626], 89: [1917]}
 
 # Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
 # guide does them in another, (quest, stage) -> the new order, so the red line falls in
