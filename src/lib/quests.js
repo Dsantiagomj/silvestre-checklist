@@ -46,6 +46,27 @@ export const questsOf = n =>
 /** La siguiente misión que se hace tras la `i` (las de solo tomarla no), o -1. */
 export const nextWalked = (list, i) => list.findIndex((q, j) => j > i && q.kind !== "take");
 
+const objTotal = q => q.s.reduce((a, stg) => a + stg.o.length, 0);
+
+/**
+ * La siguiente que se hace tras la `i` y no está terminada según `questObj`: tras una
+ * misión madre, sus hijas ya hechas se saltan. Si lo están todas, la siguiente (o -1).
+ */
+export function nextOpen(list, i, questObj) {
+  const j = list.findIndex((q, k) => k > i && q.kind !== "take" && (questObj[q.id] || 0) < objTotal(q));
+  return j >= 0 ? j : nextWalked(list, i);
+}
+
+/**
+ * Las misiones que empiezan dentro de otra y cumplen sus objetivos (build_quests_js.py):
+ * [[índice del objetivo, [ids de las hijas]], …] o null.
+ */
+export const childrenOf = id => data?.PARENT?.[id] || null;
+
+/** El puesto en `list` de la misión obligatoria de la que `id` es hija, o -1. */
+export const parentIn = (list, id) =>
+  list.findIndex(q => q.kind === "mandatory" && (childrenOf(q.id) || []).some(([, kids]) => kids.includes(id)));
+
 // Casi todas las misiones (313 de 344) tienen una sola etapa con una docena de
 // objetivos, así que el overlay avanza objetivo a objetivo sobre la lista aplanada.
 export const flatObjectives = q => q.s.flatMap((stg, j) => stg.o.map(o => ({ ...o, stage: j })));

@@ -2791,6 +2791,22 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .obj-resume::before, [data-theme="light"] .obj-resume::after{
   background:repeating-linear-gradient(90deg, #4e8f1b 0 8px, transparent 8px 14px);
 }
+/* Donde empiezan las misiones hijas: la línea en el oro del diario, sin mayúsculas, con
+   la misión como ficha que lleva a ella. No es una parada */
+.obj-kids{
+  display:flex; align-items:center; gap:10px; margin:6px 0; padding:0 14px;
+  font-size:12.5px; font-weight:600; color:var(--gw-gold);
+}
+.obj-kids::before, .obj-kids::after{
+  content:""; flex:1; min-width:16px; height:1px;
+  background:repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 7px);
+}
+.obj-kids span{ max-width:80%; text-align:center; line-height:1.7; }
+.q-ref{
+  padding:0 6px; border:1px solid color-mix(in srgb, currentColor 45%, transparent); border-radius:999px;
+  background:transparent; font:inherit; color:inherit; cursor:pointer;
+}
+.q-ref:hover{ border-color:currentColor; }
 /* El jefe que se pasa, en el medallón de lo que se resuelve */
 .call.done i img{ border-radius:50%; }
 

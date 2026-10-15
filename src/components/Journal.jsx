@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
-import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
+import { childrenOf, groupsOf, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
@@ -9,11 +9,12 @@ import {
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  closeSteps, closingPlan, loadQuests, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  closeSteps, closingPlan, getState, loadQuests, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
+import { prefersReducedMotion } from "../lib/motion.js";
 import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
 
@@ -244,10 +245,21 @@ function Quests({ step, quests, loaded, s }) {
   // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
   const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const notes = missionNotes(step);
+  // Las hijas de cada misión que van en el paso y se hacen (no las de solo tomarla)
+  const kidsOf = q => (childrenOf(q.id) || [])
+    .map(([index, ids]) => ({ index, items: ids.map(id => quests.find(x => x.id === id)).filter(x => x && x.kind !== "take") }))
+    .filter(c => c.items.length);
+  // Llevar a una hija: se despliega y se pone a la vista
+  const toKid = (id, el) => {
+    setOpen(id, true);
+    requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
+      ?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" }));
+  };
   const notesOf = q => [...notes.filter(x => x.name === q.n).map(x => x.text), ...(QUEST_NOTES[step.n]?.[q.id] ? [QUEST_NOTES[step.n][q.id]] : [])];
   const items = quests.map((q, i) => {
     if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={opened.has(q.id)} setOpen={setOpen} />;
     let offset = 0;
+    const kids = kidsOf(q);
     const optional = q.kind === "optional";
     const at = progressOf(s, step.n, quests, i, q);
     const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
@@ -258,8 +270,9 @@ function Quests({ step, quests, loaded, s }) {
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
     const pick = k => {
       setObjective(step.n, i, q.id, k, total);
-      const next = quests[nextWalked(quests, i)];
-      if (k >= total && !optional && next) setOpen(next.id, true);
+      // La que queda en curso: la siguiente sin terminar o, tras una hija, su madre
+      const next = quests[getState().questPos[step.n]];
+      if (k >= total && !optional && next && next.id !== q.id) setOpen(next.id, true);
     };
     // «Completar» la termina de una vez; hecha, vuelve a su inicio. Sin plegarla
     const finished = at >= total;
@@ -269,7 +282,7 @@ function Quests({ step, quests, loaded, s }) {
       pick(finished ? 0 : total);
     };
     return (
-      <details className="q-item" key={q.id} open={opened.has(q.id)}
+      <details className="q-item" key={q.id} data-qid={q.id} open={opened.has(q.id)}
         onToggle={e => setOpen(q.id, e.currentTarget.open)}>
         <summary>
           <QuestMark className="q-mark" />
@@ -296,7 +309,8 @@ function Quests({ step, quests, loaded, s }) {
             <Fragment key={j}>
               {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
               <Objectives route objs={stg.o} at={at - from} onPick={elsewhere ? undefined : k => pick(from + k)}
-                stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))} />
+                stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))}
+                kids={kids.filter(c => c.index >= from && c.index < offset).map(c => ({ ...c, index: c.index - from }))} onKid={toKid} />
             </Fragment>
           );
         })}
