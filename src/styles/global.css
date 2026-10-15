@@ -1223,6 +1223,13 @@ header.is-scrolled .title-bar{
   transition:transform .45s cubic-bezier(.3,1.6,.5,1);
 }
 .brand:hover .brand-icon{ transform:rotate(8deg) scale(1.08); }
+/* El contorno oscuro de las letras Lilita: un anillo de sombras de 1 px. Con
+   -webkit-text-stroke algunos navegadores rayan el interior de las letras con piezas
+   solapadas (la tilde de «á», la «ñ») aunque lleve paint-order */
+:root{
+  --ink-ring:-1px -1px 0 #121410, 0 -1px 0 #121410, 1px -1px 0 #121410, 1px 0 0 #121410,
+    1px 1px 0 #121410, 0 1px 0 #121410, -1px 1px 0 #121410, -1px 0 0 #121410;
+}
 .logo{
   display:inline-flex; gap:7px;
   font-family:'Lilita One', var(--font-body);
@@ -1231,8 +1238,7 @@ header.is-scrolled .title-bar{
 .logo > span{ display:inline-flex; }
 .logo i{
   font-style:normal; display:inline-block;
-  -webkit-text-stroke:2px #121410; paint-order:stroke fill;
-  text-shadow:0 3px 0 #121410;
+  text-shadow:var(--ink-ring), 0 3px 0 #121410;
 }
 .logo .w1 i{ color:#f3ecd2; }
 .logo .w2 i{ color:var(--accent-ink); text-shadow:0 3px 0 #121410, 0 0 14px rgba(183,220,105,.35); }
@@ -1333,8 +1339,7 @@ header.is-scrolled .title-bar{
 .hero-title .hl{
   font-family:'Lilita One', var(--font-body); font-weight:400; letter-spacing:.5px;
   color:var(--accent-ink);
-  -webkit-text-stroke:2px #121410; paint-order:stroke fill;
-  text-shadow:0 4px 0 #121410, 0 0 26px rgba(183,220,105,.35);
+  text-shadow:var(--ink-ring), 0 4px 0 #121410, 0 0 26px rgba(183,220,105,.35);
 }
 [data-theme="light"] .hero-title .hl{ color:#9fcf4f; }
 .hero-sub{ margin:0 0 22px; max-width:520px; font-size:17px; line-height:1.5; color:var(--txt-soft); }
@@ -1490,7 +1495,7 @@ header.is-scrolled .title-bar{
 .egg-pct-row > b{
   font-family:'Lilita One', var(--font-body); font-weight:400; font-size:46px;
   color:var(--accent-ink);
-  -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 4px 0 #121410;
+  text-shadow:var(--ink-ring), 0 4px 0 #121410;
   font-variant-numeric:tabular-nums;
 }
 [data-theme="light"] .egg-pct-row > b{ color:#9fcf4f; }
@@ -2524,7 +2529,7 @@ header.is-scrolled .title-bar{
 .banner-frame .frame-in{ stroke:rgba(227,197,101,.55); stroke-width:1.5; }
 .journal-num, .journal-title, .journal-show-name{
   font-family:'Lilita One', var(--font-display); font-weight:400;
-  -webkit-text-stroke:2px #121410; paint-order:stroke fill; text-shadow:0 3px 0 #121410;
+  text-shadow:var(--ink-ring), 0 3px 0 #121410;
 }
 .journal-num{ display:block; font-size:46px; line-height:1; color:#cbee8f; }
 .banner-zone{
@@ -2549,7 +2554,7 @@ header.is-scrolled .title-bar{
 .journal-show figcaption small{
   display:block; font:800 10.5px var(--font-display); letter-spacing:.16em; text-transform:uppercase; color:#e3c565;
 }
-.journal-show-name{ display:block; font-size:19px; line-height:1.1; color:#f3ecd2; -webkit-text-stroke-width:1.5px; }
+.journal-show-name{ display:block; font-size:19px; line-height:1.1; color:#f3ecd2; }
 @keyframes journal-float{ 50%{ transform:translateY(-8px); } }
 /* Volver al mapa con este paso: arriba a la derecha del objetivo */
 .journal-to-map{
@@ -2798,7 +2803,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .journal-top{
   background:linear-gradient(180deg, #f8f1de, #efe4c6) #f4ebd3; color:#3b3324; border-bottom-color:#d5c8a6;
 }
-[data-theme="light"] .journal-title{ color:#3b2a10; -webkit-text-stroke:0; text-shadow:0 1px 0 rgba(255,255,255,.6); }
+[data-theme="light"] .journal-title{ color:#3b2a10; text-shadow:0 1px 0 rgba(255,255,255,.6); }
 [data-theme="light"] .goal-calls{ border-top-color:#d5c8a6; }
 [data-theme="light"] .goal-calls .call{ color:#3b3324; }
 [data-theme="light"] .goal-ach .is-complete{ border-color:#f4ebd3; }
