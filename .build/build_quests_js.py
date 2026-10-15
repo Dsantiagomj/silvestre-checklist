@@ -121,6 +121,14 @@ MISSING_OBJECTIVES = {565: [439]}
 STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 40: [621], 52: [622, 623], 78: [434, 111, 121, 423],
               80: [1782], 83: [624, 2010], 86: [626], 89: [1917]}
 
+# Quests another quest gives on the way and that it waits for, right after it in every
+# step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos
+# son mis enemigos" (Qa=2011&Qo=14269, "Resuelve el problema de Birk") and "Los
+# nanoinsumisos" (Qo=14272, "Ayuda a liberar al general Dourak"), and goes on only when
+# each is finished (Torrente Arcano: "Debes completarla", "Una vez termines su misión,
+# habla con el General Dourak"): both before the red line, which is past Dazahk.
+SUBQUESTS = {2011: [2019, 2012]}
+
 # Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
 # guide does them in another, (quest, stage) -> the new order, so the red line falls in
 # its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48; step
@@ -487,6 +495,8 @@ def main():
                     entry["from"] = prev_align
             prev_align = last
         ids = STEP_EXTRA.get(step["n"], []) + [q for q in ids if q not in STEP_EXTRA.get(step["n"], [])]
+        given = {g for q in ids for g in SUBQUESTS.get(q, [])}
+        ids = [x for q in ids if q not in given for x in [q] + SUBQUESTS.get(q, [])]
         ids = [q for q in ids if q in quests or isinstance(q, str)]
         if ids:
             step_quests[str(step["n"])] = ids
