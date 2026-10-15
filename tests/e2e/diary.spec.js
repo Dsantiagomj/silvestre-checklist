@@ -1202,3 +1202,21 @@ test("en el 1, los dos logros que incluye enlazan a su guía; «Respuestas para 
     .toHaveAttribute("href", "https://www.torrentearcano.com/un-ciudadano-modelo");
   await expect(questItem(page, "Respuestas para todo").locator(".q-guide")).toHaveCount(0);
 });
+
+test("en el 16, «La huida es la mejor salida» va tras «Nuestros amigos los animalitos», que pide terminada", async ({ page }) => {
+  await openApp(page);
+  expect((await stepData(page, 16)).quests).toEqual(["Directo al mulaguabús", "Sin denominación de origen",
+    "El vals de manuales", "Nuestros amigos los animalitos", "La huida es la mejor salida", "Shyriiwook", "Con las mismas armas"]);
+});
+
+test("las paradas del 54 y del 85 caen en el combate: la kitsu de nueve colas y Ilyzaelle", async ({ page }) => {
+  await openApp(page);
+  const line = ":is(.obj-stop, .obj-resume)";
+  // 54: «Hasta tener que pasar Kumijo»; el combate es «Capta la atención…», antes del trato
+  await stepData(page, 54);
+  await expect(questItem(page, "Cuando se caldean las ánimas").locator(`${line} + .obj-row`))
+    .toHaveText(/Capta la atención de la kitsu de nueve colas/);
+  // 85: «Hasta tener que pasar Ilyzaelle»; no en el mapa de su mirador, sino en el combate
+  await stepData(page, 85);
+  await expect(questItem(page, "Inclemencias").locator(`${line} + .obj-row`)).toHaveText(/Vence a 1 x Ilyzaelle/);
+});

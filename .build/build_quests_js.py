@@ -144,7 +144,9 @@ STEP_SKIP = {53: [2198]}
 # Quest -> the quest it starts from, where the achievement lists it before: it goes right
 # after it in every step that lists both. "Hasta su último suspiro" is mission 2 of "El
 # guardián del inmaculado" but starts in mission 3, "Réquiem por un yokai" (Qa=2180).
-QUEST_AFTER = {2198: 2180}
+# "La huida es la mejor salida" (step 16) needs "Nuestros amigos los animalitos"
+# finished (Qf=1848), which the achievement lists after it.
+QUEST_AFTER = {2198: 2180, 1849: 1848}
 
 
 def after_requirements(ids):

@@ -227,6 +227,9 @@ export const STOP_AT = {
   51: [["Objetivo: Bandana", "Encuentra la bandana de Tugtora"]],
   // La pócima sale de terminar "El S.L.I.P. está que arde"
   52: [["Almacén de avituallamiento", "Enséñale a Asselo: 1 x Pócima del S.L.I.P."]],
+  // "Hasta tener que pasar Kumijo": el combate es demostrarle tu fuerza a la kitsu, no el
+  // trato de después
+  54: [["Cuando se caldean las ánimas", "Capta la atención de la kitsu de nueve colas"]],
   // "Se pasa Perfósil…, dejando pendiente Kanigrula y Cil": van tras Perfósil
   58: [["La bendición de Foluk", "Vence a 1 x Kanígrula"]],
   // "tienes que pasar la mazmorra de Kanígrula y vencer a la jefa"
@@ -253,6 +256,8 @@ export const STOP_AT = {
   78: [["Aprendizaje: Maestro de los Pergaminos", "Encuentra la estatuilla de Sumens"]],
   // Justo después de vencer a Dazahk y obtener "La biblia de los rencores"
   83: [["Birk, hija de Bork", "Salda varias afrentas de la biblia de los rencores"]],
+  // "Hasta tener que pasar Ilyzaelle": su combate, no el mapa de su mirador, que va antes
+  85: [["Inclemencias", "Vence a 1 x Ilyzaelle"]],
   // "matar 10 x Monstruos de cada tipo de la zona de Ilyzaelle"
   86: [["La guardia muere, pero no se rinde", "Vence 10 x Ectórrido"]],
   // "tienes que vencer a Ilyzaelle en su mazmorra ya que es la única que suelta ese drop"
