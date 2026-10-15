@@ -534,6 +534,12 @@ test("el paso 78 lleva las misiones de orden hasta la 4 y el 80 empieza por «La
   expect(await figure(page)).toBe("Inicia el paso:Elviana Tirips");
 });
 
+test("el paso 12 lleva las misiones que exige «Espionaje industrial» antes de ella", async ({ page }) => {
+  await openApp(page);
+  expect((await stepData(page, 12)).quests).toEqual(["Cofrología", "Tesorfanato", "El maleficio del cofre",
+    "Las grandes galerías", "Espionaje industrial"]);
+});
+
 test("las paradas revisadas en las guías caen en su objetivo, también cuando un paso tiene dos", async ({ page }) => {
   await openApp(page);
   const after = async (n, quest, text) => {
