@@ -307,6 +307,35 @@ test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => 
   await expect(page.locator("#journal .journal-num")).toHaveText("78");
 });
 
+test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una nota dice por qué", async ({ page }) => {
+  await openApp(page);
+  await row(page, 64).locator(".row-main").click();
+  await waitQuests(page);
+  const j = page.locator("#journal");
+  // La misión 2 (paso 66) pide «De la mano» pasada la entrega de la cerveza
+  const quest = j.locator(".q-item", { has: page.locator(".q-name", { hasText: "De la mano" }) });
+  await quest.locator("summary .q-name").click();
+  await expect(quest.locator(".obj-stop")).toHaveCount(1);
+  await expect(quest.locator(".obj-stop")).toHaveText("Hasta poder entrar en la taberna");
+  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Habla con la diosa Pandawa a través de Pandawelo");
+  await expect(quest.locator(".obj-stop").locator("xpath=preceding-sibling::*[1]")).toContainText(/Entrégale a Pandawelo.*Cerveza fuerte/);
+  // La nota, con las guías de las dos misiones y fichas a los pasos 66 y 67
+  const note = j.locator(".call.note", { hasText: "Para empezar la misión 2" });
+  await expect(note).toHaveCount(1);
+  await expect(note.locator("b")).toHaveText("Nota");
+  await expect(note).toContainText("Para empezar la misión 2, «Dos alientos, una inspiración» (paso 66), hay que llegar hasta entregarle la cerveza fuerte a Pandawelo. «De la mano» se termina en el paso 67, con el logro completo.");
+  await expect(note.locator("a.guide-link", { hasText: "Dos alientos, una inspiración" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/dos-alientos-una-inspiracion");
+  await expect(note.locator("a.guide-link", { hasText: "De la mano" })).toHaveAttribute("href", "https://www.torrentearcano.com/de-la-mano");
+  await expect(note.locator(".step-ref")).toHaveCount(2);
+  await note.locator('.step-ref[data-n="66"]').click();
+  await expect(j.locator(".journal-num")).toHaveText("66");
+  await row(page, 64).locator(".row-main").click();
+  await expect(j.locator(".journal-num")).toHaveText("64");
+  await j.locator('.call.note .step-ref[data-n="67"]').click();
+  await expect(j.locator(".journal-num")).toHaveText("67");
+});
+
 test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el mercadillo", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openApp(page);

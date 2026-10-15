@@ -40,12 +40,21 @@ function namedOptional(step) {
 }
 
 /**
+ * Notas escritas a mano, para lo que la guía no dice. En el 64, por qué se llega hasta
+ * la cerveza fuerte (STOP_AT) y no solo hasta la taberna.
+ */
+const EXTRA_NOTES = {
+  64: "Para empezar la misión 2, «Dos alientos, una inspiración» (paso 66), hay que llegar hasta entregarle"
+    + " la cerveza fuerte a Pandawelo. «De la mano» se termina en el paso 67, con el logro completo.",
+};
+
+/**
  * Avisos que muestra el detalle. Un paso con verde se resuelve en sí mismo: su rojo
  * no es dónde parar sino dónde se retoma (la línea verde de la ruta), así que no va
  * como aviso; lo que añade tras su primera frase ("Retomar sala 5 como…") queda como nota.
  */
 export function stepCalls(step) {
-  const marks = namedOptional(step);
+  const marks = EXTRA_NOTES[step.n] ? [...namedOptional(step), ["note", EXTRA_NOTES[step.n]]] : namedOptional(step);
   if (!resolvesHere(step)) return marks;
   const calls = marks.flatMap(([kind, text]) => {
     if (kind !== "stop") return [[kind, text]];
@@ -187,8 +196,10 @@ export const STOP_AT = {
   59: [["La triquiñuela del cuerno", "Consigue grasa mamaria de kanig"]],
   // "farmear Tejaiss hasta dropear 10 de esos corazones"
   63: [["Misión solución", "Entrégale a Marta Angaha: 10 x Corazón de tejaiss"]],
-  // Hasta entrar en la Taberna Prohibida, que pide "Tinta espectacular" (paso 65)
-  64: [["De la mano", "Ve a ver a Pandawelo para hablar con la diosa Pandawa"]],
+  // La guía dice "hasta poder entrar en la taberna", pero la misión 2 (paso 66) pide
+  // «De la mano» pasada la entrega de la cerveza fuerte (Qo>16993), y esta se bloquea
+  // ahí hasta terminar la 2: se para antes de hablar con la diosa
+  64: [["De la mano", "Habla con la diosa Pandawa a través de Pandawelo"]],
   // "tienes que dropear 3 x Gota de tinta indeleble" (monstruos del Reino de Papel)
   65: [["Tinta espectacular", "Enséñale a Cigrulla teatral: 3 x Gota de tinta indeleble"]],
   // Los trozos del pergamino caen de los monstruos de tinta y de papel
