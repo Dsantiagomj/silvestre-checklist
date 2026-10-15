@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import { openApp, readLS } from "./helpers.js";
 
 const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
@@ -119,4 +119,34 @@ test("un paso de una sola misión no lleva «Completar»: lo hace «Paso hecho»
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
   await expect(page.locator("#journal .q-done-btn")).toHaveCount(0);
+});
+
+test("completar todas las misiones obligatorias marca el paso, sin cambiar de paso", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(11) });
+  await openStep12(page);
+  const names = ["Cofrología", "Tesorfanato", "El maleficio del cofre", "Las grandes galerías"];
+  for (const name of names) {
+    await page.locator("#journal .q-item", { hasText: name }).locator(".q-done-btn").click();
+    // Con misiones por hacer, el paso sigue pendiente
+    await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  }
+  await page.locator("#journal .q-item", { hasText: "Espionaje industrial" }).locator(".q-done-btn").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).toHaveClass(/\bdone\b/);
+  expect((await readLS(page, "silvestre:done"))["12"]).toBe(true);
+  // Sigue en el 12
+  await expect(page.locator("#journal .journal-num")).toHaveText("12");
+  await expect(page.locator("#toggleBtn")).toHaveText("Desmarcar");
+});
+
+test("la misión opcional no hace falta para que el paso se marque solo", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(6) });
+  await page.click('.diary-row[data-n="7"] .row-main');
+  await expect(page.locator("#journal .journal-num")).toHaveText("7");
+  const colera = page.locator("#journal .q-item", { hasText: "La cólera de los dioses" });
+  await colera.locator("summary .q-name").click();
+  // Su último medallón termina la única obligatoria: Arma letal (opcional) sigue sin hacer
+  await colera.locator(".obj-med").last().click();
+  await expect(page.locator('.diary-row[data-n="7"]')).toHaveClass(/\bdone\b/);
+  await expect(page.locator("#journal .journal-num")).toHaveText("7");
+  await expect(page.locator("#journal .q-item", { hasText: "Arma letal" }).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
 });
