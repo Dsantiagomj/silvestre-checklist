@@ -6,7 +6,6 @@ import {
 } from "../state/store.js";
 import { BRAND_ICON, DOFUS_ROAD, HERO_BG, HERO_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { ALL_ROWS } from "../lib/resources.js";
-import DofusRoad from "./DofusRoad.jsx";
 import { prefersReducedMotion } from "../lib/motion.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
@@ -128,9 +127,9 @@ export default function Hero() {
           <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
           <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
 
-          {/* Con la guía terminada ya no hay siguiente paso ni nada que reunir:
-              ese sitio lo ocupa la colección de Dofus del camino */}
-          {nextStep ? (
+          {/* Con la guía terminada ya no hay siguiente paso ni nada que reunir: el hero se
+              queda con el título y el huevo obtenido */}
+          {nextStep && (
             <>
               <div className="hero-next" id="heroNext">
                 <div className="hero-next-art">
@@ -170,10 +169,8 @@ export default function Hero() {
                   </button>
                 </div>
               </div>
-
-              <DofusRoad />
             </>
-          ) : <DofusRoad big />}
+          )}
         </div>
 
         <div className="hero-visual">

@@ -8,12 +8,13 @@ import { STEPS, TIER_META } from "../data/steps.js";
 import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import {
-  clearFilters, goToNextPending, hasActiveFilters, nextPending, revealMapNode, selectStep, setSearch, setStatusFilter,
+  clearFilters, hasActiveFilters, nextPending, revealMapNode, selectStep, setSearch, setStatusFilter,
   setStepsView, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
 import StepMap, { mapPoint } from "./StepMap.jsx";
+import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 
 const TABS = [
@@ -129,16 +130,12 @@ function DiaryList({ s, current }) {
   );
 }
 
-/** Buscador y acceso al siguiente pendiente, junto al título de la sección. */
+/** Buscador de pasos, en la barra de herramientas de la ventana. */
 function DiaryBar({ s }) {
-  const next = nextPending(s);
   return (
     <div className="diary-bar">
       <input type="search" className="diary-search" id="searchInput" placeholder="Buscar por número o texto…"
         aria-label="Buscar paso" value={s.filters.search} onChange={e => setSearch(e.target.value)} />
-      <button type="button" className="diary-next" id="diaryNext" disabled={next == null} onClick={goToNextPending}>
-        {next != null ? <>Siguiente<span className="long"> pendiente</span>: <b>{next}</b></> : "Guía completa"}
-      </button>
     </div>
   );
 }
@@ -259,41 +256,50 @@ export default function Diary({ mobile }) {
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
         <h2 className="section-title" id="diaryTitle"><span className="section-num">02</span>Los 100 pasos</h2>
-        <div className="steps-view" role="group" aria-label="Vista">
-          {VIEWS.map(([key, label, id]) => (
-            <button key={key} type="button" id={id} aria-pressed={s.stepsView === key} onClick={() => setStepsView(key)}>{label}</button>
-          ))}
-        </div>
-        <DiaryBar s={s} />
       </div>
-      <ZoneSeals s={s} current={current} />
-      <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
-        style={swap != null ? { minHeight: swap } : undefined}>
-        <SwapContext.Provider value={swapInfo}>
-          <AnimatePresence mode="popLayout" initial={false}
-            onExitComplete={() => {
-              switching.current = false;
-              setSwap(null);
-              focus.current = takeMapFocus();
-              setSettled(c => c + 1);
-            }}>
-            <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
-              {map ? (
-                <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
-              ) : (
-                <DiaryWindow step={current}>
-                  <DiaryList s={s} current={current} />
-                  {!mobile && current != null && (
-                    <div className="diary-detail">
-                      {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
-                      <Journal key={current} n={current} id="journal" />
-                    </div>
-                  )}
-                </DiaryWindow>
-              )}
-            </ViewLayer>
-          </AnimatePresence>
-        </SwapContext.Provider>
+      {/* Una sola ventana: los Dofus del camino y el progreso arriba, las vistas y, debajo,
+          los pasos */}
+      <div className="steps-win">
+        <WinStrip s={s} />
+        <div className="win-tabs">
+          <div className="steps-view" role="group" aria-label="Vista">
+            {VIEWS.map(([key, label, id]) => (
+              <button key={key} type="button" id={id} aria-pressed={s.stepsView === key} onClick={() => setStepsView(key)}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="win-tools">
+          <DiaryBar s={s} />
+        </div>
+        <ZoneSeals s={s} current={current} />
+        <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
+          style={swap != null ? { minHeight: swap } : undefined}>
+          <SwapContext.Provider value={swapInfo}>
+            <AnimatePresence mode="popLayout" initial={false}
+              onExitComplete={() => {
+                switching.current = false;
+                setSwap(null);
+                focus.current = takeMapFocus();
+                setSettled(c => c + 1);
+              }}>
+              <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
+                {map ? (
+                  <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
+                ) : (
+                  <DiaryWindow step={current}>
+                    <DiaryList s={s} current={current} />
+                    {!mobile && current != null && (
+                      <div className="diary-detail">
+                        {/* key: al cambiar de paso los desplegables vuelven a su estado inicial */}
+                        <Journal key={current} n={current} id="journal" />
+                      </div>
+                    )}
+                  </DiaryWindow>
+                )}
+              </ViewLayer>
+            </AnimatePresence>
+          </SwapContext.Provider>
+        </div>
       </div>
     </section>
   );

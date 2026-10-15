@@ -103,14 +103,14 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator("#heroPct")).toHaveText("100%");
   await expect(page.locator(".hero-egg")).toHaveClass(/obtained/);
   await expect(page.locator(".egg-pct small")).toContainText("¡Obtenido!");
-  // Sin siguiente paso ni nada que reunir: el sitio lo ocupa la colección del camino
+  // Sin siguiente paso ni nada que reunir: el hero se queda con el título y el huevo.
+  // Los Dofus del camino viven en la ventana de los pasos, todos conseguidos
   await expect(page.locator("#heroNext")).toHaveCount(0);
   await expect(page.locator(".hero-reqs")).toHaveCount(0);
-  const road = page.locator(".road.big");
-  await expect(road.locator(".road-title")).toHaveText("Por el camino conseguiste");
-  await expect(road.locator(".road-dofus.obtained")).toHaveCount(12);
-  await page.click("#roadGo");
-  await expect(page.locator("#diary")).toBeInViewport();
+  await expect(page.locator(".hero .road-dofus")).toHaveCount(0);
+  await expect(page.locator("#winRoad .road-dofus.obtained")).toHaveCount(12);
+  await expect(page.locator("#winRoad .road-count")).toHaveText("12/12");
+  await expect(page.locator("#diaryNext")).toBeDisabled();
 });
 
 test("los contadores muestran pasos, prerrequisitos y objetos", async ({ page }) => {
@@ -231,32 +231,4 @@ test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async (
   };
   await page.waitForTimeout(400); // el brillo entra con una transición
   expect(await edgeJump()).toBeLessThan(8);
-});
-
-test("los Dofus del camino se van consiguiendo al completar su logro", async ({ page }) => {
-  // Esmeralda (paso 18) y Púrpura (21); el 17 solo lleva "Verde esmeralda" hasta la misión 7
-  await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
-  const road = page.locator(".road");
-  await expect(road).not.toHaveClass(/\bbig\b/);
-  await expect(road.locator(".road-count")).toHaveText("2/12");
-  // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
-  // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
-  const dofus = road.locator(".road-dofus");
-  await expect(dofus).toHaveCount(12);
-  await expect(dofus.nth(0)).toHaveAttribute("title", "Dofawa · paso 1");
-  await expect(dofus.nth(0)).not.toHaveClass(/\bobtained\b/);
-  await expect(dofus.nth(1)).toHaveClass(/\bobtained\b/);
-  await expect(dofus.nth(2)).toHaveClass(/\bobtained\b/);
-  // Uno pendiente dice en qué paso se consigue
-  await expect(dofus.nth(3)).toHaveAttribute("title", "Domakuro · paso 49");
-  await expect(dofus.nth(3).locator(".road-step")).toHaveText("49");
-  await expect(dofus.nth(4)).toHaveAttribute("title", "Dorigami · paso 56");
-  // El Ocre llega al terminar "La eterna cosecha": el logro "El fin de la eternidad" del paso 79
-  await expect(dofus.nth(7)).toHaveAttribute("title", "Dofus Ocre · paso 79");
-  // La Piñata de pino se da por conseguida al completar el paso 99
-  await expect(dofus.nth(11)).toHaveAttribute("title", "Piñata de pino · paso 99");
-  await expect(dofus.nth(7)).not.toHaveClass(/\bobtained\b/);
-  // Mientras falta, siguen el siguiente paso y lo que necesitas
-  await expect(page.locator("#heroNext")).toBeVisible();
-  await expect(page.locator(".hero-reqs")).toBeVisible();
 });
