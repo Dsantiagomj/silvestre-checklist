@@ -112,8 +112,7 @@ test("al bajar solo hay un Dofus Silvestre en el header", async ({ page }) => {
 
 test("el botón de copiar de los objetos se lee en los dos temas", async ({ page }) => {
   for (const theme of ["light", "dark"]) {
-    await openApp(page, { "silvestre:theme": theme });
-    await page.click("#tabItems");
+    await openApp(page, { "silvestre:theme": theme }, { view: "items" });
     const btn = page.locator("#items .slot-copy").first();
     await btn.focus();
     // El icono (trazo) contra el fondo del botón: al menos 4.5

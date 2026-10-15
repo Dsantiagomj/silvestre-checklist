@@ -8,7 +8,6 @@ import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
 import Diary from "./components/Diary.jsx";
-import Needs from "./components/Needs.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
 import ResetDialog from "./components/ResetDialog.jsx";
 import Toast from "./components/Toast.jsx";
@@ -56,7 +55,6 @@ export default function App() {
       <Header onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
       <Hero />
       <div className="wrap">
-        <Needs />
         <Nota />
         <Diary mobile={mobile} />
         <footer>

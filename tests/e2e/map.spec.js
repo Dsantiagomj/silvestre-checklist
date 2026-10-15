@@ -12,7 +12,7 @@ async function openMap(page, seed) {
 
 test("el mapa recorre los 100 pasos y la elección se recuerda", async ({ page }) => {
   await openMap(page, { "silvestre:done": range(1, 32) });
-  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator(".diary-window")).toHaveCount(0);
   await expect(page.locator(".map-node.done")).toHaveCount(32);
   await expect(node(page, 33)).toHaveClass(/current/);
@@ -45,7 +45,7 @@ test("«Abrir en el diario» cambia de vista con ese paso abierto", async ({ pag
   await openMap(page);
   await node(page, 34).click();
   await page.click("#mapCard .map-card-open");
-  await expect(page.locator("#stepsViewDiary")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#journal .journal-num")).toHaveText("34");
 });
 
@@ -107,7 +107,7 @@ test("desde el detalle del diario se vuelve al mapa con ese paso abierto", async
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-main');
   await page.click("#journal .journal-to-map");
-  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#mapCard .map-card-title")).toContainText("34");
   await expect(node(page, 34)).toBeInViewport();
 });
@@ -125,8 +125,8 @@ test("al volver al mapa con un paso lejano, lo desplaza hasta dejarlo a la vista
 test("sin nada guardado, los pasos se abren en el mapa y el selector va primero", async ({ page }) => {
   await openApp(page, null, { view: null });
   await expect(page.locator(".map-node")).toHaveCount(100);
-  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-pressed", "true");
-  const order = await page.locator(".steps-view button").evaluateAll(bs => bs.map(b => b.id));
+  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-selected", "true");
+  const order = await page.locator(".steps-view [role=tab]").evaluateAll(bs => bs.map(b => b.id));
   expect(order).toEqual(["stepsViewMap", "stepsViewDiary"]);
 });
 

@@ -6,7 +6,7 @@ const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 
 test("el diario lista los 100 pasos seguidos, sin capítulos por Dofus", async ({ page }) => {
   await openApp(page);
-  await expect(page.locator("#diary .section-num")).toHaveText("02");
+  await expect(page.locator("#diaryTitle")).toHaveText("Los 100 pasos");
   await expect(page.locator(".diary-row")).toHaveCount(100);
   await expect(page.locator(".diary-group-head")).toHaveCount(0);
   const nums = await page.locator(".diary-row .row-num").allInnerTexts();
@@ -218,6 +218,7 @@ test("en el detalle, los objetos van antes que las misiones y se marcan como en 
 
   // Y al revés: desmarcarlo allí lo desmarca en el detalle
   await there.click();
+  await page.click("#stepsViewDiary");
   await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
 });
 
