@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import { openApp, readLS } from "./helpers.js";
 
 // Una misión que llevan varios pasos se ve terminada en todos en cuanto un paso hecho la
 // termina entera: el que la lleva sin parar dentro, o el que para dentro si también está
@@ -118,4 +118,53 @@ test("marcar el paso que termina lo último que le faltaba a otro marca también
   await row(page, 58).locator(".row-check").click();
   await expect(row(page, 58)).not.toHaveClass(/\bdone\b/);
   await expect(row(page, 62)).toHaveClass(/\bdone\b/);
+});
+
+test("las notas del 93 terminan el 92 y retoman el 84; la misión opcional del 7 no cierra el 7", async ({ page }) => {
+  const errors = await openApp(page);
+  await openStep(page, 92);
+  const closed = page.locator("#journal .call.closedin");
+  await expect(closed).toContainText("Se termina más adelante");
+  await expect(closed.locator(".step-ref")).toHaveAttribute("data-n", "93");
+  // La parada roja del 92 cae en «Los tótems de Maimane»
+  const totems = quest(page, "Los tótems de Maimane");
+  await totems.locator("summary .q-name").click();
+  await expect(totems.locator(".obj-stop")).toHaveCount(1);
+  // El 84 se retoma en el 93
+  await openStep(page, 84);
+  const resumed = page.locator("#journal .call.resumedin");
+  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed.locator('.step-ref[data-n="93"]')).toHaveCount(1);
+  // «Se termina la misión opcional del inciso 7»: el 7 se hace sin ella
+  await openStep(page, 7);
+  await expect(page.locator("#journal .call.closedin")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("en el 92, «Los tótems de Maimame» (así en la guía) enlaza a la guía de «Los tótems de Maimane»", async ({ page }) => {
+  await openApp(page);
+  await openStep(page, 92);
+  await expect(page.locator("#journal .journal-goal a.guide-link", { hasText: "Los tótems de Maimame" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/los-totems-de-maimane");
+});
+
+test("con el 92 y el 93 hechos, «Los tótems de Maimane» sale completada en el 98", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([92]) });
+  await openStep(page, 98);
+  await doneIn(page, "La danza de la disonancia", 92);
+  await pending(page, "Los tótems de Maimane");
+  await page.evaluate(() => localStorage.setItem("silvestre:done", JSON.stringify({ 92: true, 93: true })));
+  await page.reload();
+  await openStep(page, 98);
+  await doneIn(page, "Los tótems de Maimane", 93);
+});
+
+test("marcar el 93 termina «Los tótems de Maimane», donde para el 92, y el 92 sigue pendiente sin sus misiones anteriores", async ({ page }) => {
+  await openApp(page, { "silvestre:done": doneOf([91]) });
+  await openStep(page, 93);
+  await page.locator("#toggleBtn").click();
+  await expect(row(page, 93)).toHaveClass(/\bdone\b/);
+  await expect(row(page, 92)).not.toHaveClass(/\bdone\b/);
+  await expect(page.locator("#toastTxt")).toHaveText("El 92 sigue pendiente: le faltan 3 misiones anteriores.");
+  expect((await readLS(page, "silvestre:questObjective"))["2425"]).toBe(6);
 });

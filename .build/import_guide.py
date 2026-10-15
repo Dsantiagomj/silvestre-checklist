@@ -22,7 +22,12 @@ guide also requires ("must"), advice ("tip") and anything else ("note").
 of the marks). "base" is the text without them, and "closes" lists the earlier steps whose
 missions a "done" mark finishes ("se terminan las misiones de los incisos 33
 y 34"); steps it only updates ("se actualiza la misión del inciso 53") go in
-"updates" instead: the guide picks their mission up there without finishing it.
+"updates" instead: the guide picks their mission up there without finishing it. Blue
+marks count too, but only when they say it outright ("se termina la misión del inciso
+92", "se actualiza la misión del inciso 84", in step 93's notes): advice that names a
+step in passing ("un recurso necesario para terminar la misión del inciso 63") does
+not. Nor does a step's optional mission ("se termina la misión opcional del inciso 7"):
+the step is done without it.
 
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
@@ -124,30 +129,41 @@ def base(raw):
     return re.sub(r"\s+([.,;:])", r"\1", text).strip()
 
 
-def closes(n, raw):
-    """Earlier steps finished by this step's "done" marks."""
-    found = []
+CLAUSE = re.compile(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)")
+
+
+# In a blue mark, only a clause that is the statement itself
+STATED = re.compile(r"^\(?se\s+(?:terminan?|completan?|actualizan?)\s+las?\s+misi[oó]n(?:es)?\s+de(?:l|\s+los)\s+incisos?\b", re.I)
+
+
+def clauses(raw):
+    """The clauses of the step's "done" marks, and the ones of its blue marks that state
+    what the step finishes or updates."""
     for kind, body in MARK.findall(raw):
-        if kind != "GREEN":
-            continue
-        for clause in re.split(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)", clean(body)):
-            if re.search(r"termin|complet", clause) and not re.search(r"actualiza", clause):
-                after = re.search(r"incisos?\s+(.*)", clause)
-                if after:
-                    found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
+        if kind == "GREEN":
+            yield from CLAUSE.split(clean(body))
+        elif kind == "BLUE":
+            yield from (c for c in CLAUSE.split(clean(body)) if STATED.match(c))
+
+
+def closes(n, raw):
+    """Earlier steps finished by this step's marks (not their optional missions)."""
+    found = []
+    for clause in clauses(raw):
+        if re.search(r"termin|complet", clause) and not re.search(r"actualiza|opcional", clause):
+            after = re.search(r"incisos?\s+(.*)", clause)
+            if after:
+                found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
     return sorted(set(found))
 
 
 def updates(n, raw):
-    """Earlier steps whose mission this step's "done" marks update without finishing."""
+    """Earlier steps whose mission this step's marks update without finishing."""
     found = []
-    for kind, body in MARK.findall(raw):
-        if kind != "GREEN":
-            continue
-        for clause in re.split(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)", clean(body)):
-            after = re.search(r"actualiza\s+la\s+misi[oó]n\b.*?\bincisos?\s+(.*)", clause)
-            if after:
-                found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
+    for clause in clauses(raw):
+        after = re.search(r"actualiza\s+la\s+misi[oó]n\b.*?\bincisos?\s+(.*)", clause)
+        if after:
+            found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
     return sorted(set(found))
 
 
