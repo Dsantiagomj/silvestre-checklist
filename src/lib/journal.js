@@ -196,7 +196,10 @@ const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase
 // Paradas que el texto no permite situar: ningún objetivo nombra al jefe o la zona.
 // Paso -> [misión, comienzo del objetivo que va justo después de la parada] (o varias
 // si el paso para en más de una misión), sacado de la guía de esa misión en Torrente
-// Arcano y contrastado con los objetivos de DofusDB
+// Arcano y contrastado con los objetivos de DofusDB. Un tercer elemento, { later, text },
+// es una misión madre que espera a una hija de otro paso: la parada sigue en rojo aunque
+// el paso se resuelva en sí mismo, con su propio texto si lo lleva, y no la termina el
+// paso que cierra este sino uno posterior que lleva la misión (closingPlan en store.js)
 export const STOP_AT = {
   // "te pedirá dropear 1 x sacrificio de 4 zonas diferentes"
   7: [["Arma letal", "Sacrifica a armadutinados para la muñeca de necrónix"]],
@@ -217,8 +220,12 @@ export const STOP_AT = {
   32: [["Dragones y chapuzonas", "Vence a 1 x Roble Blando en un solo combate"]],
   // "tendrás que realizar la mazmorra hasta el final"
   36: [["Venganza por procuración", "Arráncale la abrakllota ancestral al Abráknido Ancestral"]],
-  // "vencer a 7 x Monstruos de cada tipo de la zona de la Cuna de Alma"
-  38: [["La bruja mala del Este", "Vence 7 x Harpirata"]],
+  // "vencer a 7 x Monstruos de cada tipo de la zona de la Cuna de Alma". Después, la
+  // bendición de Viti la da «La bendición de Viti» (Qa=1657&Qo>10011), del paso 39 (la
+  // termina el 48); la guía no la retoma hasta el 62, con el logro completo
+  38: [["La bruja mala del Este", "Vence 7 x Harpirata"],
+    ["La bruja mala del Este", "Obtén la bendición de Viti",
+      { later: true, text: "Hasta obtener la bendición de Viti: la da «La bendición de Viti», en el paso 39" }]],
   // Las mazmorras con ídolo, en cualquier orden: falta Funoroshi para volver al discípulo
   // Funoroshi queda para el 48: va el último de los tres combates (OBJECTIVE_ORDER)
   39: [["La bendición de Viti", "Vence a 1 x Funoroshi"]],
@@ -275,8 +282,11 @@ export const STOP_AT = {
   90: [["El peso de su mirada", "Arroja un sueño de armonía al pozo demoníaco"]],
   // "debes hacer sueños infinitos hasta dropear 1 x Sueño relajante"
   91: [["Toma de conciencia", "Duerme la desconfianza del guardián"]],
-  // "tienes que entregarle a Maimane 6 x Tótems"
-  92: [["Los tótems de Maimane", "Entrégale a Maimane: 1 x Tótem de alegría"]],
+  // "tienes que entregarle a Maimane 6 x Tótems". «Un legado atormentado» no fabrica la
+  // runa de armonía sin el tótem del equilibrio, que da «Los tótems de Maimane» al
+  // terminarla (en el 93): la termina el 98, con el logro completo
+  92: [["Un legado atormentado", "Fabrica 1 Runa de armonía", { later: true }],
+    ["Los tótems de Maimane", "Entrégale a Maimane: 1 x Tótem de alegría"]],
   // "El hueso de hierro se consigue venciendo al Maxilubo en su mazmorra"
   10: [["Encender la mecha", "Consigue un hueso de hierro"]],
 };
@@ -296,10 +306,11 @@ function ownStops(step, quests) {
   const stops = (step.marks || []).filter(m => m[0] === "stop").map(m => m[1]);
   const at = STOP_AT[step.n];
   if (at && stops.length) {
-    const found = at.map(([name, start], i) => {
+    const found = at.map(([name, start, opts], i) => {
       const q = quests.find(x => x.n === name);
       const index = q ? q.s.flatMap(stg => stg.o).findIndex(o => o.t.startsWith(start)) : -1;
-      return index >= 0 ? { quest: q.id, index, text: stops[Math.min(i, stops.length - 1)] } : null;
+      const text = opts?.text || stops[Math.min(i, stops.length - 1)];
+      return index >= 0 ? { quest: q.id, index, text, ...(opts?.later ? { later: true } : {}) } : null;
     }).filter(Boolean);
     if (found.length) return found;
   }
