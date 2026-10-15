@@ -81,6 +81,10 @@ def missions(texts):
     for text in texts:
         for _, raw in MISSION.findall(text):
             title = re.sub(r"[.,;:]+$", "", raw.strip())
+            # The ")" that closes the mark the name ends ("…misión 2: Detenla si puedes),
+            # misión 7"), not one of the name's own
+            while title.endswith(")") and title.count(")") > title.count("("):
+                title = re.sub(r"[.,;:]+$", "", title[:-1].rstrip())
             if title and not re.match(r"hasta\b", title, re.I):
                 found.add(title)
     return sorted(found)
