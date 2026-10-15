@@ -20,7 +20,7 @@ async function openStep12(page) {
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
 
-test("«Misión hecha» termina la misión, abre la siguiente y se puede deshacer, sin plegar ni desplegar", async ({ page }) => {
+test("«Completar» termina la misión, abre la siguiente y se puede deshacer, sin plegar ni desplegar", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": upTo(11) });
   await openStep12(page);
   const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
@@ -31,11 +31,13 @@ test("«Misión hecha» termina la misión, abre la siguiente y se puede deshace
   const rows = cofre.locator(".obj-list.route > .obj-row");
   expect(await routeStates(rows)).toMatch(/^n-+$/);
   await expect(btn).toHaveAttribute("aria-pressed", "false");
+  await expect(btn).toHaveText("Completar");
 
   // Pendiente: la termina entera, como pulsar su último medallón, y abre la siguiente
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(rows)).toMatch(/^d+$/);
+  await expect(btn).toHaveText("✓ Completada");
   await expect(cofre).toHaveAttribute("open", "");
   await expect(tesor).toHaveAttribute("open", "");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(1);
@@ -92,7 +94,7 @@ test("el avance del overlay mueve el porcentaje sin abrir el diario", async ({ p
   expect(await pctWith({})).toBe(`${pctOf(BASE)}%`);
 });
 
-test("en un paso hecho, «Misión hecha» sale hecho y no se pulsa", async ({ page }) => {
+test("en un paso hecho, el botón sale «Completada» y no se pulsa", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(12) });
   await openStep12(page);
   const btns = page.locator("#journal .q-item .q-done-btn");
@@ -103,7 +105,7 @@ test("en un paso hecho, «Misión hecha» sale hecho y no se pulsa", async ({ pa
   }
 });
 
-test("un paso de una sola misión no lleva «Misión hecha»: lo hace «Paso hecho»", async ({ page }) => {
+test("un paso de una sola misión no lleva «Completar»: lo hace «Paso hecho»", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="4"] .row-main');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
