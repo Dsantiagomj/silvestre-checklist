@@ -673,7 +673,8 @@ test("la parada de Maxilubo (paso 10) cae antes del hueso que se consigue venci�
 
 /** Abre un paso y devuelve las casillas de «Necesitas» (ids) y los nombres de sus misiones. */
 async function stepData(page, n) {
-  await page.click(`.diary-row[data-n="${n}"] .row-main`);
+  // Por el número: en el centro de la fila puede caer la etiqueta "cierra el…", que lleva a otro paso
+  await page.click(`.diary-row[data-n="${n}"] .row-num`);
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await page.locator("#journal .journal-quests, #journal .asset-note").first().waitFor({ timeout: 15_000 });
   return {
