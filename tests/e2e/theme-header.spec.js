@@ -214,3 +214,20 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
     }, { timeout: 3_000, message: sel }).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+test("al volver arriba de golpe desde muy abajo, el header no muestra el progreso", async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => scrollTo(0, 2500));
+  await expect(page.locator("header")).toHaveClass(/show-progress/);
+  // Subir al hero (como hace la animación del huevo) y comprobar en cada fotograma
+  await page.evaluate(() => scrollTo({ top: 0, behavior: "smooth" }));
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await expect(page.locator("header")).not.toHaveClass(/show-progress/);
+  // La barra depende de dónde está el hero, no de un aviso que pueda llegar desordenado
+  const shown = await page.evaluate(async () => {
+    scrollTo(0, 2500); scrollTo(0, 0);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return document.querySelector("header").classList.contains("show-progress");
+  });
+  expect(shown).toBe(false);
+});
