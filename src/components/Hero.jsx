@@ -77,6 +77,7 @@ function stepFacts(s, step, fig) {
   const st = quests?.[0]?.st;
   const facts = [step.zone];
   if (st?.cls) facts.push("Empieza en el templo de tu clase");
+  else if (st?.ali) facts.push("Empieza según tu alineamiento");
   // El PNJ solo si no es ya la figura del estandarte
   else if (st?.npc && st.npc !== fig?.name) facts.push(`Empieza con ${st.npc}${st.a ? ` en ${st.a}` : ""}`);
   else if (st?.a) facts.push(`Empieza en ${st.a}`);

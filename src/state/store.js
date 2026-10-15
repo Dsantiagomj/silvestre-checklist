@@ -176,7 +176,7 @@ for (const st of STEPS) for (const c of st.closes || []) (CLOSERS[c] ??= []).pus
  * Misión -> pasos que la llevan como obligatoria, y paso -> las que deja a medias: la de
  * su parada roja y las de después, salvo que el paso se resuelva en sí mismo (lleva
  * verde). Necesita las misiones (las paradas se sitúan en sus objetivos): se calcula una
- * vez, cuando llegan. «clase» no se cruza: en el 63 no es la misión de clase del 1.
+ * vez, cuando llegan.
  */
 let questIndex = null;
 function questIndexOf() {
@@ -188,7 +188,7 @@ function questIndexOf() {
     const at = stopPoints(st, quests).map(p => quests.findIndex(q => q.id === p.quest)).filter(i => i >= 0);
     const from = !resolvesHere(st) && at.length ? Math.min(...at) : Infinity;
     quests.forEach((q, i) => {
-      if (q.kind !== "mandatory" || q.id === "clase") return;
+      if (q.kind !== "mandatory") return;
       (steps[q.id] ??= []).push(st.n);
       if (i >= from) (open[st.n] ??= new Set()).add(String(q.id));
     });

@@ -449,6 +449,30 @@ test("la misión de clase sale como una sola fila con su guía, no la de una cla
   expect(names.indexOf("Misión de clase")).toBe(names.indexOf("Consejo de clase") + 1);
 });
 
+test("el «Prólogo invernal» del 63 depende del alineamiento: no es la misión de clase del 1", async ({ page }) => {
+  // Hecho el 1, su misión de clase está terminada; la del 63 sigue pendiente
+  await openApp(page, { "silvestre:done": { 1: true } });
+  await row(page, 63).locator(".row-main").click();
+  await waitQuests(page);
+  const j = page.locator("#journal");
+  const names = await j.locator(".q-item .q-name").allInnerTexts();
+  expect(names[0]).toBe("Prólogo invernal");
+  expect(names).not.toContain("Misión de clase");
+  const q = j.locator(".q-item").first();
+  await expect(q.locator(".q-lv")).toHaveText("Niv. 50");
+  await expect(q.locator(".q-start")).toHaveText(
+    "Depende de tu alineamiento: El destino (Bonta), La fatalidad (Brakmar) o La rivalidad (sin alineamiento o neutral).");
+  for (const [name, slug] of [["El destino", "el-destino"], ["La fatalidad", "la-fatalidad"], ["La rivalidad", "la-rivalidad"]]) {
+    await expect(q.locator(".q-start a", { hasText: name })).toHaveAttribute("href", `https://www.torrentearcano.com/${slug}`);
+  }
+  const btn = q.locator(".q-done-btn");
+  await expect(btn).toHaveAttribute("aria-pressed", "false");
+  await expect(btn).toBeEnabled();
+  // Pesa como una misión de nivel 50 con 6 objetivos
+  expect(WEIGHTS[63].ids[0]).not.toBe("clase");
+  expect(WEIGHTS[63].q[0]).toBeCloseTo(50 * Math.sqrt(6), 1);
+});
+
 test("las misiones del paso enlazan su guía de Torrente Arcano aunque el texto no las nombre", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="1"] .row-main');
