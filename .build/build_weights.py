@@ -6,21 +6,24 @@ How the progress percentage is weighted:
     square root of its number of objectives: level x sqrt(objectives) points. The level
     says how hard it is, the objectives how long; the root keeps the very long ones
     ("La eterna cosecha", 339 objectives) from eating the percentage.
-  * A quest that appears in several steps has its points split equally between them,
-    so nothing counts twice.
+  * Only the quests a step needs count. The optional ones ("opcional pero útil") and the
+    ones the guide only asks to have taken (STEP_QUEST_KINDS in quests.json) are worth
+    0 in that step: the player may skip them, so they would hold the percentage back.
+  * A quest that appears in several steps has its points split equally between the
+    steps that need it, so nothing counts twice.
   * A step's weight is the sum of its quests' shares. A step with no quests would weigh
     nothing: it gets the weight of one level-1 quest so marking it still counts.
   * Before a step is marked, each of its finished quests already counts its share. So
     the app can tell without loading quests.json, every step also lists its quests'
-    shares in order, and the id and number of objectives of its last quest (the one
-    that is finished when its objective index reaches that number).
+    shares in order, and the id and number of objectives of its last mandatory quest
+    (the one that is finished when its objective index reaches that number).
 
 Level source: the guide page on Torrente Arcano when it states one ("Nivel mínimo N"
 under "Prerrequisitos"); otherwise DofusDB's `levelMin` (`lv` in quests.json).
 
 Reads  : src/data/{quests,guides}.json
 Writes : src/data/weights.json ({step number: {"w": weight, "q": [share of each quest],
-                                 "id": last quest id, "o": its objectives}})
+                                 "id": last mandatory quest id, "o": its objectives}})
 Caches : .build/data/ta_levels.json  ({url: {"level": n | null, "pre": text}})
 Run    : python3 -I .build/build_weights.py   (after build_quests_js.py)
 """
@@ -111,6 +114,8 @@ def ta_levels(urls):
 def main():
     data = json.loads(QUESTS_JSON.read_text())
     step_quests = {int(n): list(dict.fromkeys(qs)) for n, qs in data["STEP_QUESTS"].items()}
+    kinds = data.get("STEP_QUEST_KINDS", {})
+    mandatory = lambda n, q: str(q) not in kinds.get(str(n), {})
     quests = data["QUESTS"]
     guides = json.loads(GUIDES_JSON.read_text())
     by_name = {norm(k): v for k, v in {**guides.get("quests", {}), **guides["missions"]}.items()}
@@ -125,9 +130,10 @@ def main():
         level[q], source[q] = (ta, "ta") if ta else (quests[q]["lv"] or 1, "dofusdb")
 
     shared = {}
-    for qs in step_quests.values():
+    for n, qs in step_quests.items():
         for q in qs:
-            shared[str(q)] = shared.get(str(q), 0) + 1
+            if mandatory(n, q):
+                shared[str(q)] = shared.get(str(q), 0) + 1
 
     def objectives(q):
         return max(1, sum(len(stage["o"]) for stage in quests[q]["s"]))
@@ -136,12 +142,14 @@ def main():
     weights, steps = {}, {}
     for n in sorted(step_quests):
         qs = step_quests[n]
-        shares = [points[str(q)] / shared[str(q)] for q in qs]
+        shares = [points[str(q)] / shared[str(q)] if mandatory(n, q) else 0 for q in qs]
         weights[str(n)] = round(max(sum(shares), MIN_WEIGHT), 3)
         steps[str(n)] = {"w": weights[str(n)], "q": [round(x, 3) for x in shares]}
-        if qs:
+        needed = [q for q in qs if mandatory(n, q)]
+        if needed:
             # Lo que tiene el diario por objetivos: los de verdad, sin el mínimo de 1
-            steps[str(n)].update(id=str(qs[-1]), o=sum(len(stage["o"]) for stage in quests[str(qs[-1])]["s"]))
+            last = str(needed[-1])
+            steps[str(n)].update(id=last, o=sum(len(stage["o"]) for stage in quests[last]["s"]))
     OUT_JSON.write_text("{\n" + ",\n".join(f'"{n}": {json.dumps(v, separators=(",", ":"))}'
                                             for n, v in steps.items()) + "\n}\n")
 

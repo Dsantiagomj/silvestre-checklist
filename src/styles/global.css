@@ -2826,15 +2826,15 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .journal-goal .guide-link, [data-theme="light"] .journal-goal .step-ref{ color:#3b2a10; border-bottom-color:#8a6510; }
 [data-theme="light"] .journal-to-map{ background:#fffaf0; border-color:#c9b98f; color:#3b3324; backdrop-filter:none; }
 [data-theme="light"] .journal-to-map:hover{ background:#fff; border-color:#8a6510; }
-/* Misión que la guía da por opcional pero útil */
-.q-optional{
+/* Misión que la guía da por opcional pero útil, o que basta con tener tomada */
+.q-optional, .q-take{
   margin-right:auto; padding:1px 8px; border-radius:999px;
   border:1px solid color-mix(in srgb, var(--gw-gold) 55%, transparent);
   background:color-mix(in srgb, var(--gw-gold) 12%, transparent);
   font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-gold);
 }
 /* El nombre no ocupa todo el ancho, para que la etiqueta vaya pegada a él */
-.q-name:has(+ .q-optional){ flex:0 1 auto; }
+.q-name:has(+ .q-optional, + .q-take){ flex:0 1 auto; }
 /* «Completar» / «✓ Completada»: un botón plano del juego, pequeño; hecha, con el verde de los medallones */
 .q-done-btn{
   flex:none; padding:3px 9px; border-radius:4px; cursor:pointer;

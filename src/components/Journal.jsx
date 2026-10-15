@@ -1,10 +1,10 @@
 import { Fragment, useEffect, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
-import { groupsOf, questsOf } from "../lib/quests.js";
+import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
 import { achievementGuide, linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, doneIcon, list, nextPendingAfter, optionalMissions, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import { CLOSED_BY, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   loadQuests, markSteps, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -131,17 +131,52 @@ function Needs({ n, s }) {
 
 /**
  * Hasta dónde vas en cada misión, con el avance que guarda el overlay: las misiones
- * antes de la actual, hechas; en la actual, los objetivos antes del que toca. Con el
- * paso hecho, todo. Devuelve el índice (en la lista aplanada) del objetivo actual.
+ * antes de la actual, hechas; en la actual, los objetivos antes del que toca; y
+ * cualquiera pasada de su último objetivo. Con el paso hecho, todo. Una opcional solo
+ * lleva lo suyo: ni el paso hecho ni pasar de largo la terminan. Devuelve el índice
+ * (en la lista aplanada) del objetivo actual.
  */
 function progressOf(s, n, quests, i, q) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
-  if (s.done[n]) return total;
+  // Hasta `total`: una misión terminada sale toda hecha
+  const own = Math.min(s.questObj[q.id] || 0, total);
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
-  if (i < pos) return total;
-  if (i > pos) return -1;
-  // Hasta `total`: la última misión del paso, terminada, sale toda hecha
-  return Math.min(s.questObj[q.id] || 0, total);
+  if (q.kind === "optional") return s.questObj[q.id] != null || i === pos ? own : -1;
+  if (s.done[n] || i < pos || own >= total) return total;
+  return i === pos ? own : -1;
+}
+
+/**
+ * Una misión que basta con tener tomada (paso 28, «Luces y sombras»): dónde empieza y
+ * la nota, sin objetivos ni «Completar», porque no se hace.
+ */
+function TakeOnly({ q, open, setOpen }) {
+  return (
+    <details className="q-item" open={open} onToggle={e => setOpen(q.id, e.currentTarget.open)}>
+      <summary>
+        <QuestMark className="q-mark" />
+        <span className="q-name">{q.n}</span>
+        <span className="q-take" title="No hace falta hacerla">Solo tomarla</span>
+        <span className="q-lv">{`Niv. ${q.lv}`}</span>
+        {missionGuide(q.n) && (
+          <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
+        )}
+      </summary>
+      <QuestStart q={q} />
+      <p className="q-start q-take-note">No hace falta hacerla: basta con tenerla tomada.</p>
+    </details>
+  );
+}
+
+/** Dónde empieza la misión: el PNJ y su posición, o el templo de tu clase. */
+function QuestStart({ q }) {
+  if (q.st?.cls) return <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>;
+  if (!q.st) return null;
+  return (
+    <p className="q-start">
+      Empieza con <b>{q.st.npc || "un PNJ"}</b>{q.st.a ? ` en ${q.st.a}` : ""} <CoordChip x={q.st.x} y={q.st.y} />
+    </p>
+  );
 }
 
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
@@ -164,16 +199,20 @@ function Quests({ step, quests, loaded, s }) {
     .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
-  // Las misiones que la guía da por opcionales llevan su etiqueta
-  const optional = new Set(optionalMissions(step).map(o => o.name.toLowerCase()));
+  // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
+  const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const items = quests.map((q, i) => {
+    if (q.kind === "take") return <TakeOnly key={q.id} q={q} open={opened.has(q.id)} setOpen={setOpen} />;
     let offset = 0;
+    const optional = q.kind === "optional";
     const at = progressOf(s, step.n, quests, i, q);
     const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
-    // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él
-    const pick = s.done[step.n] ? null : k => {
-      setObjective(step.n, i, q.id, k, total, quests.length);
-      if (k >= total && quests[i + 1]) setOpen(quests[i + 1].id, true);
+    // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
+    // solo en las opcionales, que no se marcan con él
+    const pick = s.done[step.n] && !optional ? null : k => {
+      setObjective(step.n, i, q.id, k, total);
+      const next = quests[nextWalked(quests, i)];
+      if (k >= total && !optional && next) setOpen(next.id, true);
     };
     // «Completar» la termina de una vez; hecha, vuelve a su inicio. Sin plegarla
     const finished = at >= total;
@@ -188,9 +227,9 @@ function Quests({ step, quests, loaded, s }) {
         <summary>
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
-          {optional.has(q.n.toLowerCase()) && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          {/* Con una sola misión, completarla es «Paso hecho»: el botón sobra */}
-          {quests.length > 1 && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
+          {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
+          {/* Las opcionales siempre lo llevan: es como se marcan */}
+          {(optional || mandatory > 1) && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
             disabled={!pick} title={!pick ? undefined : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
             aria-label={finished ? "Misión completada" : "Completar misión"} onClick={toggleDone}>
             {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>}
@@ -199,14 +238,7 @@ function Quests({ step, quests, loaded, s }) {
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía ↗</a>
           )}
         </summary>
-        {q.st?.cls && (
-          <p className="q-start">El PNJ que la da depende de tu clase: está en el templo de tu clase.</p>
-        )}
-        {q.st && !q.st.cls && (
-          <p className="q-start">
-            Empieza con <b>{q.st.npc || "un PNJ"}</b>{q.st.a ? ` en ${q.st.a}` : ""} <CoordChip x={q.st.x} y={q.st.y} />
-          </p>
-        )}
+        <QuestStart q={q} />
         {q.s.map((stg, j) => {
           const from = offset;
           offset += stg.o.length;
