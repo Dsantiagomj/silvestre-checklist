@@ -37,8 +37,22 @@ function rowArt(n) {
   return boss ? { img: boss.img, name: boss.name } : null;
 }
 
-const Row = memo(function Row({ step, done, current }) {
+const Row = memo(function Row({ step, done, current, instant }) {
   const n = step.n;
+  const ref = useRef(null);
+  const [present, safeToRemove] = usePresence();
+  // Al salir de la lista por marcarla (con el filtro Pendientes, por ejemplo) se queda un
+  // momento para que se vea la ✓ y se pliega; lo de debajo sube en vez de saltar. Al
+  // cambiar de filtro o de búsqueda se va sin más: plegar decenas de filas sería lento
+  useEffect(() => {
+    if (present) return;
+    if (instant.current || prefersReducedMotion()) return safeToRemove();
+    const el = ref.current;
+    el.animate(
+      [{ height: `${el.offsetHeight}px`, opacity: 1, overflow: "clip" }, { height: "0px", opacity: 0, overflow: "clip" }],
+      { duration: 240, delay: 280, easing: EASE, fill: "forwards" },
+    ).finished.then(safeToRemove, safeToRemove);
+  }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
   const art = rowArt(n);
   const thumb = ZONE_IMG[step.zone]?.thumb;
   const closedBy = !done && CLOSED_BY[n];
@@ -47,7 +61,8 @@ const Row = memo(function Row({ step, done, current }) {
   // los mismos enlaces están en el detalle)
   const go = m => e => { e.stopPropagation(); selectStep(m); };
   return (
-    <li className={"diary-row" + (done ? " done" : "") + (current ? " current" : "")} data-n={n} aria-current={current ? "step" : undefined}>
+    <li ref={ref} className={"diary-row" + (done ? " done" : "") + (current ? " current" : "")} data-n={n}
+      aria-current={current ? "step" : undefined} inert={!present}>
       <button type="button" className="row-check" aria-pressed={done} aria-label={`${done ? "Desmarcar" : "Marcar"} paso ${n}`}
         onClick={() => toggleStep(n)}></button>
       <button type="button" className="row-main" onClick={() => selectStep(n)}>
@@ -95,6 +110,16 @@ function DiaryList({ s, current }) {
   const matching = STEPS.filter(st => stepMatchesFilters(s, st));
   const count = st => matching.filter(x => stepMatchesStatus(s, x, st)).length;
   const visible = new Set(matching.filter(st => stepMatchesStatus(s, st)).map(st => st.n));
+  // Cambiar de filtro, de búsqueda o de zona quita las filas al momento (ver Row)
+  const filterKey = `${status}|${s.filters.search}|${s.filters.zones.join()}`;
+  const lastKey = useRef(filterKey);
+  const instant = useRef(false);
+  // En un efecto de diseño y no al renderizar: corre antes de que las filas que se van
+  // decidan cómo irse, y un render repetido (StrictMode) no lo falsea
+  useLayoutEffect(() => {
+    instant.current = lastKey.current !== filterKey;
+    lastKey.current = filterKey;
+  });
 
   // El paso abierto siempre a la vista dentro de la lista, sin mover la página
   useLayoutEffect(() => {
@@ -126,9 +151,11 @@ function DiaryList({ s, current }) {
           </div>
         )}
         <ol className="diary-rows">
-          {STEPS.filter(st => visible.has(st.n)).map(st => (
-            <Row key={st.n} step={st} done={!!s.done[st.n]} current={st.n === current} />
-          ))}
+          <AnimatePresence initial={false}>
+            {STEPS.filter(st => visible.has(st.n)).map(st => (
+              <Row key={st.n} step={st} done={!!s.done[st.n]} current={st.n === current} instant={instant} />
+            ))}
+          </AnimatePresence>
         </ol>
       </div>
     </div>

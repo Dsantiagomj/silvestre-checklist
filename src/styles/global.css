@@ -2001,6 +2001,10 @@ header.is-scrolled .title-bar{
   box-shadow:0 18px 40px rgba(0,0,0,.45);
 }
 [data-theme="light"] .zone-pop.seals{ box-shadow:0 18px 40px rgba(40,50,20,.18); }
+@keyframes zone-pop-in{ from{ opacity:0; transform:translateY(-6px) scale(.98); } }
+@media (prefers-reduced-motion:no-preference){
+  .zone-pop.seals{ transform-origin:top right; animation:zone-pop-in .2s cubic-bezier(.2,.8,.2,1); }
+}
 .zone-pop .seal{ min-width:0; }
 .steps-win .step-map{ margin:0; border-width:1px 0 0; border-radius:0 0 16px 16px; }
 .steps-win .diary-window{ border-width:1px 0 0; border-radius:0 0 16px 16px; }
