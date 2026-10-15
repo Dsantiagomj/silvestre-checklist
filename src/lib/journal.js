@@ -156,7 +156,8 @@ export const STOP_AT = {
   // "vencer a 7 x Monstruos de cada tipo de la zona de la Cuna de Alma"
   38: [["La bruja mala del Este", "Vence 7 x Harpirata"]],
   // Las mazmorras con ídolo, en cualquier orden: falta Funoroshi para volver al discípulo
-  39: [["La bendición de Viti", "Vuelve a ver a Discípulo de Viti"]],
+  // Funoroshi queda para el 48: va el último de los tres combates (OBJECTIVE_ORDER)
+  39: [["La bendición de Viti", "Vence a 1 x Funoroshi"]],
   // "con hacer una 'run' entera es suficiente"
   41: [["Hasta el final del sueño", "Progresa si es necesario y explora el pozo hasta encontrar el primer sueño"]],
   // Las esporas y el mildiu caen de los monstruos de Plantala

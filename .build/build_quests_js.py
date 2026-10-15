@@ -110,6 +110,11 @@ MISSING_OBJECTIVES = {565: [439]}
 # "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=).
 STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 78: [434, 111, 121, 423], 80: [1782], 89: [1917]}
 
+# Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
+# guide does them in another, (quest, stage) -> the new order, so the red line falls in
+# its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48.
+OBJECTIVE_ORDER = {(1660, 0): [1, 2, 0, 3]}
+
 # An objective any of several quests completes (one per class in "Un ciudadano
 # modelo") is no single quest: it becomes one generic row instead of the first match.
 CLASS_QUEST = "clase"
@@ -456,7 +461,7 @@ def main():
             }
             break
         stages = []
-        for st in [s for s in (q.get("steps") or []) if s]:
+        for j, st in enumerate([s for s in (q.get("steps") or []) if s]):
             objs = []
             for o in [o for o in (st.get("objectives") or []) if o]:
                 m = o.get("map") or {}
@@ -473,6 +478,10 @@ def main():
                 if area:
                     obj["a"] = area
                 objs.append(obj)
+            order = OBJECTIVE_ORDER.get((qid, j))
+            if order:
+                assert sorted(order) == list(range(len(objs))), (qid, j, len(objs))
+                objs = [objs[i] for i in order]
             stages.append({"n": ((st.get("name") or {}).get("es") or "").strip(), "o": objs})
         out_quests[str(qid)] = {
             "n": q["name"]["es"],
