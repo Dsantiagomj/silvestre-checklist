@@ -253,9 +253,15 @@ def step_plan(step, achievements, marks, quests, images):
     return [entry for _, entry in sorted(found, key=lambda f: f[0])]
 
 
+# The group for quests of no achievement, in a step that mixes them with one's own
+OUTSIDE = {"id": 0, "name": {"es": "Fuera del logro"}}
+
+
 def achievement_img(ach, images):
     """The achievement's icon: the one the step assets use or, for an achievement the
     step text never names, its DofusDB icon when it is already mirrored."""
+    if ach is OUTSIDE:
+        return None
     if ach["id"] in images:
         return images[ach["id"]]
     img = f"achievements/{ach.get('iconId')}.png"
@@ -265,8 +271,9 @@ def achievement_img(ach, images):
 def quest_groups(step_quests, achievements, images):
     """Steps whose quests come from more than one achievement -> [[name, img, count], ...]
     in quest order. Each quest goes to the achievement holding the most quests of the
-    step; a quest in none (or the class quest) joins the group before it (or after it,
-    if it comes first). Steps with a single group are left out.
+    step; a quest in none goes to OUTSIDE when the step has an achievement's quests,
+    and the class quest joins the group before it (or after it, if it comes first).
+    Steps with a single group are left out.
     """
     holders = {}
     for ach in achievements.values():
@@ -280,6 +287,10 @@ def quest_groups(step_quests, achievements, images):
             for ach in holders.get(q, []):
                 weight[ach["id"]] = weight.get(ach["id"], 0) + 1
         owner = [max(holders[q], key=lambda a: weight[a["id"]]) if q in holders else None for q in ids]
+        # In a step that mixes an achievement's quests with quests of none (the 21 and
+        # "Cómo perder la pluma"), those go in a group of their own
+        if any(owner):
+            owner = [OUTSIDE if o is None and isinstance(q, int) else o for o, q in zip(owner, ids)]
         for i in range(len(owner)):  # orphans join the previous group...
             if owner[i] is None and i and owner[i - 1]:
                 owner[i] = owner[i - 1]

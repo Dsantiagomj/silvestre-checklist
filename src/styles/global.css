@@ -2864,6 +2864,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   font:700 12px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:var(--gw-gold);
 }
 .q-group-head img{ width:20px; height:20px; object-fit:contain; }
+.q-group-head .q-group-mark{ width:15px; height:20px; flex:none; }
 .q-group-head::after{ content:""; flex:1; height:1px; background:linear-gradient(90deg, var(--gw-line), transparent); }
 .q-group-n{ color:var(--gw-soft); }
 

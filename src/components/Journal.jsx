@@ -235,7 +235,8 @@ function Quests({ step, quests, loaded, s }) {
         return (
           <div className="q-group" key={name}>
             <h4 className="q-group-head">
-              {img && <img src={imgUrl(img)} alt="" />}
+              {/* Las que no son de ningún logro llevan la «!» de misión */}
+              {img ? <img src={imgUrl(img)} alt="" /> : <QuestMark className="q-group-mark" />}
               <span className="q-group-name">{name}</span> <span className="q-group-n">· {count}</span>
             </h4>
             {items.slice(from, from + count)}
