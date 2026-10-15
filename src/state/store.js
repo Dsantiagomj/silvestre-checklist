@@ -104,6 +104,8 @@ function initialState() {
     // El paso abierto en la ventana sobrevive a recargar: se puede ir por delante del
     // siguiente pendiente. El hero sigue mostrando el siguiente pendiente
     selectedStep: readSelectedStep(),
+    // El paso del overlay, si se ha movido desde él; null: sigue al de la página
+    overlayN: null,
     sheetOpen: false,
     // Pestaña de la ventana de pasos: mapa del camino (por defecto), diario (lista +
     // detalle), prerrequisitos u objetos
@@ -143,6 +145,8 @@ function setState(patch) {
   const prev = state;
   const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
   if (next === prev) return;
+  // La página manda: si elige otro paso, el overlay vuelve a seguirla
+  if (next.selectedStep !== prev.selectedStep && next.overlayN === prev.overlayN) next.overlayN = null;
   state = next;
   for (const k of PERSISTED) {
     if (next[k] !== prev[k]) localStorage.setItem(LS[k], JSON.stringify(next[k]));
@@ -324,7 +328,7 @@ export const nextPending = s => {
   const st = STEPS.find(x => !s.done[x.n]);
   return st ? st.n : null;
 };
-export const overlayStep = s => s.selectedStep ?? nextPending(s) ?? STEPS.length;
+export const overlayStep = s => s.overlayN ?? s.selectedStep ?? nextPending(s) ?? STEPS.length;
 
 /** Zona y búsqueda; el estado (pendiente/hecho) va aparte porque las pestañas lo cuentan. */
 export const stepMatchesFilters = (s, step) => {
@@ -366,10 +370,13 @@ export function selectStep(n) {
   setState({ selectedStep: n });
 }
 
-/** Desde el overlay: cambia el paso sin abrir la hoja móvil. */
+/**
+ * Desde el overlay: cambia su paso y no el de la página, que puede quedarse en otro
+ * (sin abrir la hoja móvil ni cambiar de vista).
+ */
 export function overlayGo(n) {
   if (n < 1 || n > STEPS.length) return;
-  setState({ selectedStep: n });
+  setState({ overlayN: n });
 }
 
 export const clearSelection = () => setState({ selectedStep: null });

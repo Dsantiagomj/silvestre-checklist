@@ -730,62 +730,6 @@ a:hover{ text-decoration:underline; }
 .q-mark{ flex:none; height:20px; }
 .row-art .quest-mark{ height:24px; margin:auto; }
 
-/* Objetos necesarios dentro del detalle */
-.req{
-  background:var(--inset);
-  border:1px solid var(--line);
-  border-radius:10px;
-  margin:0 0 14px;
-}
-.req > summary{
-  list-style:none;
-  display:flex; align-items:center; gap:8px;
-  padding:10px 14px;
-  cursor:pointer;
-  font-weight:700; font-size:13.5px;
-  color:var(--txt);
-}
-.req > summary::-webkit-details-marker{ display:none; }
-.req > summary::after{
-  content:"›"; margin-left:auto;
-  font-size:18px; color:var(--txt-mute);
-  transition:transform .2s ease;
-}
-.req[open] > summary::after{ transform:rotate(90deg); }
-.req > summary .n{ color:var(--accent-ink); }
-.req-note{ margin:0 14px 8px; font-size:11.5px; color:var(--txt-mute); }
-.req-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(46px, 1fr));
-  gap:6px;
-  padding:0 12px 12px;
-}
-.req-item{
-  position:relative;
-  aspect-ratio:1/1;
-  display:grid; place-items:center;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:8px;
-}
-.req-item img{ width:78%; height:78%; object-fit:contain; }
-/* Etiqueta opaca y oscura en los dos temas: el número no depende del icono de detrás */
-.req-item .q{
-  position:absolute; right:2px; bottom:2px;
-  min-width:16px; padding:0 4px; border-radius:6px;
-  background:rgba(18,20,16,.88); color:#fff;
-  font-size:11px; font-weight:800; line-height:16px; text-align:center;
-  font-variant-numeric:tabular-nums;
-}
-.req-item.owned{ opacity:.35; }
-button.req-item{ padding:0; font:inherit; color:inherit; cursor:copy; }
-.req-item.copied{ border-color:var(--amber); box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 30%, transparent); opacity:1; }
-.req-copied{ min-height:1.4em; margin:-4px 14px 12px; font-size:12.5px; color:var(--accent-ink); }
-.req-copied:empty{ display:none; }
-/* Alternativas: los dos objetos en diagonal dentro del mismo hueco */
-.req-item.alt img{ position:absolute; width:58%; height:58%; }
-.req-item.alt img:first-child{ left:4%; top:4%; }
-.req-item.alt img:nth-child(2){ right:4%; bottom:14%; }
 /* Objeto que DofusDB no tiene: hueco con interrogación */
 .item-unknown{
   display:grid; place-items:center;
@@ -794,118 +738,114 @@ button.req-item{ padding:0; font:inherit; color:inherit; cursor:copy; }
   font-weight:800; color:var(--txt-mute);
 }
 
-/* OVERLAY · se renderiza en una ventana Picture-in-Picture o popup */
-.ov-body{
-  margin:0; padding:10px;
-  background:var(--bg);
-  min-height:100vh;
+/* OVERLAY · se renderiza en una ventana Picture-in-Picture o popup ------------
+   Con el lenguaje del detalle del diario: paneles de madera (pergamino en claro),
+   rótulos dorados en Barlow Condensed y el número del paso en Lilita. Cabecera,
+   pestañas y pie fijos; solo el cuerpo se desplaza, a cualquier tamaño de ventana */
+.ov-body{ margin:0; height:100vh; overflow:hidden; background:var(--bg); }
+.ov{
+  display:flex; flex-direction:column; height:100vh;
+  background:var(--gw-panel); color:var(--gw-ink); font-family:var(--font-body);
 }
-.ov{ display:flex; flex-direction:column; gap:8px; }
-.ov-card{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
+.ov-head{
+  flex:none; display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:10px;
+  padding:8px 12px; border-bottom:1px solid var(--gw-line);
 }
-.ov-icon{
-  width:56px; height:56px; flex-shrink:0;
-  display:grid; place-items:center;
-  background:var(--inset); border:1px solid var(--line-2); border-radius:10px;
+.ov-full-head{ grid-template-columns:auto minmax(0, 1fr) auto auto; }
+.ov-num{
+  min-width:30px; text-align:center;
+  font:400 30px/1 'Lilita One', var(--font-display); color:#cbee8f;
+  text-shadow:var(--ink-ring), 0 3px 0 #121410;
 }
-.ov-icon img{ width:84%; height:84%; object-fit:contain; }
-.ov-title{ margin:0 0 6px; font-size:17px; font-weight:700; color:var(--txt); }
-.ov-title .muted{ color:var(--txt-mute); font-weight:500; font-size:13px; }
-.ov-chips{ display:flex; flex-wrap:wrap; gap:5px; }
-.ov-chip{
-  display:inline-flex; align-items:center; gap:5px;
-  padding:2px 9px;
-  background:var(--inset); border:1px solid var(--line-2); border-radius:999px;
-  font-size:11.5px; font-weight:600; color:var(--txt-soft);
+.ov-head-txt{ min-width:0; }
+.ov-qname, .ov-title{
+  margin:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  font:700 15px/1.25 var(--font-display); letter-spacing:.02em; color:var(--gw-sel-ink);
 }
-.ov-chip .dot{ width:7px; height:7px; border-radius:50%; background:var(--zone-color, var(--amber)); }
-.ov-chip.done{ color:var(--accent-ink); border-color:var(--amber); }
-.ov .req{ margin:0; background:var(--panel); }
-.ov .req-item{ background:var(--inset); }
-.ov-obj{ display:flex; gap:12px; padding:12px; }
-.ov-bang{
-  flex-shrink:0;
-  width:14px; text-align:center;
-  font-size:30px; font-weight:800; line-height:1;
-  color:var(--accent-ink);
+.ov-title{ font-size:16px; }
+.ov-meta{
+  display:flex; align-items:center; gap:3px; margin:2px 0 0;
+  font-size:12px; font-weight:600; color:var(--gw-soft); font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-.ov-label{ margin:0 0 4px; font-weight:700; font-size:13.5px; color:var(--txt); }
-.ov-text{
-  font-size:13px; line-height:1.55; color:var(--txt-soft);
-  white-space:pre-wrap;
-  max-height:220px; overflow-y:auto;
+.ov-q{
+  display:grid; place-items:center; width:18px; height:18px; padding:0; border-radius:4px; cursor:pointer;
+  border:1px solid var(--gw-line); background:var(--gw-pin); color:var(--gw-gold);
 }
-.ov .boss-row{ margin:0; }
-.ov-actions{
-  display:grid; grid-template-columns:auto 1fr auto; gap:6px;
-  /* Siempre a mano aunque la ventana sea baja y el contenido haga scroll */
-  position:sticky; bottom:0;
-  margin:0 -10px -10px; padding:8px 10px 10px;
-  background:linear-gradient(0deg, var(--bg) 70%, transparent);
+.ov-q:disabled{ opacity:.35; cursor:default; }
+.ov-q .tri{ width:8px; height:8px; }
+.ov-zone{
+  display:inline-flex; align-items:center; gap:5px; margin-top:3px; padding:1px 8px; border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--zone-color, #e3c565) 60%, transparent);
+  font:800 10px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--gw-gold);
 }
-.ov-actions button{
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid var(--line-2);
-  font-weight:700; font-size:13px;
-  color:var(--txt-soft);
-}
-.ov-actions button:hover:not(:disabled){ border-color:var(--amber); color:var(--accent-ink); }
-.ov-actions button:disabled{ opacity:.35; cursor:default; }
-.ov-actions .ov-toggle{ background:var(--amber); border-color:var(--amber); color:#0d0e0c; }
-.ov-actions .ov-toggle:hover{ color:#0d0e0c !important; background:var(--gold); }
-.ov-actions .ov-toggle.is-done{ background:transparent; color:var(--accent-ink); }
+.ov-zone i{ width:6px; height:6px; border-radius:50%; background:var(--zone-color, var(--amber)); }
+.ov-pct{ font:400 20px/1 'Lilita One', var(--font-display); color:var(--accent-ink); font-variant-numeric:tabular-nums; }
+.ov-scroll{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.ov .gbtn{ padding:7px 10px; font-size:12.5px; letter-spacing:.08em; }
+.ov .gbtn.go{ padding:7px 12px; }
+.tri{ width:10px; height:10px; fill:currentColor; vertical-align:-1px; }
+.ov-mode{ display:inline-flex; align-items:center; gap:5px; }
+.ov-mode svg{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
-/* Overlay · vista de misión ------------------------------------------------*/
-.ov-top{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--txt-soft); }
-.ov-top .bar-outer{ flex:1; height:6px; min-width:40px; }
-.ov-top b{ color:var(--accent-ink); font-variant-numeric:tabular-nums; }
-.ov-qhead{ display:flex; gap:12px; align-items:center; padding:12px; }
-.ov-qmeta{ min-width:0; }
-.ov-title .muted, .ov-switch .muted, .ov-label .muted{ color:var(--txt-mute); font-weight:500; }
-.ov-switch{
-  display:grid; grid-template-columns:32px 1fr 32px; align-items:center;
-  text-align:center; font-size:12.5px; color:var(--txt-soft);
+/* El objetivo actual: la ruta del diario con un solo medallón, que brilla */
+.ov-now .obj-list.route{ padding:4px 0; }
+.ov-mini .ov-now .obj-row{ padding-top:3px; padding-bottom:3px; }
+.ov-now .obj-list.route::before{ display:none; }
+.ov .route .obj-row{ padding:5px 12px; font-size:13.5px; }
+.ov .obj-list.route::before{ left:29px; }
+/* Dónde parar y lo que se resuelve, en una línea */
+.ov-stop, .ov-resolve{
+  margin:7px 12px 3px; padding:3px 0 3px 9px; border-left:3px solid var(--danger);
+  font-size:12.5px; line-height:1.35; color:var(--gw-ink);
 }
-.ov-switch b{ color:var(--txt); }
-.ov-switch button, .ov-stagenav button{
-  height:32px;
-  border:1px solid var(--line-2); border-radius:8px;
-  color:var(--txt-soft); font-weight:700;
+.ov-stop b, .ov-resolve b{
+  margin-right:4px; font:800 11px var(--font-display); letter-spacing:.12em; text-transform:uppercase; color:var(--danger);
 }
-.ov-switch button:hover:not(:disabled), .ov-stagenav button:hover:not(:disabled){ border-color:var(--amber); color:var(--accent-ink); }
-.ov-switch button:disabled, .ov-stagenav button:disabled{ opacity:.3; cursor:default; }
+.ov-resolve{ border-left-color:#8fd13a; }
+.ov-resolve b{ color:#8fd13a; }
+[data-theme="light"] .ov-resolve{ border-left-color:#4e8f1b; }
+[data-theme="light"] .ov-resolve b{ color:#3d7a14; }
+.ov-bar{
+  flex:none; display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; gap:6px;
+  padding:7px 10px; border-top:1px solid var(--gw-line); background:var(--bg-2);
+}
+.ov-bar .go{ overflow:hidden; text-overflow:ellipsis; }
+
+/* Completo: pestañas como las de la ventana de pasos, cuerpo que se desplaza y el pie del diario */
+.ov-tabs{ flex:none; display:flex; gap:4px; padding:8px 10px; border-bottom:1px solid var(--gw-line); overflow-x:auto; scrollbar-width:none; }
+.ov-tabs button{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border:0; border-radius:999px; cursor:pointer;
+  background:none; white-space:nowrap; font:700 13px var(--font-body); color:var(--gw-soft);
+}
+.ov-tabs button:hover{ color:var(--gw-ink); }
+.ov-tabs button[aria-selected="true"]{ background:var(--amber); color:#142208; }
+.ov .ov-tab-body{ padding:10px 12px 14px; }
+.ov .journal-h{ margin:2px 0 10px; font-size:13px; }
+.ov .journal-needs{ margin:0; }
+.ov .q-item > summary{ gap:8px; padding:8px 10px; font-size:13.5px; flex-wrap:wrap; }
+.ov .q-start, .ov .q-note{ margin-left:10px; margin-right:10px; }
+/* En una fila aunque la ventana sea estrecha (no la disposición móvil del diario) */
+.ov .journal-cta{ flex:none; grid-template-columns:auto minmax(0, 1fr) auto; padding:8px 10px; gap:6px; }
+.ov .journal-cta-main{ grid-column:auto; grid-row:auto; }
+.ov-sec{ margin-bottom:8px; }
+.ov-label{
+  margin:0; font:800 11px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--gw-gold);
+}
+.ov-sec .ov-meta{ margin-bottom:2px; }
+.ov-after{ opacity:.8; }
+.ov-calls{ margin-bottom:10px; padding:0 0 10px; border-top:0; border-bottom:1px dashed var(--gw-line); }
+.ov-guide{ gap:10px; padding:0; }
 .ov-map{
-  position:relative; margin:0;
-  border:1px solid var(--line); border-radius:12px; overflow:hidden;
-  aspect-ratio:955/485; background:var(--inset);
+  position:relative; height:90px; margin:0;
+  border:1px solid var(--gw-line); border-radius:6px; overflow:hidden; background:var(--gw-panel-2);
 }
 .ov-map img{ width:100%; height:100%; object-fit:cover; display:block; }
 .ov-map figcaption{
-  position:absolute; left:8px; bottom:8px;
-  padding:3px 9px; border-radius:999px;
-  background:rgba(13,14,12,.82); color:var(--txt);
-  font-size:11.5px; font-weight:600;
+  position:absolute; left:6px; bottom:6px; padding:2px 8px; border-radius:999px;
+  background:rgba(13,14,12,.82); color:#f3ecd2; font-size:11px; font-weight:600;
 }
-.ov-obj-body{ min-width:0; flex:1; }
-.ov-objbar{ height:3px; margin:0 0 9px; background:var(--inset); border-radius:999px; overflow:hidden; }
-.ov-objbar span{ display:block; height:100%; background:var(--amber); transition:width .3s ease; }
-.ov-obj .obj-row{ font-size:14px; color:var(--txt); }
-.ov-next{ padding:10px 12px; opacity:.7; }
-.ov-next .ov-label{ font-size:11px; letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px; }
-.ov-stagenav{ display:grid; grid-template-columns:auto 1fr; gap:6px; }
-.ov-stagenav button{ padding:0 12px; font-size:12.5px; }
-.ov-guide > summary{
-  list-style:none; cursor:pointer;
-  padding:10px 12px; font-size:12.5px; font-weight:700; color:var(--txt-soft);
-}
-.ov-guide > summary::-webkit-details-marker{ display:none; }
-.ov-guide > summary::after{ content:" ›"; color:var(--txt-mute); }
-.ov-guide[open] > summary::after{ content:" ⌄"; }
-.ov-guide .ov-text{ padding:0 12px 12px; }
+/* El pendón del diario no va en el overlay: el texto de la guía va sobre el panel */
+[data-theme="light"] .ov .goal-calls .call{ color:var(--gw-ink); }
 
 /* Objetivos (overlay y detalle) */
 .obj-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
@@ -2621,7 +2561,7 @@ header.is-scrolled .title-bar{
 /* Cuerpo del detalle con el estilo de la ventana de Misiones del juego: paneles de
    madera (pergamino en el tema claro), medallones, rombos dorados y botones planos */
 /* El estandarte va siempre en oscuro: lleva los colores de madera oscura en los dos temas */
-.journal-body, .journal-top, .journal-cta{
+.journal-body, .journal-top, .journal-cta, .ov{
   --gw-panel:linear-gradient(180deg, #2b2822, #211f1b);
   --gw-panel-2:#1f1d19;
   --gw-line:#4a4436;
@@ -2636,7 +2576,7 @@ header.is-scrolled .title-bar{
   --gw-btn-line:#6b6252;
   --gw-btn-ink:#f0e6cf;
 }
-[data-theme="light"] .journal-body, [data-theme="light"] .journal-cta, [data-theme="light"] .journal-top{
+[data-theme="light"] .journal-body, [data-theme="light"] .journal-cta, [data-theme="light"] .journal-top, [data-theme="light"] .ov{
   --gw-panel:linear-gradient(180deg, #fbf6e9, #f1e8d2);
   --gw-panel-2:#f8f2e2;
   --gw-line:#d5c8a6;
@@ -2957,6 +2897,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 .step-ref:hover{ border-color:var(--amber); }
 .q-guide{ margin-left:8px; font-size:12px; font-weight:700; color:var(--accent-ink); text-decoration:none; white-space:nowrap; }
 .q-guide:hover{ text-decoration:underline; }
+.q-guide::after{ content:" ↗"; font-size:.85em; }
 
 /* Recomendación del Dofus Ocre sobre los prerrequisitos */
 .pr-ocre{
@@ -3021,12 +2962,12 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   .map-node.current{ animation:node-here 2.4s ease-in-out infinite; }
   /* Los sellos llenan su anillo poco a poco */
   .seal{ transition:--seal-p .6s cubic-bezier(.2,.8,.2,1); }
-  /* Misiones y «Necesitas» se abren y se cierran con su altura */
-  .q-item::details-content, .req::details-content{
+  /* Las misiones se abren y se cierran con su altura */
+  .q-item::details-content{
     block-size:0; overflow-y:clip;
     transition:block-size .3s cubic-bezier(.2,.8,.2,1), content-visibility .3s allow-discrete;
   }
-  .q-item[open]::details-content, .req[open]::details-content{ block-size:auto; }
+  .q-item[open]::details-content{ block-size:auto; }
 }
 
 /* El resto de la página: la misma ✓ con rebote al marcar y las secciones que entran

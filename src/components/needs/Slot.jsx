@@ -53,11 +53,11 @@ function typeLine(row) {
 
 /**
  * El aviso va debajo de la casilla; si debajo no cabe dentro de la lista que se desplaza
- * (en escritorio, al final de la lista de la ventana o del cuerpo del paso), sube encima.
+ * (en escritorio, al final de la lista de la ventana, del cuerpo del paso o del overlay), sube encima.
  */
 function placeTip(e) {
   const slot = e.currentTarget;
-  const box = slot.closest(".items-body, .prereqs-panel, .journal-body");
+  const box = slot.closest(".items-body, .prereqs-panel, .journal-body, .ov-tab-body");
   const room = box && box.scrollHeight > box.clientHeight + 1
     ? box.getBoundingClientRect().bottom - slot.getBoundingClientRect().bottom : Infinity;
   slot.classList.toggle("tip-up", room < 130);
@@ -75,10 +75,11 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   const skipClick = useRef(false);
   useEffect(() => () => { clearTimeout(pressTimer.current); clearTimeout(copiedTimer.current); }, []);
 
-  // La guía pide la primera alternativa: es la que se copia
+  // La guía pide la primera alternativa: es la que se copia. Desde el documento de la
+  // casilla: en el overlay el foco lo tiene su ventana, y la de la página no puede copiar
   const name = RES_ITEMS[row.a[0][0]].name;
-  async function copy() {
-    if (!(await copyText(document, name))) return;
+  async function copy(doc) {
+    if (!(await copyText(doc, name))) return;
     setCopied(true);
     clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), COPIED_MS);
@@ -87,7 +88,8 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
   const onPointerDown = e => {
     if (e.pointerType !== "touch") return;
     skipClick.current = false;
-    pressTimer.current = setTimeout(() => { skipClick.current = true; copy(); }, LONG_PRESS_MS);
+    const doc = e.currentTarget.ownerDocument;
+    pressTimer.current = setTimeout(() => { skipClick.current = true; copy(doc); }, LONG_PRESS_MS);
   };
   const cancelPress = () => clearTimeout(pressTimer.current);
   const onClick = () => {
@@ -117,7 +119,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
     onContextMenu: e => { if (skipClick.current) e.preventDefault(); },
   };
   const copyButton = (
-    <button type="button" className="slot-copy" onClick={copy} aria-label={`Copiar el nombre: ${name}`}>
+    <button type="button" className="slot-copy" onClick={e => copy(e.currentTarget.ownerDocument)} aria-label={`Copiar el nombre: ${name}`}>
       <svg viewBox="0 0 16 16" aria-hidden="true">
         <rect x="5" y="5" width="8.5" height="9" rx="1.6" />
         <path d="M3.5 10.5V3.6c0-.9.7-1.6 1.6-1.6h5.4" />
