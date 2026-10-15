@@ -26,19 +26,27 @@ export default function Header({ onOverlay, onReset }) {
   const [scrolled, setScrolled] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
 
-  // Header: sólido en cuanto hay scroll; con progreso al dejar atrás el hero
+  // Header: sólido en cuanto hay scroll; con progreso al dejar atrás el hero. Se mide
+  // la posición del hero en cada scroll (y al cambiar de tamaño): un IntersectionObserver
+  // puede entregar en un mismo lote "sale" y "vuelve a entrar" tras un salto rápido, y
+  // quedarse con el aviso viejo dejaba la barra a la vista con el hero arriba
   useEffect(() => {
     const header = headerRef.current;
-    const syncHeaderSolid = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", syncHeaderSolid, { passive: true });
-    syncHeaderSolid();
-    const io = new IntersectionObserver(([entry]) => {
-      setShowProgress(!entry.isIntersecting);
-    }, { rootMargin: `-${header.offsetHeight}px 0px 0px 0px`, threshold: 0 });
-    io.observe(document.querySelector(".hero"));
+    const hero = document.querySelector(".hero");
+    let frame = 0;
+    const sync = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 8);
+      setShowProgress(hero ? hero.getBoundingClientRect().bottom <= header.offsetHeight : false);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(sync); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    sync();
     return () => {
-      window.removeEventListener("scroll", syncHeaderSolid);
-      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(frame);
     };
   }, []);
 
