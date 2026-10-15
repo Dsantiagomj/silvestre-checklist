@@ -1061,3 +1061,62 @@ test("en el paso 38, «La sombra del reino» enlaza a su guía", async ({ page }
   await expect(page.locator('#journal .call.note a.guide-link', { hasText: "La sombra del reino" }))
     .toHaveAttribute("href", "https://www.torrentearcano.com/la-sombra-del-reino");
 });
+
+/** La misión del detalle por su nombre exacto (otras la nombran en sus objetivos). */
+const questItem = (page, name) => page.locator("#journal .q-item")
+  .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+
+test("en el 93, la nota que empieza por «Misión N:» va dentro de esa misión, no entre los avisos", async ({ page }) => {
+  const errors = await openApp(page);
+  await stepData(page, 93);
+  const calls = page.locator("#journal .goal-calls .call");
+  await expect(calls.filter({ hasText: /Misión \d+:/ })).toHaveCount(0);
+  // La entrada que solo las presentaba («…se actualizan algunas misiones:») tampoco queda
+  await expect(calls).toHaveCount(1);
+  await expect(calls.first()).toContainText("Con los cuatro sacrificios dropeados");
+  await expect(calls.first().locator('.step-ref[data-n="7"]')).toHaveCount(1);
+  // Siete notas, una por misión, y sin el «Misión N: Nombre.» delante
+  await expect(page.locator("#journal .q-note")).toHaveCount(7);
+  const blanco = questItem(page, "El dragón blanco");
+  await blanco.locator("summary .q-name").click();
+  await expect(blanco.locator(".q-note")).toHaveText("Se pasa Miauvisor y se dropea el tótem de sorpresa");
+  await expect(blanco.locator(".q-note img")).toHaveAttribute("src", /\.png$/);
+  // Arriba, junto a dónde empieza: antes de los objetivos
+  expect(await blanco.locator(".q-note").evaluate(el => !!el.previousElementSibling?.matches(".q-start"))).toBe(true);
+  // «Nordalia» en la guía, «Nordalía» en el juego: va por el número de la misión
+  await expect(questItem(page, "Nordalía").locator(".q-note")).toContainText("Se pasa Tal Kasha");
+  // Los incisos siguen enlazados
+  const voz = questItem(page, "Una voz de cristal").locator(".q-note");
+  await expect(voz.locator(".step-ref")).toHaveText(["84", "15"]);
+  expect(errors).toEqual([]);
+});
+
+test("en el 94, la nota de «El dragón negro» va dentro de ella y el objetivo se queda sin avisos", async ({ page }) => {
+  await openApp(page);
+  await stepData(page, 94);
+  await expect(page.locator("#journal .goal-calls")).toHaveCount(0);
+  const negro = questItem(page, "El dragón negro");
+  await negro.locator("summary .q-name").click();
+  await expect(negro.locator(".q-note")).toHaveText("Se pasa Klim y se termina la misión del inciso 84");
+  await expect(page.locator("#journal .q-note")).toHaveCount(1);
+});
+
+test("el estandarte no crece con el texto: el del 93 mide lo mismo que el del 12", async ({ page }) => {
+  for (const [w, h] of [[1440, 900], [1280, 720]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await openApp(page);
+    // Alto y separación de la parte de arriba del detalle: arriba, en el mismo sitio
+    const box = async n => {
+      await stepData(page, n);
+      return page.evaluate(() => {
+        const top = document.querySelector("#journal .journal-top").getBoundingClientRect().top;
+        const r = document.querySelector("#journal .journal-banner").getBoundingClientRect();
+        return { h: r.height, top: r.top - top };
+      });
+    };
+    const usual = await box(12);
+    const tall = await box(93);
+    expect(Math.abs(tall.h - usual.h), `${w}×${h}: ${tall.h} frente a ${usual.h}`).toBeLessThanOrEqual(2);
+    expect(Math.abs(tall.top - usual.top)).toBeLessThanOrEqual(1);
+  }
+});

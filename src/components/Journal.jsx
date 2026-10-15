@@ -4,7 +4,9 @@ import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { groupsOf, nextWalked, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
-import { CLOSED_BY, RESUMED_IN, doneIcon, list, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints } from "../lib/journal.js";
+import {
+  CLOSED_BY, RESUMED_IN, doneIcon, list, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
+} from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
   closeSteps, closingPlan, loadQuests, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
@@ -162,7 +164,7 @@ function progressOf(s, n, quests, i, q) {
  * Una misión que basta con tener tomada (paso 28, «Luces y sombras»): dónde empieza y
  * la nota, sin objetivos ni «Completar», porque no se hace.
  */
-function TakeOnly({ q, open, setOpen }) {
+function TakeOnly({ q, notes, open, setOpen }) {
   return (
     <details className="q-item" open={open} onToggle={e => setOpen(q.id, e.currentTarget.open)}>
       <summary>
@@ -175,9 +177,23 @@ function TakeOnly({ q, open, setOpen }) {
         )}
       </summary>
       <QuestStart q={q} />
+      <QuestNotes notes={notes} />
       <p className="q-start q-take-note">No hace falta hacerla: basta con tenerla tomada.</p>
     </details>
   );
+}
+
+/**
+ * Las notas de la guía que hablan de esta misión («Misión 1: El dragón blanco. (Se pasa
+ * Miauvisor…)», missionNotes): arriba, junto a dónde empieza, sin el «Misión N: Nombre.».
+ */
+function QuestNotes({ notes }) {
+  return notes.map((text, i) => (
+    <p key={i} className="q-note">
+      {CALL_ICONS.note && <img src={imgUrl(CALL_ICONS.note)} alt="" title="Nota" />}
+      <span><RichText text={text} /></span>
+    </p>
+  ));
 }
 
 /** Dónde empieza la misión: el PNJ y su posición, el templo de tu clase o, en una que
@@ -227,8 +243,10 @@ function Quests({ step, quests, loaded, s }) {
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp ? { ...p, text: done, resume: true } : p));
   // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
   const mandatory = quests.filter(q => q.kind === "mandatory").length;
+  const notes = missionNotes(step);
+  const notesOf = q => notes.filter(x => x.name === q.n).map(x => x.text);
   const items = quests.map((q, i) => {
-    if (q.kind === "take") return <TakeOnly key={q.id} q={q} open={opened.has(q.id)} setOpen={setOpen} />;
+    if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={opened.has(q.id)} setOpen={setOpen} />;
     let offset = 0;
     const optional = q.kind === "optional";
     const at = progressOf(s, step.n, quests, i, q);
@@ -269,6 +287,7 @@ function Quests({ step, quests, loaded, s }) {
           )}
         </summary>
         <QuestStart q={q} />
+        <QuestNotes notes={notesOf(q)} />
         {q.s.map((stg, j) => {
           const from = offset;
           offset += stg.o.length;
