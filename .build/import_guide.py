@@ -28,7 +28,8 @@ marks count too, but only when they say it outright ("se termina la misión del 
 step in passing ("un recurso necesario para terminar la misión del inciso 63") does
 not. Nor does a step's optional mission ("se termina la misión opcional del inciso 7"):
 the step is done without it. CLOSES adds by hand what a step finishes and its text does
-not say (step 87 finishes step 73's mission).
+not say (step 87 finishes step 73's mission), and UPDATES what it picks up (step 81's
+reminder about step 63).
 
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
@@ -165,9 +166,16 @@ def closes(n, raw):
     return sorted(set(found))
 
 
+# Earlier steps a step updates that its marks do not state outright. Step 81's note is
+# a reminder: "en la sala 3 de Golosotrón se obtiene un recurso necesario para terminar
+# la misión del inciso 63". Golosotrón is passed in 81, so step 63 is picked up there.
+UPDATES = {81: [63]}
+
+
 def updates(n, raw):
-    """Earlier steps whose mission this step's marks update without finishing."""
-    found = []
+    """Earlier steps whose mission this step's marks update without finishing, and the
+    ones UPDATES adds."""
+    found = list(UPDATES.get(n, []))
     for clause in clauses(raw):
         after = re.search(r"actualiza\s+la\s+misi[oó]n\b.*?\bincisos?\s+(.*)", clause)
         if after:
