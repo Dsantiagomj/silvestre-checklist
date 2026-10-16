@@ -161,6 +161,25 @@ test("completar todas las misiones obligatorias marca el paso, sin cambiar de pa
   await expect(page.locator("#toggleBtn")).toHaveText("Paso completado · deshacer");
 });
 
+test("deshacer un paso que se marcó solo reabre el último objetivo de su última misión", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(11) });
+  await openStep12(page);
+  for (const name of ["Cofrología", "Tesorfanato", "El maleficio del cofre", "Las grandes galerías", "Espionaje industrial"]) {
+    await page.locator("#journal .q-item", { hasText: name }).locator(".q-done-btn").click();
+  }
+  await expect(page.locator("#toggleBtn")).toHaveText("Paso completado · deshacer");
+  await page.locator("#toggleBtn").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  // La última misión vuelve a su último objetivo; las de antes siguen hechas
+  const espionaje = page.locator("#journal .q-item", { hasText: "Espionaje industrial" });
+  await expect(espionaje.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("#journal .q-item", { hasText: "Cofrología" }).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await espionaje.locator("summary .q-name").click();
+  expect(await routeStates(espionaje.locator(".obj-list.route > .obj-row"))).toMatch(/^d*n$/);
+  // Y no se vuelve a marcar solo
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 12");
+});
+
 test("la misión opcional no hace falta para que el paso se marque solo", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(6) });
   await page.click('.diary-row[data-n="7"] .row-main');
