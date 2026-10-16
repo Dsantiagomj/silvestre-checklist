@@ -308,13 +308,13 @@ test("«Ahora» completa la misión en curso como el diario, y la cabecera enlaz
   await expect(page.locator("#journal .q-item").nth(1).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
 });
 
-test("en un paso de una sola misión obligatoria, el overlay no lleva «Completar» misión", async ({ page, context }) => {
+test("en un paso de una sola misión obligatoria, el overlay también lleva «Completar» misión", async ({ page, context }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="4"] .row-main');
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
   const ov = await openOverlay(page, context);
   await expect(objCount(ov)).toHaveText("Objetivo 1 de 9", { timeout: 15_000 });
-  await expect(ov.locator(".q-done-btn")).toHaveCount(0);
+  await expect(ov.locator(".ov-tab-body .ov-qhead .q-done-btn")).toHaveText("Completar");
   // Una sola misión que recorrer: el desplegable dice «1 de 1» y no se abre
   await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 1");
   await expect(ov.locator(".ov-tab-body .ov-qsel")).toBeDisabled();
