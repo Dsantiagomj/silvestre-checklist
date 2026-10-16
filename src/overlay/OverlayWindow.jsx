@@ -15,23 +15,10 @@ import { StepGo } from "../components/Journal.jsx";
 import OverlayView from "./OverlayView.jsx";
 
 const MODE_KEY = "silvestre:overlayMode";
-// El contenido de la ventana en cada modo
+// El tamaño con el que se abre la ventana, según el último modo. Cambiar de modo no la
+// redimensiona: el contenido se adapta a la ventana tal como la dejes
 const SIZES = { mini: { width: 340, height: 230 }, full: { width: 400, height: 680 } };
 const readMode = () => (localStorage.getItem(MODE_KEY) === "full" ? "full" : "mini");
-
-/**
- * Ajusta la ventana al modo. resizeTo mide por fuera: se suma el marco. La PiP solo se
- * deja con un gesto del usuario (el clic que cambia de modo); si no se puede, el
- * contenido se adapta a la ventana tal como esté.
- */
-function fitWindow(win, mode) {
-  const { width, height } = SIZES[mode];
-  try {
-    win.resizeTo(width + win.outerWidth - win.innerWidth, height + win.outerHeight - win.innerHeight);
-  } catch (err) {
-    console.warn("El overlay no pudo cambiar de tamaño:", err);
-  }
-}
 
 /** Copia todas las hojas de estilo (en dev son <style>, en build <link>). */
 function copyStyles(doc) {
@@ -116,8 +103,7 @@ export default function OverlayWindow({ win }) {
   const setMode = useCallback(m => {
     localStorage.setItem(MODE_KEY, m);
     setModeState(m);
-    if (win && !win.closed) fitWindow(win, m);
-  }, [win]);
+  }, []);
 
   useEffect(() => {
     if (win) loadQuests();

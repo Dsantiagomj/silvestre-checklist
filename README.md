@@ -248,10 +248,12 @@ overlay vuelve a seguirla. Sin ningún paso elegido, muestra el siguiente pendie
 demás (pasos hechos, avance de cada misión, objetos cogidos) es el mismo estado en las dos
 ventanas.
 
-Al cambiar de modo la ventana cambia de tamaño. Chrome solo deja redimensionar la ventana
-Picture-in-Picture tras un clic del usuario, que es el del propio botón; un popup abierto por la
-página sí se deja. Si el navegador no lo permite, el contenido se adapta. La cabecera, las
-pestañas y el pie quedan fijos y solo se desplaza el cuerpo.
+La ventana se abre con el tamaño del último modo y después no cambia sola: cambiar de modo no
+la redimensiona, y el tamaño lo eliges tú. El contenido se adapta a la ventana. En completo, la
+cabecera, las pestañas y el pie quedan fijos y solo se desplaza lo de en medio, así que también
+se usa en una ventana baja; mini en una ventana alta deja espacio de sobra. La posición la
+decide el navegador: la ventana Picture-in-Picture no se puede mover desde la página (no admite
+`moveTo`).
 
 Las coordenadas son botones que copian `/travel x,y` para pegarlo en el chat del juego. Con la
 ventana enfocada, ←/→ cambian de paso, ↑/↓ de objetivo y espacio o Intro marcan el paso.
