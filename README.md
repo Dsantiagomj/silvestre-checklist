@@ -225,12 +225,13 @@ La parada sale siempre que el paso la tenga, no solo cuando la misión en curso 
 Sirve más verla antes de llegar a esa misión. En un paso que se resuelve en sí mismo, la línea
 es la parada que deja el verde, si la hay.
 
-El modo completo (400×680) tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
+El modo completo (400×680) lleva arriba el título del paso y su zona, en texto con el color de
+la zona. Tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
 
 - Ahora: "Hasta dónde llegar" y "Lo que se resuelve", la misión en curso con su "Completar",
-  el objetivo actual con "‹ ✓ Completar objetivo ›" debajo, los dos siguientes y
-  una miniatura del mapa donde se hace. Si el objetivo no trae ubicación, el mapa es el de la
-  última conocida y lo dice.
+  el objetivo actual (con su ficha de coordenadas que copia el `/travel`) y "‹ ✓ Completar
+  objetivo ›" debajo, y los dos siguientes. Sin miniatura del mapa: con las coordenadas basta y
+  deja sitio al resto.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de
   medallones, las líneas de parada y las notas.
 - Objetos: las casillas de "Necesitas" del paso. Pulsar una la marca como cogida y el icono de

@@ -97,6 +97,21 @@ test("completo: «Ahora» con dónde parar, el objetivo y los dos siguientes", a
   await expect(ov.locator(".ov-now .obj-row")).toHaveCount(1, { timeout: 15_000 });
   await expect(ov.locator(".ov-after .obj-row")).toHaveCount(2);
   expect(await noEmoji(ov)).toBe(true);
+  // La zona es texto en su color, sin píldora ni punto; sin miniatura del mapa
+  const zone = ov.locator(".ov-full-head .ov-zone");
+  await expect(zone.locator("i")).toHaveCount(0);
+  const look = await zone.evaluate(el => {
+    const cs = getComputedStyle(el);
+    const probe = el.ownerDocument.createElement("span");
+    probe.style.color = cs.getPropertyValue("--zone-color");
+    el.ownerDocument.body.append(probe);
+    const want = getComputedStyle(probe).color;
+    probe.remove();
+    return { border: cs.borderTopWidth, color: cs.color, want };
+  });
+  expect(look.border).toBe("0px");
+  expect(look.color).toBe(look.want);
+  await expect(ov.locator(".ov-map")).toHaveCount(0);
   // El objetivo se completa también en completo, con sus flechas al lado
   const body = ov.locator(".ov-tab-body");
   await expect(body.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();

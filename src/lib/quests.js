@@ -88,13 +88,4 @@ export function currentQuest(n, questPos, questObj) {
   return { list, i, q, objs, k, walked, at: walked.indexOf(i) };
 }
 
-/** Dónde se hace el objetivo k: el suyo o, si no tiene, el último conocido antes. */
-export function locationFor(cur) {
-  for (let j = cur.k; j >= 0; j--) {
-    const o = cur.objs[j];
-    if (o?.m) return { ...o, carried: j !== cur.k };
-  }
-  return cur.q.st?.m ? { ...cur.q.st, carried: true } : null;
-}
-
 export const coordLabel = (x, y) => `${x},${y}`;
