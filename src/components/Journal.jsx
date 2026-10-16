@@ -172,7 +172,7 @@ export function Needs({ n, s }) {
  * (optionalDoneBy). Devuelve el índice (en la lista
  * aplanada) del objetivo actual.
  */
-function progressOf(s, n, quests, i, q) {
+export function progressOf(s, n, quests, i, q) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
   // Hasta `total`: una misión terminada sale toda hecha
   const own = Math.min(s.questObj[q.id] || 0, total);

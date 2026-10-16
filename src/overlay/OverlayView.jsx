@@ -1,13 +1,13 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { currentQuest, questsOf } from "../lib/quests.js";
+import { currentQuest, flatObjectives, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { stepCalls, stepTitle } from "../lib/journal.js";
 import {
-  moveObjective, moveQuest, overlayGo, overlayStep, progressPct, rowHave, useAppState,
+  goQuest, moveObjective, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
-import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri } from "../components/Journal.jsx";
+import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri, progressOf } from "../components/Journal.jsx";
 import { stepGuide } from "../lib/guides.js";
 import { WinBadge } from "../components/Diary.jsx";
 
@@ -26,41 +26,120 @@ function GuideLink({ step, s }) {
   ) : null;
 }
 
+/** La misión `j` de la lista del paso, terminada (el mismo avance que el diario). */
+const questFinished = (s, n, list, j) => progressOf(s, n, list, j, list[j]) >= flatObjectives(list[j]).length;
+
 /**
- * Las flechas ‹ › entre los objetivos de la misión. La siguiente no pasa del último: ahí
- * lo que queda es completarlo («Completar objetivo»), que termina la misión.
+ * Las flechas ◀ ▶ entre los objetivos de la misión. La siguiente no pasa del último: ahí
+ * lo que queda es completarlo («Completar objetivo»).
  */
 function ObjArrow({ cur, dir }) {
   const prev = dir === "prev";
   return (
-    <button type="button" className="ov-q ov-o" data-o={prev ? "-1" : "1"} aria-label={prev ? "Objetivo anterior" : "Objetivo siguiente"}
+    <button type="button" className="ov-stepper-btn" aria-label={prev ? "Objetivo anterior" : "Objetivo siguiente"}
       disabled={prev ? cur.k === 0 : cur.k >= cur.objs.length - 1} onClick={() => moveObjective(prev ? -1 : 1)}>
       <Tri dir={dir} />
     </button>
   );
 }
 
-/** «✓ Completar objetivo»: lo da por hecho y pasa al siguiente; tras el último, termina la misión. */
-function ObjButton({ cur }) {
+/** [◀ | Objetivo 8 de 9 | ▶]: las flechas y el contador, en una sola pieza. */
+function ObjStepper({ cur }) {
   return (
-    <button type="button" className="gbtn go" disabled={!cur} onClick={() => moveObjective(1)}
-      title="Da el objetivo por hecho y pasa al siguiente; tras el último, termina la misión">✓ Completar objetivo</button>
+    <div className="ov-stepper" role="group" aria-label="Objetivos de la misión">
+      <ObjArrow cur={cur} dir="prev" />
+      <span className="ov-stepper-count">Objetivo {cur.k + 1} de {cur.objs.length}</span>
+      <ObjArrow cur={cur} dir="next" />
+    </div>
   );
 }
 
-/** "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. */
-function QuestMeta({ cur }) {
-  const { at, walked, objs, k } = cur;
+/** «✓ Completar objetivo»: lo da por hecho y pasa al siguiente. */
+function ObjButton() {
   return (
-    <p className="ov-meta">
-      Objetivo {k + 1} / {objs.length}
-      {" "}· misión{" "}
-      <button type="button" className="ov-q" data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior"
-        onClick={() => moveQuest(-1)}><Tri dir="prev" /></button>
-      {at + 1} de {walked.length}
-      <button type="button" className="ov-q" data-q="1" disabled={!(at < walked.length - 1)} aria-label="Misión siguiente"
-        onClick={() => moveQuest(1)}><Tri dir="next" /></button>
-    </p>
+    <button type="button" className="gbtn go ov-objbtn" onClick={() => moveObjective(1)}
+      title="Da el objetivo por hecho y pasa al siguiente">✓ Completar objetivo</button>
+  );
+}
+
+/**
+ * El desplegable de la misión: «1 de 2 · La última piedra ▾». Abierto, lista las misiones
+ * que se recorren en el paso (cur.walked), las terminadas tachadas y con su ✓, la actual
+ * señalada. Elegir una lleva a ella (goQuest). Escape, un clic fuera o elegir la cierran.
+ * Los oyentes van en el documento del propio botón: el overlay vive en otra ventana.
+ */
+function QuestSelect({ n, cur, s }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const btn = useRef(null);
+  const { list, walked, at, q } = cur;
+  const close = (focus = true) => {
+    setOpen(false);
+    if (focus) btn.current?.focus();
+  };
+  useLayoutEffect(() => {
+    if (!open) return;
+    ref.current.querySelector('[aria-selected="true"]')?.focus();
+    const doc = ref.current.ownerDocument;
+    const onDown = e => {
+      if (!ref.current?.contains(e.target)) setOpen(false);
+    };
+    doc.addEventListener("pointerdown", onDown);
+    return () => doc.removeEventListener("pointerdown", onDown);
+  }, [open]);
+  const choose = j => {
+    close();
+    goQuest(j);
+  };
+  const onKey = e => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+      return;
+    }
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const opts = [...ref.current.querySelectorAll('[role="option"]')];
+    const i = opts.indexOf(e.target.ownerDocument.activeElement);
+    const next = e.key === "Home" ? 0 : e.key === "End" ? opts.length - 1
+      : Math.max(0, Math.min(opts.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)));
+    opts[next]?.focus();
+  };
+  return (
+    <div className="ov-qsel-wrap" ref={ref} onKeyDown={open ? onKey : undefined}>
+      <button type="button" className="ov-qsel" ref={btn} aria-haspopup="listbox" aria-expanded={open}
+        aria-controls={open ? "ov-qlist" : undefined} disabled={walked.length < 2}
+        title={walked.length < 2 ? undefined : "Elegir otra misión del paso"} onClick={() => setOpen(o => !o)}>
+        <small>{at + 1} de {walked.length}</small>
+        <span className="ov-qsel-name">{q.n}</span>
+        {walked.length > 1 && (
+          <svg className="ov-qsel-caret" viewBox="0 0 10 10" aria-hidden="true">
+            <path d={open ? "M1 7h8L5 2z" : "M1 3h8L5 8z"} />
+          </svg>
+        )}
+      </button>
+      {open && (
+        <ul className="ov-qlist ov-scroll" id="ov-qlist" role="listbox" aria-label="Misiones del paso">
+          {walked.map((j, w) => {
+            const done = questFinished(s, n, list, j);
+            return (
+              <li key={list[j].id} role="option" aria-selected={w === at} tabIndex={-1}
+                className={"ov-qopt" + (done ? " is-done" : "")} onClick={() => choose(w)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    choose(w);
+                  }
+                }}>
+                <span className="ov-qopt-ok" aria-hidden="true">{done ? "✓" : ""}</span>
+                <span className="ov-qopt-name">{w + 1} · {list[j].n}</span>
+                {done && <span className="sr-only"> (completada)</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -87,16 +166,15 @@ function NowTab({ step, cur, s }) {
       {cur ? (
         <>
           <section className="ov-sec">
-            <div className="ov-qline">
-              <h3 className="ov-label">{cur.q.n}</h3>
+            <div className="ov-qhead">
+              <h3 className="ov-label">Misión</h3>
               <CurrentQuestDone n={step.n} cur={cur} s={s} />
             </div>
-            <QuestMeta cur={cur} />
+            <QuestSelect n={step.n} cur={cur} s={s} />
             <NowCard cur={cur} />
-            <div className="ov-obj-ctl">
-              <ObjArrow cur={cur} dir="prev" />
-              <ObjButton cur={cur} />
-              <ObjArrow cur={cur} dir="next" />
+            <div className="ov-objbar">
+              <ObjStepper cur={cur} />
+              <ObjButton />
             </div>
           </section>
           {after.length > 0 && (

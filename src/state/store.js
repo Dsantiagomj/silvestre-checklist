@@ -719,6 +719,12 @@ export function moveQuest(delta) {
   setState(s => ({ questPos: { ...s.questPos, [n]: i } }));
 }
 
+/** Del desplegable de misiones del overlay: lleva a la misión `at` de las que se hacen (walked). */
+export function goQuest(at) {
+  const cur = currentQuest(overlayStep(state), state.questPos, state.questObj);
+  if (cur) moveQuest(at - cur.at);
+}
+
 /**
  * Desde el diario: deja la misión `qi` del paso `n` en su objetivo `k` (los de antes,
  * hechos). Pasado el último (`k` = `total`), la misión queda terminada y el paso sigue

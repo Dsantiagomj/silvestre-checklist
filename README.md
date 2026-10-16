@@ -215,13 +215,17 @@ mientras está abierta las teclas del overlay no cambian de paso.
 Debajo hay cuatro pestañas. La primera vez se abre en Ahora; después, en la última que usaste
 (`silvestre:overlayTab`):
 
-- Ahora: "Hasta dónde llegar" y "Lo que se resuelve", la misión en curso con su "Completar",
-  "Objetivo 3 / 12 · misión ‹ 1 de 2 ›", el objetivo actual con el medallón del juego de su
-  tipo y su ficha de coordenadas (copia el `/travel`), "‹ ✓ Completar objetivo ›" debajo y los
-  dos siguientes. "Completar" es el mismo botón y el mismo avance que en el diario: termina la
-  misión y pasa a la siguiente. Como en el diario, no sale en un paso con una sola misión
-  obligatoria. "Completar objetivo" da el objetivo por hecho y pasa al siguiente; en el último
-  termina la misión y, si era la última obligatoria, el paso queda hecho solo. La parada sale
+- Ahora: "Hasta dónde llegar" y "Lo que se resuelve"; el rótulo "Misión" con su "Completar";
+  un desplegable con "1 de 2" y el nombre de la misión en curso; el objetivo actual con el
+  medallón del juego de su tipo y su ficha de coordenadas (copia el `/travel`); una barra con
+  "◀ Objetivo 3 de 12 ▶" y "✓ Completar objetivo", y los dos objetivos siguientes. El
+  desplegable lista las misiones que se recorren en el paso ("1 · La última piedra"), las
+  terminadas tachadas y con su ✓; elegir una lleva a ella, y Escape o un clic fuera lo cierran.
+  "Completar" es el mismo botón y el mismo avance que en el diario: termina la misión y pasa a
+  la siguiente. Como en el diario, no sale en un paso con una sola misión obligatoria. Las
+  flechas de objetivo no pasan del primero ni del último. "Completar objetivo" da el objetivo
+  por hecho y pasa al siguiente; en el último termina la misión y, si era la última
+  obligatoria, el paso queda hecho solo. La parada sale
   siempre que el paso la tenga, no solo cuando la misión en curso es la que para: sirve más
   verla antes de llegar a esa misión. Sin miniatura del mapa: con las coordenadas basta.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de

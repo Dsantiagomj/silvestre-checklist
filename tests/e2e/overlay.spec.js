@@ -19,8 +19,10 @@ async function openStep(page, n) {
 
 const noEmoji = ov => ov.evaluate(re => !new RegExp(re, "u").test(document.body.textContent), EMOJI.source);
 
-/** El nombre de la misión en curso, en «Ahora». */
-const qname = ov => ov.locator(".ov-tab-body .ov-qline .ov-label");
+/** El nombre de la misión en curso, en «Ahora» (en su desplegable). */
+const qname = ov => ov.locator(".ov-tab-body .ov-qsel-name");
+/** «Objetivo 3 de 12», entre las flechas de objetivo. */
+const objCount = ov => ov.locator(".ov-tab-body .ov-stepper-count");
 
 test("el overlay tiene un solo modo: abre en «Ahora» con el paso entero, sin «Ver más» ni «Reducir»", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -49,14 +51,71 @@ test("el overlay tiene un solo modo: abre en «Ahora» con el paso entero, sin �
   expect(await noEmoji(ov)).toBe(true);
 });
 
-test("el overlay sigue el paso de la página y cambia de misión", async ({ page, context }) => {
+test("el overlay sigue el paso de la página y cambia de misión con su desplegable", async ({ page, context }) => {
   await openApp(page);
   await openStep(page, 93);
   const ov = await openOverlay(page, context);
   await expect(qname(ov)).toHaveText("El dragón blanco", { timeout: 10_000 });
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 / 16");
-  await ov.click('[data-q="1"]');
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 16");
+  // «Misión» encima; el desplegable dice «1 de 10» y el nombre de la misión
+  await expect(ov.locator(".ov-tab-body .ov-qhead .ov-label")).toHaveText("Misión");
+  const sel = ov.locator(".ov-tab-body .ov-qsel");
+  await expect(sel).toContainText("1 de 10");
+  await expect(sel).toHaveAttribute("aria-haspopup", "listbox");
+  await expect(sel).toHaveAttribute("aria-expanded", "false");
+  // Las flechas pequeñas de misión ya no están
+  await expect(ov.locator('[data-q]')).toHaveCount(0);
+  const list = ov.getByRole("listbox", { name: "Misiones del paso" });
+  await expect(list).toHaveCount(0);
+  await sel.click();
+  await expect(sel).toHaveAttribute("aria-expanded", "true");
+  const opts = list.getByRole("option");
+  await expect(opts).toHaveCount(10);
+  await expect(opts.first()).toHaveText(/1 · El dragón blanco/);
+  await expect(opts.nth(1)).toHaveText(/2 · Examen de paso/);
+  await expect(opts.first()).toHaveAttribute("aria-selected", "true");
+  await expect(opts.nth(1)).toHaveAttribute("aria-selected", "false");
+  // Con la lista abierta, las flechas del teclado no cambian el objetivo; Escape la cierra
+  await ov.keyboard.press("ArrowDown");
+  await ov.keyboard.press("Escape");
+  await expect(list).toHaveCount(0);
+  await expect(sel).toHaveAttribute("aria-expanded", "false");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 16");
+  // Un clic fuera también la cierra
+  await sel.click();
+  await expect(list).toBeVisible();
+  await ov.locator(".ov-head .ov-title").click();
+  await expect(list).toHaveCount(0);
+  // Elegir una lleva a esa misión y cierra la lista
+  await sel.click();
+  await list.getByRole("option", { name: /Examen de paso/ }).click();
+  await expect(list).toHaveCount(0);
   await expect(qname(ov)).toHaveText("Examen de paso");
+  await expect(sel).toContainText("2 de 10");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 23");
+  // Con el teclado: flechas entre las opciones e Intro elige
+  await sel.click();
+  await expect(list.getByRole("option", { name: /Examen de paso/ })).toBeFocused();
+  await ov.keyboard.press("ArrowDown");
+  await expect(list.getByRole("option", { name: /El Reino Gris/ })).toBeFocused();
+  await ov.keyboard.press("Enter");
+  await expect(list).toHaveCount(0);
+  await expect(qname(ov)).toHaveText("El Reino Gris");
+  await expect(ov.locator(".ov-num")).toHaveText("93");
+});
+
+test("en el desplegable, la misión completada sale tachada con su ✓", async ({ page, context }) => {
+  await openApp(page, { "silvestre:questObjective": { 1905: 16 }, "silvestre:questPos": { 93: 1 } });
+  await openStep(page, 93);
+  const ov = await openOverlay(page, context);
+  await expect(qname(ov)).toHaveText("Examen de paso", { timeout: 10_000 });
+  await ov.locator(".ov-tab-body .ov-qsel").click();
+  const opts = ov.getByRole("listbox", { name: "Misiones del paso" }).getByRole("option");
+  await expect(opts.first()).toHaveClass(/is-done/);
+  await expect(opts.first().locator(".ov-qopt-ok")).toHaveText("✓");
+  expect(await opts.first().locator(".ov-qopt-name").evaluate(el => getComputedStyle(el).textDecorationLine)).toBe("line-through");
+  await expect(opts.nth(1)).not.toHaveClass(/is-done/);
+  await expect(opts.nth(1).locator(".ov-qopt-ok")).toHaveText("");
 });
 
 test("«Ahora» con dónde parar, el objetivo y los dos siguientes", async ({ page, context }) => {
@@ -84,15 +143,35 @@ test("«Ahora» con dónde parar, el objetivo y los dos siguientes", async ({ pa
   expect(look.border).toBe("0px");
   expect(look.color).toBe(look.want);
   await expect(ov.locator(".ov-map")).toHaveCount(0);
-  // «✓ Completar objetivo» y sus flechas, bajo el objetivo
+  // Una barra bajo el objetivo: [◀ | Objetivo 1 de 15 | ▶] y «✓ Completar objetivo», todo a 40 px
   const body = ov.locator(".ov-tab-body");
+  const bar = body.locator(".ov-objbar");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 15");
+  await expect(bar.locator(".ov-stepper")).toBeVisible();
+  for (const el of [bar.locator(".ov-stepper"), bar.getByRole("button", { name: "✓ Completar objetivo" }), body.locator(".ov-qsel")]) {
+    expect(Math.round((await el.boundingBox()).height)).toBe(40);
+  }
+  // El botón ocupa el resto de la fila, en la misma línea que las flechas
+  const [stepBox, goBox] = [await bar.locator(".ov-stepper").boundingBox(), await bar.getByRole("button", { name: "✓ Completar objetivo" }).boundingBox()];
+  expect(Math.round(goBox.y)).toBe(Math.round(stepBox.y));
+  expect(goBox.width).toBeGreaterThan(stepBox.width);
   await expect(body.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();
   await body.getByRole("button", { name: "✓ Completar objetivo" }).click();
-  await expect(body.locator(".ov-meta")).toContainText("Objetivo 2 /");
+  await expect(objCount(ov)).toHaveText("Objetivo 2 de 15");
   await body.getByRole("button", { name: "Objetivo anterior" }).click();
-  await expect(body.locator(".ov-meta")).toContainText("Objetivo 1 /");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 15");
   await body.getByRole("button", { name: "Objetivo siguiente" }).click();
-  await expect(body.locator(".ov-meta")).toContainText("Objetivo 2 /");
+  await expect(objCount(ov)).toHaveText("Objetivo 2 de 15");
+});
+
+test("en el último objetivo, ▶ queda desactivado y no termina la misión", async ({ page, context }) => {
+  await openApp(page, { "silvestre:done": upTo(10), "silvestre:questObjective": { 1473: 14 } });
+  const ov = await openOverlay(page, context);
+  await expect(objCount(ov)).toHaveText("Objetivo 15 de 15", { timeout: 15_000 });
+  const body = ov.locator(".ov-tab-body");
+  await expect(body.getByRole("button", { name: "Objetivo siguiente" })).toBeDisabled();
+  await expect(body.getByRole("button", { name: "Objetivo anterior" })).toBeEnabled();
+  await expect(qname(ov)).toHaveText("El acusado de la recepción");
 });
 
 test("«Misiones» es la lista del diario y «Completar» comparte el estado", async ({ page, context }) => {
@@ -180,11 +259,11 @@ test("el botón del pie marca el paso como el diario, con la línea «Además»"
 test("el teclado del overlay: flechas para paso y objetivo, espacio marca el paso", async ({ page, context }) => {
   await openApp(page, { "silvestre:done": upTo(10) });
   const ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 /", { timeout: 15_000 });
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 15", { timeout: 15_000 });
   await ov.keyboard.press("ArrowDown");
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 2 /");
+  await expect(objCount(ov)).toHaveText("Objetivo 2 de 15");
   await ov.keyboard.press("ArrowUp");
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 /");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 15");
   await ov.keyboard.press("ArrowRight");
   await expect(ov.locator(".ov-num")).toHaveText("12");
   await ov.keyboard.press("ArrowLeft");
@@ -219,8 +298,8 @@ test("«Ahora» completa la misión en curso como el diario, y la cabecera enlaz
   await expect(guide).toHaveAttribute("href", "https://www.torrentearcano.com/blanco-marfil");
   await expect(guide).toHaveAttribute("target", "_blank");
   await expect(guide).toHaveAttribute("rel", /noopener/);
-  // «Completar», junto al nombre de la misión, la termina en el mismo estado que la página y pasa a la siguiente
-  const done = ov.locator(".ov-tab-body .ov-qline .q-done-btn");
+  // «Completar», junto al rótulo «Misión», la termina en el mismo estado que la página y pasa a la siguiente
+  const done = ov.locator(".ov-tab-body .ov-qhead .q-done-btn");
   await expect(done).toHaveText("Completar");
   await done.click();
   await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
@@ -234,8 +313,11 @@ test("en un paso de una sola misión obligatoria, el overlay no lleva «Completa
   await page.click('.diary-row[data-n="4"] .row-main');
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
   const ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 /", { timeout: 15_000 });
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 9", { timeout: 15_000 });
   await expect(ov.locator(".q-done-btn")).toHaveCount(0);
+  // Una sola misión que recorrer: el desplegable dice «1 de 1» y no se abre
+  await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 1");
+  await expect(ov.locator(".ov-tab-body .ov-qsel")).toBeDisabled();
   await expect(ov.locator(".ov-guide-link")).toHaveAttribute("href", "https://www.torrentearcano.com/barnabe-en-el-espacio");
 });
 

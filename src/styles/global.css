@@ -752,12 +752,41 @@ a:hover{ text-decoration:underline; }
   padding:8px 12px; border-bottom:1px solid var(--gw-line);
 }
 .ov .ov-guide-link{ margin:0; }
-/* El nombre de la misión en curso con su «Completar», que aquí dice siempre lo que hace */
-.ov-qline{ display:flex; align-items:center; gap:8px; min-width:0; }
-.ov-qline > :first-child{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.ov-qline .q-done-btn{ padding:2px 7px; font-size:10.5px; }
-.ov-qline .q-done-txt{ display:inline; }
-.ov-qline .q-done-btn:not(.is-done)::before{ content:none; }
+/* «Misión» con el «Completar» de la misión en curso, que aquí dice siempre lo que hace */
+.ov-qhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:24px; margin-bottom:8px; }
+.ov-qhead .ov-label{ font-size:12.5px; }
+.ov-qhead .q-done-btn{ padding:4px 10px; font-size:11px; }
+.ov-qhead .q-done-txt{ display:inline; }
+.ov-qhead .q-done-btn:not(.is-done)::before{ content:none; }
+/* El desplegable de la misión: «1 de 2 · nombre ▾» a todo el ancho, y su lista encima */
+.ov-qsel-wrap{ position:relative; }
+.ov-qsel{
+  display:flex; align-items:center; gap:10px; width:100%; height:40px; padding:0 12px; border-radius:9px; cursor:pointer;
+  border:1px solid var(--gw-pin-line); background:var(--gw-pin); color:var(--gw-ink); text-align:left;
+  font:600 14px var(--font-body);
+}
+.ov-qsel:hover:not(:disabled){ border-color:var(--gw-gold); }
+.ov-qsel:disabled{ cursor:default; }
+.ov-qsel small{ flex:none; font-size:12px; font-weight:600; color:var(--gw-soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ov-qsel-name{ flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ov-qsel-caret{ flex:none; width:12px; height:12px; fill:var(--gw-gold); }
+.ov-qlist{
+  position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:20; max-height:min(280px, 60vh);
+  margin:0; padding:0; list-style:none; border:1px solid var(--gw-pin-line); border-radius:9px;
+  background:var(--gw-panel); box-shadow:0 8px 20px rgba(0,0,0,.4);
+}
+.ov-qopt{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; cursor:pointer;
+  border-top:1px solid var(--gw-line); font:500 14px var(--font-body); color:var(--gw-ink);
+}
+.ov-qopt:first-child{ border-top:0; }
+.ov-qopt:hover, .ov-qopt:focus{ background:var(--gw-pin); outline:none; }
+.ov-qopt:focus-visible{ box-shadow:inset 0 0 0 2px var(--gw-gold); }
+.ov-qopt[aria-selected="true"]{ background:var(--gw-pin); font-weight:700; box-shadow:inset 3px 0 0 var(--gw-gold); }
+.ov-qopt-ok{ flex:none; width:14px; font-weight:800; color:#8fd13a; }
+[data-theme="light"] .ov-qopt-ok{ color:#3d7414; }
+.ov-qopt-name{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ov-qopt.is-done .ov-qopt-name{ color:var(--gw-soft); text-decoration:line-through; }
 .ov-num{
   min-width:30px; text-align:center;
   font:400 30px/1 'Lilita One', var(--font-display); color:#cbee8f;
@@ -791,20 +820,27 @@ button.ov-num:hover{ filter:brightness(1.15); }
   margin:0; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
   overflow-wrap:break-word; font:700 16px/1.25 var(--font-display); letter-spacing:.02em; color:var(--gw-sel-ink);
 }
-.ov-meta{
-  display:flex; align-items:center; gap:3px; margin:2px 0 0;
-  font-size:12px; font-weight:600; color:var(--gw-soft); font-variant-numeric:tabular-nums; white-space:nowrap;
-}
 .ov-q{
   display:grid; place-items:center; width:18px; height:18px; padding:0; border-radius:4px; cursor:pointer;
   border:1px solid var(--gw-line); background:var(--gw-pin); color:var(--gw-gold);
 }
 .ov-q:disabled{ opacity:.35; cursor:default; }
 .ov-q .tri{ width:8px; height:8px; }
-/* En «Ahora»: ‹ ✓ Completar objetivo › bajo el objetivo actual */
-.ov-obj-ctl{ display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 2px; }
-.ov-obj-ctl .ov-o{ width:26px; height:26px; margin:0; }
-.ov-obj-ctl .ov-o .tri{ width:10px; height:10px; }
+/* En «Ahora», bajo el objetivo: [◀ | Objetivo 8 de 9 | ▶] y el botón, todo a 40 px */
+.ov-objbar{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.ov-stepper{
+  flex:none; display:flex; align-items:stretch; height:40px; overflow:hidden;
+  border:1px solid var(--gw-pin-line); border-radius:9px; background:var(--gw-pin);
+}
+.ov-stepper-btn{ display:grid; place-items:center; width:34px; padding:0; border:0; background:none; color:var(--gw-gold); cursor:pointer; }
+.ov-stepper-btn:hover:not(:disabled){ background:color-mix(in srgb, var(--gw-gold) 12%, transparent); }
+.ov-stepper-btn:disabled{ opacity:.35; cursor:default; }
+.ov-stepper-btn .tri{ width:10px; height:10px; }
+.ov-stepper-count{
+  display:grid; place-items:center; padding:0 8px; border-inline:1px solid var(--gw-line);
+  font:600 13px var(--font-body); color:var(--gw-ink); font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.ov .gbtn.ov-objbtn{ flex:1; min-width:0; height:40px; padding:0 10px; border-radius:9px; font-size:13.5px; letter-spacing:.08em; overflow:hidden; text-overflow:ellipsis; }
 /* La zona, en texto con su color (sin píldora: la cabecera ya va llena) */
 .ov-zone{
   display:block; margin-top:2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
@@ -841,7 +877,7 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .ov-label{
   margin:0; font:800 11px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--gw-gold);
 }
-.ov-sec .ov-meta{ margin-bottom:2px; }
+.ov-now{ margin:8px 0 6px; }
 .ov-after{ opacity:.8; }
 .ov-calls{ margin-bottom:10px; padding:0 0 10px; border-top:0; border-bottom:1px dashed var(--gw-line); }
 .ov-guide{ gap:10px; padding:0; }

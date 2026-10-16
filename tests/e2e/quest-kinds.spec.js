@@ -153,15 +153,17 @@ test("el overlay entra en «Arma letal» y salta «Luces y sombras»", async ({ 
   await openApp(page, { "silvestre:done": upTo(6) });
   await openStep(page, 7);
   const [ov] = await Promise.all([context.waitForEvent("page"), page.click("#overlayBtn")]);
-  await expect(ov.locator(".ov-tab-body .ov-qline .ov-label")).toHaveText("La cólera de los dioses", { timeout: 10_000 });
-  await ov.click('[data-q="1"]');
-  await expect(ov.locator(".ov-tab-body .ov-qline .ov-label")).toHaveText("Arma letal");
+  const qname = ov.locator(".ov-tab-body .ov-qsel-name");
+  await expect(qname).toHaveText("La cólera de los dioses", { timeout: 10_000 });
+  await ov.locator(".ov-tab-body .ov-qsel").click();
+  await ov.getByRole("option", { name: /Arma letal/ }).click();
+  await expect(qname).toHaveText("Arma letal");
 
   await page.bringToFront();
   await openStep(page, 28);
-  await expect(ov.locator(".ov-tab-body .ov-qline .ov-label")).toHaveText("Pesca en aguas congeladas");
-  await expect(ov.locator(".ov-meta")).toContainText("misión 1 de 1");
-  await expect(ov.locator('[data-q="1"]')).toBeDisabled();
+  await expect(qname).toHaveText("Pesca en aguas congeladas");
+  await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 1");
+  await expect(ov.locator(".ov-tab-body .ov-qsel")).toBeDisabled();
 });
 
 test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos que da y «La biblia de los rencores» solo tomada", async ({ page }) => {
