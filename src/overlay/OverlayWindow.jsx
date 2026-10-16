@@ -36,8 +36,8 @@ function copyStyles(doc) {
 
 function overlayKeys(e) {
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
-  // Con la lista de pasos abierta, las teclas son suyas (Escape la cierra)
-  if (e.currentTarget.querySelector(".ov-picker")) return;
+  // Con la lista de pasos o el desplegable de misiones abiertos, las teclas son suyas (Escape los cierra)
+  if (e.currentTarget.querySelector(".ov-picker, .ov-qlist")) return;
   const n = overlayStep(getState());
   if (e.key === "ArrowLeft") overlayGo(n - 1);
   if (e.key === "ArrowRight") overlayGo(n + 1);
