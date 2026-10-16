@@ -20,6 +20,14 @@ export const missionGuide = name => MISSIONS.get(norm(name)) || QUESTS.get(norm(
 export const achievementGuide = name => ACHIEVEMENTS.get(norm(name)) || null;
 
 /**
+ * La guía del paso en Torrente Arcano: la primera que enlaza su texto (el logro que
+ * persigue, como en el diario) o, en los pasos de alineamiento, que no nombran ninguna,
+ * la de su primera misión con guía. Sin ninguna, null.
+ */
+export const stepGuide = (step, quests = []) =>
+  linkify(step.base).find(p => p.href)?.href ?? quests.map(q => missionGuide(q.n)).find(Boolean) ?? null;
+
+/**
  * Parte un texto de la guía en trozos: texto suelto, nombres con guía ({ href })
  * y números de inciso ({ step }). Los trozos no se solapan.
  */

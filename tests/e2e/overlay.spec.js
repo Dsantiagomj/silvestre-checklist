@@ -220,3 +220,38 @@ test("sin las misiones cargadas, mini enseña el título del paso y dónde parar
   await ov.locator(".ov-bar").getByRole("button", { name: "✓ Completar paso 11" }).click();
   await expect(page.locator('.diary-row[data-n="11"]')).toHaveClass(/done/);
 });
+
+test("mini y «Ahora» completan la misión en curso como el diario, y la cabecera enlaza la guía del paso", async ({ page, context }) => {
+  await openApp(page);
+  await openStep(page, 93);
+  const ov = await openOverlay(page, context);
+  await expect(ov.locator(".ov-qname")).toHaveText("El dragón blanco", { timeout: 10_000 });
+  // La guía del logro del paso en Torrente Arcano, en otra pestaña
+  const guide = ov.locator(".ov-head .ov-guide-link");
+  await expect(guide).toHaveText("Guía");
+  await expect(guide).toHaveAttribute("href", "https://www.torrentearcano.com/blanco-marfil");
+  await expect(guide).toHaveAttribute("target", "_blank");
+  await expect(guide).toHaveAttribute("rel", /noopener/);
+  // «Completar» termina la misión en curso, en el mismo estado que la página, y pasa a la siguiente
+  const done = ov.locator(".ov-head .q-done-btn");
+  await expect(done).toHaveText("Completar");
+  await done.click();
+  await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(ov.locator(".ov-qname")).toHaveText("Examen de paso");
+  // En completo, junto al nombre de la misión en «Ahora»
+  await ov.getByRole("button", { name: "Ver más" }).click();
+  const now = ov.locator(".ov-tab-body .q-done-btn");
+  await expect(now).toHaveText("Completar");
+  await now.click();
+  await expect(page.locator("#journal .q-item").nth(1).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("en un paso de una sola misión obligatoria, el overlay no lleva «Completar» misión", async ({ page, context }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="4"] .row-main');
+  await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
+  const ov = await openOverlay(page, context);
+  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 /", { timeout: 15_000 });
+  await expect(ov.locator(".q-done-btn")).toHaveCount(0);
+  await expect(ov.locator(".ov-guide-link")).toHaveAttribute("href", "https://www.torrentearcano.com/barnabe-en-el-espacio");
+});
