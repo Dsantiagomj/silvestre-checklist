@@ -7,7 +7,7 @@ import {
   moveObjective, moveQuest, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
-import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, StepButton, Tri } from "../components/Journal.jsx";
+import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri } from "../components/Journal.jsx";
 import { stepGuide } from "../lib/guides.js";
 import { WinBadge } from "../components/Diary.jsx";
 
@@ -48,15 +48,12 @@ function ObjButton({ cur }) {
   );
 }
 
-/**
- * "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. En mini,
- * también las del objetivo, junto a su número: las del pie son de paso.
- */
-function QuestMeta({ cur, objArrows }) {
+/** "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. */
+function QuestMeta({ cur }) {
   const { at, walked, objs, k } = cur;
   return (
     <p className="ov-meta">
-      Objetivo {objArrows && <ObjArrow cur={cur} dir="prev" />}{k + 1} / {objs.length}{objArrows && <ObjArrow cur={cur} dir="next" />}
+      Objetivo {k + 1} / {objs.length}
       {" "}· misión{" "}
       <button type="button" className="ov-q" data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior"
         onClick={() => moveQuest(-1)}><Tri dir="prev" /></button>
@@ -73,58 +70,6 @@ function NowCard({ cur }) {
     <div className="ov-now" data-qid={cur.q.id}>
       <Objectives route objs={[cur.objs[cur.k]]} at={0} />
     </div>
-  );
-}
-
-/**
- * La parada roja del paso, siempre que la tenga: se ve antes de llegar a la misión que
- * la lleva, que es cuando sirve. stepCalls ya quita el rojo de un paso que se resuelve
- * en sí mismo (ahí es donde se retoma) y deja la parada que queda tras el verde.
- */
-const stopsOf = step => stepCalls(step).filter(([kind]) => kind === "stop").map(([, text]) => text);
-
-function StopLines({ step }) {
-  return stopsOf(step).map((text, i) => (
-    <p key={i} className="ov-stop"><b>Parar:</b> {text}</p>
-  ));
-}
-
-function Mini({ n, step, cur, s, setMode, pick }) {
-  const resolves = !cur && stepCalls(step).filter(([kind]) => kind === "done");
-  return (
-    <>
-      <header className="ov-head">
-        <button type="button" className="ov-num" aria-haspopup="listbox" title="Elegir otro paso" onClick={pick}>{n}</button>
-        <div className="ov-head-txt">
-          <div className="ov-qline">
-            <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
-            {cur && <CurrentQuestDone n={n} cur={cur} s={s} />}
-          </div>
-          {cur ? <QuestMeta cur={cur} objArrows /> : <p className="ov-meta">{step.zone}</p>}
-        </div>
-        <GuideLink step={step} s={s} />
-        <b className="ov-pct">{progressPct(s)}%</b>
-      </header>
-      <div className="ov-scroll ov-mini-body">
-        {/* Dónde parar, arriba: en una ventana baja se ve sin desplazar */}
-        <StopLines step={step} />
-        {cur && <NowCard cur={cur} />}
-        {resolves && resolves.map(([, text], i) => <p key={i} className="ov-resolve"><b>Se resuelve:</b> {text}</p>)}
-      </div>
-      <nav className="ov-bar" aria-label="Overlay">
-        <button type="button" className="gbtn" disabled={n === 1} aria-label={`Paso ${n - 1}`} onClick={() => overlayGo(n - 1)}>
-          <Tri dir="prev" />
-        </button>
-        {cur ? <ObjButton cur={cur} /> : <StepButton step={step} s={s} />}
-        <button type="button" className="gbtn" disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`} onClick={() => overlayGo(n + 1)}>
-          <Tri dir="next" />
-        </button>
-        <button type="button" className="gbtn ov-mode" onClick={() => setMode("full")} title="Ver el paso entero">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5" /></svg>
-          Ver más
-        </button>
-      </nav>
-    </>
   );
 }
 
@@ -168,7 +113,8 @@ function NowTab({ step, cur, s }) {
   );
 }
 
-function Full({ n, step, cur, s, setMode, pick }) {
+/** El paso entero: cabecera, las cuatro pestañas y la barra del diario. */
+function Step({ n, step, cur, s, pick }) {
   const [tab, setTabState] = useState(readTab);
   const setTab = t => {
     localStorage.setItem(TAB_KEY, t);
@@ -178,7 +124,7 @@ function Full({ n, step, cur, s, setMode, pick }) {
   const left = rows.filter(row => !rowHave(s, { ...row, steps: [n] }, [n])).length;
   return (
     <>
-      <header className="ov-head ov-full-head">
+      <header className="ov-head">
         <button type="button" className="ov-num" aria-haspopup="listbox" title="Elegir otro paso" onClick={pick}>{n}</button>
         <div className="ov-head-txt">
           <p className="ov-title">{stepTitle(step)}</p>
@@ -186,10 +132,6 @@ function Full({ n, step, cur, s, setMode, pick }) {
         </div>
         <GuideLink step={step} s={s} />
         <b className="ov-pct">{progressPct(s)}%</b>
-        <button type="button" className="gbtn ov-mode" onClick={() => setMode("mini")} title="Volver a la tira sobre el juego">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 6.5h-4v-4M9.5 6.5l4-4M2.5 9.5h4v4M6.5 9.5l-4 4" /></svg>
-          Reducir
-        </button>
       </header>
       <div className="ov-tabs" role="tablist" aria-label="Overlay">
         {TABS.map(([key, label]) => (
@@ -263,20 +205,16 @@ function StepPicker({ n, s, onClose }) {
   );
 }
 
-/**
- * Contenido del overlay. En mini, una tira sobre el juego con el objetivo actual y dónde
- * parar; en completo, el paso entero en pestañas, con las piezas del diario.
- */
-export default function OverlayView({ mode, setMode }) {
+/** Contenido del overlay: el paso entero en pestañas, con las piezas del diario. */
+export default function OverlayView() {
   const s = useAppState();
   const n = overlayStep(s);
   const step = STEPS[n - 1];
   const cur = s.questsLoaded ? currentQuest(n, s.questPos, s.questObj) : null;
   const [picking, setPicking] = useState(false);
-  const View = mode === "full" ? Full : Mini;
   return (
-    <div className={`ov journal ov-${mode}`} data-mode={mode}>
-      <View n={n} step={step} cur={cur} s={s} setMode={setMode} pick={() => setPicking(true)} />
+    <div className="ov journal">
+      <Step n={n} step={step} cur={cur} s={s} pick={() => setPicking(true)} />
       {picking && <StepPicker n={n} s={s} onClose={() => setPicking(false)} />}
     </div>
   );
