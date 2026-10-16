@@ -775,14 +775,10 @@ export function moveObjective(delta) {
   if (!cur) return;
   const next = cur.k + delta;
   if (next < 0) return;
-  // Fin de la misión: queda terminada y se pasa a la siguiente (en la última, el paso
-  // puede quedar hecho)
-  if (next >= cur.objs.length) {
-    setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: cur.objs.length } }));
-    moveQuest(1);
-  } else {
-    setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: next } }));
-  }
+  // Fin de la misión: queda terminada y el overlay sigue en ella («Misión completada»,
+  // con «Siguiente misión» para pasar). En la última, el paso puede quedar hecho
+  const k = Math.min(next, cur.objs.length);
+  setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: k } }));
   completeIfDone(n);
 }
 
