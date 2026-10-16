@@ -457,6 +457,24 @@ export function toggleStep(n) {
   celebrateDofus(before.done);
   // Desmarcar no termina nada en otro paso
   if (state.done[n]) completeOthers(before);
+  else reopenLast(n);
+}
+
+/**
+ * Desmarcar un paso con todas sus misiones hechas lo deja como antes del último clic:
+ * su última misión obligatoria vuelve a su último objetivo. Si no, el paso seguiría
+ * con todo completado y se volvería a marcar solo al tocar cualquier objetivo.
+ */
+function reopenLast(n) {
+  if (!questsAllDone(state, n)) return;
+  const quests = questsOf(n);
+  const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n));
+  if (j < 0) return;
+  const q = quests[j];
+  setState(s => ({
+    questPos: { ...s.questPos, [n]: j },
+    questObj: { ...s.questObj, [q.id]: Math.max(objCount(q) - 1, 0) },
+  }));
 }
 
 /** Marca varios pasos a la vez (los que cierra un mismo combate). */
