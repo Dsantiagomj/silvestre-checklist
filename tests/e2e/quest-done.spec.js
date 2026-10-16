@@ -136,12 +136,16 @@ test("en un paso hecho, pulsar un medallón hecho vuelve a él y desmarca el pas
   await expect(page.locator("#journal .q-item .q-done-btn[aria-pressed=true]")).toHaveCount(4);
 });
 
-test("un paso de una sola misión no lleva «Completar»: lo hace «Completar paso N»", async ({ page }) => {
+test("un paso de una sola misión también lleva «Completar», y completarla marca el paso", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="4"] .row-main');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
-  await expect(page.locator("#journal .q-done-btn")).toHaveCount(0);
+  const btn = page.locator("#journal .q-done-btn");
+  await expect(btn).toHaveText("Completar");
+  await btn.click();
+  await expect(btn).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('.diary-row[data-n="4"]')).toHaveClass(/\bdone\b/);
 });
 
 test("completar todas las misiones obligatorias marca el paso, sin cambiar de paso", async ({ page }) => {

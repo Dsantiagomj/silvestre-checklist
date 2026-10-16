@@ -55,8 +55,9 @@ test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Comp
   await expect(luces.locator(".q-start").first()).toContainText("Waldos FieldChester Potcobble");
   await expect(luces.locator(".q-take-note")).toHaveText("No hace falta hacerla: basta con tenerla tomada.");
   await expect(luces.locator(".obj-row")).toHaveCount(0);
-  // Una sola misión obligatoria: «Paso hecho» la termina, el botón sobra
-  await expect(page.locator("#journal .q-done-btn")).toHaveCount(0);
+  // Solo tomarla no lleva «Completar»; la obligatoria sí
+  await expect(luces.locator(".q-done-btn")).toHaveCount(0);
+  await expect(quest(page, "Pesca en aguas congeladas").locator(".q-done-btn")).toHaveText("Completar");
   await expect(page.locator("#journal .q-take")).toHaveCount(1);
   await expect(page.locator("#journal .q-optional")).toHaveCount(0);
 
@@ -83,8 +84,8 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   await openStep(page, 7);
   const colera = quest(page, "La cólera de los dioses");
   const arma = quest(page, "Arma letal");
-  // Una sola misión obligatoria: la cólera no lleva «Completar»; la opcional sí
-  await expect(colera.locator(".q-done-btn")).toHaveCount(0);
+  // Las dos llevan «Completar», también la única obligatoria
+  await expect(colera.locator(".q-done-btn")).toHaveText("Completar");
   const btn = arma.locator(".q-done-btn");
   await expect(btn).toHaveText("Completar");
 
@@ -136,9 +137,9 @@ test("paso 27: «La marcha de la emperatriz» suma sus puntos; «Star ski y Dutc
   await star.locator(".q-done-btn").click();
   await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
 
-  // La única obligatoria no lleva «Completar»: se termina con su último medallón. Suma
-  // lo que vale y la opcional sigue sin hacer
-  await expect(marcha.locator(".q-done-btn")).toHaveCount(0);
+  // La única obligatoria también lleva «Completar»; aquí se termina con su último
+  // medallón. Suma lo que vale y la opcional sigue sin hacer
+  await expect(marcha.locator(".q-done-btn")).toHaveText("Completar");
   await marcha.locator("summary .q-name").click();
   const rows = marcha.locator(".obj-list.route > .obj-row");
   await rows.last().locator(".obj-med").click();

@@ -243,12 +243,6 @@ function QuestStart({ q }) {
   );
 }
 
-/**
- * «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Completar
- * paso N». Las opcionales siempre lo llevan: es como se marcan.
- */
-export const hasQuestDone = (quests, q) => q.kind === "optional" || quests.filter(x => x.kind === "mandatory").length > 1;
-
 /** «Completar» / «✓ Completada» de una misión; terminada en otro paso, no se pulsa. */
 function QuestDone({ finished, elsewhere, onClick }) {
   return (
@@ -262,11 +256,11 @@ function QuestDone({ finished, elsewhere, onClick }) {
 
 /**
  * El «Completar» de la misión en curso del overlay (cur, de currentQuest): el mismo
- * botón y el mismo avance que en la lista del diario. Nada si el paso no lo lleva.
+ * botón y el mismo avance que en la lista del diario. Nada en una de solo recoger.
  */
 export function CurrentQuestDone({ n, cur, s }) {
   const { list, i, q } = cur;
-  if (q.kind === "take" || !hasQuestDone(list, q)) return null;
+  if (q.kind === "take") return null;
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
   const finished = progressOf(s, n, list, i, q) >= total;
   const elsewhere = q.kind === "optional" ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, n);
@@ -342,7 +336,7 @@ export function Quests({ step, quests, loaded, s }) {
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          {hasQuestDone(quests, q) && <QuestDone finished={finished} elsewhere={elsewhere} onClick={toggleDone} />}
+          <QuestDone finished={finished} elsewhere={elsewhere} onClick={toggleDone} />
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
