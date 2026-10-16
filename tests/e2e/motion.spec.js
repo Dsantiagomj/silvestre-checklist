@@ -315,7 +315,7 @@ test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) 
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
 
-test("con el final del diario a la vista, desplegar y plegar misiones no mueve la lista", async ({ page }) => {
+test("con el final del diario a la vista, desplegar y plegar misiones deja la lista entera y a la vista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.click('.diary-row[data-n="17"] .row-main');
@@ -325,11 +325,21 @@ test("con el final del diario a la vista, desplegar y plegar misiones no mueve l
   // Al final de la ventana del diario, como al bajar hasta las últimas misiones
   await page.evaluate(() => { const w = document.querySelector(".diary-window"); scrollTo(0, w.getBoundingClientRect().bottom + scrollY - innerHeight + 40); });
   await page.waitForTimeout(600);
-  // Las pestañas de la lista siguen a la vista: la lista no se ha ido hacia arriba
-  const tabsTop = await page.locator(".diary-tabs").evaluate(el => el.getBoundingClientRect().top);
-  expect(tabsTop).toBeGreaterThan(0);
-  const tops = await listTops(page, [2, 2, 0, 0]);
-  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
+  // Al final del panel la lista llega con él: plegar lo acorta y la lista sube con su
+  // final, pero no cambia de alto ni se va de la pantalla
+  const frames = await page.evaluate(async () => {
+    const side = document.querySelector(".diary-side");
+    const sums = document.querySelectorAll("#journal .q-item summary");
+    const snap = () => { const r = side.getBoundingClientRect(); return { h: Math.round(r.height), bottom: r.bottom, vh: innerHeight }; };
+    const out = [snap()];
+    for (const k of [2, 2, 0, 0]) {
+      sums[k].click();
+      for (let i = 0; i < 25; i++) { await new Promise(r => requestAnimationFrame(r)); out.push(snap()); }
+    }
+    return out;
+  });
+  expect(new Set(frames.map(f => f.h)).size).toBe(1);
+  expect(frames.every(f => f.bottom > f.vh / 2)).toBe(true);
 });
 
 test("al final de la página, desplegar una misión no mueve nada ni cambia el tamaño de la lista", async ({ page }) => {
@@ -343,16 +353,19 @@ test("al final de la página, desplegar una misión no mueve nada ni cambia el t
   const frames = await page.evaluate(async () => {
     const side = document.querySelector(".diary-side");
     const sum = document.querySelectorAll("#journal .q-item summary")[1];
+    const header = document.querySelector("header").getBoundingClientRect().bottom;
     const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top),
-      top: Math.round(side.getBoundingClientRect().top), h: Math.round(side.offsetHeight) });
+      top: side.getBoundingClientRect().top - header, h: Math.round(side.offsetHeight) });
     const out = [snap()];
     sum.click();
     for (let i = 0; i < 30; i++) { await new Promise(r => requestAnimationFrame(r)); out.push(snap()); }
     return out;
   });
   const spread = k => Math.max(...frames.map(f => f[k])) - Math.min(...frames.map(f => f[k]));
-  // Ni la página, ni la misión pulsada, ni la lista se mueven; la lista no cambia de altura
-  expect([spread("y"), spread("sum"), spread("top"), spread("h")].every(d => d <= 1)).toBe(true);
+  // Ni la página ni la misión pulsada se mueven y la lista no cambia de altura. Al alargarse
+  // el panel la lista puede bajar hasta su sitio, pegada bajo la cabecera, nunca más
+  expect([spread("y"), spread("sum"), spread("h")].every(d => d <= 1), JSON.stringify(frames.at(-1))).toBe(true);
+  expect(frames.every(f => f.top <= 1)).toBe(true);
 });
 
 /**

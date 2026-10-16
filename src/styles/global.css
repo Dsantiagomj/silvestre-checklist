@@ -609,7 +609,7 @@ footer small{ color:var(--line-warm); }
 *::-webkit-scrollbar-thumb:hover{ background:var(--amber-2); }
 /* Con scrollbar-width (las barras finas), Chromium ignora ::-webkit-scrollbar y dibuja
    la del sistema: estas llevan los mismos colores por la vía estándar */
-.step-map-scroll, .prereqs-panel, .items-body, .diary-detail, .diary-detail .journal-body{
+.step-map-scroll, .prereqs-panel, .items-body{
   scrollbar-color:var(--line-2) var(--inset);
 }
 
@@ -2027,12 +2027,20 @@ header.is-scrolled .title-bar{
    resto y lo que no cabe se desplaza por dentro: la lista y el cuerpo del paso en el
    diario, el camino en el mapa y las listas en Prerrequisitos y Objetos. En pantallas
    muy bajas manda min-height: la ventana deja de caber y entonces sí se baja la página.
+   El diario no tiene alto fijo: el detalle crece con sus misiones y se baja la página,
+   con la lista pegada bajo la cabecera, del alto de la pantalla y con su propio scroll.
    En móvil todo sigue el flujo de la página (el detalle vive en la hoja inferior) */
 @media (min-width:901px){
   .diary{
     display:flex; flex-direction:column; min-height:560px;
     height:calc(100vh - var(--header-h) - 24px);
     height:calc(100dvh - var(--header-h) - 24px);
+  }
+  .diary.is-journal{ height:auto; }
+  .diary.is-journal .diary-side{
+    position:sticky; top:var(--header-h); align-self:start;
+    height:calc(100vh - var(--header-h));
+    height:calc(100dvh - var(--header-h));
   }
   .diary-head{ flex:none; }
   .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
@@ -2417,9 +2425,9 @@ header.is-scrolled .title-bar{
 .seal-pin circle{ fill:var(--bg); }
 .seal.here .seal-name{ color:var(--accent-ink); }
 
-/* El diario llena lo que deja la cabecera de la ventana (ver «La ventana cabe en la
-   pantalla», más abajo): la lista y el detalle se desplazan cada uno por dentro. Así
-   desplegar misiones no cambia la altura de la página y la lista no se mueve nunca */
+/* El diario: a la izquierda la lista de pasos, que en escritorio se queda a la vista y se
+   desplaza por dentro (ver «La ventana cabe en la pantalla», más abajo); a la derecha el
+   detalle, que crece con lo que lleva */
 .diary-window{
   display:grid; grid-template-columns:minmax(330px, 420px) minmax(0, 1fr); overflow:clip;
 }
@@ -2483,7 +2491,7 @@ header.is-scrolled .title-bar{
 .diary-row.done .row-art{ opacity:.5; }
 
 /* Detalle: el escenario va siempre en oscuro, como un estandarte, en los dos temas */
-.diary-detail{ min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.diary-detail{ min-width:0; }
 /* Arriba, el estandarte (opción D): a la izquierda, un pendón vertical sobre el mapa del
    juego donde empieza el paso, con su número, su zona y su figura; a la derecha, el
    objetivo: el logro, una frase por lo que pide, la cita de Sandglass y los pasos que
@@ -2498,7 +2506,8 @@ header.is-scrolled .title-bar{
   display:flex; flex-direction:column; align-items:center;
   min-height:236px; padding:14px 12px 36px; text-align:center;
   /* La punta del pendón */
-  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 26px), 50% 100%, 0 calc(100% - 26px));
+  --tip:26px;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--tip)), 50% 100%, 0 calc(100% - var(--tip)));
   background:#1d2017;
 }
 /* Mide lo que en un paso corriente (el 12) y va arriba: un objetivo largo (el 93) no
@@ -2596,6 +2605,12 @@ header.is-scrolled .title-bar{
   font:800 10px var(--font-display); letter-spacing:.16em; text-transform:uppercase; color:#e3c565;
 }
 .journal-goal .journal-base{ margin:0; font-size:13.5px; line-height:1.5; color:#bdb39a; }
+/* Quién da el paso, en una línea bajo el objetivo: solo con el estandarte pequeño del
+   diario en escritorio, que lleva la figura sin su nombre */
+.goal-by{ display:none; margin:0; font-size:12.5px; line-height:1.4; color:#bdb39a; }
+.goal-by b{ font-weight:700; color:#ece3cc; }
+[data-theme="light"] .goal-by{ color:#5e5240; }
+[data-theme="light"] .goal-by b{ color:#3b2a10; }
 .journal-goal .guide-link, .journal-goal .step-ref{
   color:#ece3cc; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(227,197,101,.6);
 }
@@ -2868,14 +2883,46 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
   padding:12px 26px 14px; border-top:1px solid var(--gw-line); background:var(--bg-2);
 }
-/* En escritorio el detalle no se desplaza entero: la cabecera (estandarte y objetivo)
-   y la barra de pasos quedan fijas, y solo el cuerpo (avisos y misiones) se desplaza */
+/* En escritorio el detalle crece con lo que lleva y se desplaza la página: nada se
+   desplaza por dentro y abrir una misión alarga el panel. Mide como poco lo que la
+   pantalla bajo la cabecera de la página, así que con poco contenido la barra de pasos
+   va al pie de la pantalla y el hueco queda entre el contenido y ella. Con mucho, se
+   queda pegada al pie de la pantalla mientras el panel sigue y, al final, al pie del panel.
+   Nunca sube por encima de los primeros 240 px del cuerpo: su margen de arriba es el
+   tope dentro de .journal-main, y el cuerpo lo devuelve con el mismo margen negativo
+   (sin cambiar dónde va la barra). Arriba, el estandarte a media altura: número, zona y
+   figura; quién da el paso baja al objetivo (.goal-by) */
 @media (min-width:901px){
-  .diary-detail{ display:flex; flex-direction:column; overflow:hidden; }
-  .diary-detail .journal{ flex:1; min-height:0; display:flex; flex-direction:column; }
-  .diary-detail .journal-top, .diary-detail .journal-cta{ flex:none; }
-  .diary-detail .journal-body{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+  .diary-detail{
+    display:flex; flex-direction:column;
+    min-height:calc(100vh - var(--header-h));
+    min-height:calc(100dvh - var(--header-h));
+  }
+  .diary-detail .journal, .diary-detail .journal-main{ flex:1; display:flex; flex-direction:column; }
+  .diary-detail .journal-body{ flex:1; margin-bottom:-240px; }
+  .diary-detail .journal-cta{ position:sticky; bottom:0; z-index:3; margin-top:240px; box-shadow:0 -8px 16px -10px rgba(0,0,0,.55); }
+  /* Ir a una misión la deja bajo la cabecera de la página, no debajo */
+  .diary-detail .q-item{ scroll-margin-top:calc(var(--header-h) + 10px); }
+  .diary-detail .journal-top{ grid-template-columns:156px minmax(0,1fr); gap:22px; padding:12px 26px; }
+  .diary-detail .journal-goal{ gap:10px; }
+  /* Rótulos y grupos un poco más juntos: en el 12, las cinco misiones caben a 1440×900 */
+  .diary-detail .journal-h{ margin-top:16px; }
+  .diary-detail .q-group + .q-group{ margin-top:8px; }
+  .diary-detail .journal-top .journal-banner{ --tip:22px; height:200px; min-height:0; padding:10px 8px 16px; }
+  .diary-detail .journal-num{ font-size:38px; }
+  .diary-detail .banner-zone{
+    max-width:100%; margin-top:4px; padding:1px 8px; border-radius:9px;
+    font-size:9.5px; letter-spacing:.12em; line-height:1.3;
+  }
+  .diary-detail .journal-show{ padding-top:4px; }
+  .diary-detail .journal-show figcaption{ display:none; }
+  .diary-detail .journal-show::before{ bottom:0; width:96px; height:18px; }
+  .diary-detail .journal-show img{ width:92px; height:92px; animation-name:journal-float-sm; }
+  .diary-detail .journal-show[data-kind="egg"] img{ width:72px; height:72px; margin:8px 0; }
+  .diary-detail .goal-by{ display:block; }
 }
+[data-theme="light"] .diary-detail .journal-cta{ box-shadow:0 -8px 16px -10px rgba(40,50,20,.25); }
+@keyframes journal-float-sm{ 50%{ transform:translateY(-4px); } }
 .journal-cta-main{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; }
 /* Lo que el paso termina además en los que cierra, en una línea pequeña bajo el botón */
 .cta-also{
@@ -3040,9 +3087,9 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   }
 }
 
-/* Pantallas bajas de escritorio: la ventana entera cabe en la pantalla, así que el
-   estandarte, la franja de los Dofus y las barras se compactan para que al cuerpo del
-   paso (avisos, objetos y misiones) le quede sitio de verdad */
+/* Pantallas bajas de escritorio: la franja de los Dofus, las pestañas y las barras se
+   compactan para que a las vistas les quede sitio de verdad. El estandarte del diario ya
+   es pequeño (ver «En escritorio el detalle crece con lo que lleva») */
 @media (min-width:901px) and (max-height:820px){
   .journal-top{ padding:10px 22px 10px; gap:16px; grid-template-columns:170px minmax(0,1fr); }
   .journal-banner{ min-height:0; padding:8px 8px 30px; }

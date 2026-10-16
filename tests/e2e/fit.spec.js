@@ -4,7 +4,9 @@ import { openApp } from "./helpers.js";
 /**
  * En escritorio la ventana de los 100 pasos nunca es más alta que la pantalla: su
  * cabecera (los Dofus del camino, las pestañas y el buscador) queda fija y lo que no
- * cabe se desplaza por dentro, en la lista, en el detalle, en el mapa o en las listas.
+ * cabe se desplaza por dentro, en el mapa o en las listas. El diario es la excepción:
+ * el detalle del paso crece con sus misiones y se desplaza la página, con la lista de
+ * pasos y la barra de pasos pegadas a la pantalla.
  */
 
 const VIEWS = ["map", "diary", "prereqs", "items"];
@@ -33,8 +35,19 @@ const boxes = page => page.evaluate(() => {
 /** La ventana entera a la vista, bajo la cabecera de la página. */
 const fits = b => b.section >= b.header - 0.5 && b.win.top >= b.header - 0.5 && b.win.bottom <= b.vh + 0.5;
 
+/**
+ * En el diario: la ventana empieza bajo la cabecera y la cabecera del paso (estandarte y
+ * objetivo) se ve entera. La barra de pasos puede quedar más abajo: no sube sobre ella.
+ */
+const fitsDiary = page => page.evaluate(() => {
+  const header = document.querySelector("header").getBoundingClientRect().bottom;
+  const win = document.querySelector(".steps-win").getBoundingClientRect();
+  const top = document.querySelector("#journal .journal-top")?.getBoundingClientRect();
+  return win.top >= header - 0.5 && !!top && top.top >= header - 0.5 && top.bottom <= innerHeight + 0.5;
+});
+
 for (const [w, h] of SIZES) {
-  for (const view of VIEWS) {
+  for (const view of VIEWS.filter(v => v !== "diary")) {
     test(`a ${w}×${h}, la ventana de pasos cabe en la pantalla con la pestaña «${view}»`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await openApp(page, null, { view });
@@ -49,24 +62,41 @@ for (const [w, h] of SIZES) {
   }
 }
 
-test("la ventana tiene la misma altura en todas las pestañas", async ({ page }) => {
+for (const [w, h] of SIZES) {
+  test(`a ${w}×${h}, en el diario la ventana empieza bajo la cabecera y la cabecera del paso se ve sin bajar`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await openApp(page);
+    await align(page);
+    await page.waitForTimeout(150);
+    const b = await boxes(page);
+    expect(b.section).toBeGreaterThanOrEqual(b.header - 0.5);
+    expect(await fitsDiary(page)).toBe(true);
+    // La lista mide lo que la pantalla bajo la cabecera, no lo que el detalle
+    const side = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().height);
+    expect(side).toBeLessThanOrEqual(h - b.header);
+  });
+}
+
+test("la ventana tiene la misma altura en el mapa y las listas; en el diario, al menos esa", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page, null, { view: "map" });
   await align(page);
-  const heights = [];
+  const heights = {};
   for (const id of ["#stepsViewMap", "#stepsViewDiary", "#tabPrereqs", "#tabItems"]) {
     await page.click(id);
     await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
     await page.waitForTimeout(350);
-    heights.push(Math.round((await boxes(page)).win.height));
+    heights[id] = Math.round((await boxes(page)).win.height);
   }
-  expect(new Set(heights).size, heights.join()).toBe(1);
+  const { "#stepsViewDiary": diary, ...rest } = heights;
+  expect(new Set(Object.values(rest)).size, JSON.stringify(heights)).toBe(1);
+  expect(diary).toBeGreaterThanOrEqual(heights["#stepsViewMap"]);
 });
 
 // Lo que se desplaza en cada pestaña y lo que queda fijo encima
 const SCROLL = {
   map: { scrollers: [".step-map-scroll"], fixed: [] },
-  diary: { scrollers: [".diary-list", "#journal .journal-body"], fixed: [".diary-tabs", "#journal .journal-top", "#journal .journal-cta"] },
+  diary: { scrollers: [".diary-list"], fixed: [".diary-tabs", "#journal .journal-top", "#journal .journal-cta"] },
   prereqs: { scrollers: [".prereqs-panel"], fixed: [".needs-bar"] },
   items: { scrollers: [".items-body"], fixed: [".needs-toolbar"] },
 };
@@ -113,18 +143,35 @@ test("con la rueda sobre la lista, se desplaza la lista y no la página", async 
   expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
-test("«Siguiente» de la franja deja la ventana entera a la vista", async ({ page }) => {
+test("«Siguiente» de la franja deja a la vista la ventana desde arriba y la cabecera del paso", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await page.click(".win-strip .diary-next");
-  await expect.poll(async () => fits(await boxes(page)), { timeout: 4000 }).toBe(true);
+  await expect.poll(() => fitsDiary(page), { timeout: 4000 }).toBe(true);
 });
 
-test("«Continuar» del hero deja la ventana entera a la vista", async ({ page }) => {
+test("«Continuar» del hero deja a la vista la ventana desde arriba y la cabecera del paso", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.click("#heroNextGo");
-  await expect.poll(async () => fits(await boxes(page)), { timeout: 4000 }).toBe(true);
+  await expect.poll(() => fitsDiary(page), { timeout: 4000 }).toBe(true);
+});
+
+test("en el diario, la rueda sobre el detalle baja la página y la lista sigue a la vista", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await page.click('.diary-row[data-n="1"] .row-main');
+  await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
+  await align(page);
+  await page.waitForTimeout(200);
+  const y = await page.evaluate(() => scrollY);
+  const box = await page.locator("#journal .journal-top").boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + 10);
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y + 100);
+  expect(await page.locator("#journal .journal-body").evaluate(el => el.scrollTop)).toBe(0);
+  await expect(page.locator(".diary-list")).toBeInViewport();
+  await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
 });
 
 test("al volver al mapa, el paso se busca dentro del mapa y la página no se mueve", async ({ page }) => {
@@ -153,14 +200,22 @@ test("en móvil la ventana sigue el flujo de la página, sin alto fijo", async (
 });
 
 for (const [w, h] of SIZES) {
-  test(`a ${w}×${h}, al cuerpo del paso le queda sitio para leer las misiones`, async ({ page }) => {
+  test(`a ${w}×${h}, con el detalle arriba se leen las misiones sin desplazar nada por dentro`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await openApp(page);
     await page.click('.diary-row[data-n="1"] .row-title');
-    await align(page);
     await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
-    // En pantallas bajas el estandarte y la franja se compactan: el cuerpo, al menos 200 px
-    const body = await page.locator("#journal .journal-body").evaluate(el => el.clientHeight);
-    expect(body).toBeGreaterThanOrEqual(200);
+    await align(page);
+    await page.evaluate(() => {
+      const header = document.querySelector("header").getBoundingClientRect().bottom;
+      scrollBy(0, document.querySelector(".diary-detail").getBoundingClientRect().top - header);
+    });
+    // El cuerpo no se desplaza por dentro y las misiones empiezan sobre la barra de pasos,
+    // que va pegada abajo: el 1, con su objetivo largo y tres objetos, ya deja ver la primera
+    expect(await page.locator("#journal .journal-body").evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+    const ctaTop = await page.locator("#journal .journal-cta").evaluate(el => el.getBoundingClientRect().top);
+    const first = await page.locator("#journal .q-item").first().evaluate(e => e.getBoundingClientRect().bottom);
+    expect(first).toBeLessThanOrEqual(ctaTop + 0.5);
+    await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
   });
 }
