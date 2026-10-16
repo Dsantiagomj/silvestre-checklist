@@ -136,7 +136,7 @@ test("en un paso hecho, pulsar un medallón hecho vuelve a él y desmarca el pas
   await expect(page.locator("#journal .q-item .q-done-btn[aria-pressed=true]")).toHaveCount(4);
 });
 
-test("un paso de una sola misión no lleva «Completar»: lo hace «Paso hecho»", async ({ page }) => {
+test("un paso de una sola misión no lleva «Completar»: lo hace «Completar paso N»", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="4"] .row-main');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
@@ -158,7 +158,7 @@ test("completar todas las misiones obligatorias marca el paso, sin cambiar de pa
   expect((await readLS(page, "silvestre:done"))["12"]).toBe(true);
   // Sigue en el 12
   await expect(page.locator("#journal .journal-num")).toHaveText("12");
-  await expect(page.locator("#toggleBtn")).toHaveText("Desmarcar");
+  await expect(page.locator("#toggleBtn")).toHaveText("Paso completado · deshacer");
 });
 
 test("la misión opcional no hace falta para que el paso se marque solo", async ({ page }) => {

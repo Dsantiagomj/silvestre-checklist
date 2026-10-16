@@ -1,11 +1,12 @@
 import { useEffect, useId } from "react";
 import { ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, OBJ_ICONS, imgUrl } from "../lib/assets.js";
-import { CLOSED_BY, RESUMED_IN, doneIcon, list, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
+import { CLOSED_BY, RESUMED_IN, doneIcon, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
 import { questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { closeSteps, loadQuests, openInDiary, pendingCloses, toggleStep, useAppState } from "../state/store.js";
 import Banner from "./Banner.jsx";
+import { AlsoLine, stepLabel } from "./Journal.jsx";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const count = (k, one, many) => `${k} ${k === 1 ? one : many}`;
@@ -87,10 +88,11 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
         <div className="map-card-cta">
           <button type="button" className={"map-card-done" + (done ? " is-done" : "")}
             onClick={() => (closes.length ? closeSteps(n, closes) : toggleStep(n))}>
-            {done ? "Desmarcar" : closes.length ? `✓ Hecho, y termina el ${list(closes)}` : "✓ Hecho"}
+            {stepLabel(n, done)}
           </button>
           <button type="button" className="map-card-open" onClick={() => openInDiary(n)}>Abrir en el diario →</button>
         </div>
+        <AlsoLine s={s} closes={closes} />
       </div>
       <button type="button" className="map-card-x" aria-label="Cerrar" onClick={onClose}>×</button>
     </div>
