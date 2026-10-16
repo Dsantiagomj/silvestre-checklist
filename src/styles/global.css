@@ -845,6 +845,9 @@ button.ov-num:hover{ filter:brightness(1.15); }
   padding:7px 10px; border-top:1px solid var(--gw-line); background:var(--bg-2);
 }
 .ov-bar .go{ overflow:hidden; text-overflow:ellipsis; }
+/* A 340 px caben «✓ Completar objetivo» entero, las flechas de paso y «Ver más» */
+.ov-bar .gbtn{ padding:7px 8px; font-size:11.5px; letter-spacing:.04em; }
+.ov-bar .ov-mode{ gap:4px; }
 
 /* Completo: pestañas como las de la ventana de pasos, cuerpo que se desplaza y el pie del diario */
 .ov-tabs{ flex:none; display:flex; gap:4px; padding:8px 10px; border-bottom:1px solid var(--gw-line); overflow-x:auto; scrollbar-width:none; }
