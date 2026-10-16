@@ -80,7 +80,7 @@ Los 100 pasos se leen como el diario de misiones del juego.
 - ✅ **Nota aclaratoria** sobre "Hasta tener que pasar X jefe": explica la pausa con un ejemplo real dibujado con casillas del tablero (los pasos 43 y 44 se detienen ante Kodámade y el 45 los termina) y lleva a los 33 pasos que usan esa instrucción.
 - ✅ **Arte real del juego**: cada paso muestra el sprite de su recompensa o del jefe que exige (ver abajo).
 - ✅ **Objetos necesarios**: la lista de torrentearcano, paso a paso, como un inventario del juego. La franja **Tus próximos pasos** reúne lo que piden tus próximos 5 pasos (más los prerrequisitos mientras falte alguno; de cada objeto, solo lo que pide un prerrequisito sin completar) con la cantidad justa para ellos, ordenado por paso: prerrequisitos, 1, 2, 3…; el resto queda en "Más adelante", también por paso (un objeto que piden varios pasos va en el primero que lo pide). Al completar un paso, la franja avanza al siguiente. Arriba a la derecha, la etiqueta de cada paso se marca con ✓ cuando todo lo suyo está reunido, y se atenúa si no pide nada. Marcar algo en "Tus próximos pasos" marca solo esa parte. "Tus próximos pasos" y "Más adelante" muestran solo lo que queda por gastar: una parte se da por gastada al hacer su paso o al completar el prerrequisito que la pide. Con "Solo pasos pendientes" apagado, debajo aparece "Ya utilizados", con la cantidad que se gastó de cada objeto; uno gastado a medias sale en las dos, cada una con su cantidad. Se puede ordenar por cantidad o de la A a la Z, filtrar por categoría y buscar sin tildes (atajo `/`). El buscador, el orden, la vista y "Solo pasos pendientes" van en la fila de herramientas de la ventana, donde en el mapa y el diario está el buscador de pasos. Hay vista de cuadrícula y de lista: en la cuadrícula la búsqueda resalta en vez de esconder y sube las coincidencias al principio de cada franja; la lista se pagina (10, 25, 50, 100 o todo, sin tocar "Por paso") y la búsqueda filtra. Un objeto deja de hacer falta al completar todos los pasos que lo piden o al marcarlo. El icono de copiar de cada casilla (o mantenerla pulsada en móvil) copia su nombre para buscarlo en el mercadillo.
-- ✅ **Overlay**: una ventana que se queda encima del juego. En mini es una tira con el objetivo actual y dónde parar; en completo, el paso entero en pestañas con las piezas del diario. Ver abajo.
+- ✅ **Overlay**: una ventana que se queda encima del juego, con el paso entero en pestañas y las piezas del diario. Ver abajo.
 - ✅ **Misiones por paso**: el detalle de cada paso lista sus misiones con el NPC inicial, el nivel y todos los objetivos.  Van en el orden de los objetivos del logro (contando los que no son misiones, para que "misión 7" sea la séptima del logro), y si un paso cita varios logros, en el orden en que los nombra la guía. Los avisos solo añaden misiones si las citan por número o dicen que el paso "incluye" el logro: nombrar otro logro de pasada no mete sus misiones. Una misión suelta entra por su nombre tras "Misión:", también si van varias seguidas, como las tres de Mel en el 29. Sin los dos puntos solo entra la que la guía exige ("Se debe hacer la misión Flovoración", en el 100), no la que solo se puede lanzar. "La sombra del reino", en el 38, entra a mano: el rojo dice que se lanza en la misión 3 y se puede hacer hasta antes del 80, y "La sombra de lo que era", en el 81, la pide terminada. Va tras "Esto parece el Sur", es obligatoria y lleva una nota con eso ("Se puede hacer en cualquier momento antes del paso 80.", `QUEST_NOTES` en `src/lib/journal.js`). Lo lee `match_assets.py`. Lo que el paso "incluye" son sus requisitos, así que va primero. El objetivo de "Un ciudadano modelo" que cumple la misión de cualquier clase sale como una sola fila, "Misión de clase", enlazada a la página de Torrente Arcano que da la de cada clase. El "Prólogo invernal" de "Un alma helada", en el 63, también es una sola fila, pero la misión depende del alineamiento: su inicio dice cuál toca a Bonta, a Brakmar y a quien no tiene alineamiento o es neutral, y enlaza la guía de cada una.
 - ✅ **Iconos en prerrequisitos**: oficios y hechizos con su icono del juego. Lo que pide misiones concretas, aunque sean de un logro, lleva la «!» de misión; lo que pide un logro completo, el librito con trofeo. Lo opcional lleva una etiqueta azul y el borde discontinuo. Los logros previos con guía en Torrente Arcano (El gran Guarrok, Turbera maldita, Altos vuelos, Pan Koko Mío, Frío al cubo y Ángeles y demonios) la enlazan con "Guía ↗": la del logro, aunque el prerrequisito pida solo algunas de sus misiones. Los que son una misión suelta enlazan la de la misión (El despertar de Pandala, Intrusión en el territorio wabbit); El cementerio primitivo no tiene guía en Torrente Arcano. El enlace va encima de la esquina de la tarjeta y no dentro, porque la tarjeta es el botón que la marca.
 - ✅ **Estética tipo duffus.fr**: carbón verdoso, acento lima, tipografía Barlow y un mapa del juego de fondo en la cabecera. La marca es un logotipo en la línea del de Dofus (Lilita One con contorno) junto al Dofus Silvestre inclinado; las letras hacen una ola al pasar el ratón. Los botones de overlay y reinicio usan objetos del juego: el Catalejo de gobletrotter, que se inclina y acerca, y el Minirreloj de arena, que se da la vuelta.
@@ -201,37 +201,29 @@ cuyo logro no tiene misiones.
 ## Overlay
 
 El botón **Overlay** de la cabecera abre una ventana que se queda encima del juego, para no
-tener que volver al navegador. Tiene dos modos y recuerda el último (`silvestre:overlayMode`).
+tener que volver al navegador. Tiene un solo modo y un solo tamaño (400×680).
 
-El modo mini (340×230, el de partida) es una tira con lo justo para seguir jugando. Arriba van
-el número del paso, la misión en curso, "Objetivo ‹ 3 / 12 › · misión ‹ 1 de 2 ›" y el
-porcentaje. Las flechas de al lado del número del objetivo cambian de objetivo y las de la
-misión, de misión. Junto al nombre de la misión va su "Completar", el mismo botón y el
-mismo avance que en el diario: la termina y pasa a la siguiente. Como en el diario, no sale en
-un paso con una sola misión obligatoria. En la cabecera, de los dos modos, "Guía ↗" abre en
-otra pestaña la guía del paso en Torrente Arcano: la del logro que nombra su texto o, en los
-pasos de alineamiento, la de su primera misión con guía. Pulsar el número del paso, en los dos modos, abre
-dentro del overlay la lista de los 100 pasos, con su número y su título: los hechos llevan la ✓
-y salen apagados, y el actual va señalado y a la vista. Elegir uno lleva el overlay a ese paso.
-Escape o la × la cierran, y mientras está abierta las teclas del overlay no cambian de paso. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
-y el objetivo actual con el medallón del juego de su tipo, su zona, el objeto que se entrega y
-sus coordenadas. Al pie, paso anterior, "✓ Completar objetivo", paso siguiente y "Ver más". Las
-flechas del pie son de paso. "Completar objetivo" da el objetivo por hecho y pasa al siguiente;
-en el último objetivo termina la misión y, si era la última obligatoria, el paso queda hecho
-solo. Mientras las misiones no han cargado, sale el título del paso con su parada y el botón
-del pie es "✓ Completar paso 11", el mismo del diario.
+Arriba van el número del paso, su título y su zona, en texto con el color de la zona, "Guía ↗"
+y el porcentaje. El título ocupa hasta dos líneas antes de cortarse, así que uno largo como
+"Krosmoz: Misión: Barnabé en el espacio" se lee entero. "Guía ↗" abre en otra pestaña la guía
+del paso en Torrente Arcano: la del logro que nombra su texto o, en los pasos de alineamiento,
+la de su primera misión con guía. Pulsar el número del paso abre dentro del overlay la lista de
+los 100 pasos, con su número y su título: los hechos llevan la ✓ y salen apagados, y el actual
+va señalado y a la vista. Elegir uno lleva el overlay a ese paso. Escape o la × la cierran, y
+mientras está abierta las teclas del overlay no cambian de paso.
 
-La parada sale siempre que el paso la tenga, no solo cuando la misión en curso es la que para.
-Sirve más verla antes de llegar a esa misión. En un paso que se resuelve en sí mismo, la línea
-es la parada que deja el verde, si la hay.
-
-El modo completo (400×680) lleva arriba el título del paso y su zona, en texto con el color de
-la zona. Tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
+Debajo hay cuatro pestañas. La primera vez se abre en Ahora; después, en la última que usaste
+(`silvestre:overlayTab`):
 
 - Ahora: "Hasta dónde llegar" y "Lo que se resuelve", la misión en curso con su "Completar",
-  el objetivo actual (con su ficha de coordenadas que copia el `/travel`) y "‹ ✓ Completar
-  objetivo ›" debajo, y los dos siguientes. Sin miniatura del mapa: con las coordenadas basta y
-  deja sitio al resto.
+  "Objetivo 3 / 12 · misión ‹ 1 de 2 ›", el objetivo actual con el medallón del juego de su
+  tipo y su ficha de coordenadas (copia el `/travel`), "‹ ✓ Completar objetivo ›" debajo y los
+  dos siguientes. "Completar" es el mismo botón y el mismo avance que en el diario: termina la
+  misión y pasa a la siguiente. Como en el diario, no sale en un paso con una sola misión
+  obligatoria. "Completar objetivo" da el objetivo por hecho y pasa al siguiente; en el último
+  termina la misión y, si era la última obligatoria, el paso queda hecho solo. La parada sale
+  siempre que el paso la tenga, no solo cuando la misión en curso es la que para: sirve más
+  verla antes de llegar a esa misión. Sin miniatura del mapa: con las coordenadas basta.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de
   medallones, las líneas de parada y las notas.
 - Objetos: las casillas de "Necesitas" del paso. Pulsar una la marca como cogida y el icono de
@@ -240,7 +232,8 @@ la zona. Tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
   adelante" y "Se termina más adelante".
 
 Abajo va la barra del diario, con el mismo botón ("✓ Completar paso 34" o "Paso completado ·
-deshacer") y la línea "Además: …" de lo que termina en los pasos que cierra. "Reducir" vuelve a mini.
+deshacer") y la línea "Además: …" de lo que termina en los pasos que cierra. Mientras las
+misiones no han cargado, Ahora enseña la parada y ese botón completa el paso.
 
 El overlay lleva su propio paso. Las flechas, la barra y los pasos citados en la guía cambian
 el del overlay y no el que tienes abierto en la página. Si en la página eliges otro paso, el
@@ -248,12 +241,10 @@ overlay vuelve a seguirla. Sin ningún paso elegido, muestra el siguiente pendie
 demás (pasos hechos, avance de cada misión, objetos cogidos) es el mismo estado en las dos
 ventanas.
 
-La ventana se abre con el tamaño del último modo y después no cambia sola: cambiar de modo no
-la redimensiona, y el tamaño lo eliges tú. El contenido se adapta a la ventana. En completo, la
-cabecera, las pestañas y el pie quedan fijos y solo se desplaza lo de en medio, así que también
-se usa en una ventana baja; mini en una ventana alta deja espacio de sobra. La posición la
-decide el navegador: la ventana Picture-in-Picture no se puede mover desde la página (no admite
-`moveTo`).
+La ventana se abre a 400×680 y después no cambia sola: el tamaño lo eliges tú y el contenido
+se adapta. La cabecera, las pestañas y el pie quedan fijos y solo se desplaza lo de en medio,
+así que también se usa en una ventana baja. La posición la decide el navegador: la ventana
+Picture-in-Picture no se puede mover desde la página (no admite `moveTo`).
 
 Las coordenadas son botones que copian `/travel x,y` para pegarlo en el chat del juego. Con la
 ventana enfocada, ←/→ cambian de paso, ↑/↓ de objetivo y espacio o Intro marcan el paso.

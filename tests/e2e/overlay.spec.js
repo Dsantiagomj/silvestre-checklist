@@ -19,38 +19,28 @@ async function openStep(page, n) {
 
 const noEmoji = ov => ov.evaluate(re => !new RegExp(re, "u").test(document.body.textContent), EMOJI.source);
 
-test("el overlay abre en mini con el objetivo actual, su /travel y dónde parar", async ({ page, context }) => {
+/** El nombre de la misión en curso, en «Ahora». */
+const qname = ov => ov.locator(".ov-tab-body .ov-qline .ov-label");
+
+test("el overlay tiene un solo modo: abre en «Ahora» con el paso entero, sin «Ver más» ni «Reducir»", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await openApp(page, { "silvestre:done": upTo(10) });
+  // Un modo guardado de antes no cuenta, y se borra al abrir
+  await openApp(page, { "silvestre:done": upTo(10), "silvestre:overlayMode": "mini" });
   const ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "mini");
+  await expect(ov.locator(".ov")).not.toHaveAttribute("data-mode");
+  await expect(ov.locator(".ov-mini-body")).toHaveCount(0);
+  await expect(ov.locator(".ov-bar")).toHaveCount(0);
+  await expect(ov.getByRole("button", { name: "Ver más" })).toHaveCount(0);
+  await expect(ov.getByRole("button", { name: "Reducir" })).toHaveCount(0);
+  await expect(ov.getByRole("tab")).toHaveText([/^Ahora/, /^Misiones/, /^Objetos/, /^Guía/]);
+  await expect(ov.getByRole("tab", { name: /^Ahora/ })).toHaveAttribute("aria-selected", "true");
+  expect(await page.evaluate(() => localStorage.getItem("silvestre:overlayMode"))).toBeNull();
   await expect(ov.locator(".ov-num")).toHaveText("11");
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 /", { timeout: 15_000 });
-  await expect(ov.locator(".ov-meta")).toContainText("misión 1 de");
+  await expect(ov.locator(".ov-head")).toContainText("La viajera imprudente");
   await expect(ov.locator(".ov-pct")).toHaveText(/^\d+(\.\d)?%$/);
+  await expect(ov.locator(".journal-cta .gbtn.go")).toBeVisible();
   // El objetivo con el medallón del juego (no un emoji) y su /travel
-  const now = ov.locator(".ov-now .obj-row");
-  await expect(now.locator(".obj-med img")).toHaveCount(1);
-  const first = await now.locator(".obj-t").textContent();
-  await expect(ov.locator(".ov-stop")).toContainText("Hasta tener que pasar Kanigrula");
-
-  // «Completar objetivo» avanza al objetivo siguiente, en el mismo estado que la página
-  const qid = await ov.locator(".ov-now").getAttribute("data-qid");
-  await ov.getByRole("button", { name: "✓ Completar objetivo" }).click();
-  await expect(ov.locator(".ov-meta")).toContainText("Objetivo 2 /");
-  await expect(now.locator(".obj-t")).not.toHaveText(first);
-  expect((await readLS(page, "silvestre:questObjective"))[qid]).toBe(1);
-  // Las flechas del objetivo van junto a «Objetivo 2 / N»; las del pie son de paso
-  const meta = ov.locator(".ov-head .ov-meta");
-  await expect(meta.getByRole("button", { name: "Objetivo anterior" })).toBeVisible();
-  await meta.getByRole("button", { name: "Objetivo anterior" }).click();
-  await expect(meta).toContainText("Objetivo 1 /");
-  await expect(meta.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();
-  await meta.getByRole("button", { name: "Objetivo siguiente" }).click();
-  await expect(meta).toContainText("Objetivo 2 /");
-  await expect(ov.locator(".ov-bar").getByRole("button", { name: "Paso 10" })).toBeVisible();
-  await expect(ov.locator(".ov-bar").getByRole("button", { name: "Paso 12" })).toBeVisible();
-
+  await expect(ov.locator(".ov-now .obj-row .obj-med img")).toHaveCount(1, { timeout: 15_000 });
   const chip = ov.locator(".ov-now .coord-chip").first();
   if (await chip.count()) {
     await chip.click();
@@ -63,42 +53,24 @@ test("el overlay sigue el paso de la página y cambia de misión", async ({ page
   await openApp(page);
   await openStep(page, 93);
   const ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov-qname")).toHaveText("El dragón blanco", { timeout: 10_000 });
+  await expect(qname(ov)).toHaveText("El dragón blanco", { timeout: 10_000 });
   await expect(ov.locator(".ov-meta")).toContainText("Objetivo 1 / 16");
   await ov.click('[data-q="1"]');
-  await expect(ov.locator(".ov-qname")).toHaveText("Examen de paso");
+  await expect(qname(ov)).toHaveText("Examen de paso");
 });
 
-test("«Ver más» pasa a completo y se recuerda; «Reducir» vuelve a mini", async ({ page, context }) => {
+test("«Ahora» con dónde parar, el objetivo y los dos siguientes", async ({ page, context }) => {
   await openApp(page, { "silvestre:done": upTo(10) });
-  let ov = await openOverlay(page, context);
-  await expect(ov.getByRole("button", { name: "Ver todo" })).toHaveCount(0);
-  await ov.getByRole("button", { name: "Ver más" }).click();
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "full");
-  expect(await page.evaluate(() => localStorage.getItem("silvestre:overlayMode"))).toBe("full");
-  await expect(ov.getByRole("tab")).toHaveText([/^Ahora/, /^Misiones/, /^Objetos/, /^Guía/]);
-
-  // Cerrar y volver a abrir: sigue en completo
-  await ov.close();
-  ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "full");
-  await ov.getByRole("button", { name: "Reducir" }).click();
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "mini");
-  expect(await page.evaluate(() => localStorage.getItem("silvestre:overlayMode"))).toBe("mini");
-});
-
-test("completo: «Ahora» con dónde parar, el objetivo y los dos siguientes", async ({ page, context }) => {
-  await openApp(page, { "silvestre:done": upTo(10), "silvestre:overlayMode": "full" });
   const ov = await openOverlay(page, context);
   await expect(ov.getByRole("tab", { name: /^Ahora/ })).toHaveAttribute("aria-selected", "true");
   await expect(ov.locator(".ov-num")).toHaveText("11");
-  await expect(ov.locator(".ov-full-head")).toContainText("La viajera imprudente");
+  await expect(ov.locator(".ov-head")).toContainText("La viajera imprudente");
   await expect(ov.locator(".ov-tab-body .call.stop")).toContainText("Hasta tener que pasar Kanigrula");
   await expect(ov.locator(".ov-now .obj-row")).toHaveCount(1, { timeout: 15_000 });
   await expect(ov.locator(".ov-after .obj-row")).toHaveCount(2);
   expect(await noEmoji(ov)).toBe(true);
   // La zona es texto en su color, sin píldora ni punto; sin miniatura del mapa
-  const zone = ov.locator(".ov-full-head .ov-zone");
+  const zone = ov.locator(".ov-head .ov-zone");
   await expect(zone.locator("i")).toHaveCount(0);
   const look = await zone.evaluate(el => {
     const cs = getComputedStyle(el);
@@ -112,7 +84,7 @@ test("completo: «Ahora» con dónde parar, el objetivo y los dos siguientes", a
   expect(look.border).toBe("0px");
   expect(look.color).toBe(look.want);
   await expect(ov.locator(".ov-map")).toHaveCount(0);
-  // El objetivo se completa también en completo, con sus flechas al lado
+  // «✓ Completar objetivo» y sus flechas, bajo el objetivo
   const body = ov.locator(".ov-tab-body");
   await expect(body.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();
   await body.getByRole("button", { name: "✓ Completar objetivo" }).click();
@@ -123,8 +95,8 @@ test("completo: «Ahora» con dónde parar, el objetivo y los dos siguientes", a
   await expect(body.locator(".ov-meta")).toContainText("Objetivo 2 /");
 });
 
-test("completo: «Misiones» es la lista del diario y «Completar» comparte el estado", async ({ page, context }) => {
-  await openApp(page, { "silvestre:overlayMode": "full" });
+test("«Misiones» es la lista del diario y «Completar» comparte el estado", async ({ page, context }) => {
+  await openApp(page);
   await openStep(page, 93);
   const ov = await openOverlay(page, context);
   await ov.getByRole("tab", { name: /^Misiones/ }).click();
@@ -141,9 +113,9 @@ test("completo: «Misiones» es la lista del diario y «Completar» comparte el 
   expect(await noEmoji(ov)).toBe(true);
 });
 
-test("completo: «Objetos» marca lo conseguido en la página y copia el nombre", async ({ page, context }) => {
+test("«Objetos» marca lo conseguido en la página y copia el nombre", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await openApp(page, { "silvestre:overlayMode": "full" });
+  await openApp(page);
   await openStep(page, 93);
   const ov = await openOverlay(page, context);
   const tab = ov.getByRole("tab", { name: /^Objetos/ });
@@ -163,8 +135,8 @@ test("completo: «Objetos» marca lo conseguido en la página y copia el nombre"
   expect(await noEmoji(ov)).toBe(true);
 });
 
-test("completo: «Guía» con el texto y sus avisos; un paso citado cambia el overlay, no la página", async ({ page, context }) => {
-  await openApp(page, { "silvestre:overlayMode": "full" });
+test("«Guía» con el texto y sus avisos; un paso citado cambia el overlay, no la página", async ({ page, context }) => {
+  await openApp(page);
   await openStep(page, 58);
   const ov = await openOverlay(page, context);
   await ov.getByRole("tab", { name: /^Guía/ }).click();
@@ -184,10 +156,10 @@ test("completo: «Guía» con el texto y sus avisos; un paso citado cambia el ov
   await expect(ov.locator(".ov-num")).toHaveText("60");
 });
 
-test("completo: el botón del pie marca el paso como el diario, con la línea «Además»", async ({ page, context }) => {
+test("el botón del pie marca el paso como el diario, con la línea «Además»", async ({ page, context }) => {
   const done = { ...upTo(16) };
   delete done[10];
-  await openApp(page, { "silvestre:done": done, "silvestre:overlayMode": "full" });
+  await openApp(page, { "silvestre:done": done });
   await openStep(page, 17);
   const ov = await openOverlay(page, context);
   const go = ov.locator(".journal-cta .gbtn.go");
@@ -221,43 +193,39 @@ test("el teclado del overlay: flechas para paso y objetivo, espacio marca el pas
   await expect(page.locator('.diary-row[data-n="11"]')).toHaveClass(/done/);
 });
 
-test("sin las misiones cargadas, mini enseña el título del paso y dónde parar", async ({ page, context }) => {
+test("sin las misiones cargadas, «Ahora» enseña dónde parar y el pie completa el paso", async ({ page, context }) => {
   // El chunk de las misiones no llega: el overlay no tiene objetivo que enseñar
   await page.route(/quests[^/]*\.js$/, route => route.abort());
   await openApp(page, { "silvestre:done": upTo(10) });
   const ov = await openOverlay(page, context);
   await expect(ov.locator(".ov-num")).toHaveText("11");
-  await expect(ov.locator(".ov-qname")).toHaveText("La viajera imprudente");
-  await expect(ov.locator(".ov-stop")).toContainText("Hasta tener que pasar Kanigrula");
+  await expect(ov.locator(".ov-title")).toHaveText("La viajera imprudente");
+  await expect(ov.locator(".ov-tab-body .call.stop")).toContainText("Hasta tener que pasar Kanigrula");
   await expect(ov.locator(".ov-now")).toHaveCount(0);
   // Sin objetivo que completar, el botón del pie completa el paso
   await expect(ov.getByRole("button", { name: "✓ Completar objetivo" })).toHaveCount(0);
-  await ov.locator(".ov-bar").getByRole("button", { name: "✓ Completar paso 11" }).click();
+  await ov.locator(".journal-cta").getByRole("button", { name: "✓ Completar paso 11" }).click();
   await expect(page.locator('.diary-row[data-n="11"]')).toHaveClass(/done/);
 });
 
-test("mini y «Ahora» completan la misión en curso como el diario, y la cabecera enlaza la guía del paso", async ({ page, context }) => {
+test("«Ahora» completa la misión en curso como el diario, y la cabecera enlaza la guía del paso", async ({ page, context }) => {
   await openApp(page);
   await openStep(page, 93);
   const ov = await openOverlay(page, context);
-  await expect(ov.locator(".ov-qname")).toHaveText("El dragón blanco", { timeout: 10_000 });
+  await expect(qname(ov)).toHaveText("El dragón blanco", { timeout: 10_000 });
   // La guía del logro del paso en Torrente Arcano, en otra pestaña
   const guide = ov.locator(".ov-head .ov-guide-link");
   await expect(guide).toHaveText("Guía");
   await expect(guide).toHaveAttribute("href", "https://www.torrentearcano.com/blanco-marfil");
   await expect(guide).toHaveAttribute("target", "_blank");
   await expect(guide).toHaveAttribute("rel", /noopener/);
-  // «Completar» termina la misión en curso, en el mismo estado que la página, y pasa a la siguiente
-  const done = ov.locator(".ov-head .q-done-btn");
+  // «Completar», junto al nombre de la misión, la termina en el mismo estado que la página y pasa a la siguiente
+  const done = ov.locator(".ov-tab-body .ov-qline .q-done-btn");
   await expect(done).toHaveText("Completar");
   await done.click();
   await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await expect(ov.locator(".ov-qname")).toHaveText("Examen de paso");
-  // En completo, junto al nombre de la misión en «Ahora»
-  await ov.getByRole("button", { name: "Ver más" }).click();
-  const now = ov.locator(".ov-tab-body .q-done-btn");
-  await expect(now).toHaveText("Completar");
-  await now.click();
+  await expect(qname(ov)).toHaveText("Examen de paso");
+  await done.click();
   await expect(page.locator("#journal .q-item").nth(1).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -294,8 +262,7 @@ test("pulsar el número del paso abre la lista de los 100 pasos para elegir otro
   await expect(picker).toHaveCount(0);
   await ov.keyboard.press("ArrowRight");
   await expect(ov.locator(".ov-num")).toHaveText("12");
-  // Elegir uno lleva el overlay a ese paso y cierra la lista; también en completo
-  await ov.getByRole("button", { name: "Ver más" }).click();
+  // Elegir uno lleva el overlay a ese paso y cierra la lista
   await ov.locator(".ov-num").click();
   await picker.locator('.ov-pick[data-n="50"]').click();
   await expect(picker).toHaveCount(0);
@@ -303,25 +270,57 @@ test("pulsar el número del paso abre la lista de los 100 pasos para elegir otro
   await expect(page.locator("#journal .journal-num")).not.toHaveText("50");
 });
 
-test("cambiar de modo no cambia el tamaño de la ventana: completo en una ventana baja desplaza su cuerpo", async ({ page, context }) => {
+test("la ventana se abre una vez a 400×680 y no cambia de tamaño; en una ventana baja se desplaza el cuerpo", async ({ page, context }) => {
   await openApp(page, { "silvestre:done": upTo(10) });
+  // Se mira con qué tamaño pide la ventana la página, sea Picture-in-Picture o popup
+  await page.evaluate(() => {
+    window.__sizes = [];
+    const pip = window.documentPictureInPicture;
+    if (pip) {
+      const request = pip.requestWindow.bind(pip);
+      pip.requestWindow = opts => { window.__sizes.push(`${opts.width}x${opts.height}`); return request(opts); };
+    }
+    const open = window.open;
+    window.open = (url, name, features) => {
+      const m = /width=(\d+),height=(\d+)/.exec(features || "");
+      if (m) window.__sizes.push(`${m[1]}x${m[2]}`);
+      return open.call(window, url, name, features);
+    };
+  });
   const ov = await openOverlay(page, context);
+  expect(new Set(await page.evaluate(() => window.__sizes))).toEqual(new Set(["400x680"]));
   await ov.evaluate(() => {
     window.__resized = 0;
     window.resizeTo = () => { window.__resized++; };
     window.resizeBy = () => { window.__resized++; };
   });
   await ov.setViewportSize({ width: 340, height: 230 });
-  await ov.getByRole("button", { name: "Ver más" }).click();
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "full");
   await expect(ov.locator(".ov-now .obj-row")).toHaveCount(1, { timeout: 15_000 });
   // Cabecera, pestañas y pie a la vista; lo de en medio se desplaza
-  await expect(ov.locator(".ov-full-head")).toBeInViewport();
+  await expect(ov.locator(".ov-head")).toBeInViewport();
   await expect(ov.locator(".journal-cta .gbtn.go")).toBeInViewport();
   const body = await ov.locator(".ov-tab-body").evaluate(el => ({ sh: el.scrollHeight, ch: el.clientHeight, ov: getComputedStyle(el).overflowY }));
   expect(body.ov).toBe("auto");
   expect(body.sh).toBeGreaterThan(body.ch);
-  await ov.getByRole("button", { name: "Reducir" }).click();
-  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "mini");
+  // Cambiar de pestaña o de paso tampoco la redimensiona
+  await ov.getByRole("tab", { name: /^Misiones/ }).click();
+  await ov.keyboard.press("ArrowRight");
+  await expect(ov.locator(".ov-num")).toHaveText("12");
   expect(await ov.evaluate(() => window.__resized)).toBe(0);
+});
+
+test("a 400 px el título largo del paso cabe en dos líneas, sin cortarse", async ({ page, context }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="4"] .row-main');
+  const ov = await openOverlay(page, context);
+  await ov.setViewportSize({ width: 400, height: 680 });
+  const title = ov.locator(".ov-head .ov-title");
+  await expect(title).toHaveText("Krosmoz: Misión: Barnabé en el espacio");
+  const box = await title.evaluate(el => ({
+    sw: el.scrollWidth, cw: el.clientWidth, sh: el.scrollHeight, ch: el.clientHeight,
+    lines: Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)),
+  }));
+  expect(box.sw).toBeLessThanOrEqual(box.cw);
+  expect(box.sh).toBeLessThanOrEqual(box.ch);
+  expect(box.lines).toBeLessThanOrEqual(2);
 });

@@ -5,7 +5,7 @@
 // aplicación, incluido el cliente de Dofus. El resto de navegadores recibe un
 // popup normal, que no flota pero muestra lo mismo. La UI se pinta con un
 // portal de React en el documento de esa ventana, así que comparte el estado.
-// Dos modos: mini, una tira con el objetivo actual, y completo, el paso en pestañas.
+// Un solo modo: el paso entero en pestañas, en una ventana de un solo tamaño.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -14,11 +14,11 @@ import {
 import { StepGo } from "../components/Journal.jsx";
 import OverlayView from "./OverlayView.jsx";
 
-const MODE_KEY = "silvestre:overlayMode";
-// El tamaño con el que se abre la ventana, según el último modo. Cambiar de modo no la
-// redimensiona: el contenido se adapta a la ventana tal como la dejes
-const SIZES = { mini: { width: 340, height: 230 }, full: { width: 400, height: 680 } };
-const readMode = () => (localStorage.getItem(MODE_KEY) === "full" ? "full" : "mini");
+// El tamaño con el que se abre la ventana. Después no se redimensiona: el contenido se
+// adapta a la ventana tal como la dejes
+const SIZE = { width: 400, height: 680 };
+// Lo guardaban las versiones con modo mini; ya no se usa
+const OLD_MODE_KEY = "silvestre:overlayMode";
 
 /** Copia todas las hojas de estilo (en dev son <style>, en build <link>). */
 function copyStyles(doc) {
@@ -60,7 +60,8 @@ export function useOverlayWindow() {
       current.focus();
       return;
     }
-    const size = SIZES[readMode()];
+    localStorage.removeItem(OLD_MODE_KEY);
+    const size = SIZE;
     let w = null;
     if ("documentPictureInPicture" in window) {
       try {
@@ -99,11 +100,6 @@ export function useOverlayWindow() {
 export default function OverlayWindow({ win }) {
   const s = useAppState();
   const n = overlayStep(s);
-  const [mode, setModeState] = useState(readMode);
-  const setMode = useCallback(m => {
-    localStorage.setItem(MODE_KEY, m);
-    setModeState(m);
-  }, []);
 
   useEffect(() => {
     if (win) loadQuests();
@@ -119,7 +115,7 @@ export default function OverlayWindow({ win }) {
   // los botones de paso cambian el paso del overlay, no el de la página (StepGo)
   return createPortal(
     <StepGo.Provider value={overlayGo}>
-      <OverlayView key={n} mode={mode} setMode={setMode} />
+      <OverlayView key={n} />
     </StepGo.Provider>,
     win.document.body,
   );
