@@ -5,11 +5,11 @@ import { childrenOf, groupsOf, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
-  CLOSED_BY, QUEST_NOTES, RESUMED_IN, doneIcon, list, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, doneIcon, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  alsoText, closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -264,7 +264,7 @@ export function Quests({ step, quests, loaded, s }) {
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
-  // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Paso hecho»
+  // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Completar paso N»
   const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const notes = missionNotes(step);
   // Las hijas de cada misión que van en el paso y se hacen (no las de solo tomarla)
@@ -375,11 +375,24 @@ export function Tri({ dir }) {
   );
 }
 
+/** El botón de un paso: «✓ Completar paso 34» o, hecho, «Paso completado · deshacer». */
+export const stepLabel = (n, done) => (done ? "Paso completado · deshacer" : `✓ Completar paso ${n}`);
+
 /**
- * Barra final, con los botones planos del juego: el paso anterior, «Paso hecho» (que
- * marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del paso
- * cierra otros que siguen pendientes, el mismo botón termina lo que les queda («Hecho,
- * y termina el 33»): uno aparte se perdía al avanzar y lo cerrado quedaba pendiente.
+ * Bajo el botón del paso, lo que hace además en los pasos que cierra (alsoText): "Además:
+ * en el 33 completa «Muchos cuerboks en la cabeza»." Hecho el paso o sin nada pendiente,
+ * nada.
+ */
+export function AlsoLine({ s, closes }) {
+  const text = alsoText(s, closes);
+  return text ? <p className="cta-also">{text}</p> : null;
+}
+
+/**
+ * Barra final, con los botones planos del juego: el paso anterior, «Completar paso N»
+ * (que marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del
+ * paso cierra otros que siguen pendientes, el mismo botón termina lo que les queda y una
+ * línea debajo lo dice: uno aparte se perdía al avanzar y lo cerrado quedaba pendiente.
  */
 export function Actions({ step, s }) {
   const n = step.n;
@@ -396,18 +409,17 @@ export function Actions({ step, s }) {
     else toggleStep(n);
     if (next != null) go(next);
   }
-  const label = closes.length ? `✓ Hecho, y termina el ${list(closes)}` : "✓ Paso hecho";
   return (
     <div className="journal-cta">
       <button type="button" className="gbtn" id={live ? "prevBtn" : undefined} disabled={n === 1} aria-label={`Paso ${n - 1}`}
         onClick={() => go(n - 1)}><Tri dir="prev" /> {n > 1 ? n - 1 : ""}</button>
       <div className="journal-cta-main">
         <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={live ? "toggleBtn" : undefined}
-          title={done ? undefined : (closes.length ? `Termina lo que queda del ${list(closes)}, que este paso cierra` : "Marca el paso")
-            + (next != null ? `${closes.length ? "," : ""} y abre el ${next}` : "")}
+          title={done ? "Vuelve a dejar el paso pendiente" : `Marca el paso${next != null ? ` y abre el ${next}` : ""}`}
           onClick={done ? () => toggleStep(n) : finish}>
-          {done ? "Desmarcar" : label}
+          {stepLabel(n, done)}
         </button>
+        <AlsoLine s={s} closes={closes} />
       </div>
       <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
         onClick={() => go(n + 1)}>{n < STEPS.length ? n + 1 : ""} <Tri dir="next" /></button>

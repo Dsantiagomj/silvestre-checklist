@@ -149,14 +149,15 @@ test("completo: «Guía» con el texto y sus avisos; un paso citado cambia el ov
   await expect(ov.locator(".ov-num")).toHaveText("60");
 });
 
-test("completo: el botón del pie marca el paso como el diario, también «y termina el N»", async ({ page, context }) => {
+test("completo: el botón del pie marca el paso como el diario, con la línea «Además»", async ({ page, context }) => {
   const done = { ...upTo(16) };
   delete done[10];
   await openApp(page, { "silvestre:done": done, "silvestre:overlayMode": "full" });
   await openStep(page, 17);
   const ov = await openOverlay(page, context);
   const go = ov.locator(".journal-cta .gbtn.go");
-  await expect(go).toHaveText("✓ Hecho, y termina el 10");
+  await expect(go).toHaveText("✓ Completar paso 17");
+  await expect(ov.locator(".journal-cta .cta-also")).toHaveText(/^Además: en el 10 completa /);
   await go.click();
   await expect(page.locator('.diary-row[data-n="17"]')).toHaveClass(/done/);
   // Como en el diario: al 10 le faltan misiones, sigue pendiente y el aviso lo dice
@@ -166,7 +167,7 @@ test("completo: el botón del pie marca el paso como el diario, también «y ter
   await expect(page.locator("#journal .journal-num")).toHaveText("17");
   await ov.locator(".journal-cta .gbtn").first().click();
   await expect(ov.locator(".ov-num")).toHaveText("17");
-  await expect(go).toHaveText("Desmarcar");
+  await expect(go).toHaveText("Paso completado · deshacer");
 });
 
 test("el teclado del overlay: flechas para paso y objetivo, espacio marca el paso", async ({ page, context }) => {

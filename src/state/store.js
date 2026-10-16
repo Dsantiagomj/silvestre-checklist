@@ -516,6 +516,25 @@ export function pendingText(pending) {
 }
 
 /**
+ * Lo que «Completar paso N» hace además en los pasos que cierra, para la línea bajo el
+ * botón: "Además: el 77 queda completado y en el 78 completa 2 misiones." Un paso que
+ * queda hecho lo dice así, aunque este clic no le termine ninguna misión; uno que sigue
+ * pendiente, las misiones que le termina (las de closingPlan que no estaban ya
+ * completas). Sin las misiones cargadas no se sabe qué queda a medias: null.
+ */
+export function alsoText(s, closes) {
+  if (!closes.length || !s.questsLoaded) return null;
+  const plan = closingPlan(s, closes);
+  const parts = closes.flatMap(c => {
+    if (plan.done.includes(c)) return [`el ${c} queda completado`];
+    const quests = questsOf(c).filter(q => q.id in plan.questObj && (s.questObj[q.id] || 0) < plan.questObj[q.id]);
+    if (!quests.length) return [];
+    return [`en el ${c} completa ${quests.length > 1 ? `${quests.length} misiones` : `«${quests[0].n}»`}`];
+  });
+  return parts.length ? `Además: ${list(parts)}.` : null;
+}
+
+/**
  * «Hecho» en un paso que cierra otros: marca n y termina lo que les queda (closingPlan).
  * Los que aún tienen misiones sin hacer siguen pendientes y un aviso lo dice,
  * con la opción de marcarlos. Va después del aviso del Dofus: este pide algo, y la

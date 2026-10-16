@@ -134,7 +134,8 @@ test("la ficha del paso: estandarte, título, lo que se gana, la parada y lo que
   await expect(card.locator(".journal-num")).toHaveText("34");
   // Marcar termina lo que queda del 33, que cierra; sin sus misiones anteriores sigue
   // pendiente y el aviso deja marcarlo. Luego, desmarcar
-  await expect(card.locator(".map-card-done")).toHaveText("✓ Hecho, y termina el 33");
+  await expect(card.locator(".map-card-done")).toHaveText("✓ Completar paso 34");
+  await expect(card.locator(".cta-also")).toHaveText("Además: en el 33 completa «Muchos cuerboks en la cabeza».");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).toHaveClass(/done/);
   await expect(node(page, 33)).not.toHaveClass(/done/);
@@ -144,10 +145,10 @@ test("la ficha del paso: estandarte, título, lo que se gana, la parada y lo que
   await page.click("#toastAction");
   await expect(node(page, 33)).toHaveClass(/done/);
   await node(page, 34).click();
-  await expect(card.locator(".map-card-done")).toHaveText("Desmarcar");
+  await expect(card.locator(".map-card-done")).toHaveText("Paso completado · deshacer");
   await card.locator(".map-card-done").click();
   await expect(node(page, 34)).not.toHaveClass(/done/);
-  await expect(card.locator(".map-card-done")).toHaveText("✓ Hecho");
+  await expect(card.locator(".map-card-done")).toHaveText("✓ Completar paso 34");
 });
 
 test("la ficha de un paso con Dofus dice que se gana, con su huevo", async ({ page }) => {

@@ -81,26 +81,34 @@ test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota",
   await expect(page.locator("#journal .call.note")).toContainText("Retomar sala 5");
 });
 
-test("«Paso hecho» marca el paso y salta al siguiente pendiente", async ({ page }) => {
-  // Con el 33 hecho, el 34 ya no cierra nada pendiente
+test("«Completar paso N» marca el paso y salta al siguiente pendiente", async ({ page }) => {
+  // Con el 33 hecho, el 34 ya no cierra nada pendiente: sin la línea «Además»
   await openApp(page, { "silvestre:done": range(1, 33) });
   await row(page, 34).locator(".row-main").click();
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
+  await waitQuests(page);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
   await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca el paso y abre el 35");
+  await expect(page.locator("#journal .cta-also")).toHaveCount(0);
   await page.click("#toggleBtn");
   await expect(row(page, 34)).toHaveClass(/done/);
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
   expect((await readLS(page, "silvestre:done"))["34"]).toBe(true);
+  // Hecho, el botón lo dice y lo deshace
+  await row(page, 34).locator(".row-main").click();
+  await expect(page.locator("#toggleBtn")).toHaveText("Paso completado · deshacer");
+  await page.click("#toggleBtn");
+  await expect(row(page, 34)).not.toHaveClass(/done/);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
 });
 
-test("si el paso cierra otros pendientes, «Hecho» termina lo que les queda y luego avanza", async ({ page }) => {
+test("si el paso cierra otros pendientes, «Completar» termina lo que les queda y una línea aparte lo dice", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
   await row(page, 34).locator(".row-main").click();
   await waitQuests(page);
-  // Un solo botón: no hay uno aparte que se pierda al avanzar
+  // Un solo botón, con el número del paso; lo que termina en el 33 va debajo
   await expect(page.locator("#closesBtn")).toHaveCount(0);
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 33");
-  await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Termina lo que queda del 33, que este paso cierra, y abre el 35");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
+  await expect(page.locator("#journal .cta-also")).toHaveText("Además: en el 33 completa «Muchos cuerboks en la cabeza».");
   await page.click("#toggleBtn");
   await expect(row(page, 34)).toHaveClass(/done/);
   // El 33 tiene tres misiones antes de su parada: sigue pendiente
@@ -109,17 +117,21 @@ test("si el paso cierra otros pendientes, «Hecho» termina lo que les queda y l
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
   await page.click("#toastAction");
   await expect(row(page, 33)).toHaveClass(/done/);
-  // Con lo cerrado ya hecho, vuelve a ser «Paso hecho»
+  // Hecho el 34, sin la línea; con lo cerrado ya hecho, al deshacerlo tampoco
   await row(page, 34).locator(".row-main").click();
+  await expect(page.locator("#journal .cta-also")).toHaveCount(0);
   await page.click("#toggleBtn");
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Paso hecho");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
+  await expect(page.locator("#journal .cta-also")).toHaveCount(0);
 });
 
-test("un paso que cierra varios los nombra todos en «Hecho» y avisa de los que siguen pendientes", async ({ page }) => {
+test("un paso que cierra varios los nombra todos en la línea «Además» y avisa de los que siguen pendientes", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 24) });
   await row(page, 28).locator(".row-main").click();
   await waitQuests(page);
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 25, 26 y 27");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 28");
+  await expect(page.locator("#journal .cta-also"))
+    .toHaveText("Además: en el 25 completa «Los cazadores», en el 26 completa «El recadero» y el 27 queda completado.");
   await page.click("#toggleBtn");
   // El 27 solo tenía pendiente lo de tras su parada (la otra es opcional); el 25 y el 26, no
   for (const n of [27, 28]) await expect(row(page, n)).toHaveClass(/done/);
@@ -128,6 +140,15 @@ test("un paso que cierra varios los nombra todos en «Hecho» y avisa de los que
   await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 25 y 26");
   await page.click("#toastAction");
   for (const n of [25, 26]) await expect(row(page, n)).toHaveClass(/done/);
+});
+
+test("la línea «Además» cuenta las misiones si en un paso cerrado se completan varias", async ({ page }) => {
+  // El 80 cierra el 77 y el 78
+  await openApp(page, { "silvestre:done": range(1, 76) });
+  await row(page, 80).locator(".row-main").click();
+  await waitQuests(page);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 80");
+  await expect(page.locator("#journal .cta-also")).toHaveText(/^Además: .*\bel 77\b.* y .*\bel 78\b.*\.$/);
 });
 
 // El 22 cierra el 5: «¿Dónde se ha ido la 7.ª compañía?» lleva la parada del 5 y se
@@ -139,11 +160,12 @@ const BUT_5 = () => {
 };
 const questBtn = (page, name) => page.locator("#journal .q-item", { hasText: name }).locator(".q-done-btn");
 
-test("«Hecho» en el 22 termina la misión del 5 tras su parada y avisa de la que falta", async ({ page }) => {
+test("«Completar» en el 22 termina la misión del 5 tras su parada y avisa de la que falta", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5() });
   await row(page, 22).locator(".row-main").click();
   await waitQuests(page);
-  await expect(page.locator("#toggleBtn")).toHaveText("✓ Hecho, y termina el 5");
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 22");
+  await expect(page.locator("#journal .cta-also")).toHaveText("Además: en el 5 completa «¿Dónde se ha ido la 7.ª compañía?».");
   await page.click("#toggleBtn");
   await expect(row(page, 22)).toHaveClass(/done/);
   await expect(row(page, 5)).not.toHaveClass(/done/);
@@ -157,10 +179,11 @@ test("«Hecho» en el 22 termina la misión del 5 tras su parada y avisa de la q
   await expect(row(page, 5)).toHaveClass(/done/);
 });
 
-test("con lo anterior del 5 ya hecho, «Hecho» en el 22 marca el 5 sin avisar", async ({ page }) => {
+test("con lo anterior del 5 ya hecho, «Completar» en el 22 marca el 5 sin avisar", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5(), "silvestre:questObjective": { 894: 11 } });
   await row(page, 22).locator(".row-main").click();
   await waitQuests(page);
+  await expect(page.locator("#journal .cta-also")).toHaveText("Además: el 5 queda completado.");
   await page.click("#toggleBtn");
   for (const n of [5, 22]) await expect(row(page, n)).toHaveClass(/done/);
   await expect(page.locator("#toast")).not.toHaveClass(/show/);
