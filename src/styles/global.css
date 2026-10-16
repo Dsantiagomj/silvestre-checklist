@@ -808,12 +808,11 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .ov-obj-ctl{ display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 2px; }
 .ov-obj-ctl .ov-o{ width:26px; height:26px; margin:0; }
 .ov-obj-ctl .ov-o .tri{ width:10px; height:10px; }
+/* La zona, en texto con su color (sin píldora: la cabecera ya va llena) */
 .ov-zone{
-  display:inline-flex; align-items:center; gap:5px; margin-top:3px; padding:1px 8px; border-radius:999px;
-  border:1px solid color-mix(in srgb, var(--zone-color, #e3c565) 60%, transparent);
-  font:800 10px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--gw-gold);
+  display:block; margin-top:2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  font:800 10px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--zone-color, var(--gw-gold));
 }
-.ov-zone i{ width:6px; height:6px; border-radius:50%; background:var(--zone-color, var(--amber)); }
 .ov-pct{ font:400 20px/1 'Lilita One', var(--font-display); color:var(--accent-ink); font-variant-numeric:tabular-nums; }
 .ov-scroll{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
 .ov .gbtn{ padding:7px 10px; font-size:12.5px; letter-spacing:.08em; }
@@ -870,15 +869,6 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .ov-after{ opacity:.8; }
 .ov-calls{ margin-bottom:10px; padding:0 0 10px; border-top:0; border-bottom:1px dashed var(--gw-line); }
 .ov-guide{ gap:10px; padding:0; }
-.ov-map{
-  position:relative; height:90px; margin:0;
-  border:1px solid var(--gw-line); border-radius:6px; overflow:hidden; background:var(--gw-panel-2);
-}
-.ov-map img{ width:100%; height:100%; object-fit:cover; display:block; }
-.ov-map figcaption{
-  position:absolute; left:6px; bottom:6px; padding:2px 8px; border-radius:999px;
-  background:rgba(13,14,12,.82); color:#f3ecd2; font-size:11px; font-weight:600;
-}
 /* El pendón del diario no va en el overlay: el texto de la guía va sobre el panel */
 [data-theme="light"] .ov .goal-calls .call{ color:var(--gw-ink); }
 

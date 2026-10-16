@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { MAP_IMG, coordLabel, currentQuest, locationFor, questsOf } from "../lib/quests.js";
+import { currentQuest, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { stepCalls, stepTitle } from "../lib/journal.js";
 import {
@@ -17,19 +17,6 @@ const readTab = () => {
   const t = localStorage.getItem(TAB_KEY);
   return TABS.some(([k]) => k === t) ? t : "now";
 };
-
-/** Mapa del objetivo; si DofusDB no tiene la imagen, la figura desaparece. */
-function MapFigure({ loc }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
-  const where = [loc.a, loc.x != null ? `[${coordLabel(loc.x, loc.y)}]` : ""].filter(Boolean).join(" · ");
-  return (
-    <figure className="ov-map">
-      <img src={`${MAP_IMG}${loc.m}.jpg`} alt="Mapa del objetivo" loading="lazy" onError={() => setFailed(true)} />
-      {where && <figcaption>{loc.carried ? "Última ubicación conocida · " : ""}{where}</figcaption>}
-    </figure>
-  );
-}
 
 /** «Guía ↗», a la guía del paso en Torrente Arcano (stepGuide), en otra pestaña. */
 function GuideLink({ step, s }) {
@@ -141,11 +128,10 @@ function Mini({ n, step, cur, s, setMode, pick }) {
   );
 }
 
-/** «Ahora»: dónde parar y qué se resuelve, el objetivo actual, los dos siguientes y su mapa. */
+/** «Ahora»: dónde parar y qué se resuelve, el objetivo actual y los dos siguientes. */
 function NowTab({ step, cur, s }) {
   const calls = stepCalls(step).filter(([kind]) => kind === "stop" || kind === "done");
   const after = cur ? cur.objs.slice(cur.k + 1, cur.k + 3) : [];
-  const loc = cur && locationFor(cur);
   return (
     <>
       {calls.length > 0 && (
@@ -174,8 +160,6 @@ function NowTab({ step, cur, s }) {
               <Objectives route objs={after} />
             </section>
           )}
-          {/* key: una imagen nueva vuelve a intentarlo aunque la anterior fallara */}
-          {loc?.m && <MapFigure key={loc.m} loc={loc} />}
         </>
       ) : (
         <p className="asset-note">{s.questsLoaded ? "Este paso no tiene misiones que recorrer." : "Cargando misiones…"}</p>
@@ -198,7 +182,7 @@ function Full({ n, step, cur, s, setMode, pick }) {
         <button type="button" className="ov-num" aria-haspopup="listbox" title="Elegir otro paso" onClick={pick}>{n}</button>
         <div className="ov-head-txt">
           <p className="ov-title">{stepTitle(step)}</p>
-          <span className="ov-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><i aria-hidden="true"></i>{step.zone}</span>
+          <span className="ov-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>{step.zone}</span>
         </div>
         <GuideLink step={step} s={s} />
         <b className="ov-pct">{progressPct(s)}%</b>
