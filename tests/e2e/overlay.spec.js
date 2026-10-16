@@ -300,3 +300,26 @@ test("pulsar el número del paso abre la lista de los 100 pasos para elegir otro
   await expect(ov.locator(".ov-num")).toHaveText("50");
   await expect(page.locator("#journal .journal-num")).not.toHaveText("50");
 });
+
+test("cambiar de modo no cambia el tamaño de la ventana: completo en una ventana baja desplaza su cuerpo", async ({ page, context }) => {
+  await openApp(page, { "silvestre:done": upTo(10) });
+  const ov = await openOverlay(page, context);
+  await ov.evaluate(() => {
+    window.__resized = 0;
+    window.resizeTo = () => { window.__resized++; };
+    window.resizeBy = () => { window.__resized++; };
+  });
+  await ov.setViewportSize({ width: 340, height: 230 });
+  await ov.getByRole("button", { name: "Ver más" }).click();
+  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "full");
+  await expect(ov.locator(".ov-now .obj-row")).toHaveCount(1, { timeout: 15_000 });
+  // Cabecera, pestañas y pie a la vista; lo de en medio se desplaza
+  await expect(ov.locator(".ov-full-head")).toBeInViewport();
+  await expect(ov.locator(".journal-cta .gbtn.go")).toBeInViewport();
+  const body = await ov.locator(".ov-tab-body").evaluate(el => ({ sh: el.scrollHeight, ch: el.clientHeight, ov: getComputedStyle(el).overflowY }));
+  expect(body.ov).toBe("auto");
+  expect(body.sh).toBeGreaterThan(body.ch);
+  await ov.getByRole("button", { name: "Reducir" }).click();
+  await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "mini");
+  expect(await ov.evaluate(() => window.__resized)).toBe(0);
+});
