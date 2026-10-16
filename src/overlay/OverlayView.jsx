@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
 import { MAP_IMG, coordLabel, currentQuest, locationFor, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
@@ -102,12 +102,12 @@ function StopLines({ step }) {
   ));
 }
 
-function Mini({ n, step, cur, s, setMode }) {
+function Mini({ n, step, cur, s, setMode, pick }) {
   const resolves = !cur && stepCalls(step).filter(([kind]) => kind === "done");
   return (
     <>
       <header className="ov-head">
-        <span className="ov-num">{n}</span>
+        <button type="button" className="ov-num" aria-haspopup="listbox" title="Elegir otro paso" onClick={pick}>{n}</button>
         <div className="ov-head-txt">
           <div className="ov-qline">
             <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
@@ -184,7 +184,7 @@ function NowTab({ step, cur, s }) {
   );
 }
 
-function Full({ n, step, cur, s, setMode }) {
+function Full({ n, step, cur, s, setMode, pick }) {
   const [tab, setTabState] = useState(readTab);
   const setTab = t => {
     localStorage.setItem(TAB_KEY, t);
@@ -195,7 +195,7 @@ function Full({ n, step, cur, s, setMode }) {
   return (
     <>
       <header className="ov-head ov-full-head">
-        <span className="ov-num">{n}</span>
+        <button type="button" className="ov-num" aria-haspopup="listbox" title="Elegir otro paso" onClick={pick}>{n}</button>
         <div className="ov-head-txt">
           <p className="ov-title">{stepTitle(step)}</p>
           <span className="ov-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><i aria-hidden="true"></i>{step.zone}</span>
@@ -231,6 +231,55 @@ function Full({ n, step, cur, s, setMode }) {
 }
 
 /**
+ * La lista de los 100 pasos, al pulsar el número: el actual señalado y a la vista, los
+ * hechos con su ✓ y apagados. Elegir uno lleva el overlay a él (overlayGo); Escape o
+ * la ✕ la cierran. Mientras está abierta, el teclado del overlay no cambia de paso.
+ */
+function StepPicker({ n, s, onClose }) {
+  const ref = useRef(null);
+  // Solo al abrirla: lo demás (un paso marcado en la página) no la vuelve a desplazar
+  const close = useRef(onClose);
+  close.current = onClose;
+  useLayoutEffect(() => {
+    const el = ref.current.querySelector('[aria-current="step"]');
+    el?.scrollIntoView({ block: "center" });
+    el?.focus({ preventScroll: true });
+    const doc = ref.current.ownerDocument;
+    const onKey = e => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      close.current();
+    };
+    doc.addEventListener("keydown", onKey);
+    return () => doc.removeEventListener("keydown", onKey);
+  }, []);
+  const choose = m => {
+    onClose();
+    overlayGo(m);
+  };
+  return (
+    <div className="ov-picker" ref={ref} role="dialog" aria-label="Elegir paso">
+      <div className="ov-picker-head">
+        <span className="ov-label">Ir al paso</span>
+        <button type="button" className="ov-q ov-picker-x" aria-label="Cerrar" onClick={onClose}>×</button>
+      </div>
+      <ol className="ov-picker-list ov-scroll">
+        {STEPS.map(st => (
+          <li key={st.n}>
+            <button type="button" className={"ov-pick" + (s.done[st.n] ? " is-done" : "")} data-n={st.n}
+              aria-current={st.n === n ? "step" : undefined} onClick={() => choose(st.n)}>
+              <b>{st.n}</b>
+              <span>{stepTitle(st)}</span>
+              {s.done[st.n] && <i aria-label="Hecho">✓</i>}
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/**
  * Contenido del overlay. En mini, una tira sobre el juego con el objetivo actual y dónde
  * parar; en completo, el paso entero en pestañas, con las piezas del diario.
  */
@@ -239,10 +288,12 @@ export default function OverlayView({ mode, setMode }) {
   const n = overlayStep(s);
   const step = STEPS[n - 1];
   const cur = s.questsLoaded ? currentQuest(n, s.questPos, s.questObj) : null;
+  const [picking, setPicking] = useState(false);
   const View = mode === "full" ? Full : Mini;
   return (
     <div className={`ov journal ov-${mode}`} data-mode={mode}>
-      <View n={n} step={step} cur={cur} s={s} setMode={setMode} />
+      <View n={n} step={step} cur={cur} s={s} setMode={setMode} pick={() => setPicking(true)} />
+      {picking && <StepPicker n={n} s={s} onClose={() => setPicking(false)} />}
     </div>
   );
 }

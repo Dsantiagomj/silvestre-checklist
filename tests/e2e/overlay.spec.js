@@ -255,3 +255,33 @@ test("en un paso de una sola misión obligatoria, el overlay no lleva «Completa
   await expect(ov.locator(".q-done-btn")).toHaveCount(0);
   await expect(ov.locator(".ov-guide-link")).toHaveAttribute("href", "https://www.torrentearcano.com/barnabe-en-el-espacio");
 });
+
+test("pulsar el número del paso abre la lista de los 100 pasos para elegir otro", async ({ page, context }) => {
+  await openApp(page, { "silvestre:done": upTo(10) });
+  const ov = await openOverlay(page, context);
+  await expect(ov.locator(".ov-num")).toHaveText("11");
+  await ov.locator(".ov-num").click();
+  const picker = ov.locator(".ov-picker");
+  await expect(picker).toBeVisible();
+  await expect(picker.locator(".ov-pick")).toHaveCount(100);
+  // Número y título; los hechos, marcados; el actual, señalado y a la vista
+  await expect(picker.locator('.ov-pick[data-n="11"]')).toContainText("11");
+  await expect(picker.locator('.ov-pick[data-n="11"]')).toContainText("La viajera imprudente");
+  await expect(picker.locator('.ov-pick[data-n="11"]')).toHaveAttribute("aria-current", "step");
+  await expect(picker.locator('.ov-pick[data-n="11"]')).toBeInViewport();
+  await expect(picker.locator(".ov-pick.is-done")).toHaveCount(10);
+  // Con la lista abierta, las flechas no cambian de paso; Escape la cierra
+  await ov.keyboard.press("ArrowRight");
+  await expect(ov.locator(".ov-num")).toHaveText("11");
+  await ov.keyboard.press("Escape");
+  await expect(picker).toHaveCount(0);
+  await ov.keyboard.press("ArrowRight");
+  await expect(ov.locator(".ov-num")).toHaveText("12");
+  // Elegir uno lleva el overlay a ese paso y cierra la lista; también en completo
+  await ov.getByRole("button", { name: "Ver más" }).click();
+  await ov.locator(".ov-num").click();
+  await picker.locator('.ov-pick[data-n="50"]').click();
+  await expect(picker).toHaveCount(0);
+  await expect(ov.locator(".ov-num")).toHaveText("50");
+  await expect(page.locator("#journal .journal-num")).not.toHaveText("50");
+});
