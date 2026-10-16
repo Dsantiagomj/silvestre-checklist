@@ -4,10 +4,11 @@ import { ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { MAP_IMG } from "../lib/quests.js";
 import { bannerFigure, startMap } from "../lib/journal.js";
 
-// La punta del pendón: lo que baja el centro respecto de los lados (igual que el clip-path)
+// La punta del pendón: lo que baja el centro respecto de los lados. La pone el CSS
+// (--tip, la misma del clip-path); el pendón pequeño del diario la lleva más corta
 const TIP = 26;
 
-/** Ancho y alto de un elemento, al día con sus cambios de tamaño. */
+/** Ancho, alto y punta de un elemento, al día con sus cambios de tamaño. */
 function useSize() {
   const ref = useRef(null);
   const [size, setSize] = useState(null);
@@ -15,7 +16,8 @@ function useSize() {
     const el = ref.current;
     const measure = () => setSize(prev => {
       const w = el.offsetWidth, h = el.offsetHeight;
-      return prev && prev.w === w && prev.h === h ? prev : { w, h };
+      const tip = parseFloat(getComputedStyle(el).getPropertyValue("--tip")) || TIP;
+      return prev && prev.w === w && prev.h === h && prev.tip === tip ? prev : { w, h, tip };
     });
     measure();
     const ro = new ResizeObserver(measure);
@@ -29,13 +31,13 @@ function useSize() {
  * El marco dorado del pendón, con la punta incluida: el borde de fuera y el filete de
  * dentro. Va en SVG porque un borde de CSS no sigue las diagonales del clip-path.
  */
-function BannerFrame({ w, h }) {
+function BannerFrame({ w, h, tip }) {
   // El contorno metido `d` px hacia dentro: los lados y el techo, d; las diagonales de
-  // la punta bajan con pendiente TIP / (w/2) y, desplazadas d en su normal, suben d/cos
+  // la punta bajan con pendiente tip / (w/2) y, desplazadas d en su normal, suben d/cos
   const outline = d => {
-    const slope = TIP / (w / 2);
+    const slope = tip / (w / 2);
     const up = d * Math.hypot(1, slope);
-    const side = h - TIP + d * slope - up;
+    const side = h - tip + d * slope - up;
     return `M${d} ${d} H${w - d} V${side} L${w / 2} ${h - up} L${d} ${side} Z`;
   };
   return (

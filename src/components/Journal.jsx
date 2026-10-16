@@ -5,7 +5,7 @@ import { childrenOf, groupsOf, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
-  CLOSED_BY, QUEST_NOTES, RESUMED_IN, doneIcon, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
@@ -52,11 +52,13 @@ function RichText({ text }) {
 
 /**
  * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
- * Sandglass y, al pie, los pasos que cierra o donde se cierra.
+ * Sandglass y, al pie, los pasos que cierra o donde se cierra. Debajo, quién da el paso:
+ * en escritorio el estandarte es pequeño y su figura va sin nombre.
  */
 function Goal({ step, done }) {
   const plan = PLANS[step.n] || [];
   const head = plan.find(e => e.t === "a");
+  const fig = bannerFigure(step.n);
   return (
     <div className="journal-goal">
       <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
@@ -74,6 +76,7 @@ function Goal({ step, done }) {
         </div>
       </div>
       <GuideCalls step={step} done={done} />
+      {fig && <p className="goal-by">{fig.as}: <b>{fig.name}</b></p>}
     </div>
   );
 }
@@ -300,7 +303,7 @@ export function Quests({ step, quests, loaded, s }) {
   const toKid = (id, el) => {
     setOpen(id, true);
     el.ownerDocument.defaultView.requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
-      ?.scrollIntoView({ block: "start" }));
+      ?.scrollIntoView({ block: "start", behavior: "instant" }));
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
   const items = quests.map((q, i) => {
@@ -474,12 +477,15 @@ export default function Journal({ n, id }) {
         <Banner step={step} />
         <Goal step={step} done={!!s.done[n]} />
       </div>
-      <div className="journal-body">
-        <Needs n={n} s={s} />
-        <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
-        <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
+      {/* El cuerpo y la barra juntos: en escritorio, el tope hasta donde sube la barra pegada */}
+      <div className="journal-main">
+        <div className="journal-body">
+          <Needs n={n} s={s} />
+          <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
+          <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
+        </div>
+        <Actions step={step} s={s} />
       </div>
-      <Actions step={step} s={s} />
     </article>
   );
 }
