@@ -34,12 +34,22 @@ test("el overlay abre en mini con el objetivo actual, su /travel y dónde parar"
   const first = await now.locator(".obj-t").textContent();
   await expect(ov.locator(".ov-stop")).toContainText("Hasta tener que pasar Kanigrula");
 
-  // «Hecho, siguiente» avanza al objetivo siguiente, en el mismo estado que la página
+  // «Completar objetivo» avanza al objetivo siguiente, en el mismo estado que la página
   const qid = await ov.locator(".ov-now").getAttribute("data-qid");
-  await ov.getByRole("button", { name: "✓ Hecho, siguiente" }).click();
+  await ov.getByRole("button", { name: "✓ Completar objetivo" }).click();
   await expect(ov.locator(".ov-meta")).toContainText("Objetivo 2 /");
   await expect(now.locator(".obj-t")).not.toHaveText(first);
   expect((await readLS(page, "silvestre:questObjective"))[qid]).toBe(1);
+  // Las flechas del objetivo van junto a «Objetivo 2 / N»; las del pie son de paso
+  const meta = ov.locator(".ov-head .ov-meta");
+  await expect(meta.getByRole("button", { name: "Objetivo anterior" })).toBeVisible();
+  await meta.getByRole("button", { name: "Objetivo anterior" }).click();
+  await expect(meta).toContainText("Objetivo 1 /");
+  await expect(meta.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();
+  await meta.getByRole("button", { name: "Objetivo siguiente" }).click();
+  await expect(meta).toContainText("Objetivo 2 /");
+  await expect(ov.locator(".ov-bar").getByRole("button", { name: "Paso 10" })).toBeVisible();
+  await expect(ov.locator(".ov-bar").getByRole("button", { name: "Paso 12" })).toBeVisible();
 
   const chip = ov.locator(".ov-now .coord-chip").first();
   if (await chip.count()) {
@@ -59,10 +69,11 @@ test("el overlay sigue el paso de la página y cambia de misión", async ({ page
   await expect(ov.locator(".ov-qname")).toHaveText("Examen de paso");
 });
 
-test("«Ver todo» pasa a completo y se recuerda; «Reducir» vuelve a mini", async ({ page, context }) => {
+test("«Ver más» pasa a completo y se recuerda; «Reducir» vuelve a mini", async ({ page, context }) => {
   await openApp(page, { "silvestre:done": upTo(10) });
   let ov = await openOverlay(page, context);
-  await ov.getByRole("button", { name: "Ver todo" }).click();
+  await expect(ov.getByRole("button", { name: "Ver todo" })).toHaveCount(0);
+  await ov.getByRole("button", { name: "Ver más" }).click();
   await expect(ov.locator(".ov")).toHaveAttribute("data-mode", "full");
   expect(await page.evaluate(() => localStorage.getItem("silvestre:overlayMode"))).toBe("full");
   await expect(ov.getByRole("tab")).toHaveText([/^Ahora/, /^Misiones/, /^Objetos/, /^Guía/]);
@@ -86,6 +97,15 @@ test("completo: «Ahora» con dónde parar, el objetivo y los dos siguientes", a
   await expect(ov.locator(".ov-now .obj-row")).toHaveCount(1, { timeout: 15_000 });
   await expect(ov.locator(".ov-after .obj-row")).toHaveCount(2);
   expect(await noEmoji(ov)).toBe(true);
+  // El objetivo se completa también en completo, con sus flechas al lado
+  const body = ov.locator(".ov-tab-body");
+  await expect(body.getByRole("button", { name: "Objetivo anterior" })).toBeDisabled();
+  await body.getByRole("button", { name: "✓ Completar objetivo" }).click();
+  await expect(body.locator(".ov-meta")).toContainText("Objetivo 2 /");
+  await body.getByRole("button", { name: "Objetivo anterior" }).click();
+  await expect(body.locator(".ov-meta")).toContainText("Objetivo 1 /");
+  await body.getByRole("button", { name: "Objetivo siguiente" }).click();
+  await expect(body.locator(".ov-meta")).toContainText("Objetivo 2 /");
 });
 
 test("completo: «Misiones» es la lista del diario y «Completar» comparte el estado", async ({ page, context }) => {
@@ -195,4 +215,8 @@ test("sin las misiones cargadas, mini enseña el título del paso y dónde parar
   await expect(ov.locator(".ov-qname")).toHaveText("La viajera imprudente");
   await expect(ov.locator(".ov-stop")).toContainText("Hasta tener que pasar Kanigrula");
   await expect(ov.locator(".ov-now")).toHaveCount(0);
+  // Sin objetivo que completar, el botón del pie completa el paso
+  await expect(ov.getByRole("button", { name: "✓ Completar objetivo" })).toHaveCount(0);
+  await ov.locator(".ov-bar").getByRole("button", { name: "✓ Completar paso 11" }).click();
+  await expect(page.locator('.diary-row[data-n="11"]')).toHaveClass(/done/);
 });

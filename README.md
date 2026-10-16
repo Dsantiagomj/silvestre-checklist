@@ -204,13 +204,15 @@ El botón **Overlay** de la cabecera abre una ventana que se queda encima del ju
 tener que volver al navegador. Tiene dos modos y recuerda el último (`silvestre:overlayMode`).
 
 El modo mini (340×230, el de partida) es una tira con lo justo para seguir jugando. Arriba van
-el número del paso, la misión en curso, "Objetivo 3 / 12 · misión 1 de 2" con flechas para
-cambiar de misión, y el porcentaje. Debajo, la parada roja del paso ("Parar: Hasta tener que
-pasar Kanigrula") y el objetivo actual con el medallón del juego de su tipo, su zona, el
-objeto que se entrega y sus coordenadas. Al pie, paso anterior, "✓ Hecho, siguiente", paso
-siguiente y "Ver todo". "Hecho, siguiente" da el objetivo por hecho; en el último objetivo
-termina la misión y, si era la última obligatoria, el paso queda hecho solo. Mientras las
-misiones no han cargado, sale el título del paso con su parada.
+el número del paso, la misión en curso, "Objetivo ‹ 3 / 12 › · misión ‹ 1 de 2 ›" y el
+porcentaje. Las flechas de al lado del número del objetivo cambian de objetivo y las de la
+misión, de misión. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
+y el objetivo actual con el medallón del juego de su tipo, su zona, el objeto que se entrega y
+sus coordenadas. Al pie, paso anterior, "✓ Completar objetivo", paso siguiente y "Ver más". Las
+flechas del pie son de paso. "Completar objetivo" da el objetivo por hecho y pasa al siguiente;
+en el último objetivo termina la misión y, si era la última obligatoria, el paso queda hecho
+solo. Mientras las misiones no han cargado, sale el título del paso con su parada y el botón
+del pie es "✓ Completar paso 11", el mismo del diario.
 
 La parada sale siempre que el paso la tenga, no solo cuando la misión en curso es la que para.
 Sirve más verla antes de llegar a esa misión. En un paso que se resuelve en sí mismo, la línea
@@ -218,7 +220,8 @@ es la parada que deja el verde, si la hay.
 
 El modo completo (400×680) tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
 
-- Ahora: "Hasta dónde llegar" y "Lo que se resuelve", el objetivo actual, los dos siguientes y
+- Ahora: "Hasta dónde llegar" y "Lo que se resuelve", el objetivo actual con "‹ ✓ Completar
+  objetivo ›" debajo, los dos siguientes y
   una miniatura del mapa donde se hace. Si el objetivo no trae ubicación, el mapa es el de la
   última conocida y lo dice.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de
