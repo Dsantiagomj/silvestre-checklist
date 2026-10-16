@@ -406,3 +406,56 @@ test("a 400 px el título largo del paso cabe en dos líneas, sin cortarse", asy
   expect(box.sh).toBeLessThanOrEqual(box.ch);
   expect(box.lines).toBeLessThanOrEqual(2);
 });
+
+test("tras el último objetivo, la misión queda «Misión completada» y «Siguiente misión» lleva a la otra", async ({ page, context }) => {
+  // Paso 80: «La última piedra» (33 objetivos) y «Alma máster»; en el último objetivo de la primera
+  await openApp(page, { "silvestre:done": upTo(79), "silvestre:questObjective": { 1782: 32 } });
+  const ov = await openOverlay(page, context);
+  await expect(ov.locator(".ov-num")).toHaveText("80");
+  await expect(objCount(ov)).toHaveText("Objetivo 33 de 33", { timeout: 15_000 });
+  const body = ov.locator(".ov-tab-body");
+  const go = body.getByRole("button", { name: "✓ Completar objetivo" });
+  await go.click();
+  // La misión no se va: el botón queda apagado, sin verde, y el objetivo atenuado
+  const doneBtn = body.getByRole("button", { name: "✓ Misión completada" });
+  await expect(doneBtn).toBeDisabled();
+  await expect(doneBtn).not.toHaveClass(/\bgo\b/);
+  await expect(go).toHaveCount(0);
+  await expect(body.locator(".ov-stepper")).toHaveCount(0);
+  await expect(body.locator(".ov-now")).toHaveClass(/is-done/);
+  await expect(qname(ov)).toHaveText("La última piedra");
+  await expect(body.locator(".ov-qhead .q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  expect(Math.round((await doneBtn.boundingBox()).height)).toBe(40);
+  // «Siguiente misión ▶» pasa a la siguiente, que sigue por su primer objetivo
+  const next = body.getByRole("button", { name: /Siguiente misión/ });
+  await expect(next).toBeEnabled();
+  await next.click();
+  await expect(qname(ov)).toHaveText("Alma máster");
+  await expect(body.locator(".ov-qsel")).toContainText("2 de 2");
+  await expect(objCount(ov)).toHaveText("Objetivo 1 de 30");
+  await expect(body.getByRole("button", { name: "✓ Completar objetivo" })).toBeEnabled();
+  // En el desplegable, la primera sale tachada con su ✓
+  await body.locator(".ov-qsel").click();
+  const first = ov.getByRole("listbox", { name: "Misiones del paso" }).getByRole("option").first();
+  await expect(first).toHaveClass(/is-done/);
+  await expect(first.locator(".ov-qopt-ok")).toHaveText("✓");
+  // Volver a la terminada enseña otra vez «Misión completada»
+  await first.click();
+  await expect(body.getByRole("button", { name: "✓ Misión completada" })).toBeDisabled();
+});
+
+test("en la última misión del paso, terminada, solo queda «Misión completada»", async ({ page, context }) => {
+  await openApp(page, { "silvestre:done": upTo(79), "silvestre:questPos": { 80: 1 }, "silvestre:questObjective": { 1782: 33, 1784: 29 } });
+  await openStep(page, 80);
+  const ov = await openOverlay(page, context);
+  await expect(qname(ov)).toHaveText("Alma máster", { timeout: 15_000 });
+  await expect(objCount(ov)).toHaveText("Objetivo 30 de 30");
+  const body = ov.locator(".ov-tab-body");
+  await body.getByRole("button", { name: "✓ Completar objetivo" }).click();
+  // Con todas sus misiones hechas el paso queda hecho solo y el overlay sigue en él
+  await expect(page.locator('.diary-row[data-n="80"]')).toHaveClass(/done/);
+  await expect(ov.locator(".ov-num")).toHaveText("80");
+  await expect(body.getByRole("button", { name: "✓ Misión completada" })).toBeDisabled();
+  await expect(body.getByRole("button", { name: /Siguiente misión/ })).toHaveCount(0);
+  await expect(body.getByRole("button", { name: "✓ Completar objetivo" })).toHaveCount(0);
+});

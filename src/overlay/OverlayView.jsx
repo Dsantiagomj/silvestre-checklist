@@ -54,11 +54,37 @@ function ObjStepper({ cur }) {
   );
 }
 
-/** «✓ Completar objetivo»: lo da por hecho y pasa al siguiente. */
+/** «✓ Completar objetivo»: lo da por hecho y pasa al siguiente; en el último, termina la misión. */
 function ObjButton() {
   return (
     <button type="button" className="gbtn go ov-objbtn" onClick={() => moveObjective(1)}
-      title="Da el objetivo por hecho y pasa al siguiente">✓ Completar objetivo</button>
+      title="Da el objetivo por hecho y pasa al siguiente; en el último, termina la misión">✓ Completar objetivo</button>
+  );
+}
+
+/**
+ * La barra bajo el objetivo. Con la misión terminada (aquí, en otro paso o pasada de
+ * largo), en vez de las flechas y «Completar objetivo»: «✓ Misión completada», apagado,
+ * y «Siguiente misión ▶» si queda otra que recorrer en el paso.
+ */
+function ObjBar({ cur, finished }) {
+  if (!finished) {
+    return (
+      <div className="ov-objbar">
+        <ObjStepper cur={cur} />
+        <ObjButton />
+      </div>
+    );
+  }
+  return (
+    <div className="ov-objbar">
+      <button type="button" className="gbtn ov-objbtn ov-objbtn-done" disabled>✓ Misión completada</button>
+      {cur.at < cur.walked.length - 1 && (
+        <button type="button" className="gbtn ov-nextq" onClick={() => goQuest(cur.at + 1)}>
+          Siguiente misión <Tri dir="next" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -144,9 +170,9 @@ function QuestSelect({ n, cur, s }) {
 }
 
 /** El objetivo actual, como en la ruta del diario: medallón del juego, zona, lo que se entrega y su /travel. */
-function NowCard({ cur }) {
+function NowCard({ cur, finished }) {
   return (
-    <div className="ov-now" data-qid={cur.q.id}>
+    <div className={"ov-now" + (finished ? " is-done" : "")} data-qid={cur.q.id}>
       <Objectives route objs={[cur.objs[cur.k]]} at={0} />
     </div>
   );
@@ -156,6 +182,7 @@ function NowCard({ cur }) {
 function NowTab({ step, cur, s }) {
   const calls = stepCalls(step).filter(([kind]) => kind === "stop" || kind === "done");
   const after = cur ? cur.objs.slice(cur.k + 1, cur.k + 3) : [];
+  const finished = !!cur && questFinished(s, step.n, cur.list, cur.i);
   return (
     <>
       {calls.length > 0 && (
@@ -171,11 +198,8 @@ function NowTab({ step, cur, s }) {
               <CurrentQuestDone n={step.n} cur={cur} s={s} />
             </div>
             <QuestSelect n={step.n} cur={cur} s={s} />
-            <NowCard cur={cur} />
-            <div className="ov-objbar">
-              <ObjStepper cur={cur} />
-              <ObjButton />
-            </div>
+            <NowCard cur={cur} finished={finished} />
+            <ObjBar cur={cur} finished={finished} />
           </section>
           {after.length > 0 && (
             <section className="ov-sec ov-after">

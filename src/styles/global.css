@@ -841,6 +841,14 @@ button.ov-num:hover{ filter:brightness(1.15); }
   font:600 13px var(--font-body); color:var(--gw-ink); font-variant-numeric:tabular-nums; white-space:nowrap;
 }
 .ov .gbtn.ov-objbtn{ flex:1; min-width:0; height:40px; padding:0 10px; border-radius:9px; font-size:13.5px; letter-spacing:.08em; overflow:hidden; text-overflow:ellipsis; }
+/* Misión terminada: el botón, apagado y sin verde; el objetivo, atenuado */
+.ov .gbtn.ov-objbtn-done:disabled{ opacity:1; background:var(--gw-pin); border-color:var(--gw-line); color:var(--gw-soft); box-shadow:none; }
+.ov .gbtn.ov-nextq{
+  flex:none; display:inline-flex; align-items:center; gap:6px; height:40px; padding:0 12px; border-radius:9px;
+  font-size:13px; letter-spacing:.08em; color:var(--gw-gold);
+}
+.ov-nextq .tri{ width:9px; height:9px; }
+.ov-now.is-done{ opacity:.55; filter:saturate(.6); }
 /* La zona, en texto con su color (sin píldora: la cabecera ya va llena) */
 .ov-zone{
   display:block; margin-top:2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;

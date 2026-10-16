@@ -225,7 +225,9 @@ Debajo hay cuatro pestañas. La primera vez se abre en Ahora; después, en la ú
   la siguiente. Como en el diario, no sale en un paso con una sola misión obligatoria. Las
   flechas de objetivo no pasan del primero ni del último. "Completar objetivo" da el objetivo
   por hecho y pasa al siguiente; en el último termina la misión y, si era la última
-  obligatoria, el paso queda hecho solo. La parada sale
+  obligatoria, el paso queda hecho solo. Con la misión terminada (aquí, en otro paso o pasada
+  de largo), el objetivo sale atenuado y la barra dice "✓ Misión completada", apagado, con
+  "Siguiente misión ▶" si queda otra en el paso. La parada sale
   siempre que el paso la tenga, no solo cuando la misión en curso es la que para: sirve más
   verla antes de llegar a esa misión. Sin miniatura del mapa: con las coordenadas basta.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de
