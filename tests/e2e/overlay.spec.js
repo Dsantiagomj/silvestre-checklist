@@ -285,6 +285,8 @@ test("pulsar el número del paso abre la lista de los 100 pasos para elegir otro
   await expect(picker.locator('.ov-pick[data-n="11"]')).toHaveAttribute("aria-current", "step");
   await expect(picker.locator('.ov-pick[data-n="11"]')).toBeInViewport();
   await expect(picker.locator(".ov-pick.is-done")).toHaveCount(10);
+  // Tapa también la cabecera del overlay
+  expect(await ov.evaluate(() => !!document.elementFromPoint(40, 12)?.closest(".ov-picker"))).toBe(true);
   // Con la lista abierta, las flechas no cambian de paso; Escape la cierra
   await ov.keyboard.press("ArrowRight");
   await expect(ov.locator(".ov-num")).toHaveText("11");
