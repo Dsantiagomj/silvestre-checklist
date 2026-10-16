@@ -7,7 +7,8 @@ import {
   moveObjective, moveQuest, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
-import { Actions, Call, GuideCalls, Needs, Quests, StepButton, Tri } from "../components/Journal.jsx";
+import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, StepButton, Tri } from "../components/Journal.jsx";
+import { stepGuide } from "../lib/guides.js";
 import { WinBadge } from "../components/Diary.jsx";
 
 const TAB_KEY = "silvestre:overlayTab";
@@ -28,6 +29,14 @@ function MapFigure({ loc }) {
       {where && <figcaption>{loc.carried ? "Última ubicación conocida · " : ""}{where}</figcaption>}
     </figure>
   );
+}
+
+/** «Guía ↗», a la guía del paso en Torrente Arcano (stepGuide), en otra pestaña. */
+function GuideLink({ step, s }) {
+  const href = stepGuide(step, s.questsLoaded ? questsOf(step.n) : []);
+  return href ? (
+    <a className="q-guide ov-guide-link" href={href} target="_blank" rel="noopener" title="Guía del paso en Torrente Arcano">Guía</a>
+  ) : null;
 }
 
 /**
@@ -100,9 +109,13 @@ function Mini({ n, step, cur, s, setMode }) {
       <header className="ov-head">
         <span className="ov-num">{n}</span>
         <div className="ov-head-txt">
-          <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
+          <div className="ov-qline">
+            <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
+            {cur && <CurrentQuestDone n={n} cur={cur} s={s} />}
+          </div>
           {cur ? <QuestMeta cur={cur} objArrows /> : <p className="ov-meta">{step.zone}</p>}
         </div>
+        <GuideLink step={step} s={s} />
         <b className="ov-pct">{progressPct(s)}%</b>
       </header>
       <div className="ov-scroll ov-mini-body">
@@ -129,7 +142,7 @@ function Mini({ n, step, cur, s, setMode }) {
 }
 
 /** «Ahora»: dónde parar y qué se resuelve, el objetivo actual, los dos siguientes y su mapa. */
-function NowTab({ step, cur, loaded }) {
+function NowTab({ step, cur, s }) {
   const calls = stepCalls(step).filter(([kind]) => kind === "stop" || kind === "done");
   const after = cur ? cur.objs.slice(cur.k + 1, cur.k + 3) : [];
   const loc = cur && locationFor(cur);
@@ -143,7 +156,10 @@ function NowTab({ step, cur, loaded }) {
       {cur ? (
         <>
           <section className="ov-sec">
-            <h3 className="ov-label">{cur.q.n}</h3>
+            <div className="ov-qline">
+              <h3 className="ov-label">{cur.q.n}</h3>
+              <CurrentQuestDone n={step.n} cur={cur} s={s} />
+            </div>
             <QuestMeta cur={cur} />
             <NowCard cur={cur} />
             <div className="ov-obj-ctl">
@@ -162,7 +178,7 @@ function NowTab({ step, cur, loaded }) {
           {loc?.m && <MapFigure key={loc.m} loc={loc} />}
         </>
       ) : (
-        <p className="asset-note">{loaded ? "Este paso no tiene misiones que recorrer." : "Cargando misiones…"}</p>
+        <p className="asset-note">{s.questsLoaded ? "Este paso no tiene misiones que recorrer." : "Cargando misiones…"}</p>
       )}
     </>
   );
@@ -184,6 +200,7 @@ function Full({ n, step, cur, s, setMode }) {
           <p className="ov-title">{stepTitle(step)}</p>
           <span className="ov-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}><i aria-hidden="true"></i>{step.zone}</span>
         </div>
+        <GuideLink step={step} s={s} />
         <b className="ov-pct">{progressPct(s)}%</b>
         <button type="button" className="gbtn ov-mode" onClick={() => setMode("mini")} title="Volver a la tira sobre el juego">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 6.5h-4v-4M9.5 6.5l4-4M2.5 9.5h4v4M6.5 9.5l-4 4" /></svg>
@@ -199,7 +216,7 @@ function Full({ n, step, cur, s, setMode }) {
         ))}
       </div>
       <div className="ov-scroll ov-tab-body journal-body" role="tabpanel">
-        {tab === "now" && <NowTab step={step} cur={cur} loaded={s.questsLoaded} />}
+        {tab === "now" && <NowTab step={step} cur={cur} s={s} />}
         {tab === "quests" && <Quests step={step} quests={s.questsLoaded ? questsOf(n) : []} loaded={s.questsLoaded} s={s} />}
         {tab === "items" && (rows.length ? <Needs n={n} s={s} /> : <p className="asset-note">Este paso no pide objetos.</p>)}
         {tab === "guide" && (

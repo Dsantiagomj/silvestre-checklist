@@ -243,6 +243,36 @@ function QuestStart({ q }) {
   );
 }
 
+/**
+ * «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Completar
+ * paso N». Las opcionales siempre lo llevan: es como se marcan.
+ */
+export const hasQuestDone = (quests, q) => q.kind === "optional" || quests.filter(x => x.kind === "mandatory").length > 1;
+
+/** «Completar» / «✓ Completada» de una misión; terminada en otro paso, no se pulsa. */
+function QuestDone({ finished, elsewhere, onClick }) {
+  return (
+    <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
+      disabled={!!elsewhere}
+      title={elsewhere ? `Completada en el paso ${elsewhere}` : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
+      aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
+      {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
+  );
+}
+
+/**
+ * El «Completar» de la misión en curso del overlay (cur, de currentQuest): el mismo
+ * botón y el mismo avance que en la lista del diario. Nada si el paso no lo lleva.
+ */
+export function CurrentQuestDone({ n, cur, s }) {
+  const { list, i, q } = cur;
+  if (q.kind === "take" || !hasQuestDone(list, q)) return null;
+  const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
+  const finished = progressOf(s, n, list, i, q) >= total;
+  const elsewhere = q.kind === "optional" ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, n);
+  return <QuestDone finished={finished} elsewhere={elsewhere} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
+}
+
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
 export function Quests({ step, quests, loaded, s }) {
   // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
@@ -264,8 +294,6 @@ export function Quests({ step, quests, loaded, s }) {
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
-  // «Completar» sobra si el paso tiene una sola misión obligatoria: la termina «Completar paso N»
-  const mandatory = quests.filter(q => q.kind === "mandatory").length;
   const notes = missionNotes(step);
   // Las hijas de cada misión que van en el paso y se hacen (no las de solo tomarla)
   const kidsOf = q => (childrenOf(q.id) || [])
@@ -314,12 +342,7 @@ export function Quests({ step, quests, loaded, s }) {
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          {/* Las opcionales siempre lo llevan: es como se marcan */}
-          {(optional || mandatory > 1) && <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-            disabled={!!elsewhere}
-            title={elsewhere ? `Completada en el paso ${elsewhere}` : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
-            aria-label={finished ? "Misión completada" : "Completar misión"} onClick={toggleDone}>
-            {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>}
+          {hasQuestDone(quests, q) && <QuestDone finished={finished} elsewhere={elsewhere} onClick={toggleDone} />}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>

@@ -206,7 +206,11 @@ tener que volver al navegador. Tiene dos modos y recuerda el último (`silvestre
 El modo mini (340×230, el de partida) es una tira con lo justo para seguir jugando. Arriba van
 el número del paso, la misión en curso, "Objetivo ‹ 3 / 12 › · misión ‹ 1 de 2 ›" y el
 porcentaje. Las flechas de al lado del número del objetivo cambian de objetivo y las de la
-misión, de misión. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
+misión, de misión. Junto al nombre de la misión va su "Completar", el mismo botón y el
+mismo avance que en el diario: la termina y pasa a la siguiente. Como en el diario, no sale en
+un paso con una sola misión obligatoria. En la cabecera, de los dos modos, "Guía ↗" abre en
+otra pestaña la guía del paso en Torrente Arcano: la del logro que nombra su texto o, en los
+pasos de alineamiento, la de su primera misión con guía. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
 y el objetivo actual con el medallón del juego de su tipo, su zona, el objeto que se entrega y
 sus coordenadas. Al pie, paso anterior, "✓ Completar objetivo", paso siguiente y "Ver más". Las
 flechas del pie son de paso. "Completar objetivo" da el objetivo por hecho y pasa al siguiente;
@@ -220,8 +224,8 @@ es la parada que deja el verde, si la hay.
 
 El modo completo (400×680) tiene cuatro pestañas y recuerda la última (`silvestre:overlayTab`):
 
-- Ahora: "Hasta dónde llegar" y "Lo que se resuelve", el objetivo actual con "‹ ✓ Completar
-  objetivo ›" debajo, los dos siguientes y
+- Ahora: "Hasta dónde llegar" y "Lo que se resuelve", la misión en curso con su "Completar",
+  el objetivo actual con "‹ ✓ Completar objetivo ›" debajo, los dos siguientes y
   una miniatura del mapa donde se hace. Si el objetivo no trae ubicación, el mapa es el de la
   última conocida y lo dice.
 - Misiones: la misma lista del diario, con sus grupos por logro, "Completar", la ruta de

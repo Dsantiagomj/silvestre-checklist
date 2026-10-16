@@ -751,7 +751,15 @@ a:hover{ text-decoration:underline; }
   flex:none; display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center; gap:10px;
   padding:8px 12px; border-bottom:1px solid var(--gw-line);
 }
-.ov-full-head{ grid-template-columns:auto minmax(0, 1fr) auto auto; }
+.ov-full-head{ grid-template-columns:auto minmax(0, 1fr) auto auto auto; }
+.ov-mini .ov-head{ grid-template-columns:auto minmax(0, 1fr) auto auto; }
+.ov .ov-guide-link{ margin:0; }
+/* El nombre de la misión en curso con su «Completar», que aquí dice siempre lo que hace */
+.ov-qline{ display:flex; align-items:center; gap:8px; min-width:0; }
+.ov-qline > :first-child{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ov-qline .q-done-btn{ padding:2px 7px; font-size:10.5px; }
+.ov-qline .q-done-txt{ display:inline; }
+.ov-qline .q-done-btn:not(.is-done)::before{ content:none; }
 .ov-num{
   min-width:30px; text-align:center;
   font:400 30px/1 'Lilita One', var(--font-display); color:#cbee8f;
