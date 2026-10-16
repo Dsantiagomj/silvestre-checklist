@@ -210,7 +210,10 @@ misión, de misión. Junto al nombre de la misión va su "Completar", el mismo b
 mismo avance que en el diario: la termina y pasa a la siguiente. Como en el diario, no sale en
 un paso con una sola misión obligatoria. En la cabecera, de los dos modos, "Guía ↗" abre en
 otra pestaña la guía del paso en Torrente Arcano: la del logro que nombra su texto o, en los
-pasos de alineamiento, la de su primera misión con guía. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
+pasos de alineamiento, la de su primera misión con guía. Pulsar el número del paso, en los dos modos, abre
+dentro del overlay la lista de los 100 pasos, con su número y su título: los hechos llevan la ✓
+y salen apagados, y el actual va señalado y a la vista. Elegir uno lleva el overlay a ese paso.
+Escape o la × la cierran, y mientras está abierta las teclas del overlay no cambian de paso. Debajo, la parada roja del paso ("Parar: Hasta tener que pasar Kanigrula")
 y el objetivo actual con el medallón del juego de su tipo, su zona, el objeto que se entrega y
 sus coordenadas. Al pie, paso anterior, "✓ Completar objetivo", paso siguiente y "Ver más". Las
 flechas del pie son de paso. "Completar objetivo" da el objetivo por hecho y pasa al siguiente;
