@@ -7,7 +7,7 @@ import {
   moveObjective, moveQuest, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
-import { Actions, Call, GuideCalls, Needs, Quests, Tri } from "../components/Journal.jsx";
+import { Actions, Call, GuideCalls, Needs, Quests, StepButton, Tri } from "../components/Journal.jsx";
 import { WinBadge } from "../components/Diary.jsx";
 
 const TAB_KEY = "silvestre:overlayTab";
@@ -30,12 +30,38 @@ function MapFigure({ loc }) {
   );
 }
 
-/** "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. */
-function QuestMeta({ cur }) {
+/**
+ * Las flechas ‹ › entre los objetivos de la misión. La siguiente no pasa del último: ahí
+ * lo que queda es completarlo («Completar objetivo»), que termina la misión.
+ */
+function ObjArrow({ cur, dir }) {
+  const prev = dir === "prev";
+  return (
+    <button type="button" className="ov-q ov-o" data-o={prev ? "-1" : "1"} aria-label={prev ? "Objetivo anterior" : "Objetivo siguiente"}
+      disabled={prev ? cur.k === 0 : cur.k >= cur.objs.length - 1} onClick={() => moveObjective(prev ? -1 : 1)}>
+      <Tri dir={dir} />
+    </button>
+  );
+}
+
+/** «✓ Completar objetivo»: lo da por hecho y pasa al siguiente; tras el último, termina la misión. */
+function ObjButton({ cur }) {
+  return (
+    <button type="button" className="gbtn go" disabled={!cur} onClick={() => moveObjective(1)}
+      title="Da el objetivo por hecho y pasa al siguiente; tras el último, termina la misión">✓ Completar objetivo</button>
+  );
+}
+
+/**
+ * "Objetivo 3 / 12 · misión 1 de 2", con las flechas para cambiar de misión. En mini,
+ * también las del objetivo, junto a su número: las del pie son de paso.
+ */
+function QuestMeta({ cur, objArrows }) {
   const { at, walked, objs, k } = cur;
   return (
     <p className="ov-meta">
-      Objetivo {k + 1} / {objs.length} · misión{" "}
+      Objetivo {objArrows && <ObjArrow cur={cur} dir="prev" />}{k + 1} / {objs.length}{objArrows && <ObjArrow cur={cur} dir="next" />}
+      {" "}· misión{" "}
       <button type="button" className="ov-q" data-q="-1" disabled={!(at > 0)} aria-label="Misión anterior"
         onClick={() => moveQuest(-1)}><Tri dir="prev" /></button>
       {at + 1} de {walked.length}
@@ -75,7 +101,7 @@ function Mini({ n, step, cur, s, setMode }) {
         <span className="ov-num">{n}</span>
         <div className="ov-head-txt">
           <p className="ov-qname">{cur ? cur.q.n : stepTitle(step)}</p>
-          {cur ? <QuestMeta cur={cur} /> : <p className="ov-meta">{step.zone}</p>}
+          {cur ? <QuestMeta cur={cur} objArrows /> : <p className="ov-meta">{step.zone}</p>}
         </div>
         <b className="ov-pct">{progressPct(s)}%</b>
       </header>
@@ -89,14 +115,13 @@ function Mini({ n, step, cur, s, setMode }) {
         <button type="button" className="gbtn" disabled={n === 1} aria-label={`Paso ${n - 1}`} onClick={() => overlayGo(n - 1)}>
           <Tri dir="prev" />
         </button>
-        <button type="button" className="gbtn go" disabled={!cur} onClick={() => moveObjective(1)}
-          title="Da el objetivo por hecho y pasa al siguiente; tras el último, termina la misión">✓ Hecho, siguiente</button>
+        {cur ? <ObjButton cur={cur} /> : <StepButton step={step} s={s} />}
         <button type="button" className="gbtn" disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`} onClick={() => overlayGo(n + 1)}>
           <Tri dir="next" />
         </button>
         <button type="button" className="gbtn ov-mode" onClick={() => setMode("full")} title="Ver el paso entero">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5" /></svg>
-          Ver todo
+          Ver más
         </button>
       </nav>
     </>
@@ -121,6 +146,11 @@ function NowTab({ step, cur, loaded }) {
             <h3 className="ov-label">{cur.q.n}</h3>
             <QuestMeta cur={cur} />
             <NowCard cur={cur} />
+            <div className="ov-obj-ctl">
+              <ObjArrow cur={cur} dir="prev" />
+              <ObjButton cur={cur} />
+              <ObjArrow cur={cur} dir="next" />
+            </div>
           </section>
           {after.length > 0 && (
             <section className="ov-sec ov-after">

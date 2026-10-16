@@ -389,16 +389,13 @@ export function AlsoLine({ s, closes }) {
 }
 
 /**
- * Barra final, con los botones planos del juego: el paso anterior, «Completar paso N»
- * (que marca el paso y abre el siguiente pendiente) y el siguiente. Si el combate del
- * paso cierra otros que siguen pendientes, el mismo botón termina lo que les queda y una
- * línea debajo lo dice: uno aparte se perdía al avanzar y lo cerrado quedaba pendiente.
+ * El botón del paso: «Completar paso N» marca el paso, termina lo que queda de los que
+ * cierra y abre el siguiente pendiente; hecho, lo vuelve a dejar pendiente. Lo usan la
+ * barra del diario y el pie del overlay en mini cuando no hay objetivo que completar.
  */
-export function Actions({ step, s }) {
+export function StepButton({ step, s, id }) {
   const n = step.n;
   const go = useContext(StepGo);
-  // En la vista que se va (zoom hacia el mapa) los botones no llevan id
-  const live = !useLeaving();
   const done = !!s.done[n];
   const closes = pendingCloses(s, n);
   // Lo cerrado que quede pendiente (le faltan misiones de antes) puede ser el siguiente
@@ -410,16 +407,32 @@ export function Actions({ step, s }) {
     if (next != null) go(next);
   }
   return (
+    <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={id}
+      title={done ? "Vuelve a dejar el paso pendiente" : `Marca el paso${next != null ? ` y abre el ${next}` : ""}`}
+      onClick={done ? () => toggleStep(n) : finish}>
+      {stepLabel(n, done)}
+    </button>
+  );
+}
+
+/**
+ * Barra final, con los botones planos del juego: el paso anterior, «Completar paso N»
+ * (StepButton) y el siguiente. Si el combate del paso cierra otros que siguen
+ * pendientes, el mismo botón termina lo que les queda y una línea debajo lo dice: uno
+ * aparte se perdía al avanzar y lo cerrado quedaba pendiente.
+ */
+export function Actions({ step, s }) {
+  const n = step.n;
+  const go = useContext(StepGo);
+  // En la vista que se va (zoom hacia el mapa) los botones no llevan id
+  const live = !useLeaving();
+  return (
     <div className="journal-cta">
       <button type="button" className="gbtn" id={live ? "prevBtn" : undefined} disabled={n === 1} aria-label={`Paso ${n - 1}`}
         onClick={() => go(n - 1)}><Tri dir="prev" /> {n > 1 ? n - 1 : ""}</button>
       <div className="journal-cta-main">
-        <button type="button" className={"gbtn go" + (done ? " is-done" : "")} id={live ? "toggleBtn" : undefined}
-          title={done ? "Vuelve a dejar el paso pendiente" : `Marca el paso${next != null ? ` y abre el ${next}` : ""}`}
-          onClick={done ? () => toggleStep(n) : finish}>
-          {stepLabel(n, done)}
-        </button>
-        <AlsoLine s={s} closes={closes} />
+        <StepButton step={step} s={s} id={live ? "toggleBtn" : undefined} />
+        <AlsoLine s={s} closes={pendingCloses(s, n)} />
       </div>
       <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
         onClick={() => go(n + 1)}>{n < STEPS.length ? n + 1 : ""} <Tri dir="next" /></button>

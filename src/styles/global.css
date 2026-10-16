@@ -773,6 +773,12 @@ a:hover{ text-decoration:underline; }
 }
 .ov-q:disabled{ opacity:.35; cursor:default; }
 .ov-q .tri{ width:8px; height:8px; }
+/* Las del objetivo, a los lados de su número, un poco separadas de él */
+.ov-o{ margin:0 3px; }
+/* En «Ahora»: ‹ ✓ Completar objetivo › bajo el objetivo actual */
+.ov-obj-ctl{ display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 2px; }
+.ov-obj-ctl .ov-o{ width:26px; height:26px; margin:0; }
+.ov-obj-ctl .ov-o .tri{ width:10px; height:10px; }
 .ov-zone{
   display:inline-flex; align-items:center; gap:5px; margin-top:3px; padding:1px 8px; border-radius:999px;
   border:1px solid color-mix(in srgb, var(--zone-color, #e3c565) 60%, transparent);
