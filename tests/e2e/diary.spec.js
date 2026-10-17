@@ -1399,3 +1399,16 @@ test("el consejo «En el logro X, misión N: Nombre. = …» va dentro de esa mi
   await expect(questItem(page, "El barco con esclavos").locator(".q-note")).toContainText("Se puede encadenar");
   await expect(page.locator("#journal .goal-calls .call.tip")).toHaveCount(0);
 });
+
+test("el paso 47 pide el Filtro de amor, con su imagen, y no el Filtro de dragonalgas", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await openApp(page);
+  // «En busca de un herrero» pide el objeto 33380 en DofusDB; la lista de la página lo llama de otra forma
+  await page.click('.diary-row[data-n="47"] .row-main');
+  const slot = page.locator('#journal .journal-needs .slot[data-id="33380"]');
+  await expect(slot.locator("img")).toHaveAttribute("src", /items\//);
+  await slot.hover();
+  await slot.locator(".slot-copy").click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Filtro de amor");
+  await expect(page.locator('#journal .journal-needs .slot[data-id="x:filtro de dragonalgas"]')).toHaveCount(0);
+});

@@ -45,6 +45,7 @@ CATEGORY = {"Recursos": "recursos", "Consumibles": "consumibles", "Equipables": 
 # and to the compiled list alike, so the check still compares like with like.
 CORRECTIONS = {
     "Hoja de kalipto": "Flor de kalipto",   # no such leaf exists; the guide means the flower
+    "Filtro de dragonalgas": "Filtro de amor",  # what "En busca de un herrero" asks for (33380)
 }
 # Names that differ from DofusDB's Spanish name
 ALIASES = {
