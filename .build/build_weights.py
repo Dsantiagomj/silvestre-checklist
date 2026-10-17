@@ -19,12 +19,17 @@ How the progress percentage is weighted:
     (the one that is finished when its objective index reaches that number).
 
 Level source: the guide page on Torrente Arcano when it states one ("Nivel mínimo N"
-under "Prerrequisitos"); otherwise DofusDB's `levelMin` (`lv` in quests.json).
+under "Prerrequisitos"); otherwise DofusDB's `levelMin` (`lv` in quests.json). A quest
+in LEVEL_FROM_MONSTERS takes instead the mean level of the monsters whose souls it asks
+for: "La eterna cosecha" starts at level 40, but its stages go up to archmonsters of
+level 181. DofusDB's per-stage `optimalLevel` is not used: many quests have 200 there
+for every stage whatever their level.
 
-Reads  : src/data/{quests,guides}.json
+Reads  : src/data/{quests,guides}.json, .build/data/quests.json (DofusDB's objectives)
 Writes : src/data/weights.json ({step number: {"w": weight, "q": [share of each quest],
                                  "ids": [quest ids], "os": [their objective counts]}})
 Caches : .build/data/ta_levels.json  ({url: {"level": n | null, "pre": text}})
+         .build/data/monster_levels.json  ({monster id: level of its lowest grade})
 Run    : python3 -I .build/build_weights.py   (after build_quests_js.py)
 """
 import html
@@ -43,6 +48,12 @@ QUESTS_JSON = ROOT / "src" / "data" / "quests.json"
 GUIDES_JSON = ROOT / "src" / "data" / "guides.json"
 OUT_JSON = ROOT / "src" / "data" / "weights.json"
 TA_CACHE = DATA / "ta_levels.json"
+RAW_QUESTS = DATA / "quests.json"
+MONSTER_CACHE = DATA / "monster_levels.json"
+# Brackets encoded: curl reads [] as a URL pattern
+MONSTER_API = "https://api.dofusdb.fr/monsters?%24limit=50&"
+SOUL_OBJECTIVE = 12  # "Lleva 1 alma(s) de {monster} a {npc}"
+LEVEL_FROM_MONSTERS = {"439"}  # La eterna cosecha
 MIN_WEIGHT = 1  # one level-1 quest
 
 
@@ -108,6 +119,31 @@ def ta_levels(urls):
     return cache
 
 
+def monster_levels(ids):
+    """Level of each monster's lowest grade, from the cache or DofusDB."""
+    cache = json.loads(MONSTER_CACHE.read_text()) if MONSTER_CACHE.exists() else {}
+    todo = sorted(i for i in ids if str(i) not in cache)
+    for k in range(0, len(todo), 50):
+        chunk = todo[k:k + 50]
+        body = fetch(MONSTER_API + "&".join(f"id%5B%24in%5D%5B%5D={i}" for i in chunk))
+        if not body:
+            sys.exit(f"DofusDB no respondió para los monstruos {chunk[0]}…{chunk[-1]}")
+        for m in json.loads(body)["data"]:
+            cache[str(m["id"])] = m["grades"][0]["level"]
+        MONSTER_CACHE.write_text(json.dumps(cache, indent=0))
+    return {i: cache[str(i)] for i in ids}
+
+
+def soul_level(q):
+    """Mean level of the monsters whose souls the quest asks for."""
+    raw = json.loads(RAW_QUESTS.read_text())
+    quest = next(e for e in (raw if isinstance(raw, list) else raw.values()) if str(e.get("id")) == q)
+    ids = [o["parameters"]["parameter1"] for stage in quest["steps"] for o in stage["objectives"]
+           if o["typeId"] == SOUL_OBJECTIVE]
+    levels = monster_levels(set(ids))
+    return sum(levels[i] for i in ids) / len(ids)
+
+
 # ---------------------------------------------------------------------------
 # Weights
 # ---------------------------------------------------------------------------
@@ -128,6 +164,9 @@ def main():
     for q in used:
         ta = (cache.get(url_of[q]) or {}).get("level") if url_of[q] else None
         level[q], source[q] = (ta, "ta") if ta else (quests[q]["lv"] or 1, "dofusdb")
+    for q in LEVEL_FROM_MONSTERS & used:
+        level[q], source[q] = soul_level(q), "monsters"
+        print(f"{quests[q]['n']}: nivel {level[q]:.1f}, la media de sus monstruos")
 
     shared = {}
     for n, qs in step_quests.items():
