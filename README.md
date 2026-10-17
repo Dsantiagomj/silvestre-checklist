@@ -132,9 +132,10 @@ comprueba contra `.build/lists/compilado.txt` (420 de 420 filas iguales):
 - Los objetos de una misión opcional o de una sola orden de alineamiento llevan etiqueta.
   Cuentan en el total como los demás: van ligados a sus pasos, así que completarlos los cubre.
 
-La lista de la página trae un error, corregido en `CORRECTIONS`: pide "Hoja de kalipto", que
-no existe; es la Flor de kalipto. Tres nombres no existen en DofusDB y salen sin imagen:
-Esencia de cil, Filtro de dragonalgas y "Recursos recolectables de los reinos de tinta y papel".
+La lista de la página trae dos errores, corregidos en `CORRECTIONS`: pide "Hoja de kalipto",
+que no existe (es la Flor de kalipto), y "Filtro de dragonalgas", que ahora es el Filtro de
+amor que pide "En busca de un herrero" en el paso 47. Dos nombres no existen en DofusDB y salen
+sin imagen: Esencia de cil y "Recursos recolectables de los reinos de tinta y papel".
 
 ### Todo auto-alojado
 
