@@ -899,9 +899,9 @@ test("el estandarte lleva lo más representativo del paso sobre el mapa donde em
   // Las líneas primordiales que empieza Meriana, con Meriana
   await stepData(page, 17);
   expect(await figure(page)).toBe("Inicia el paso:Meriana");
-  // El fondo: el mapa del juego donde empieza la primera misión
+  // El fondo: el mapa del juego donde empieza la primera misión, alojado aquí
   await expect(page.locator("#journal .journal-banner .journal-bg"))
-    .toHaveAttribute("style", /maps\/0\.5\/122421248\.jpg/);
+    .toHaveAttribute("style", /img\/maps\/start\/122421248\.jpg/);
   // Figuras elegidas: el dragón de su Dofus, los jinetes, Draconiros y Silvosse
   for (const [n, want] of [[39, "Dragón primordial:Aguabrial"], [74, "Jinete del Selocalipsis:Guerra"],
     [68, "Selocalipsis:Draconiros"], [34, "Dofus Silvestre:Silvosse"], [64, "Inicia el paso:Pandawelo"]]) {
