@@ -143,9 +143,13 @@ sin imagen: Esencia de cil y "Recursos recolectables de los reinos de tinta y pa
 Las 336 imágenes de iconos, jefes y objetos viven en `public/img/` (5.2 MB), copiadas de DofusDB por el script de build.
 Los iconos de oficio salen del release `job_images_64.tar.gz` de
 [dofusdude/dofus3-main](https://github.com/dofusdude/dofus3-main), porque DofusDB
-devuelve 404 en los suyos. La excepción son los mapas del overlay: son 1.210 y pesarían
-unos 80 MB, así que se cargan desde DofusDB al verlos. Si no cargan, el overlay sigue sin
-la imagen. Lo demás externo es Google Fonts.
+devuelve 404 en los suyos. Los 61 mapas donde empiezan los pasos, el fondo del estandarte,
+también: `fetch_start_maps.py` los recorta como los paisajes de zona y los deja a 800 px de
+ancho (2,5 MB en `public/img/maps/start/`). Antes venían de DofusDB al abrir el paso, y
+durante un segundo se veía el paisaje de la zona antes de que el mapa lo tapara. Ahora el
+estandarte lleva un solo fondo, el mapa o, si el paso no tiene, el paisaje, y no lo pinta
+hasta que ha cargado. La excepción es el fondo del hero, el mapa del siguiente paso a todo
+el ancho y en alta resolución, que se carga desde DofusDB. Lo demás externo es Google Fonts.
 
 ### Actualizar la guía
 
@@ -171,6 +175,7 @@ python3 -I .build/build_assets_js.py   # escribe src/data/assets.json (60 KB) y 
 python3 -I .build/build_quests_js.py   # escribe src/data/quests.json (506 KB): misiones y objetivos por paso
 python3 -I .build/build_weights.py     # escribe src/data/weights.json: el peso de cada paso en el porcentaje
 python3 -I .build/build_figures.py     # escribe src/data/figures.json: mapa de inicio y figura del estandarte por paso
+python3 -I .build/fetch_start_maps.py  # copia esos mapas de inicio a public/img/maps/start/, el fondo del estandarte
 python3 -I .build/build_resources.py   # escribe src/data/resources.json: los objetos de cada paso
 ```
 
@@ -373,6 +378,7 @@ silvestre-checklist/
     ├── build_quests_js.py    ← resuelve cada paso a sus misiones
     ├── build_weights.py      ← peso de cada paso para el porcentaje: nivel × √objetivos de sus misiones
     ├── build_figures.py      ← mapa de inicio y figura del estandarte de cada paso
+    ├── fetch_start_maps.py   ← esos mapas, recortados y alojados aquí
     ├── build_resources.py    ← objetos de cada paso desde la lista de torrentearcano
     ├── lists/                ← datos importados de torrentearcano y su compilado
     ├── steps.js

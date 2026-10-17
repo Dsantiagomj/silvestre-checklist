@@ -369,3 +369,19 @@ test("la ficha dice dónde se retoma el paso, antes de dónde se termina", async
   await expect(lines.nth(1)).toHaveClass(/later/);
   await expect(lines.nth(1).locator(".step-chip")).toHaveAttribute("data-n", "61");
 });
+
+test("el estandarte de la ficha lleva un solo fondo, alojado aquí: sin el paisaje de la zona debajo del mapa", async ({ page }) => {
+  const remote = [];
+  // Los del estandarte venían a media resolución (el hero lleva el suyo, en alta)
+  page.on("request", r => { if (/api\.dofusdb\.fr\/img\/maps\/0\.5\//.test(r.url())) remote.push(r.url()); });
+  await openMap(page);
+  const bgOf = () => page.locator("#mapCard .journal-bg").evaluate(el => getComputedStyle(el).backgroundImage);
+  // El 34 empieza en el mapa 149159936: solo ese fondo, servido desde public/img
+  await node(page, 34).click();
+  await expect.poll(bgOf).toMatch(/^url\("[^"]*\/img\/maps\/start\/149159936\.jpg"\)$/);
+  // El 7 no tiene mapa de inicio: el paisaje de su zona
+  await node(page, 7).click();
+  await expect(page.locator("#mapCard .journal-banner .journal-num")).toHaveText("7");
+  await expect.poll(bgOf).toMatch(/^url\("[^"]*\/img\/zones\/[^"]+\.jpg"\)$/);
+  expect(remote).toEqual([]);
+});

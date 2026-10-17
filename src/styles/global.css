@@ -3043,6 +3043,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   .steps-stage.swap .steps-layer[inert] *{ animation:none !important; transition:none !important; }
   /* Otro paso: el paisaje se asienta, el jefe aparece de un salto y el texto sube */
   .journal-top .journal-bg{ animation:hero-bg-in .55s cubic-bezier(.2,.8,.2,1) both; }
+  .map-card-banner .journal-bg{ animation:hero-bg-in .35s cubic-bezier(.2,.8,.2,1) both; }
   .journal-top .journal-show{ animation:boss-pop .45s cubic-bezier(.3,1.4,.5,1) .08s both; }
   .journal-goal{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .04s both; }
   .journal-body{ animation:enter-up .35s cubic-bezier(.2,.8,.2,1) .1s both; }

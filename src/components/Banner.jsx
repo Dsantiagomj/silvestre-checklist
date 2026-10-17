@@ -1,7 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ZONE_COLOR } from "../data/steps.js";
 import { ZONE_IMG, imgUrl } from "../lib/assets.js";
-import { MAP_IMG } from "../lib/quests.js";
 import { bannerFigure, startMap } from "../lib/journal.js";
 
 // La punta del pendón: lo que baja el centro respecto de los lados. La pone el CSS
@@ -49,18 +48,38 @@ function BannerFrame({ w, h, tip }) {
 }
 
 /**
+ * La URL que ya se puede pintar entera: hasta que la imagen carga, nada. Así el fondo
+ * entra de una vez (con su animación) y no a trozos ni encima de otro.
+ */
+function useLoaded(src) {
+  const [loaded, setLoaded] = useState(null);
+  useEffect(() => {
+    if (!src) return;
+    const img = new Image();
+    let live = true;
+    img.onload = img.onerror = () => live && setLoaded(src);
+    img.src = src;
+    return () => { live = false; };
+  }, [src]);
+  return loaded === src;
+}
+
+/**
  * El estandarte (izquierda): sobre el mapa del juego donde empieza el paso, su número,
- * su zona y lo que lo representa (bannerFigure). Sin mapa, el paisaje de la zona.
+ * su zona y lo que lo representa (bannerFigure). Sin mapa, el paisaje de la zona. Un
+ * solo fondo, alojado aquí (fetch_start_maps.py): con el mapa de DofusDB encima del
+ * paisaje, se veía el paisaje y un segundo después lo tapaba el mapa.
  */
 export default function Banner({ step, className = "" }) {
   const fig = bannerFigure(step.n);
   const map = startMap(step.n);
   const zone = ZONE_IMG[step.zone];
-  const bg = [map && `url(${MAP_IMG}${map}.jpg)`, zone && `url(${imgUrl(zone.img)})`].filter(Boolean).join(", ");
+  const bg = map ? imgUrl(`maps/start/${map}.jpg`) : zone ? imgUrl(zone.img) : null;
+  const ready = useLoaded(bg);
   const [ref, size] = useSize();
   return (
     <aside className={"journal-banner" + (className ? ` ${className}` : "")} ref={ref} style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
-      {bg && <div className="journal-bg" style={{ backgroundImage: bg }}></div>}
+      {bg && ready && <div className="journal-bg" key={bg} style={{ backgroundImage: `url("${bg}")` }}></div>}
       {size && <BannerFrame {...size} />}
       <span className="journal-num">{step.n}</span>
       <span className="banner-zone">{step.zone}</span>
