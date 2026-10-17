@@ -118,8 +118,9 @@ test("el peso de una misión es su nivel por la raíz de sus objetivos", async (
   // objetivos cada una, la del 30 con 7
   expect(weights["29"].w).toBeCloseTo(3 * 110 * Math.sqrt(2), 1);
   expect(weights["30"].w).toBeCloseTo(110 * Math.sqrt(7), 1);
-  // «La eterna cosecha» (paso 79, 339 objetivos) pesa mucho, pero la raíz lo contiene
-  expect(weights["79"].w).toBeCloseTo(40 * Math.sqrt(339), 0);
+  // «La eterna cosecha» (paso 79, 339 objetivos) pesa mucho, pero la raíz lo contiene. Su
+  // nivel no es el 40 de empezarla: es la media de los 337 archimonstruos que pide (73,8)
+  expect(weights["79"].w / Math.sqrt(339)).toBeCloseTo(73.8, 1);
   // Lo que vale cada misión del paso suma lo que vale el paso
   for (const { w, q } of Object.values(weights)) expect(q.reduce((a, p) => a + p, 0)).toBeCloseTo(w, 1);
 });
