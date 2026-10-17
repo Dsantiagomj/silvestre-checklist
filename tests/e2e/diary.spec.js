@@ -1412,3 +1412,15 @@ test("el paso 47 pide el Filtro de amor, con su imagen, y no el Filtro de dragon
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Filtro de amor");
   await expect(page.locator('#journal .journal-needs .slot[data-id="x:filtro de dragonalgas"]')).toHaveCount(0);
 });
+
+test("la lista del diario no lleva la miniatura de la zona y deja más ancho al detalle", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  await expect(page.locator(".diary-row").first()).toBeVisible();
+  await expect(page.locator(".diary-list .row-thumb")).toHaveCount(0);
+  const side = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().width);
+  expect(side).toBeLessThanOrEqual(380);
+  // El título sigue teniendo el mismo sitio que antes, sin la miniatura
+  const title = await page.locator('.diary-row[data-n="4"] .row-title').evaluate(el => el.getBoundingClientRect().width);
+  expect(title).toBeGreaterThanOrEqual(200);
+});

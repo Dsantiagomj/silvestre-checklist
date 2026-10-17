@@ -5,7 +5,7 @@ import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { EASE, morphHeight, prefersReducedMotion, restartClass, useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS } from "../data/steps.js";
-import { DOFUS_ROAD, ZONE_IMG, imgUrl } from "../lib/assets.js";
+import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import {
@@ -55,7 +55,6 @@ const Row = memo(function Row({ step, done, current, instant }) {
     ).finished.then(safeToRemove, safeToRemove);
   }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
   const art = rowArt(n);
-  const thumb = ZONE_IMG[step.zone]?.thumb;
   const closedBy = !done && CLOSED_BY[n];
   const closes = !done && step.closes;
   // Dentro del botón de la fila: un clic lleva a ese paso sin abrir este (con teclado,
@@ -67,7 +66,6 @@ const Row = memo(function Row({ step, done, current, instant }) {
       <button type="button" className="row-check" aria-pressed={done} aria-label={`${done ? "Desmarcar" : "Marcar"} paso ${n}`}
         onClick={() => toggleStep(n)}></button>
       <button type="button" className="row-main" onClick={() => selectStep(n)}>
-        <span className="row-thumb" style={thumb ? { backgroundImage: `url(${imgUrl(thumb)})` } : undefined} aria-hidden="true"></span>
         <span className="row-num">{n}</span>
         <span className="row-text">
           <span className="row-title">{stepTitle(step)}</span>
