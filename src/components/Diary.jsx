@@ -89,18 +89,14 @@ const Row = memo(function Row({ step, done, current, instant }) {
 });
 
 /**
- * La ventana del diario (lista y detalle): en escritorio el detalle crece con lo que
- * lleva y se desplaza la página; la lista se queda a la vista y se desplaza por dentro.
- * Al cambiar de paso con el principio del detalle ya pasado, la página vuelve a él.
+ * La ventana del diario (lista y detalle): en escritorio llena lo que deja la cabecera
+ * de la ventana y cada lado se desplaza por dentro. Al cambiar de paso, el detalle
+ * vuelve arriba, sin mover la página.
  */
 function DiaryWindow({ step, children }) {
   const ref = useRef(null);
   useLayoutEffect(() => {
-    const detail = ref.current.querySelector(".diary-detail");
-    if (!detail) return;
-    const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
-    const top = detail.getBoundingClientRect().top;
-    if (top < header) window.scrollBy({ top: top - header, behavior: "instant" });
+    ref.current.querySelector(".diary-detail")?.scrollTo(0, 0);
   }, [step]);
   return <div className="diary-window" ref={ref}>{children}</div>;
 }
@@ -513,7 +509,7 @@ export default function Diary({ mobile }) {
   const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
   const origin = `${at.x}px ${at.y - (flow ? 0 : mapScrollTop())}px`;
   return (
-    <section className={"diary" + (steps && !map ? " is-journal" : "")} id="diary" aria-labelledby="diaryTitle">
+    <section className="diary" id="diary" aria-labelledby="diaryTitle">
       <div className="diary-head">
         <h2 className="section-title" id="diaryTitle">Los 100 pasos</h2>
       </div>

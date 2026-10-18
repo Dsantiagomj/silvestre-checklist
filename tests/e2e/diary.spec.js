@@ -987,59 +987,59 @@ test("el marco dorado del estandarte sigue también la punta", async ({ page }) 
   expect(ok).toEqual([true, true]);
 });
 
-test("en escritorio el detalle crece con sus misiones: se desplaza la página y la barra de pasos queda pegada abajo", async ({ page }) => {
+/** Deja la sección del diario arriba, bajo la cabecera de la página, como al ir a ella. */
+const alignDiary = async page => {
+  await page.waitForLoadState("networkidle");
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+};
+
+test("en escritorio el detalle se desplaza por dentro y la barra de pasos queda pegada a su pie", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="1"] .row-main');
   await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
+  await alignDiary(page);
   const detail = page.locator(".diary-detail");
   const body = page.locator("#journal .journal-body");
-  // Ni el panel ni el cuerpo se desplazan por dentro: el panel mide lo que su contenido
-  expect(await detail.evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+  // Se desplaza el detalle entero (estandarte incluido), no el cuerpo por su lado
+  expect(await detail.evaluate(el => el.scrollHeight > el.clientHeight + 50)).toBe(true);
   expect(await body.evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
-  expect(await detail.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(900);
-  // La barra va fuera del cuerpo y, con el panel más alto que la pantalla, pegada al borde de abajo
+  // La barra va fuera del cuerpo, al pie del detalle, y no se mueve al desplazarlo
   await expect(page.locator("#journal .journal-body .journal-cta")).toHaveCount(0);
   const cta = page.locator("#journal .journal-cta");
-  const bottom = () => cta.evaluate(el => Math.round(el.getBoundingClientRect().bottom));
-  await page.evaluate(() => scrollTo(0, document.querySelector(".diary-detail").getBoundingClientRect().top + scrollY - 80));
+  const gap = () => page.evaluate(() => document.querySelector(".diary-detail").getBoundingClientRect().bottom
+    - document.querySelector("#journal .journal-cta").getBoundingClientRect().bottom);
   await expect(cta).toBeInViewport({ ratio: 1 });
-  expect(await bottom()).toBe(900);
-  // Se desplaza la página, no el panel: la barra sigue en el mismo sitio y la lista a la vista
-  await page.evaluate(() => scrollBy(0, 300));
-  expect(await bottom()).toBe(900);
+  expect(Math.abs(await gap())).toBeLessThanOrEqual(2);
+  const y = await page.evaluate(() => scrollY);
+  await detail.evaluate(el => el.scrollTo(0, 300));
+  expect(Math.abs(await gap())).toBeLessThanOrEqual(2);
+  await detail.evaluate(el => el.scrollTo(0, el.scrollHeight));
+  expect(Math.abs(await gap())).toBeLessThanOrEqual(2);
+  // La página y la lista no se mueven
+  expect(await page.evaluate(() => scrollY)).toBe(y);
   await expect(page.locator(".diary-list")).toBeInViewport();
-  const side = await page.locator(".diary-side").evaluate(el => {
-    const r = el.getBoundingClientRect();
-    return { top: r.top, bottom: r.bottom, header: document.querySelector("header").getBoundingClientRect().bottom };
-  });
-  expect(side.top).toBeGreaterThanOrEqual(side.header - 0.5);
-  expect(side.bottom).toBeLessThanOrEqual(900.5);
-  // Al final del panel la barra se queda en su sitio, al pie del detalle
-  await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
-  const end = await page.evaluate(() => ({
-    cta: document.querySelector("#journal .journal-cta").getBoundingClientRect().bottom,
-    detail: document.querySelector(".diary-detail").getBoundingClientRect().bottom,
-  }));
-  expect(Math.abs(end.cta - end.detail)).toBeLessThanOrEqual(2);
 });
 
 test("pasar de paso desde la barra, al final de un paso largo, vuelve al principio del detalle", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="1"] .row-main');
   await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
-  await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+  await alignDiary(page);
+  await page.locator(".diary-detail").evaluate(el => el.scrollTo(0, el.scrollHeight));
+  const y = await page.evaluate(() => scrollY);
   await page.locator("#nextBtn").evaluate(el => el.click());
   await expect(page.locator("#journal .journal-num")).toHaveText("2");
   await expect(page.locator("#journal .journal-top")).toBeInViewport({ ratio: 1 });
-  const top = await page.evaluate(() => document.querySelector(".diary-detail").getBoundingClientRect().top - document.querySelector("header").getBoundingClientRect().bottom);
-  expect(top).toBeGreaterThanOrEqual(-0.5);
+  expect(await page.locator(".diary-detail").evaluate(el => el.scrollTop)).toBe(0);
+  // La página no se mueve: vuelve el detalle, por dentro
+  expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
-test("con la página arriba, la barra de pasos pegada no sube sobre la cabecera del paso", async ({ page }) => {
+test("la barra de pasos pegada no sube sobre la cabecera del paso", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await stepData(page, 12);
-  await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+  await alignDiary(page);
   await page.waitForTimeout(100);
   const r = await page.evaluate(() => {
     const top = document.querySelector("#journal .journal-top").getBoundingClientRect();
@@ -1047,50 +1047,43 @@ test("con la página arriba, la barra de pasos pegada no sube sobre la cabecera 
     const cta = document.querySelector("#journal .journal-cta").getBoundingClientRect();
     return { topEnd: top.bottom, bodyEnd: body.bottom, cta: cta.top };
   });
-  // Como poco, 240 px de cuerpo a la vista antes de la barra (o el cuerpo entero, si es más corto)
+  // Como poco, 240 px de cuerpo antes de la barra (o el cuerpo entero, si es más corto)
   expect(r.cta).toBeGreaterThanOrEqual(Math.min(r.topEnd + 240, r.bodyEnd) - 0.5);
 });
 
-test("con poco contenido el panel llega al pie de la pantalla y la barra de pasos va abajo", async ({ page }) => {
+test("con poco contenido la barra de pasos va al pie del detalle, al pie de la ventana", async ({ page }) => {
   await openApp(page);
   await stepData(page, 4);
   await expect(page.locator("#journal .q-item")).toHaveCount(1);
-  await page.waitForLoadState("networkidle");
-  await page.evaluate(() => {
-    const header = document.querySelector("header").getBoundingClientRect().bottom;
-    scrollBy({ top: document.querySelector(".diary-detail").getBoundingClientRect().top - header, behavior: "instant" });
-  });
+  await alignDiary(page);
   await page.waitForTimeout(100);
-  const r = await page.evaluate(() => {
-    const header = document.querySelector("header").getBoundingClientRect().bottom;
-    const detail = document.querySelector(".diary-detail").getBoundingClientRect();
-    const cta = document.querySelector("#journal .journal-cta").getBoundingClientRect();
-    return { header, h: detail.height, detail: detail.bottom, cta: cta.bottom, vh: innerHeight };
-  });
-  // El panel mide al menos lo que la pantalla bajo la cabecera, con la barra al pie
-  expect(r.h).toBeGreaterThanOrEqual(r.vh - r.header - 0.5);
-  expect(Math.min(Math.abs(r.cta - r.vh), Math.abs(r.cta - r.detail))).toBeLessThanOrEqual(4);
+  const r = await page.evaluate(() => ({
+    win: document.querySelector(".steps-win").getBoundingClientRect().bottom,
+    detail: document.querySelector(".diary-detail").getBoundingClientRect().bottom,
+    cta: document.querySelector("#journal .journal-cta").getBoundingClientRect().bottom,
+    overflow: document.querySelector(".diary-detail").scrollHeight - document.querySelector(".diary-detail").clientHeight,
+  }));
+  // El detalle llena la ventana sin desplazarse y la barra va a su pie; el hueco, encima
+  expect(r.overflow).toBeLessThanOrEqual(1);
+  expect(Math.abs(r.detail - r.win)).toBeLessThanOrEqual(1.5);
+  expect(Math.abs(r.cta - r.detail)).toBeLessThanOrEqual(2);
 });
 
-test("a 1440×900, con el paso 12 abierto se leen todas sus misiones sin desplazar nada por dentro", async ({ page }) => {
+test("a 1440×900, en el paso 12 el estandarte es compacto y al final del detalle se leen todas sus misiones", async ({ page }) => {
   await openApp(page);
   await stepData(page, 12);
   const items = page.locator("#journal .q-item");
   await expect(items.first()).toBeAttached();
-  await page.waitForLoadState("networkidle");
-  // La página baja hasta dejar el detalle arriba, bajo la cabecera
-  await page.evaluate(() => {
-    const header = document.querySelector("header").getBoundingClientRect().bottom;
-    scrollBy(0, document.querySelector(".diary-detail").getBoundingClientRect().top - header);
-  });
-  // El estandarte es compacto y el cuerpo no se desplaza por dentro
+  await alignDiary(page);
+  // El estandarte es compacto y el cuerpo no se desplaza por su lado
   const banner = await page.locator("#journal .journal-banner").boundingBox();
   expect(banner.height).toBeGreaterThanOrEqual(180);
   expect(banner.height).toBeLessThanOrEqual(215);
   expect(await page.locator("#journal .journal-body").evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+  await page.locator(".diary-detail").evaluate(el => el.scrollTo(0, el.scrollHeight));
   for (const item of await items.all()) await expect(item).toBeInViewport({ ratio: 1 });
   await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
-  // Y ninguna queda tapada por la barra de pasos, que va pegada abajo
+  // Y ninguna queda tapada por la barra de pasos, pegada al pie
   const ctaTop = await page.locator("#journal .journal-cta").evaluate(el => el.getBoundingClientRect().top);
   const bottoms = await items.evaluateAll(els => els.map(e => e.getBoundingClientRect().bottom));
   for (const b of bottoms) expect(b).toBeLessThanOrEqual(ctaTop + 0.5);
