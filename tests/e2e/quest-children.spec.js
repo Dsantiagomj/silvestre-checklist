@@ -68,6 +68,35 @@ test("en la ruta de la madre, una línea dice qué hijas se hacen ahí y lleva a
   expect(errors).toEqual([]);
 });
 
+test("en escritorio, llevar a una hija desplaza el detalle por dentro y no la página", async ({ page }) => {
+  await openApp(page);
+  await openStep(page, 81);
+  await page.waitForLoadState("networkidle");
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+  const remedio = quest(page, "Un remedio draconiano");
+  await remedio.locator("summary .q-name").evaluate(el => el.click());
+  // La madre, ya abierta del todo
+  await expect(remedio).toHaveAttribute("open", "");
+  await page.waitForTimeout(600);
+  const y = await page.evaluate(() => scrollY);
+  // Sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
+  await remedio.locator(".obj-kids").getByRole("button", { name: "«El dragón de los vientos»" }).evaluate(el => el.click());
+  const vientos = quest(page, "El dragón de los vientos");
+  await expect(vientos).toHaveAttribute("open", "");
+  await expect(vientos.locator("summary")).toBeInViewport();
+  await page.waitForTimeout(200);
+  // La hija queda arriba del detalle, que es lo que se ha desplazado
+  const r = await page.evaluate(() => {
+    const detail = document.querySelector(".diary-detail");
+    const kid = [...document.querySelectorAll("#journal .q-item")].find(q => q.querySelector("summary .q-name")?.textContent === "El dragón de los vientos");
+    return { y: scrollY, scroll: detail.scrollTop, gap: kid.getBoundingClientRect().top - detail.getBoundingClientRect().top };
+  });
+  expect(r.y).toBe(y);
+  expect(r.scroll).toBeGreaterThan(0);
+  expect(r.gap).toBeGreaterThanOrEqual(0);
+  expect(r.gap).toBeLessThanOrEqual(30);
+});
+
 test("en el 93, cada hija de «Nordalía» va en su objetivo, una por línea", async ({ page }) => {
   await openApp(page);
   await openStep(page, 93);

@@ -300,10 +300,27 @@ export function Quests({ step, quests, loaded, s }) {
   // cortaba la altura de la misión al abrirse
   // El requestAnimationFrame de la ventana de la misión: en el overlay, la de la página
   // puede estar en segundo plano y no llegar
+  // En escritorio el detalle se desplaza por dentro: se mueve solo él, no la página (que
+  // scrollIntoView también desplazaría para llevar la misión arriba de la pantalla)
   const toKid = (id, el) => {
     setOpen(id, true);
-    el.ownerDocument.defaultView.requestAnimationFrame(() => el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`)
-      ?.scrollIntoView({ block: "start", behavior: "instant" }));
+    const win = el.ownerDocument.defaultView;
+    win.requestAnimationFrame(() => {
+      const item = el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`);
+      if (!item) return;
+      const box = item.closest(".diary-detail");
+      if (box && box.scrollHeight > box.clientHeight && win.getComputedStyle(box).overflowY !== "visible") {
+        const margin = parseFloat(win.getComputedStyle(item).scrollMarginTop) || 0;
+        const to = box.scrollTop + item.getBoundingClientRect().top - box.getBoundingClientRect().top - margin;
+        // Si la hija va al final, el detalle aún no da para llevarla arriba: crece mientras
+        // se abre, y se sigue hasta llegar (como mucho, un segundo)
+        const follow = left => {
+          box.scrollTop = to;
+          if (box.scrollTop < to - 1 && left > 0) win.requestAnimationFrame(() => follow(left - 1));
+        };
+        follow(60);
+      } else item.scrollIntoView({ block: "start", behavior: "instant" });
+    });
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
   const items = quests.map((q, i) => {
