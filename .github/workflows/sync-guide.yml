@@ -1,0 +1,168 @@
+name: Sync guide with Torrente Arcano
+
+# Cada 6 horas lee la página de datos de Torrente Arcano (el checklist clásico) y, si la
+# guía cambió, regenera los datos, pasa las pruebas, sube el cambio a main y despliega.
+# Si algo falla, abre un issue (o comenta en el que ya esté abierto).
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: sync-guide
+  cancel-in-progress: false
+
+env:
+  # La página con los datos del checklist clásico. Se cambia con la variable del repo
+  # GUIDE_URL (Settings → Secrets and variables → Actions → Variables)
+  GUIDE_URL: ${{ vars.GUIDE_URL || 'https://www.torrentearcano.com/checklist-silvestre-datos' }}
+
+jobs:
+  # Barato y en Linux: bajar la página, importarla y ver si cambia algo
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      reason: ${{ steps.fetch.outputs.reason || steps.import.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch the data page
+        id: fetch
+        run: |
+          mkdir -p "$RUNNER_TEMP/ta"
+          if ! curl -sSL --fail -A "Mozilla/5.0" -o "$RUNNER_TEMP/ta/page.html" "$GUIDE_URL"; then
+            msg="la página de datos no responde ($GUIDE_URL)"
+            echo "reason=$msg" >> "$GITHUB_OUTPUT"
+            echo "::error::$msg"
+            exit 1
+          fi
+      - name: Import the guide
+        id: import
+        run: |
+          if ! python3 -I .build/import_guide.py "$RUNNER_TEMP/ta/page.html" 2> "$RUNNER_TEMP/ta/import.err"; then
+            cat "$RUNNER_TEMP/ta/import.err"
+            msg="no se pudo importar la página de datos ($GUIDE_URL): $(tail -n 1 "$RUNNER_TEMP/ta/import.err")"
+            echo "reason=$msg" >> "$GITHUB_OUTPUT"
+            echo "::error::$msg"
+            exit 1
+          fi
+      - name: Anything new?
+        id: diff
+        run: |
+          if [ -z "$(git status --porcelain src/data .build/lists)" ]; then
+            echo "Sin cambios en la guía."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git status --porcelain src/data .build/lists
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          name: page
+          path: ${{ runner.temp }}/ta/page.html
+          retention-days: 7
+
+  # En macOS: los scripts de los assets recortan y comprimen las imágenes con `sips`
+  sync:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Los datos crudos de DofusDB (~190 MB) y las cachés de la API: así regenerar no
+      # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución para guardar lo nuevo
+      - uses: actions/cache@v4
+        with:
+          path: .build/data
+          key: dofusdb-${{ github.run_id }}
+          restore-keys: dofusdb-
+      - uses: actions/download-artifact@v4
+        with:
+          name: page
+          path: ${{ runner.temp }}/ta
+      # La misma página que vio `check`; los scripts solo usan la biblioteca estándar
+      - name: Import and regenerate the assets
+        run: |
+          mkdir -p .build/data
+          python3 -I .build/import_guide.py "$RUNNER_TEMP/ta/page.html"
+          python3 -I .build/fetch_dofusdb.py
+          python3 -I .build/match_assets.py
+          python3 -I .build/build_assets_js.py
+          python3 -I .build/build_quests_js.py
+          python3 -I .build/build_weights.py
+          python3 -I .build/build_figures.py
+          python3 -I .build/fetch_start_maps.py
+          python3 -I .build/build_resources.py
+      - run: npm ci
+      - run: npx playwright install chromium
+      # Las dos suites: la app sola y embebida en una página como la de Squarespace
+      - name: Test
+        run: |
+          npx playwright test --retries=2
+          npm run test:embed -- --retries=2
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A src/data .build/lists public/img
+          if git diff --cached --quiet; then
+            echo "Nada que subir."
+            exit 0
+          fi
+          git commit -m "chore(guia): sincroniza con Torrente Arcano"
+          git push origin HEAD:main
+          echo "pushed=true" >> "$GITHUB_ENV"
+      # Un push con GITHUB_TOKEN no lanza otros workflows: el despliegue se pide a mano
+      - name: Deploy
+        if: env.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
+
+  report:
+    needs: [check, sync]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REASON: ${{ needs.check.outputs.reason }}
+          SYNC: ${{ needs.sync.result }}
+        run: |
+          title="La sincronización con Torrente Arcano falló"
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ -z "$REASON" ]; then
+            if [ "$SYNC" = "failure" ]; then
+              REASON="falló la regeneración, las pruebas o el push (main no se tocó si fallaron las pruebas)"
+            else
+              REASON="falló la comprobación de la página de datos"
+            fi
+          fi
+          body="$(printf 'Ejecución: %s\n\nMotivo: %s\n\nPágina de datos: %s' "$run_url" "$REASON" "$GUIDE_URL")"
+          number="$(gh issue list --state open --search "in:title \"$title\"" --json number,title \
+            --jq "map(select(.title == \"$title\")) | first | .number // empty")"
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
