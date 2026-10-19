@@ -153,12 +153,19 @@ el ancho y en alta resolución, que se carga desde DofusDB. Lo demás externo es
 
 ### Actualizar la guía
 
-Cuando Sandglass publica una versión nueva, se importa de la página de torrentearcano:
+Cuando Sandglass publica una versión nueva, se importa de la página de torrentearcano que
+tiene el checklist clásico. Cuando esta app pase a ocupar `/checklist-silvestre`, esa
+página será `/checklist-silvestre-datos` (ver "Montaje en Torrente Arcano"):
 
 ```bash
 curl -sL -A "Mozilla/5.0" -o /tmp/ta/page.html https://www.torrentearcano.com/checklist-silvestre
 python3 -I .build/import_guide.py /tmp/ta/page.html
 ```
+
+Si la página no trae los datos del checklist (un 404, una página con contraseña o la del
+snippet de esta app), el script falla con un mensaje y no toca nada. Lo mismo si no
+llegan los 100 pasos. Normalmente no hace falta lanzarlo a mano: lo hace el workflow de
+sincronización.
 
 Reescribe los pasos de `src/data/steps.js` y guarda una copia de los datos de la página en
 `.build/lists/torrentearcano.json`. La página publica también qué pasos de la versión
@@ -289,7 +296,7 @@ npx playwright test
 
 Son pruebas de extremo a extremo con Playwright en `tests/e2e/`: diario, detalle, misiones,
 filtros, prerrequisitos, lista de objetos, tema, header, reinicio con copia de seguridad,
-overlay y móvil. Sin `APP_URL`, construyen el sitio y lo prueban en `vite preview`. Con
+importación del checklist clásico, overlay y móvil. Sin `APP_URL`, construyen el sitio y lo prueban en `vite preview`. Con
 `APP_URL` se pueden pasar contra cualquier otro despliegue:
 
 ```bash
@@ -298,6 +305,22 @@ APP_URL=https://mi-despliegue.example/ npx playwright test
 
 Se escribieron contra la antigua versión de un solo archivo antes de migrar a React, y las
 dos versiones las pasaban sin cambios.
+
+La app embebida tiene su propia suite en `tests/embed/`, con su propia configuración:
+
+```bash
+npm run test:embed
+```
+
+Construye el embebido en `.embed-test/` y lo abre dentro de una página que imita la de
+Torrente Arcano en Squarespace (`tests/embed/fixtures/squarespace.html`): cabecera fija de
+80 px, CSS global agresivo (`* { font-family: serif }`, `button { all: unset }`…) y
+contenido arriba y abajo del bloque. No levanta servidor: Playwright sirve esa página en
+`https://www.torrentearcano.com/checklist-silvestre` y los archivos del build en la
+dirección de GitHub Pages, así que el snippet y el build son los mismos que en
+producción. Comprueba que el CSS no cruza en ningún sentido, marcar pasos, el tema, el
+desplazamiento del diario, la cabecera bajo la de la página, la importación del clásico,
+el overlay y la hoja inferior en móvil.
 
 ---
 
@@ -347,11 +370,94 @@ BASE_PATH=/silvestre-checklist/ npx vite preview --port 4318
 APP_URL=http://127.0.0.1:4318/silvestre-checklist/ npx playwright test
 ```
 
+El mismo workflow construye también el embebido (`npm run build:embed`), que queda en
+`dist/embed/silvestre.js` con sus trozos en `dist/embed/chunks/`. Carga los trozos y las
+imágenes de la dirección absoluta de Pages; las imágenes no se copian dos veces.
+
 `dist/` pesa unos 15 MB, casi todo imágenes del juego. Las misiones (`quests.json`) van en un
 archivo aparte que solo se descarga cuando hace falta.
 
 El progreso se guarda en el navegador, por dominio: si el sitio cambia de dirección, cada
-cual pierde su avance salvo que haya guardado una copia de seguridad.
+cual pierde su avance salvo que haya guardado una copia de seguridad. El progreso de
+github.io y el de torrentearcano.com son independientes.
+
+---
+
+## Montaje en Torrente Arcano
+
+La app sustituye al checklist clásico en https://www.torrentearcano.com/checklist-silvestre.
+No va en un iframe: desde un iframe el navegador no deja abrir el overlay de
+Picture-in-Picture. En la página se pega un bloque de código de Squarespace con esto:
+
+```html
+<div id="silvestre-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/silvestre.js"></script>
+```
+
+El script se monta en una shadow root sobre `#silvestre-root` (`src/embed.jsx`). El CSS de
+Squarespace no entra en la app y el de la app no sale a la página. Las fuentes de Google
+sí se añaden al `<head>` de la página, porque dentro de una shadow root no se cargan. Si
+la página tiene la cabecera fija de Squarespace (`#header`), la app mide su alto y pega su
+propia cabecera debajo. Las media queries miran el ancho de la ventana, no el del bloque:
+la sección debe ir a todo el ancho o la app se verá apretada en escritorio.
+
+### La página de datos
+
+El checklist clásico, con sus datos, pasa a https://www.torrentearcano.com/checklist-silvestre-datos.
+De ahí lee la guía `.build/import_guide.py`. Esa página tiene que seguir pública, sin
+contraseña. Puede quedar oculta del menú y de los buscadores.
+
+La app tiene que estar en el mismo dominio, `www.torrentearcano.com`, para leer el progreso
+del clásico: el navegador guarda `localStorage` por dominio, y con otro dominio o sin
+`www` la app no ve nada.
+
+### El progreso del checklist clásico
+
+El clásico guarda el progreso en `dofus_silvestre_clean_v4` (y antes en
+`dofus_silvestre_clean_v3`, con la numeración anterior de la guía). La app solo lee esas
+claves, nunca las cambia ni las borra (`src/lib/classic.js`).
+
+- En la primera visita marca como hechos todos los pasos que el clásico tiene marcados.
+  Si aquí no se eligió tema, toma también el claro o el oscuro del clásico. La v3 solo
+  cuenta si no hay v4, y se pasa a la numeración actual con `PREVIOUS_STEPS`.
+- En las visitas siguientes, si el clásico tiene pasos hechos que aquí no lo están, un
+  aviso dice "Tienes N pasos más en el checklist clásico" con un botón "Traerlos". El botón
+  solo añade pasos, no desmarca ninguno. La cruz cierra el aviso, que no vuelve hasta que
+  cambien los pasos marcados en el clásico.
+- Traer pasos funciona como restaurar una copia: no celebra los Dofus que lleguen ni
+  completa por su cuenta otros pasos.
+
+### Sincronización con la guía
+
+`.github/workflows/sync-guide.yml` corre cada 6 horas y también a mano (Actions → Sync
+guide with Torrente Arcano → Run workflow). Baja la página de datos y la importa. La
+dirección sale de la variable del repo `GUIDE_URL`; sin ella, usa
+`https://www.torrentearcano.com/checklist-silvestre-datos`.
+
+Si no cambia nada en `src/data` ni en `.build/lists`, termina ahí. Si cambia, en macOS
+(los scripts de imágenes usan `sips`) regenera los assets con la secuencia de "Regenerar
+los assets", pasa las dos suites de pruebas, sube el cambio a `main` como
+`chore(guia): sincroniza con Torrente Arcano` y lanza el despliegue. Un push hecho con el
+token del workflow no lanza otros workflows, por eso el despliegue se pide aparte.
+
+Si algo falla (la página no responde, no trae los datos, falla la regeneración o una
+prueba), no se sube nada y se abre un issue "La sincronización con Torrente Arcano falló"
+con el enlace a la ejecución. Si ya hay uno abierto con ese título, se comenta en él.
+Mientras la página de datos no exista, cada ejecución fallará y comentará en ese issue.
+
+El horario solo corre desde la rama por defecto: el workflow tiene que estar en `main`.
+
+### Orden para ponerlo en marcha
+
+1. El dueño de Torrente Arcano copia el bloque del checklist clásico a
+   `/checklist-silvestre-datos`: pública, sin contraseña, oculta del menú y de los buscadores.
+2. Se define `GUIDE_URL` si hace falta otra dirección, se lanza la sincronización a mano y
+   se comprueba que lee la página. Si la guía no cambió, termina sin cambios.
+3. Se prueba el snippet en una página oculta de prueba del mismo dominio.
+4. Se cambia el bloque de `/checklist-silvestre` por el snippet.
+
+Para volver atrás basta con pegar otra vez el bloque antiguo en `/checklist-silvestre`. El
+progreso de los usuarios en el clásico sigue en sus claves, que la app nunca tocó.
 
 ---
 
@@ -362,14 +468,17 @@ silvestre-checklist/
 ├── index.html                ← entrada de Vite
 ├── src/
 │   ├── main.jsx, App.jsx
+│   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
 │   ├── overlay/              ← ventana Picture-in-Picture (portal de React)
-│   ├── lib/                  ← imágenes, carga diferida de misiones, animaciones
+│   ├── lib/                  ← imágenes, carga diferida de misiones, animaciones, checklist clásico,
+│   │                           root.js (dónde vive la app: el documento o la shadow root)
 │   ├── data/                 ← steps.js (los 100 pasos de Sandglass) y JSON generados
 │   └── styles/global.css
 ├── public/img/               ← las 336 imágenes del juego, auto-alojadas (5.2 MB)
 ├── tests/e2e/                ← pruebas de Playwright
+├── tests/embed/              ← pruebas del embebido en una página como la de Squarespace
 └── .build/                   ← internos (no enviar al usuario final)
     ├── import_guide.py       ← importa los pasos de la guía desde torrentearcano
     ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
