@@ -173,6 +173,12 @@ export const startMap = n => FIGURES[n]?.m ?? null;
 /** Lo que se resuelve: el jefe que se pasa; sin jefe, la espada del juego. */
 export const doneIcon = n => resolvedBoss(n)?.img || OBJ_ICONS.fight;
 
+/** El jefe ante el que para el paso: el que nombra el texto de su parada, o null. */
+export function stopBoss(n, text) {
+  const t = ` ${norm(text).replace(/[^a-z0-9]+/g, " ")} `;
+  return assetsFor(n)?.bosses?.find(b => t.includes(` ${norm(b.name).replace(/[^a-z0-9]+/g, " ").trim()} `)) || null;
+}
+
 
 /**
  * Misión opcional -> paso que la termina sin cerrar el suyo. Nota del 93: «Con los cuatro

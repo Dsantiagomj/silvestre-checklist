@@ -7,7 +7,7 @@ import {
 import { BRAND_ICON, CALL_ICONS, DOFUS_ROAD, HERO_BG, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { MAP_IMG_HD, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
-import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle } from "../lib/journal.js";
+import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle, stopBoss } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import Banner from "./Banner.jsx";
 import { appRoot, appTopY, scrolledInApp } from "../lib/root.js";
@@ -97,7 +97,8 @@ function HeroStep({ s, step }) {
   const live = useIsPresent();
   const fig = bannerFigure(step.n);
   const call = stepCalls(step).find(([kind]) => CALL_LABEL[kind]);
-  const icon = call && (call[0] === "done" ? doneIcon(step.n) : CALL_ICONS.stop);
+  // En el medallón, el jefe que se pasa o ante el que se para; si no lo hay, el icono de la guía
+  const icon = call && (call[0] === "done" ? doneIcon(step.n) : stopBoss(step.n, call[1])?.img || CALL_ICONS.stop);
   return (
     <div className="hero-step-in" id={live ? "heroNext" : undefined} inert={!live}>
       <Banner step={step} className="hero-banner" />
@@ -107,9 +108,12 @@ function HeroStep({ s, step }) {
           {stepFacts(s, step, fig).map((fact, i) => <Fragment key={i}>{i > 0 && " "}<span>{fact}</span></Fragment>)}
         </p>
         {call && (
-          <p className={`hero-call ${call[0]}`} title={call[1]}>
-            {icon && <img src={imgUrl(icon)} alt="" />}
-            <b>{CALL_LABEL[call[0]]}:</b> {call[1]}
+          <p className={`hero-call ${call[0]}`}>
+            <span className="hero-call-med">{icon && <img src={imgUrl(icon)} alt="" />}</span>
+            <span className="hero-call-copy">
+              <span className="hero-call-label">{CALL_LABEL[call[0]]}</span>
+              <span className="hero-call-text">{call[1]}</span>
+            </span>
           </p>
         )}
         <button type="button" className="hero-next-go" id={live ? "heroNextGo" : undefined} onClick={() => goToStep(step.n)}>

@@ -211,7 +211,31 @@ test("el hero dice los objetos que pide el paso y su aviso de la guía", async (
   const call = step.locator(".hero-call");
   await expect(call).toHaveCount(1);
   await expect(call).toHaveClass(/\b(stop|done)\b/);
-  expect(await call.evaluate(el => getComputedStyle(el).whiteSpace)).toBe("nowrap");
+  expect(await call.locator(".hero-call-text").evaluate(el => getComputedStyle(el).whiteSpace)).toBe("nowrap");
+});
+
+test("dónde parar va en un medallón con el jefe ante el que se para, sin caja ni tooltip", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(9) });
+  const call = page.locator("#heroNext .hero-call.stop");
+  await expect(call).toHaveCount(1);
+  await expect(call.locator(".hero-call-med img")).toHaveAttribute("src", /monsters\/128\.png$/);
+  await expect(call.locator(".hero-call-label")).toHaveText("Hasta dónde llegar");
+  await expect(call.locator(".hero-call-text")).toHaveText("Hasta tener que pasar Maxilubo");
+  await expect(call).not.toHaveAttribute("title");
+  // Sin la caja de antes: ni fondo ni borde
+  const box = await call.evaluate(el => {
+    const cs = getComputedStyle(el);
+    return { bg: cs.backgroundColor, border: cs.borderLeftWidth };
+  });
+  expect(box).toEqual({ bg: "rgba(0, 0, 0, 0)", border: "0px" });
+});
+
+test("si la parada no nombra un jefe, el medallón lleva el icono de la guía", async ({ page }) => {
+  // El 5 para a la entrada de una mazmorra: no hay jefe que mostrar
+  await openApp(page, { "silvestre:done": upTo(4) });
+  const call = page.locator("#heroNext .hero-call.stop");
+  await expect(call.locator(".hero-call-med img")).toHaveAttribute("src", /items\/84228\.png$/);
+  await expect(call.locator(".hero-call-text")).toContainText("Laboratorio de Brumen Tinctorias");
 });
 
 test("al marcar un paso el hero pasa al siguiente con un fundido, pero no al cargar", async ({ page }) => {
