@@ -1,0 +1,39 @@
+name: CI
+
+# Las dos suites de pruebas en cada pull request a main. La protección de main exige que
+# el check "Pruebas" pase antes de fusionar. La sincronización de la guía lo lanza a mano
+# sobre su rama, porque un PR abierto con el token del workflow no dispara otros workflows.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # La app sola y embebida en una página como la de Squarespace
+      - run: npx playwright test --retries=2
+      - run: npm run test:embed -- --retries=2
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results
+          retention-days: 7
