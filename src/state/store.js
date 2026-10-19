@@ -12,6 +12,7 @@ import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } fr
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
+import { appRoot, themeTarget } from "../lib/root.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -384,7 +385,7 @@ export const hasActiveFilters = s => {
 // ACCIONES
 // ============================================================================
 export function applyTheme(t) {
-  document.documentElement.setAttribute("data-theme", t);
+  themeTarget().setAttribute("data-theme", t);
   localStorage.setItem(LS.theme, t);
   setState({ theme: t });
 }
@@ -436,7 +437,7 @@ export function takeMapFocus() {
  * la ventana si esta no se ve entera). En móvil el mapa va en la página.
  */
 export function revealMapNode(n) {
-  const node = document.querySelector(`.map-node[data-n="${n}"]`);
+  const node = appRoot().querySelector(`.map-node[data-n="${n}"]`);
   if (!node) return;
   const behavior = prefersReducedMotion() ? "auto" : "smooth";
   const r = node.getBoundingClientRect();
@@ -450,7 +451,7 @@ export function revealMapNode(n) {
       box.scrollTo({ top, behavior });
     }
     // Donde quedará el sello: si ni así se ve, la página baja hasta la ventana
-    const head = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+    const head = appRoot().querySelector("header")?.getBoundingClientRect().bottom ?? 0;
     if (r.top - shift < head || r.bottom - shift > innerHeight) showStepsWindow();
     return;
   }
@@ -459,7 +460,7 @@ export function revealMapNode(n) {
 
 /** Lleva la página hasta la ventana de los pasos, que queda entera a la vista en escritorio. */
 export function showStepsWindow() {
-  document.getElementById("diary")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+  appRoot().getElementById("diary")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
 }
 
 export function showOnMap(n) {
@@ -684,7 +685,7 @@ export function goToNextPending() {
   if (!stepMatches(state, STEPS[n - 1])) setFilters({ zones: [], status: "all", search: "" });
   selectStep(n);
   // En escritorio, a la vista el diario; en móvil la hoja ya está abierta
-  if (!isMobile()) document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!isMobile()) appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function togglePrereq(id) {

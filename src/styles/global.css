@@ -7,7 +7,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Lilita+One&display=swap');
 
 /* TOKENS DE DISEÑO ----------------------------------------------------------*/
-:root{
+:root, :host{
   /* Fondos (DARK) — carbón con tinte verde */
   --bg:        #0d0e0c;
   --bg-2:      #121411;
@@ -100,9 +100,12 @@
 }
 
 /* RESET ----------------------------------------------------------------------*/
+/* Embebida (src/embed.jsx), la app vive en una shadow root: el anfitrión no hereda nada de
+   la página que la aloja y .app-root hace de <body> (lleva también data-theme) */
+:host{ all:initial; display:block; }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
-body{
+body, .app-root{
   margin:0;
   font-family:var(--font-body);
   background:var(--bg);
@@ -124,8 +127,10 @@ input,select,textarea{font-family:inherit; color:inherit}
 @media (max-width:640px){ .wrap{padding:0 12px} }
 
 /* HEADER · "ventana de juego" -----------------------------------------------*/
+/* --silvestre-top: lo que tapa la cabecera fija de la página que aloja la app embebida
+   (src/embed.jsx lo mide); en su página no existe y vale 0 */
 header{
-  position:sticky; top:0; z-index:60;
+  position:sticky; top:var(--silvestre-top, 0px); z-index:60;
   background:var(--bg);
   border-bottom:1px solid var(--line);
 }
@@ -202,7 +207,7 @@ header{
 @media (max-width:600px){
   .icon-btn .lbl{display:none}
   .brand{font-size:15px; letter-spacing:1.5px}
-  :root{ --header-h:48px; }
+  :root, :host{ --header-h:48px; }
 }
 
 /* HERO ---------------------------------------------------------------------*/
@@ -569,6 +574,9 @@ header{
   overflow:hidden;
 }
 .sheet.open{ transform:translateY(0); }
+/* Embebida, lo que va fijo a la ventana pasa por encima de la cabecera fija de la página */
+.is-embed .sheet-overlay{ z-index:2147483000; }
+.is-embed .sheet{ z-index:2147483001; }
 .sheet-handle{
   display:flex; justify-content:center;
   padding:8px 0 4px;
@@ -631,7 +639,7 @@ footer small{ color:var(--line-warm); }
    CAPA DUFFUS · estructura y componentes nuevos
    Va al final para ganar en cascada sin reescribir los bloques de arriba.
    ============================================================================ */
-body{
+body, .app-root{
   background-color:var(--bg);
   background-image:
     radial-gradient(1100px 520px at 12% -8%, rgba(183,220,105,.07), transparent 60%),
@@ -1196,6 +1204,7 @@ header.is-scrolled .title-bar{
   transition:opacity .25s ease, transform .3s cubic-bezier(.2,.9,.25,1);
 }
 .toast.show{ opacity:1; pointer-events:auto; transform:translate(-50%, 0); }
+.is-embed .toast{ z-index:2147483002; }
 .toast-action{ margin-left:auto; color:var(--accent-ink); font-weight:700; font-size:13.5px; padding:2px 4px; }
 .toast-action:empty{ display:none; }
 .toast-bar{
@@ -1225,7 +1234,7 @@ header.is-scrolled .title-bar{
 /* El contorno oscuro de las letras Lilita: un anillo de sombras de 1 px. Con
    -webkit-text-stroke algunos navegadores rayan el interior de las letras con piezas
    solapadas (la tilde de «á», la «ñ») aunque lleve paint-order */
-:root{
+:root, :host{
   --ink-ring:-1px -1px 0 #121410, 0 -1px 0 #121410, 1px -1px 0 #121410, 1px 0 0 #121410,
     1px 1px 0 #121410, 0 1px 0 #121410, -1px 1px 0 #121410, -1px 0 0 #121410;
 }
@@ -1675,7 +1684,7 @@ header.is-scrolled .title-bar{
 .needs-hint{ flex:1 1 280px; margin:0; font-size:12.5px; line-height:1.5; color:var(--txt-mute); }
 .items-body{ display:grid; grid-template-columns:190px minmax(0, 1fr); gap:16px; align-items:start; }
 .needs-find{ flex:1 1 320px; }
-.needs-cats{ display:flex; flex-direction:column; gap:3px; position:sticky; top:84px; }
+.needs-cats{ display:flex; flex-direction:column; gap:3px; position:sticky; top:calc(var(--silvestre-top, 0px) + 84px); }
 .needs-cat{
   display:flex; justify-content:space-between; align-items:center;
   padding:8px 10px; border-radius:9px;
@@ -1923,7 +1932,7 @@ header.is-scrolled .title-bar{
 /* 02 · LOS 100 PASOS --------------------------------------------------------
    Diario: la lista por capítulos a la izquierda y, a la derecha, el paso con su
    escenario (paisaje de la zona y jefe), los avisos de la guía y las misiones. */
-.diary{ margin-bottom:24px; scroll-margin-top:calc(var(--header-h) + 12px); }
+.diary{ margin-bottom:24px; scroll-margin-top:calc(var(--silvestre-top, 0px) + var(--header-h) + 12px); }
 .diary-head{ display:flex; align-items:center; gap:12px 18px; flex-wrap:wrap; margin-bottom:14px; }
 .diary-head .section-title{ margin:0; }
 .diary-bar{ flex:1; display:flex; gap:10px; min-width:min(100%, 420px); }
@@ -2047,8 +2056,8 @@ header.is-scrolled .title-bar{
 @media (min-width:901px){
   .diary{
     display:flex; flex-direction:column; min-height:560px;
-    height:calc(100vh - var(--header-h) - 24px);
-    height:calc(100dvh - var(--header-h) - 24px);
+    height:calc(100vh - var(--silvestre-top, 0px) - var(--header-h) - 24px);
+    height:calc(100dvh - var(--silvestre-top, 0px) - var(--header-h) - 24px);
   }
   .diary-head{ flex:none; }
   .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
@@ -2141,7 +2150,7 @@ header.is-scrolled .title-bar{
    el siguiente pendiente lleva «Estás aquí». Sin imágenes: textura y viñeta con
    degradados (y un ruido SVG en línea).
    ============================================================================ */
-:root{
+:root, :host{
   --parch:        #2b2216;
   --parch-hi:     rgba(255,222,160,.07);
   --parch-shade:  rgba(0,0,0,.42);
@@ -3014,7 +3023,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 /* MOVIMIENTO ------------------------------------------------------------------
    Lo que aparece entra con un desplazamiento corto y un fundido: así se entiende
    qué ha cambiado. Las alturas las anima useHeightMorph (lib/motion.js). */
-:root{ interpolate-size:allow-keywords; }
+:root, :host{ interpolate-size:allow-keywords; }
 @keyframes enter-up{ from{ opacity:0; transform:translateY(8px); } }
 @keyframes enter-fade{ from{ opacity:0; } }
 @keyframes badge-bump{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); } }

@@ -27,3 +27,6 @@ __pycache__/
 dist/
 test-results/
 playwright-report/
+
+# Build del embebido para sus pruebas (tests/embed/build.js)
+.embed-test/

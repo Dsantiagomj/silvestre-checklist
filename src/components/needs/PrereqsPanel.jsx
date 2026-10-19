@@ -6,6 +6,7 @@ import { achievementGuide, missionGuide } from "../../lib/guides.js";
 import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
+import { appRoot } from "../../lib/root.js";
 
 const GROUPS = [
   { title: "Logros previos", items: PREREQS_LOGROS },
@@ -101,7 +102,7 @@ function PrereqCard({ p, done }) {
 
 function showStep(n) {
   openInDiary(n);
-  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /**

@@ -4,6 +4,7 @@ import {
   clearSelection, closeSheet, closeSteps, getState, isMobile, loadQuests, pendingCloses, selectStep, toggleStep,
 } from "./state/store.js";
 import { useMediaQuery } from "./lib/useMediaQuery.js";
+import { eventTarget } from "./lib/root.js";
 import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
@@ -19,7 +20,8 @@ function onKeyDown(e) {
   const s = getState();
   const { selectedStep } = s;
   if (selectedStep == null) return;
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  const target = eventTarget(e);
+  if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
   if (e.key === "ArrowLeft" && selectedStep > 1) selectStep(selectedStep - 1);
   if (e.key === "ArrowRight" && selectedStep < STEPS.length) selectStep(selectedStep + 1);
   if (e.key === " " || e.key === "Enter") {

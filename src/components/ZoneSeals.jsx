@@ -4,6 +4,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ZONES, ZONE_COLOR } from "../data/steps.js";
 import { BRAND_ICON, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { setZone } from "../state/store.js";
+import { eventTarget } from "../lib/root.js";
 
 const TOTAL = Object.fromEntries(ZONES.map(z => [z, STEPS.filter(st => st.zone === z).length]));
 
@@ -67,7 +68,7 @@ export default function ZoneSeals({ s, current }) {
 
   useEffect(() => {
     if (!open) return;
-    const onDown = e => { if (!boxRef.current?.contains(e.target)) setOpen(false); };
+    const onDown = e => { if (!boxRef.current?.contains(eventTarget(e))) setOpen(false); };
     // En captura y antes que nadie: Escape cierra el desplegable, no el paso abierto
     const onKey = e => {
       if (e.key !== "Escape") return;

@@ -7,6 +7,7 @@ import {
 } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import SearchField from "../SearchField.jsx";
+import { appRoot } from "../../lib/root.js";
 
 const SORTS = [["soon", "Por paso"], ["qty", "Cantidad"], ["az", "A–Z"]];
 const CATS = [["todo", "Todo"], ...CATEGORIES];
@@ -115,7 +116,7 @@ function Pager({ id, total, view, size }) {
     setShopPage(page);
     // Si la cabecera de la lista quedó arriba, se vuelve a ella: en escritorio dentro de
     // la lista, que se desplaza por dentro de la ventana; en móvil, en la página
-    const top = document.getElementById(id);
+    const top = appRoot().getElementById(id);
     const box = top?.closest(".items-body");
     if (box && box.scrollHeight > box.clientHeight + 1) {
       const above = top.getBoundingClientRect().top - box.getBoundingClientRect().top;

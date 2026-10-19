@@ -8,6 +8,7 @@ import {
 } from "../state/store.js";
 import { useLeaving, useLiveId } from "../lib/leaving.js";
 import MapCard from "./MapCard.jsx";
+import { activeElement, eventTarget } from "../lib/root.js";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const ROW_H = 132;
@@ -194,7 +195,7 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen }) {
     if (!leaving) ref.current.focus({ preventScroll: true });
   }, [place]); // eslint-disable-line react-hooks/exhaustive-deps
   const close = () => {
-    const had = ref.current?.contains(document.activeElement);
+    const had = ref.current?.contains(activeElement());
     clearSelection();
     if (had) nodeEl(scrollRef.current, n)?.focus({ preventScroll: true });
   };
@@ -204,7 +205,8 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen }) {
   useEffect(() => {
     if (leaving) return;
     const outside = e => {
-      if (!ref.current?.contains(e.target) && !e.target.closest?.(".map-node")) clearSelection();
+      const target = eventTarget(e);
+      if (!ref.current?.contains(target) && !target.closest?.(".map-node")) clearSelection();
     };
     const esc = e => { if (e.key === "Escape") close(); };
     document.addEventListener("pointerdown", outside);

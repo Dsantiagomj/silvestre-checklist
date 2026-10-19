@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist Silvestre — Torrente Arcano</title>
+<!-- Imita una página de Squarespace con cabecera fija y CSS global agresivo: nada de esto
+     debe llegar a la app, ni nada de la app debe llegar aquí -->
+<style>
+  * { box-sizing: content-box; font-family: serif; letter-spacing: .08em; }
+  html, body { margin: 0; font-size: 21px; line-height: 2.2; color: #c00; background: #fafafa; text-transform: uppercase; }
+  img { max-width: 50%; border: 4px solid magenta; }
+  button { all: unset; }
+  a { color: orange; }
+  p { margin: 40px 0; }
+  aside, header, footer, section { padding: 17px; }
+  :root { --bg: red; --txt: lime; --amber: blue; --header-h: 300px; }
+  #header { position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 1000; padding: 0; background: #222; color: #fff; }
+  main { padding-top: 80px; }
+  .page-section { max-width: 1100px; margin: 0 auto; }
+</style>
+</head>
+<body class="tweak-fixed-header tweak-fixed-header-style-basic">
+<header id="header" data-test="header">Torrente Arcano · Inicio · Guías · Checklist</header>
+<main>
+  <section class="page-section" id="above">
+    <h1>Checklist del Dofus Silvestre</h1>
+    <p>Texto de Torrente Arcano antes del bloque de código.</p>
+  </section>
+  <section class="page-section sqs-block code-block">
+    <div class="sqs-block-content">
+<div id="silvestre-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/silvestre.js"></script>
+    </div>
+  </section>
+  <section class="page-section" id="below">
+    <p>Texto de Torrente Arcano después del bloque.</p>
+  </section>
+  <footer>Pie de página de Torrente Arcano</footer>
+</main>
+</body>
+</html>

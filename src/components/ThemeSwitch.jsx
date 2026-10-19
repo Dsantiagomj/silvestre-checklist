@@ -3,6 +3,7 @@ import { flushSync } from "react-dom";
 import { applyTheme, getState, useAppState } from "../state/store.js";
 import { THEME_ICONS, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
+import { isEmbedded } from "../lib/root.js";
 
 const SPARKS = [
   [0, -14], [12, -8], [13, 7], [0, 14], [-12, 8], [-13, -7],
@@ -21,7 +22,9 @@ function syncThemeSwitch(btn, t) {
 const commitTheme = t => flushSync(() => applyTheme(t));
 
 function runThemeTransition(next) {
-  if (!document.startViewTransition) return commitTheme(next);
+  // Embebida, la transición cubriría toda la página de otro y sus estilos (::view-transition
+  // de <html>) no llegan desde la shadow root: el tema cambia sin ella
+  if (!document.startViewTransition || isEmbedded()) return commitTheme(next);
   const root = document.documentElement;
   const cls = next === "dark" ? "vt-to-dark" : "vt-to-light";
   root.classList.add(cls);

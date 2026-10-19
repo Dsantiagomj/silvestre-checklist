@@ -58,7 +58,9 @@ const urlsOf = bg => [...bg.matchAll(/url\(["']?(.+?)["']?\)/g)].map(m => m[1]);
  * DofusDB, sobre el paisaje del paso) puede tardar casi un segundo: esperarlo dejaba el
  * zoom parado; llega encima del paisaje, que ya hace de fondo mientras tanto.
  */
-const local = url => new URL(url, location.href).origin === location.origin;
+// Embebida, lo propio llega de GitHub Pages (la base del build), no de la página
+const OWN_ORIGIN = new URL(import.meta.env.BASE_URL, location.href).origin;
+const local = url => new URL(url, location.href).origin === OWN_ORIGIN;
 
 /**
  * Espera a que la vista que llega esté lista para verse: su maquetación hecha (la lista
