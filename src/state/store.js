@@ -11,6 +11,7 @@ import { childrenOf, currentQuest, loadQuests as loadQuestsData, nextOpen, nextW
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
+import { classicKey, readClassic } from "../lib/classic.js";
 
 export const LS = {
   done: "silvestre:done",
@@ -24,6 +25,10 @@ export const LS = {
   itemsPageSize: "silvestre:itemsPageSize",
   stepsView: "silvestre:stepsView",
   selectedStep: "silvestre:selectedStep",
+  // Ya se trajo el progreso del checklist clásico (la primera visita)
+  classicImported: "silvestre:classicImported",
+  // Los pasos del clásico con los que se cerró su aviso (classicKey)
+  classicDismissed: "silvestre:classicDismissed",
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -91,8 +96,32 @@ function readProgress() {
   return { done, questPos };
 }
 
+/**
+ * El checklist clásico (lib/classic.js). La primera vez se trae entero: sus pasos hechos
+ * y, si aquí no se eligió tema, el suyo. Después solo se avisa de los que tiene de más
+ * (`extra`), salvo que se cerrara el aviso con ese mismo conjunto de pasos.
+ */
+function readClassicProgress(done) {
+  const classic = readClassic();
+  if (!localStorage.getItem(LS.classicImported)) {
+    localStorage.setItem(LS.classicImported, "1");
+    if (!classic) return { done, extra: [] };
+    if (classic.theme && localStorage.getItem(LS.theme) == null) localStorage.setItem(LS.theme, classic.theme);
+    const add = classic.steps.filter(n => !done[n]);
+    if (add.length) {
+      done = { ...done, ...Object.fromEntries(add.map(n => [n, true])) };
+      localStorage.setItem(LS.done, JSON.stringify(done));
+    }
+    return { done, extra: [] };
+  }
+  if (!classic || localStorage.getItem(LS.classicDismissed) === classicKey(classic.steps)) return { done, extra: [] };
+  return { done, extra: classic.steps.filter(n => !done[n]) };
+}
+
 function initialState() {
-  const { done, questPos } = readProgress();
+  const progress = readProgress();
+  const { questPos } = progress;
+  const { done, extra } = readClassicProgress(progress.done);
   const prereqs = readObj(LS.prereqs);
   return {
     done,
@@ -127,6 +156,8 @@ function initialState() {
     // Los Dofus del camino recién conseguidos al marcar (los celebra la franja de la
     // ventana). Solo cambia al marcar: ni al cargar ni al restaurar una copia
     dofusWon: { seq: 0, steps: [] },
+    // Los pasos que el clásico tenía hechos y aquí no, al cargar (el aviso de traerlos)
+    classicExtra: extra,
   };
 }
 
@@ -328,6 +359,8 @@ export const nextPending = s => {
   const st = STEPS.find(x => !s.done[x.n]);
   return st ? st.n : null;
 };
+/** Los del clásico que siguen sin hacer aquí: marcar uno a mano lo quita del aviso. */
+export const classicPending = s => s.classicExtra.filter(n => !s.done[n]);
 export const overlayStep = s => s.overlayN ?? s.selectedStep ?? nextPending(s) ?? STEPS.length;
 
 /** Zona y búsqueda; el estado (pendiente/hecho) va aparte porque las pestañas lo cuentan. */
@@ -828,6 +861,25 @@ export function applySnapshot(snap) {
   }));
   // La versión vanilla siempre reescribía las cinco claves, aunque no cambiaran.
   for (const k of PERSISTED) localStorage.setItem(LS[k], JSON.stringify(state[k]));
+}
+
+/**
+ * «Traerlos»: marca hechos los pasos de más del clásico, sin quitar ninguno. Como una
+ * copia restaurada, es progreso de otro sitio: no celebra Dofus ni completa otros pasos.
+ */
+export function bringClassic() {
+  const ns = classicPending(state);
+  setState(s => ({
+    done: { ...s.done, ...Object.fromEntries(ns.map(n => [n, true])) },
+    classicExtra: [],
+    shopEpoch: s.shopEpoch + 1,
+  }));
+}
+
+/** Cierra el aviso: no vuelve hasta que cambien los pasos marcados en el clásico. */
+export function dismissClassic() {
+  localStorage.setItem(LS.classicDismissed, classicKey(readClassic()?.steps || []));
+  setState({ classicExtra: [] });
 }
 
 // ---------------------------------------------------------------------------
