@@ -506,8 +506,9 @@ test("la marca de la pestaña activa se desliza hasta la pestaña nueva", async 
     return out;
   });
   const target = await box("#tabItems");
-  // Recorre el camino (posiciones intermedias) y acaba bajo la pestaña nueva, con su ancho
-  expect(xs.filter(x => x > at + 5 && x < target.x - 5).length).toBeGreaterThan(2);
+  // Recorre el camino (alguna posición intermedia: saltar no deja ninguna) y acaba bajo la
+  // pestaña nueva, con su ancho. Cuántas depende de los fotogramas: en la CI, sin GPU, 1 o 2
+  expect(xs.filter(x => x > at + 5 && x < target.x - 5).length).toBeGreaterThan(0);
   const end = await pill.evaluate(el => { const r = el.getBoundingClientRect(); return { x: r.left, w: r.width }; });
   expect(Math.abs(end.x - target.x)).toBeLessThanOrEqual(1);
   expect(Math.abs(end.w - target.w)).toBeLessThanOrEqual(1);
