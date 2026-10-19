@@ -20,6 +20,7 @@ import StepMap, { mapPoint, mapScrollTop } from "./StepMap.jsx";
 import WinStrip from "./WinStrip.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import SearchField from "./SearchField.jsx";
+import { appRoot, eventTarget } from "../lib/root.js";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -277,11 +278,12 @@ function useSlashToItems() {
   useEffect(() => {
     const onKey = e => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      const target = eventTarget(e);
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable) return;
       e.preventDefault();
       setStepsView("items");
       requestAnimationFrame(() => {
-        const input = document.getElementById("needsSearch");
+        const input = appRoot().getElementById("needsSearch");
         if (isMobile()) {
           input?.focus();
           input?.scrollIntoView({ behavior: "smooth", block: "center" });

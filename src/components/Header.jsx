@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BRAND_ICON, HEADER_ICONS, imgUrl } from "../lib/assets.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
+import { scrolledInApp } from "../lib/root.js";
 
 /** Una palabra del logotipo, letra a letra; --k escalona la ola. */
 function LogoWord({ text, className, start }) {
@@ -27,7 +28,7 @@ export default function Header({ onOverlay, onReset }) {
     let frame = 0;
     const sync = () => {
       frame = 0;
-      setScrolled(window.scrollY > 8);
+      setScrolled(scrolledInApp() > 8);
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(sync); };
     window.addEventListener("scroll", onScroll, { passive: true });

@@ -3,6 +3,7 @@ import { STEPS } from "../data/steps.js";
 import { assetsFor, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import { setSearch } from "../state/store.js";
+import { appRoot } from "../lib/root.js";
 
 // La instrucción que explica la nota, tal como la escribe Sandglass en los pasos
 const PHRASE = "hasta tener que pasar";
@@ -21,7 +22,7 @@ const REWIND_MS = 450;
 
 function showPaused() {
   setSearch(PHRASE);
-  document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /**

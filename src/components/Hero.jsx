@@ -10,6 +10,7 @@ import { rowsOf } from "../lib/resources.js";
 import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import Banner from "./Banner.jsx";
+import { appRoot, appTopY, scrolledInApp } from "../lib/root.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
 // Posiciones y ritmos fijos (no aleatorios) para que el render sea estable.
@@ -25,7 +26,7 @@ const PARALLAX = 0.35;
 function goToStep(n) {
   selectStep(n);
   // En escritorio el detalle vive junto al tablero; en móvil sube la hoja inferior
-  if (!isMobile()) document.getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!isMobile()) appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // La Piñata de pino: la da el paso 99 y es la que se convierte en el Dofus Silvestre
@@ -56,7 +57,7 @@ function useMorph(stage) {
     prev.current = stage;
     if (!was) return;
     const still = prefersReducedMotion();
-    window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
+    window.scrollTo({ top: appTopY(), behavior: still ? "auto" : "smooth" });
     if (still) return;
     setFrom(was);
     const t = setTimeout(() => setFrom(null), MORPH_MS);
@@ -165,7 +166,7 @@ export default function Hero() {
     const update = () => {
       frame = 0;
       if (prefersReducedMotion()) { bgEl.style.transform = ""; return; }
-      const y = Math.min(window.scrollY, heroRef.current.offsetHeight);
+      const y = Math.min(scrolledInApp(), heroRef.current.offsetHeight);
       bgEl.style.transform = `translate3d(0, ${y * PARALLAX}px, 0) scale(1.08)`;
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };

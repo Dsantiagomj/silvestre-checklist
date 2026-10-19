@@ -13,6 +13,7 @@ import {
 } from "../state/store.js";
 import { StepGo } from "../components/Journal.jsx";
 import OverlayView from "./OverlayView.jsx";
+import { appRoot, isEmbedded } from "../lib/root.js";
 
 // El tamaño con el que se abre la ventana. Después no se redimensiona: el contenido se
 // adapta a la ventana tal como la dejes
@@ -20,9 +21,15 @@ const SIZE = { width: 400, height: 680 };
 // Lo guardaban las versiones con modo mini; ya no se usa
 const OLD_MODE_KEY = "silvestre:overlayMode";
 
-/** Copia todas las hojas de estilo (en dev son <style>, en build <link>). */
+/**
+ * Copia todas las hojas de estilo de la app (en dev son <style>, en build <link>).
+ * Embebida, las de la shadow root y la de las fuentes, no las de la página que la aloja.
+ */
 function copyStyles(doc) {
-  document.querySelectorAll("style, link[rel=stylesheet]").forEach(node => {
+  const sheets = isEmbedded()
+    ? [...document.querySelectorAll("link[data-silvestre-fonts]"), ...appRoot().querySelectorAll("style, link[rel=stylesheet]")]
+    : document.querySelectorAll("style, link[rel=stylesheet]");
+  sheets.forEach(node => {
     const clone = node.cloneNode(true);
     // La ventana nueva no comparte la URL base de esta página.
     if (clone.tagName === "LINK") clone.href = node.href;
