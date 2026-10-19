@@ -230,6 +230,20 @@ header{
   border-radius:999px;
 }
 
+/* AVISO DEL CHECKLIST CLÁSICO -----------------------------------------------*/
+/* Una franja como la tarjeta de la copia: el texto, «Traerlos» y la cruz para cerrarlo */
+.classic-notice{
+  display:flex; align-items:center; gap:14px; margin:22px 0 0; padding:12px 14px 12px 18px;
+  background:var(--panel); border:1px solid var(--line-2); border-left:3px solid var(--amber);
+  border-radius:var(--radius);
+}
+.classic-notice-text{ margin:0 auto 0 0; font-size:14.5px; color:var(--txt-soft); }
+.classic-notice-text b{ color:var(--txt); }
+.classic-notice-close{
+  width:30px; height:30px; border-radius:var(--radius-sm); font-size:20px; line-height:1; color:var(--txt-mute);
+}
+.classic-notice-close:hover{ color:var(--txt); background:var(--panel-2); }
+
 /* NOTA ----------------------------------------------------------------------*/
 /* Nota aclaratoria · sin caja ni líneas: un ejemplo real dibujado con casillas del tablero
    (43 y 44 en pausa ante el jefe, el 45 los termina) y la explicación al lado */

@@ -7,6 +7,7 @@ import { useMediaQuery } from "./lib/useMediaQuery.js";
 import Header from "./components/Header.jsx";
 import Hero from "./components/Hero.jsx";
 import Nota from "./components/Nota.jsx";
+import ClassicNotice from "./components/ClassicNotice.jsx";
 import Diary from "./components/Diary.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
 import ResetDialog from "./components/ResetDialog.jsx";
@@ -59,6 +60,7 @@ export default function App() {
       <Header onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
       <Hero />
       <div className="wrap">
+        <ClassicNotice />
         <Nota />
         <Diary mobile={mobile} />
         <footer>
