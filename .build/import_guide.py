@@ -190,13 +190,36 @@ def read_old_steps():
             for m in pattern.finditer(body)}
 
 
+# What the old checklist's inline script defines. Without them the page is not that
+# checklist (a 404, a password page, or the page with our app's snippet).
+PAGE_MARKERS = {"steps": "const steps = [", "resourcesData": "resourcesData = ",
+                "previousStepsByNewStep": "previousStepsByNewStep = "}
+
+
+def read_page(html):
+    """The page's steps, resources and previous-version table, checked before anything is
+    written: a page without the checklist's data stops the import with a clear message
+    and leaves src/data and the snapshot as they were."""
+    missing = [name for name, marker in PAGE_MARKERS.items() if marker not in html]
+    if missing:
+        raise SystemExit(f"la página no trae los datos del checklist clásico (falta {', '.join(missing)}): "
+                         "no se importa nada")
+    try:
+        raws = js_template_array(html, "steps")
+        resources = js_value(html, "resourcesData")
+        previous = js_value(html, "previousStepsByNewStep")
+    except ValueError as e:
+        raise SystemExit(f"los datos del checklist clásico no se pueden leer ({e}): no se importa nada")
+    if len(raws) != 100 or len(previous) != 100 or not all(t.strip() for t in raws):
+        raise SystemExit(f"se esperaban 100 pasos con texto y llegaron {len(raws)} pasos "
+                         f"y {len(previous)} filas de previousStepsByNewStep: no se importa nada")
+    return raws, resources, previous
+
+
 def main(page):
     html = pathlib.Path(page).read_text(encoding="utf-8")
-    raws = js_template_array(html, "steps")
+    raws, resources, previous = read_page(html)
     texts = [clean(t) for t in raws]
-    resources = js_value(html, "resourcesData")
-    previous = js_value(html, "previousStepsByNewStep")
-    assert len(texts) == 100 and len(previous) == 100, (len(texts), len(previous))
 
     SNAPSHOT.write_text(json.dumps({
         "source": "https://www.torrentearcano.com/checklist-silvestre",
