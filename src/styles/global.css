@@ -1375,19 +1375,29 @@ header.is-scrolled .title-bar{
 /* Cada dato entero en su línea; el corte, después del punto que los separa */
 .hero-step-meta span{ white-space:nowrap; }
 .hero-step-meta span:not(:last-child)::after{ content:"·"; margin:0 3px 0 8px; color:var(--txt-mute); }
-/* El primer aviso de la guía, en una línea: rojo dónde parar, verde lo que se resuelve */
+/* El primer aviso de la guía: un medallón con el jefe (o el icono de la guía), el rótulo
+   en rojo dónde parar o en verde lo que se resuelve, y el texto en una línea */
 .hero-call{
   --call:#8fd13a;
-  max-width:100%; margin:0 0 18px; padding:7px 12px 7px 10px; border-radius:10px;
-  background:color-mix(in srgb, var(--bg) 70%, transparent);
-  border:1px solid var(--line-2); border-left:3px solid var(--call);
-  backdrop-filter:blur(6px);
-  font-size:14px; color:var(--txt-soft);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  display:flex; align-items:center; gap:12px; max-width:100%; margin:0 0 18px;
 }
 .hero-call.stop{ --call:#e05a4f; }
-.hero-call img{ width:18px; height:18px; margin-right:6px; object-fit:contain; vertical-align:-4px; }
-.hero-call b{ color:var(--txt); }
+.hero-call-med{
+  flex:none; display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
+  /* La madera oscura y el oro de los medallones del diario, en los dos temas como el estandarte */
+  background:radial-gradient(circle at 50% 40%, #57503f, #1f1d19);
+  border:2px solid #e3c565;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--call) 35%, transparent), 0 2px 6px rgba(0,0,0,.4);
+}
+.hero-call-med img{ width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.hero-call-copy{ display:flex; flex-direction:column; min-width:0; }
+.hero-call-label{
+  font:800 11px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--call);
+}
+.hero-call-text{
+  font-size:17px; font-weight:600; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 .hero-next-go{
   padding:12px 22px; border-radius:999px;
   background:var(--amber); color:#0d0e0c;
@@ -1573,7 +1583,10 @@ header.is-scrolled .title-bar{
   .hero-step-title{ grid-area:title; align-self:end; margin:0; font-size:24px; }
   .hero-step-meta{ grid-area:meta; align-self:start; margin:0; font-size:13.5px; }
   .hero-step-meta span:not(:last-child)::after{ margin:0 1px 0 5px; }
-  .hero-call{ grid-area:call; margin:0; font-size:13px; }
+  .hero-call{ grid-area:call; margin:0; gap:10px; }
+  .hero-call-med{ width:38px; height:38px; }
+  .hero-call-med img{ width:31px; height:31px; }
+  .hero-call-text{ font-size:14.5px; }
   .hero-next-go{ grid-area:go; width:100%; text-align:center; }
   /* En móvil el texto ocupa todo el ancho: velo vertical, el mapa se ve arriba
      detrás del huevo y se va cubriendo donde empieza el texto */
