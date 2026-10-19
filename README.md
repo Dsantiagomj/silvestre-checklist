@@ -359,6 +359,11 @@ el overlay y la hoja inferior en móvil.
 
 La app se publica en GitHub Pages: https://dsantiagomj.github.io/silvestre-checklist/
 
+`main` está protegida: no se puede borrar ni reescribir, y todo cambio entra por un pull
+request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, las dos suites), sin
+excepciones ni para el administrador. No hace falta aprobación, así que el PR se fusiona
+en cuanto pasan las pruebas. Al fusionar se borra la rama.
+
 Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, construye con
 `BASE_PATH=/silvestre-checklist/` (la ruta del sitio en Pages) y publica `dist/`. En local y
 en las pruebas `BASE_PATH` no se pasa y la app vive en la raíz. Para comprobar un build como
@@ -436,12 +441,13 @@ dirección sale de la variable del repo `GUIDE_URL`; sin ella, usa
 
 Si no cambia nada en `src/data` ni en `.build/lists`, termina ahí. Si cambia, en macOS
 (los scripts de imágenes usan `sips`) regenera los assets con la secuencia de "Regenerar
-los assets", pasa las dos suites de pruebas, sube el cambio a `main` como
-`chore(guia): sincroniza con Torrente Arcano` y lanza el despliegue. Un push hecho con el
-token del workflow no lanza otros workflows, por eso el despliegue se pide aparte.
+los assets" y sube el cambio a la rama `sync/guia` con un PR a `main`,
+`chore(guia): sincroniza con Torrente Arcano`. Lanza la CI sobre esa rama, espera al check
+"Pruebas", fusiona el PR y pide el despliegue. Lo que hace el token del workflow (abrir el
+PR, fusionarlo) no lanza otros workflows, por eso la CI y el despliegue se piden aparte.
 
 Si algo falla (la página no responde, no trae los datos, falla la regeneración o una
-prueba), no se sube nada y se abre un issue "La sincronización con Torrente Arcano falló"
+prueba), `main` no cambia y se abre un issue "La sincronización con Torrente Arcano falló"
 con el enlace a la ejecución. Si ya hay uno abierto con ese título, se comenta en él.
 Mientras la página de datos no exista, cada ejecución fallará y comentará en ese issue.
 

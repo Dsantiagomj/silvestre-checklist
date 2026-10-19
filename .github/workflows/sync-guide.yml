@@ -1,8 +1,9 @@
 name: Sync guide with Torrente Arcano
 
 # Cada 6 horas lee la página de datos de Torrente Arcano (el checklist clásico) y, si la
-# guía cambió, regenera los datos, pasa las pruebas, sube el cambio a main y despliega.
-# Si algo falla, abre un issue (o comenta en el que ya esté abierto).
+# guía cambió, regenera los datos y abre un PR a main. Lo fusiona y despliega cuando pasan
+# las pruebas de CI, que main exige. Si algo falla, abre un issue (o comenta en el que ya
+# esté abierto).
 on:
   schedule:
     - cron: "17 */6 * * *"
@@ -12,6 +13,7 @@ permissions:
   contents: write
   issues: write
   actions: write
+  pull-requests: write
 
 concurrency:
   group: sync-guide
@@ -21,6 +23,8 @@ env:
   # La página con los datos del checklist clásico. Se cambia con la variable del repo
   # GUIDE_URL (Settings → Secrets and variables → Actions → Variables)
   GUIDE_URL: ${{ vars.GUIDE_URL || 'https://www.torrentearcano.com/checklist-silvestre-datos' }}
+  # La rama del PR de la sincronización
+  SYNC_BRANCH: sync/guia
 
 jobs:
   # Barato y en Linux: bajar la página, importarla y ver si cambia algo
@@ -111,14 +115,10 @@ jobs:
           python3 -I .build/build_figures.py
           python3 -I .build/fetch_start_maps.py
           python3 -I .build/build_resources.py
-      - run: npm ci
-      - run: npx playwright install chromium
-      # Las dos suites: la app sola y embebida en una página como la de Squarespace
-      - name: Test
-        run: |
-          npx playwright test --retries=2
-          npm run test:embed -- --retries=2
-      - name: Commit and push
+      - name: Push the branch and open the PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -127,12 +127,40 @@ jobs:
             echo "Nada que subir."
             exit 0
           fi
+          git switch -c "$SYNC_BRANCH"
           git commit -m "chore(guia): sincroniza con Torrente Arcano"
-          git push origin HEAD:main
-          echo "pushed=true" >> "$GITHUB_ENV"
-      # Un push con GITHUB_TOKEN no lanza otros workflows: el despliegue se pide a mano
+          git push --force origin "$SYNC_BRANCH"
+          # Si quedó abierto el de una ejecución anterior, el push lo actualiza
+          pr="$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq 'first | .number // empty')"
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$SYNC_BRANCH" \
+              --title "chore(guia): sincroniza con Torrente Arcano" \
+              --body "Cambios de la página de datos ($GUIDE_URL), regenerados por $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            pr="$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq 'first | .number')"
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+      # Un PR abierto con GITHUB_TOKEN no lanza CI: se lanza a mano sobre la rama y se espera
+      # al check "Pruebas" que exige la protección de main
+      - name: Wait for the tests
+        if: steps.pr.outputs.number
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          gh workflow run ci.yml --ref "$SYNC_BRANCH"
+          for _ in $(seq 1 30); do
+            gh pr checks "$PR" --json name --jq '.[].name' | grep -qx "Pruebas" && break
+            sleep 10
+          done
+          gh pr checks "$PR" --watch --fail-fast --interval 30
+      - name: Merge
+        if: steps.pr.outputs.number
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge "${{ steps.pr.outputs.number }}" --squash --delete-branch
+      # La fusión hecha con GITHUB_TOKEN tampoco lanza el despliegue: se pide aparte
       - name: Deploy
-        if: env.pushed == 'true'
+        if: steps.pr.outputs.number
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref main
@@ -153,7 +181,7 @@ jobs:
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           if [ -z "$REASON" ]; then
             if [ "$SYNC" = "failure" ]; then
-              REASON="falló la regeneración, las pruebas o el push (main no se tocó si fallaron las pruebas)"
+              REASON="falló la regeneración, las pruebas del PR o la fusión (main no se tocó si fallaron las pruebas)"
             else
               REASON="falló la comprobación de la página de datos"
             fi
