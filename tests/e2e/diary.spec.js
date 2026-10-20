@@ -1417,3 +1417,30 @@ test("la lista del diario no lleva la miniatura de la zona y deja más ancho al 
   const title = await page.locator('.diary-row[data-n="4"] .row-title').evaluate(el => el.getBoundingClientRect().width);
   expect(title).toBeGreaterThanOrEqual(200);
 });
+
+test("un paso que se termina más adelante avisa bajo el botón de que no se marca todavía", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 9) });
+  const wait = page.locator("#journal .cta-wait");
+  // El 10 para «hasta tener que pasar Maxilubo» y lo termina el combate del 17
+  await row(page, 10).locator(".row-main").click();
+  await expect(wait).toHaveText("No lo marques todavía. Llega hasta donde indica y sigue; al completar el paso 17, este se marca con él.");
+  // El 13 para, pero ningún paso lo cierra: se marca a mano
+  await row(page, 13).locator(".row-main").click();
+  await expect(wait).toHaveCount(0);
+  // El 17 es el que cierra
+  await row(page, 17).locator(".row-main").click();
+  await expect(wait).toHaveCount(0);
+  // Hecho el 10, sin aviso
+  await row(page, 10).locator(".row-main").click();
+  await page.click("#toggleBtn");
+  await row(page, 10).locator(".row-main").click();
+  await expect(wait).toHaveCount(0);
+});
+
+test("bajo «Misiones», las etapas se presentan como referencia y la guía de cada misión como el camino", async ({ page }) => {
+  await openApp(page, { "silvestre:done": range(1, 9) });
+  await row(page, 10).locator(".row-main").click();
+  await waitQuests(page);
+  const ref = page.locator("#journal .journal-quests > .journal-h + .q-howto");
+  await expect(ref).toHaveText("Las etapas sirven para saber hasta dónde llegar en cada misión. Para saber adónde ir y qué hacer, abre su Guía de Torrente Arcano.");
+});
