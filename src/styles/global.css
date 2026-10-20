@@ -2729,6 +2729,9 @@ header.is-scrolled .title-bar{
 
 /* Misiones: «!» del juego, nivel dorado y la abierta resaltada */
 .journal-quests{ display:flex; flex-direction:column; gap:8px; }
+/* Bajo «Misiones»: para qué sirven las etapas, sin competir con la lista */
+.q-howto{ margin:-4px auto 6px; max-width:560px; text-align:center; text-wrap:balance; font-size:13px; line-height:1.45; color:var(--gw-soft); }
+.q-howto b{ color:var(--gw-ink); font-weight:700; }
 .journal .q-item{ border-radius:6px; border:1px solid var(--gw-line); background:var(--gw-panel-2); }
 .journal .q-item > summary{ gap:12px; padding:10px 14px; font-size:15px; }
 .journal .q-item[open] > summary{ background:var(--gw-sel); border-bottom-color:var(--gw-line); border-radius:6px 6px 0 0; }
@@ -2957,6 +2960,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   flex-basis:100%; margin:0; text-align:center; text-wrap:balance;
   font-size:12px; line-height:1.35; color:var(--gw-soft);
 }
+.cta-wait{ color:#e05a4f; }
 .map-card .cta-also{ text-align:left; color:inherit; opacity:.8; }
 .gbtn{
   padding:9px 16px; border-radius:4px; cursor:pointer;

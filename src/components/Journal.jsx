@@ -386,6 +386,10 @@ export function Quests({ step, quests, loaded, s }) {
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
+      {/* Las etapas dicen hasta dónde llegar; el camino lo da la guía de cada misión */}
+      <p className="q-howto">
+        Las etapas sirven para saber hasta dónde llegar en cada misión. Para saber adónde ir y qué hacer, abre su <b>Guía</b> de Torrente Arcano.
+      </p>
       {grouped ? grouped.map(([name, img, count], g) => {
         const from = grouped.slice(0, g).reduce((a, x) => a + x[2], 0);
         return (
@@ -423,6 +427,20 @@ export const stepLabel = (n, done) => (done ? "Paso completado · deshacer" : `�
 export function AlsoLine({ s, closes }) {
   const text = alsoText(s, closes);
   return text ? <p className="cta-also">{text}</p> : null;
+}
+
+/**
+ * Bajo el botón de un paso que para y termina el combate de otro posterior (CLOSED_BY):
+ * marcarlo ya lo daría por hecho a medias. Al completar ese, se marca con él. Los que paran
+ * sin que nada los cierre se marcan a mano: sin aviso.
+ */
+function WaitLine({ n, done }) {
+  const by = !done && CLOSED_BY[n];
+  return by ? (
+    <p className="cta-also cta-wait">
+      <b>No lo marques todavía.</b> Llega hasta donde indica y sigue; al completar el paso {by}, este se marca con él.
+    </p>
+  ) : null;
 }
 
 /**
@@ -470,6 +488,7 @@ export function Actions({ step, s }) {
       <div className="journal-cta-main">
         <StepButton step={step} s={s} id={live ? "toggleBtn" : undefined} />
         <AlsoLine s={s} closes={pendingCloses(s, n)} />
+        <WaitLine n={n} done={!!s.done[n]} />
       </div>
       <button type="button" className="gbtn" id={live ? "nextBtn" : undefined} disabled={n === STEPS.length} aria-label={`Paso ${n + 1}`}
         onClick={() => go(n + 1)}>{n < STEPS.length ? n + 1 : ""} <Tri dir="next" /></button>
