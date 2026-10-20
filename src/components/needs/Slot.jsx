@@ -54,6 +54,8 @@ function typeLine(row) {
 /**
  * El aviso va debajo de la casilla; si debajo no cabe dentro de la lista que se desplaza
  * (en escritorio, al final de la lista de la ventana, del cuerpo del paso o del overlay), sube encima.
+ * Centrado en la casilla; si a un lado no cabe su mitad (la primera de la fila, pegada al
+ * borde del detalle), se alinea con la casilla por ese lado.
  */
 function placeTip(e) {
   const slot = e.currentTarget;
@@ -61,6 +63,12 @@ function placeTip(e) {
   const room = box && box.scrollHeight > box.clientHeight + 1
     ? box.getBoundingClientRect().bottom - slot.getBoundingClientRect().bottom : Infinity;
   slot.classList.toggle("tip-up", room < 130);
+  const edge = (box || slot.ownerDocument.documentElement).getBoundingClientRect();
+  const r = slot.getBoundingClientRect();
+  const mid = r.left + r.width / 2;
+  // La mitad del ancho máximo del aviso (220px) y un margen
+  slot.classList.toggle("tip-left", mid - edge.left < 118);
+  slot.classList.toggle("tip-right", mid - edge.left >= 118 && edge.right - mid < 118);
 }
 
 /**
