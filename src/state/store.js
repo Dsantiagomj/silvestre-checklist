@@ -590,9 +590,14 @@ export function alsoText(s, closes) {
  * «Hecho» en un paso que cierra otros: marca n y termina lo que les queda (closingPlan).
  * Los que aún tienen misiones sin hacer siguen pendientes y un aviso lo dice,
  * con la opción de marcarlos. Va después del aviso del Dofus: este pide algo, y la
- * franja ya celebra el Dofus.
+ * franja ya celebra el Dofus. Sin las misiones (llegan en diferido) no se sabe qué deja
+ * a medias cada paso cerrado: se espera a que lleguen, o los marcaría enteros.
  */
 export function closeSteps(n, closes) {
+  if (!questsData()) {
+    loadQuestsData(() => { if (!state.done[n]) closeSteps(n, closes); });
+    return;
+  }
   const plan = closingPlan(state, closes);
   const before = state;
   setState(s => ({
