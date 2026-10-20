@@ -699,7 +699,8 @@ async function stepData(page, n) {
   // Por el número: en el centro de la fila puede caer la etiqueta "cierra el…", que lleva a otro paso
   await page.click(`.diary-row[data-n="${n}"] .row-num`);
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
-  await page.locator("#journal .journal-quests, #journal .asset-note").first().waitFor({ timeout: 15_000 });
+  // Hasta que lleguen las misiones (el pie de créditos también es .asset-note: no sirve de señal)
+  await expect(page.locator("#journal .asset-note", { hasText: "Cargando misiones" })).toHaveCount(0, { timeout: 15_000 });
   return {
     needs: await page.locator("#journal .journal-needs .slot").evaluateAll(els => els.map(e => e.dataset.id)),
     quests: await page.locator("#journal .q-item .q-name").allInnerTexts(),
