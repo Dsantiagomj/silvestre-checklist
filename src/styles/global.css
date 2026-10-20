@@ -1859,6 +1859,9 @@ header.is-scrolled .title-bar{
 }
 /* Sin sitio debajo, dentro de la lista que se desplaza (Slot.jsx): encima */
 .slot.tip-up .slot-tip{ top:auto; bottom:calc(100% + 6px); }
+/* Sin sitio a un lado para centrarlo: alineado con la casilla por ese lado */
+.slot.tip-left .slot-tip{ left:0; transform:none; }
+.slot.tip-right .slot-tip{ left:auto; right:0; transform:none; }
 .slot-tip b{ display:block; color:var(--txt); font-size:12.5px; }
 .slot-tip span{ display:block; }
 .slot-tip-when{ color:var(--soon-ink); }
