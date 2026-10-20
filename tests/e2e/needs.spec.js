@@ -713,3 +713,23 @@ test("prerrequisitos y objetos van dentro de la tarjeta de la ventana de pasos",
   expect(card.border).toBe("1px");
   expect(card.radius).toBe("16px");
 });
+
+test("el aviso del primer objeto del paso no se corta por el borde del detalle", async ({ page }) => {
+  await page.setViewportSize({ width: 1504, height: 1104 });
+  await openApp(page);
+  await page.click("#stepsViewDiary");
+  await page.click('.diary-row[data-n="17"] .row-title');
+  // El primero de la fila arriba a la izquierda: centrado en él, el aviso salía del detalle
+  const slot = page.locator("#journal .journal-needs .slot").first();
+  await slot.locator(".slot-main").hover();
+  const tip = slot.locator(".slot-tip");
+  await expect(tip).toBeVisible();
+  await page.waitForTimeout(500);
+  const seen = await tip.evaluate(el => {
+    el.style.pointerEvents = "auto";
+    const r = el.getBoundingClientRect();
+    const y = r.top + r.height / 2;
+    return [r.left + 6, r.right - 6].map(x => el.contains(document.elementFromPoint(x, y)));
+  });
+  expect(seen).toEqual([true, true]);
+});
