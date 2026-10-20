@@ -46,6 +46,21 @@ test("marcar un paso actualiza la fila, hero, ventana de pasos y almacenamiento"
   await expect(page.locator('.diary-row[data-n="93"]')).not.toHaveClass(/done/);
 });
 
+test("«Completar paso» antes de que lleguen las misiones cierra lo mismo que con ellas", async ({ page }) => {
+  // Las misiones (su chunk) tardan: el 93 cierra el 92, que sigue pendiente porque le faltan
+  let release;
+  const held = new Promise(r => { release = r; });
+  await page.route(/quests-[\w-]+\.js$/, async route => { await held; await route.continue(); });
+  await openApp(page);
+  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click("#toggleBtn");
+  release();
+  await expect(page.locator('.diary-row[data-n="93"]')).toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText(/El 92 sigue pendiente/);
+  await expect(page.locator('.diary-row[data-n="92"]')).not.toHaveClass(/done/);
+  expect(await readLS(page, "silvestre:done")).toEqual({ "93": true });
+});
+
 test("los prerrequisitos tienen icono y se marcan", async ({ page }) => {
   await openApp(page, null, { view: "prereqs" });
   // Cada tarjeta lleva su icono: imagen del juego o la «!» de misión
