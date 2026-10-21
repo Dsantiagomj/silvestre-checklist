@@ -22,6 +22,24 @@ test("al marcar el paso de un Dofus del camino, su huevo se enciende y se avisa"
   await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
 });
 
+test("el aviso del Dofus lleva su huevo y va centrado, sin hueco a la derecha", async ({ page }) => {
+  await openApp(page, SEED);
+  await page.click('.diary-row[data-n="18"] .row-check');
+  const toast = page.locator("#toast");
+  await expect(toast).toHaveClass(/show/);
+  await expect(toast).toHaveClass(/toast-dofus/);
+  await expect(toast.locator(".toast-icons img")).toHaveAttribute("src", /items\/23002\.png$/);
+  // Lo que se ve (huevo y texto) deja el mismo margen a cada lado
+  await expect.poll(() => toast.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    const parts = [...el.children].filter(c => c.offsetWidth && !c.classList.contains("toast-bar"))
+      .map(c => c.getBoundingClientRect());
+    const left = Math.min(...parts.map(r => r.left)) - box.left;
+    const right = box.right - Math.max(...parts.map(r => r.right));
+    return Math.abs(left - right);
+  })).toBeLessThan(3);
+});
+
 test("al cargar la página con el Dofus ya conseguido no hay celebración", async ({ page }) => {
   await openApp(page, { "silvestre:done": { ...SEED["silvestre:done"], 18: true } });
   await page.waitForTimeout(300);
