@@ -602,6 +602,43 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "");
 });
 
+test("abrir una misión pliega la que estaba abierta: solo va una abierta", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="93"] .row-main');
+  const quests = page.locator("#journal .q-item");
+  await expect(quests.first()).toBeVisible({ timeout: 15_000 });
+  await quests.nth(0).locator("summary .q-name").click();
+  await expect(quests.nth(0)).toHaveAttribute("open", "");
+  await quests.nth(2).locator("summary .q-name").click();
+  await expect(quests.nth(2)).toHaveAttribute("open", "");
+  await expect(quests.nth(0)).not.toHaveAttribute("open", "");
+  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(1);
+});
+
+test("«Completar» en la misión abierta la pliega", async ({ page }) => {
+  await openApp(page);
+  await page.click('.diary-row[data-n="93"] .row-main');
+  const quests = page.locator("#journal .q-item");
+  await expect(quests.first()).toBeVisible({ timeout: 15_000 });
+  const open = () => quests.evaluateAll(els => els.filter(e => e.open).map(e => e.dataset.qid));
+  // La primera: se pliega y se abre la siguiente, que es la que queda en curso
+  const first = quests.first();
+  await first.locator("summary .q-name").click();
+  await expect(first).toHaveAttribute("open", "");
+  await first.locator(".q-done-btn").click();
+  await expect(first.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(first).not.toHaveAttribute("open", "");
+  await expect.poll(open).toEqual([await quests.nth(1).getAttribute("data-qid")]);
+  // La última, que se abre a mano: también se pliega
+  const last = quests.last();
+  await last.locator("summary .q-name").click();
+  await expect(last).toHaveAttribute("open", "");
+  await last.locator(".q-done-btn").click();
+  await expect(last.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(last).not.toHaveAttribute("open", "");
+  expect((await open()).length).toBeLessThanOrEqual(1);
+});
+
 test("al abrir un paso todas sus misiones salen plegadas, también la de la parada y la que va en curso", async ({ page }) => {
   // Paso 17: la primera misión es la que va en curso y otra lleva la línea verde
   await openApp(page, { "silvestre:questPos": { 17: 0 } });
