@@ -307,12 +307,18 @@ export function Quests({ step, quests, loaded, s }) {
       const box = item.closest(".diary-detail");
       if (box && box.scrollHeight > box.clientHeight && win.getComputedStyle(box).overflowY !== "visible") {
         const margin = parseFloat(win.getComputedStyle(item).scrollMarginTop) || 0;
-        const to = box.scrollTop + item.getBoundingClientRect().top - box.getBoundingClientRect().top - margin;
-        // Si la hija va al final, el detalle aún no da para llevarla arriba: crece mientras
-        // se abre, y se sigue hasta llegar (como mucho, un segundo)
+        // Mientras la hija se abre y la que estaba abierta se pliega (solo va una), el detalle
+        // cambia de alto y la hija se mueve: el destino se vuelve a medir en cada fotograma
+        // hasta que se queda quieta (como mucho, un segundo)
+        let still = 0;
+        let last = null;
         const follow = left => {
+          const to = box.scrollTop + item.getBoundingClientRect().top - box.getBoundingClientRect().top - margin;
           box.scrollTop = to;
-          if (box.scrollTop < to - 1 && left > 0) win.requestAnimationFrame(() => follow(left - 1));
+          // Quieta: el destino no cambia de un fotograma a otro y ya se ha llegado
+          still = last != null && Math.abs(to - last) <= 1 && Math.abs(box.scrollTop - to) <= 1 ? still + 1 : 0;
+          last = to;
+          if (still < 6 && left > 0) win.requestAnimationFrame(() => follow(left - 1));
         };
         follow(60);
       } else item.scrollIntoView({ block: "start", behavior: "instant" });
