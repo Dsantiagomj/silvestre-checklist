@@ -20,7 +20,7 @@ async function openStep12(page) {
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
 
-test("«Completar» termina la misión, abre la siguiente y se puede deshacer, sin plegar ni desplegar", async ({ page }) => {
+test("«Completar» termina la misión, la pliega y abre la siguiente, y se puede deshacer sin desplegarla", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": upTo(11) });
   await openStep12(page);
   const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
@@ -33,26 +33,25 @@ test("«Completar» termina la misión, abre la siguiente y se puede deshacer, s
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   await expect(btn).toHaveText("Completar");
 
-  // Pendiente: la termina entera, como pulsar su último medallón, y abre la siguiente
+  // Pendiente: la termina entera, como pulsar su último medallón; se pliega y se abre la
+  // siguiente (solo va una abierta)
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await expect(btn).toHaveText("✓ Completada");
-  await expect(cofre).toHaveAttribute("open", "");
+  await expect(cofre).not.toHaveAttribute("open", "");
   await expect(tesor).toHaveAttribute("open", "");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(1);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questObjective"))["1504"])).toBe(16);
 
-  // Hecha: vuelve a su inicio, sin plegar la misión
+  // Hecha: vuelve a su inicio, sin desplegarla
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   expect(await routeStates(rows)).toMatch(/^n-+$/);
-  await expect(cofre).toHaveAttribute("open", "");
+  await expect(cofre).not.toHaveAttribute("open", "");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(0);
 
-  // Con la misión plegada, el botón tampoco la despliega
-  await cofre.locator("summary .q-name").click();
-  await expect(cofre).not.toHaveAttribute("open", "");
+  // Plegada, el botón tampoco la despliega al completarla
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   await expect(cofre).not.toHaveAttribute("open", "");
