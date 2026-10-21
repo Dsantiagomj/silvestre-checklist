@@ -273,14 +273,10 @@ export function CurrentQuestDone({ n, cur, s }) {
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
 export function Quests({ step, quests, loaded, s }) {
   // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
-  // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso)
-  const [opened, setOpened] = useState(() => new Set());
-  const setOpen = (id, on) => setOpened(prev => {
-    if (prev.has(id) === on) return prev;
-    const next = new Set(prev);
-    if (on) next.add(id); else next.delete(id);
-    return next;
-  });
+  // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso). Solo
+  // una a la vez: abrir otra pliega la que estaba abierta
+  const [openId, setOpenId] = useState(null);
+  const setOpen = (id, on) => setOpenId(prev => (on ? id : prev === id ? null : prev));
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
   // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
@@ -324,7 +320,7 @@ export function Quests({ step, quests, loaded, s }) {
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
   const items = quests.map((q, i) => {
-    if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={opened.has(q.id)} setOpen={setOpen} />;
+    if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={openId === q.id} setOpen={setOpen} />;
     let offset = 0;
     const kids = kidsOf(q);
     const optional = q.kind === "optional";
@@ -342,15 +338,17 @@ export function Quests({ step, quests, loaded, s }) {
       const next = quests[getState().questPos[step.n]];
       if (k >= total && !optional && next && next.id !== q.id) setOpen(next.id, true);
     };
-    // «Completar» la termina de una vez; hecha, vuelve a su inicio. Sin plegarla
+    // «Completar» la termina de una vez y la pliega (si hay siguiente, se abre ella);
+    // hecha, vuelve a su inicio sin plegarla
     const finished = at >= total;
     const toggleDone = e => {
       e.preventDefault();
       e.stopPropagation();
+      if (!finished) setOpen(q.id, false);
       pick(finished ? 0 : total);
     };
     return (
-      <details className="q-item" key={q.id} data-qid={q.id} open={opened.has(q.id)}
+      <details className="q-item" key={q.id} data-qid={q.id} open={openId === q.id}
         onToggle={e => setOpen(q.id, e.currentTarget.open)}>
         <summary>
           <QuestMark className="q-mark" />
