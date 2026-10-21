@@ -958,6 +958,10 @@ test("una misión que da el PNJ de cada clase lo dice, y el paso no pone a uno c
   const q = page.locator("#journal .q-item", { hasText: "La cólera de los dioses" });
   await expect(q.locator(".q-start")).toContainText("depende de tu clase");
   await expect(q.locator(".q-start")).not.toContainText("Rigal");
+  // Tres misiones que dan tres PNJ distintos y ninguno es el del paso: la Daimia Hikomi
+  await stepData(page, 43);
+  expect(await figure(page)).toBe("De qué madera estoy hecho:Daimia Hikomi");
+  await expect.poll(() => page.locator("#journal .journal-show img").evaluate(i => i.naturalWidth)).toBeGreaterThan(0);
   // Sin punto de inicio, el primer PNJ al que se va: Pandawelo en «De la mano»
   await stepData(page, 64);
   await expect(page.locator("#journal .q-item", { hasText: "De la mano" }).locator(".q-start")).toContainText("Pandawelo");

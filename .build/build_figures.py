@@ -57,9 +57,11 @@ CURATED = {
 
 
 # Step -> figure for a step with nothing better: step 7's quest is given by the NPC of
-# your class, but in it you talk to the goddess Feca.
+# your class, but in it you talk to the goddess Feca. Step 43's three quests start with
+# three different NPCs, none of them the step's: the Daimia Hikomi stands for Pandala.
 STEP_FIGURE = {
     "7": ("diosa-feca", "Diosa Feca", "La cólera de los dioses", "{4841}"),
+    "43": ("daimia-hikomi", "Daimia Hikomi", "De qué madera estoy hecho", "{5784|||100}"),
 }
 
 
