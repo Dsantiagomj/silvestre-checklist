@@ -153,7 +153,7 @@ function initialState() {
     // animación de entrada; este contador remonta la rejilla en esos mismos casos.
     shopEpoch: 0,
     questsLoaded: questsData() != null,
-    toast: { seq: 0, visible: false, text: "", actionLabel: "", ms: 8000 },
+    toast: { seq: 0, visible: false, text: "", actionLabel: "", ms: 8000, kind: "", icons: [] },
     // Los Dofus del camino recién conseguidos al marcar (los celebra la franja de la
     // ventana). Solo cambia al marcar: ni al cargar ni al restaurar una copia
     dofusWon: { seq: 0, steps: [] },
@@ -675,7 +675,7 @@ function celebrateDofus(before) {
   const won = DOFUS_ROAD.filter(d => !before[d.step] && state.done[d.step]);
   if (!won.length) return;
   setState(s => ({ dofusWon: { seq: s.dofusWon.seq + 1, steps: won.map(d => d.step) } }));
-  showToast(dofusWonText(won), "", null, 4500);
+  showToast(dofusWonText(won), "", null, 4500, { kind: "dofus", icons: won.map(d => d.img) });
 }
 
 export function goToNextPending() {
@@ -888,10 +888,11 @@ export function dismissClassic() {
 // ---------------------------------------------------------------------------
 let toastTimer;
 let toastAction = null;
-export function showToast(text, actionLabel = "", onAction = null, ms = 8000) {
+/** `kind` le da su propio aspecto ("dofus": la celebración) e `icons`, las imágenes de delante. */
+export function showToast(text, actionLabel = "", onAction = null, ms = 8000, { kind = "", icons = [] } = {}) {
   toastAction = onAction;
   clearTimeout(toastTimer);
-  setState(s => ({ toast: { seq: s.toast.seq + 1, visible: true, text, actionLabel, ms } }));
+  setState(s => ({ toast: { seq: s.toast.seq + 1, visible: true, text, actionLabel, ms, kind, icons } }));
   toastTimer = setTimeout(hideToast, ms);
 }
 export function hideToast() {
