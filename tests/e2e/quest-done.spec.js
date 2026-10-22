@@ -195,3 +195,38 @@ test("la misión opcional no hace falta para que el paso se marque solo", async 
   await expect(page.locator("#journal .journal-num")).toHaveText("7");
   await expect(page.locator("#journal .q-item", { hasText: "Arma letal" }).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
 });
+
+test("completar una misión que va por delante no da por hechas las de antes ni marca el paso", async ({ page }) => {
+  // Paso 21: «Cómo perder la pluma» se hace «en algún punto» del paso, y va la última
+  await openApp(page, { "silvestre:done": upTo(20) });
+  await page.click('.diary-row[data-n="21"] .row-main');
+  await expect(page.locator("#journal .journal-num")).toHaveText("21");
+  const item = name => page.locator("#journal .q-item").filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  const pluma = item("Cómo perder la pluma");
+  await expect(pluma).toBeVisible({ timeout: 15_000 });
+  await pluma.locator(".q-done-btn").click();
+  await expect(pluma.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  // Las de Púrpura profundo que no terminó el 19 siguen pendientes, y el paso también
+  for (const name of ["Remordimientos de eternala", "El anillo de Tot", "Como alma en pena", "El poder detrás del trono"]) {
+    await expect(item(name).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
+  }
+  await expect(page.locator('.diary-row[data-n="21"]')).not.toHaveClass(/done/);
+  expect((await readLS(page, "silvestre:done"))["21"]).toBeUndefined();
+  // La misión en curso sigue siendo la primera
+  expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
+});
+
+test("avanzar los objetivos de una misión que va por delante los guarda y no pasa de largo a las de antes", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(20) });
+  await page.click('.diary-row[data-n="21"] .row-main');
+  const item = name => page.locator("#journal .q-item").filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  const pluma = item("Cómo perder la pluma");
+  await expect(pluma).toBeVisible({ timeout: 15_000 });
+  await pluma.locator("summary .q-name").click();
+  const rows = pluma.locator(".obj-list.route > .obj-row");
+  await rows.nth(1).locator("button.obj-med").click();
+  // Se ve lo hecho en ella: los dos primeros, y el tercero en curso
+  expect(await routeStates(rows)).toMatch(/^ddn-*$/);
+  await expect(item("Remordimientos de eternala").locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
+  expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
+});
