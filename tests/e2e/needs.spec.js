@@ -24,7 +24,7 @@ test("prerrequisitos y objetos son pestañas de la ventana de pasos, con lo que 
   await expect(tabs).toHaveText([/Mapa/, /Diario/, /Prerrequisitos/, /Objetos/]);
   // Cada una dice cuántos le faltan
   await expect(page.locator("#prereqsCount")).toHaveText("20");
-  await expect(page.locator("#itemsCount")).toHaveText("422");
+  await expect(page.locator("#itemsCount")).toHaveText("426");
   await page.click("#tabPrereqs");
   await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "false");
@@ -91,7 +91,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
   await page.click('.needs-sort [data-sort="qty"]');
   await expect(page.locator("#bandSoon")).toHaveCount(0);
   // Sin progreso: la guía entera, una casilla por objeto
-  await expect(page.locator("#items .slot")).toHaveCount(422);
+  await expect(page.locator("#items .slot")).toHaveCount(426);
   await expect(page.locator("#items .slot").first()).toHaveAttribute("data-id", "14635");
   await page.click('.needs-sort [data-sort="az"]');
   await expect(page.locator("#items .slot .q").first()).toBeVisible();
@@ -99,7 +99,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
 
 test("las categorías filtran y cuentan objetos distintos", async ({ page }) => {
   await openItems(page);
-  const counts = { todo: 422, recursos: 335, consumibles: 48, equipables: 20, almas: 9, criaturas: 9, cosmeticos: 1 };
+  const counts = { todo: 426, recursos: 338, consumibles: 49, equipables: 20, almas: 9, criaturas: 9, cosmeticos: 1 };
   for (const [cat, n] of Object.entries(counts)) {
     await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
   }
@@ -112,11 +112,11 @@ test("el buscador resalta coincidencias sin quitar casillas y entiende sin tilde
   await openItems(page);
   await page.click('.needs-sort [data-sort="az"]');
   await page.fill("#needsSearch", "bambu");
-  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 422$/);
+  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 426$/);
   const matches = page.locator("#items .slot.match");
   await expect(matches.first()).toBeVisible();
-  await expect(page.locator("#items .slot")).toHaveCount(422);
-  expect(await page.locator("#items .slot.dim").count()).toBe(422 - await matches.count());
+  await expect(page.locator("#items .slot")).toHaveCount(426);
+  expect(await page.locator("#items .slot.dim").count()).toBe(426 - await matches.count());
   // Los recuentos pasan a contar coincidencias ("bambu" también encuentra criaturas de bambú)
   await expect(page.locator('.needs-cat[data-cat="todo"] .n')).toHaveText(String(await matches.count()));
   await expect(page.locator('.needs-cat[data-cat="criaturas"] .n')).not.toHaveText("0");
