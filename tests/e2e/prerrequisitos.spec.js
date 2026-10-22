@@ -125,3 +125,24 @@ test("completar una misión da por hechas las que necesita aunque sean de otro p
   await pending(page, "A la leche caliente, batir de repente");
   await expect(row(page, 19)).not.toHaveClass(/\bdone\b/);
 });
+
+test("el progreso guardado con la misión en curso pasa a sus misiones: las de antes quedan completadas", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(11) }, { view: "map" });
+  // Progreso de antes: en el 12 se iba por la 3.ª, y «Las grandes galerías» iba a medias
+  await page.evaluate(() => {
+    localStorage.setItem("silvestre:questPos", JSON.stringify({ 12: 2 }));
+    localStorage.setItem("silvestre:questObjective", JSON.stringify({ 1507: 2 }));
+    localStorage.removeItem("silvestre:questModel");
+  });
+  await page.reload();
+  await expect(page.locator(".map-node")).toHaveCount(100);
+  // El mismo porcentaje que antes: las dos de antes de la actual
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1504: 16, 1505: 11, 1507: 2 });
+  expect(await readLS(page, "silvestre:questPos")).toEqual({ 12: 2 });
+  expect(await readLS(page, "silvestre:questModel")).toBe(2);
+  // Solo una vez: lo que se deshaga después no vuelve
+  await page.evaluate(() => localStorage.setItem("silvestre:questObjective", JSON.stringify({ 1504: 16 })));
+  await page.reload();
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
+});

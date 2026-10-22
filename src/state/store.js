@@ -21,6 +21,7 @@ export const LS = {
   owned: "silvestre:owned",
   questPos: "silvestre:questPos",
   questObj: "silvestre:questObjective",
+  questModel: "silvestre:questModel",
   guide: "silvestre:guide",
   itemsView: "silvestre:itemsView",
   itemsPageSize: "silvestre:itemsPageSize",
@@ -59,6 +60,28 @@ export function migrateProgress(done = {}, questPos = {}) {
   return out;
 }
 
+// Lo que cuenta como misión terminada en el progreso guardado. Hasta la 1, también todas
+// las de antes de la misión en curso (questPos); desde la 2, solo las terminadas de
+// verdad y las que estas necesitaban terminadas para empezar (impliedDone)
+export const QUEST_MODEL = 2;
+
+/**
+ * Pasa el avance de las misiones del modelo anterior al actual: cada misión obligatoria
+ * de antes de la que iba en curso en su paso contaba como terminada, y ahora lo está de
+ * verdad (pasada de su último objetivo). Así nadie pierde progreso ni porcentaje. Con
+ * los pesos (WEIGHTS: las misiones de cada paso en orden y sus objetivos), sin esperar
+ * a las misiones; las opcionales y las de solo tomarla pesan 0 y no las terminaba.
+ */
+export function migrateQuestPos(questPos = {}, questObj = {}) {
+  const out = { ...questObj };
+  for (const [n, at] of Object.entries(questPos)) {
+    const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
+    const pos = Math.min(at || 0, q.length - 1);
+    for (let i = 0; i < pos; i++) if (q[i] > 0 && (out[ids[i]] || 0) < os[i]) out[ids[i]] = os[i];
+  }
+  return out;
+}
+
 const readSelectedStep = () => {
   const n = Number(localStorage.getItem(LS.selectedStep));
   return Number.isInteger(n) && n >= 1 && n <= STEPS.length ? n : null;
@@ -82,10 +105,14 @@ const readStepsView = () => {
   return WIN_TABS.includes(v) ? v : "map";
 };
 
-/** Progreso guardado, migrado una sola vez si viene de la versión anterior de la guía. */
+/**
+ * Progreso guardado, migrado una sola vez si viene de la versión anterior de la guía y,
+ * después (ya con su numeración), si viene del modelo anterior de las misiones.
+ */
 function readProgress() {
   let done = readObj(LS.done);
   let questPos = readObj(LS.questPos);
+  let questObj = readObj(LS.questObj);
   if (localStorage.getItem(LS.guide) !== String(GUIDE_VERSION)) {
     if (Object.keys(done).length || Object.keys(questPos).length) {
       ({ done, questPos } = migrateProgress(done, questPos));
@@ -94,7 +121,14 @@ function readProgress() {
     }
     localStorage.setItem(LS.guide, String(GUIDE_VERSION));
   }
-  return { done, questPos };
+  if (localStorage.getItem(LS.questModel) !== String(QUEST_MODEL)) {
+    if (Object.keys(questPos).length) {
+      questObj = migrateQuestPos(questPos, questObj);
+      localStorage.setItem(LS.questObj, JSON.stringify(questObj));
+    }
+    localStorage.setItem(LS.questModel, String(QUEST_MODEL));
+  }
+  return { done, questPos, questObj };
 }
 
 /**
@@ -121,7 +155,7 @@ function readClassicProgress(done) {
 
 function initialState() {
   const progress = readProgress();
-  const { questPos } = progress;
+  const { questPos, questObj } = progress;
   const { done, extra } = readClassicProgress(progress.done);
   const prereqs = readObj(LS.prereqs);
   return {
@@ -130,7 +164,7 @@ function initialState() {
     owned: readObj(LS.owned),
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de la misión en curso (solo eso: no da por hechas las de antes)
-    questObj: readObj(LS.questObj), // misión -> índice de objetivo
+    questObj, // misión -> índice de objetivo
     // El paso abierto en la ventana sobrevive a recargar: se puede ir por delante del
     // siguiente pendiente. El hero sigue mostrando el siguiente pendiente
     selectedStep: readSelectedStep(),
@@ -890,6 +924,7 @@ export function moveObjective(delta) {
 // ---------------------------------------------------------------------------
 export const takeSnapshot = () => ({
   guide: GUIDE_VERSION,
+  questModel: QUEST_MODEL,
   done: { ...state.done },
   prereqs: { ...state.prereqs },
   owned: { ...state.owned },
@@ -900,6 +935,8 @@ export const takeSnapshot = () => ({
 export function applySnapshot(snap) {
   // Una copia hecha con la versión anterior de la guía trae la numeración vieja
   if (snap.guide !== GUIDE_VERSION) snap = { ...snap, ...migrateProgress(snap.done, snap.questPos) };
+  // Y una del modelo anterior de las misiones da por hechas las de antes de la que iba en curso
+  if (snap.questModel !== QUEST_MODEL) snap = { ...snap, questObj: migrateQuestPos(snap.questPos, snap.questObj) };
   setState(s => ({
     done: snap.done || {},
     prereqs: snap.prereqs || {},
