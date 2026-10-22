@@ -125,8 +125,9 @@ test("solo con la hija en el mismo paso: «La bruja mala del Este» en el 38 no 
 });
 
 test("terminar una hija no da por terminada a la madre; al terminar la madre se sigue por la primera sin hacer", async ({ page }) => {
-  // En el 81, en «Un remedio draconiano» (la 4.ª), con las tres de antes hechas
-  await openApp(page, { "silvestre:questPos": { 81: 3 } });
+  // En el 81, en «Un remedio draconiano» (la 4.ª), con las tres de antes hechas: «La sombra
+  // de lo que era» terminada pide las otras dos
+  await openApp(page, { "silvestre:questPos": { 81: 3 }, "silvestre:questObjective": { 1785: 12 } });
   await openStep(page, 81);
   await btn(page, "El dragón de las aguas").click();
   await expect(btn(page, "El dragón de las aguas")).toHaveAttribute("aria-pressed", "true");

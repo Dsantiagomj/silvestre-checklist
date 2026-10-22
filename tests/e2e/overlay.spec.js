@@ -243,11 +243,12 @@ test("el botón del pie marca el paso como el diario, con la línea «Además»"
   const ov = await openOverlay(page, context);
   const go = ov.locator(".journal-cta .gbtn.go");
   await expect(go).toHaveText("✓ Completar paso 17");
-  await expect(ov.locator(".journal-cta .cta-also")).toHaveText(/^Además: en el 10 completa /);
+  // Lo que el 10 deja abierto, «Encender la mecha», pide terminada «La bestia interior»:
+  // con las dos, el 10 queda completado
+  await expect(ov.locator(".journal-cta .cta-also")).toHaveText("Además: el 10 queda completado.");
   await go.click();
   await expect(page.locator('.diary-row[data-n="17"]')).toHaveClass(/done/);
-  // Como en el diario: al 10 le faltan misiones, sigue pendiente y el aviso lo dice
-  await expect(page.locator("#toast")).toContainText("El 10 sigue pendiente");
+  await expect(page.locator('.diary-row[data-n="10"]')).toHaveClass(/done/);
   // El overlay pasa al siguiente pendiente; la página sigue en el suyo
   await expect(ov.locator(".ov-num")).toHaveText("18");
   await expect(page.locator("#journal .journal-num")).toHaveText("17");
