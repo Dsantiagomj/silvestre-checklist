@@ -53,8 +53,9 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   await download.saveAs(file);
   const backup = JSON.parse(fs.readFileSync(file, "utf8"));
   expect(backup.app).toBe("silvestre-checklist");
-  expect(Object.keys(backup.data).sort()).toEqual(["done", "guide", "owned", "prereqs", "questObj", "questPos"]);
+  expect(Object.keys(backup.data).sort()).toEqual(["done", "guide", "owned", "prereqs", "questModel", "questObj", "questPos"]);
   expect(backup.data.guide).toBe(4); // la numeración de pasos con la que se guardó
+  expect(backup.data.questModel).toBe(2); // lo que cuenta como misión terminada
 
   const ownedBefore = await page.locator("#itemsCount").textContent();
   await page.uncheck('#resetDialog input[name="owned"]');
@@ -107,6 +108,17 @@ test("soltar una copia sobre la tarjeta la restaura", async ({ page }) => {
   await dropFile(page, "#rdBackupCard", "copia.json", copy);
   await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
   await expect(page.locator(".diary-row.done")).toHaveCount(2);
+});
+
+test("una copia de antes, con la misión en curso, se restaura con las de antes completadas", async ({ page }) => {
+  await openApp(page);
+  await page.click("#resetBtn");
+  // Sin questModel: cada misión de antes de la que iba en curso contaba como terminada
+  const copy = JSON.stringify({ app: "silvestre-checklist", version: 1, data: { guide: 4, done: { 5: true }, prereqs: {}, owned: {}, questPos: { 12: 2 }, questObj: { 1507: 2 } } });
+  await dropFile(page, "#rdBackupCard", "copia.json", copy);
+  await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
+  expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1504: 16, 1505: 11, 1507: 2 });
+  expect(await readLS(page, "silvestre:questPos")).toEqual({ 12: 2 });
 });
 
 test("un archivo que no es una copia muestra el error en la tarjeta", async ({ page }) => {
