@@ -30,6 +30,41 @@ export function followPageHeader(host, name) {
   }, [header]);
 }
 
+const px = v => parseFloat(v) || 0;
+
+/** Lo que la página pinta debajo del anfitrión: sus hermanos siguientes y los rellenos de abajo. */
+function heightBelow(host) {
+  let sum = px(getComputedStyle(host).marginBottom);
+  for (let node = host; node.parentElement && node !== document.body; node = node.parentElement) {
+    for (let sib = node.nextElementSibling; sib; sib = sib.nextElementSibling) {
+      const cs = getComputedStyle(sib);
+      if (cs.display === "none" || cs.position === "absolute" || cs.position === "fixed") continue;
+      sum += sib.getBoundingClientRect().height + px(cs.marginTop) + px(cs.marginBottom);
+    }
+    const pcs = getComputedStyle(node.parentElement);
+    sum += px(pcs.paddingBottom) + px(pcs.borderBottomWidth);
+  }
+  return sum;
+}
+
+/**
+ * El alto del anfitrión en la variable `name`: lo que deja la ventana entre lo que va encima
+ * (la cabecera fija y el relleno que la compensa) y lo que va debajo (el pie), sin scroll.
+ * Si eso queda por debajo de `min` (un móvil, con un pie alto), llena la pantalla bajo la
+ * cabecera fija y el pie queda debajo.
+ */
+export function fitBetweenHeaderAndFooter(host, name, min) {
+  const header = document.getElementById("header") || document.querySelector("body > header");
+  onLayout(() => {
+    const pos = header && getComputedStyle(header).position;
+    const fixedTop = pos === "fixed" || pos === "sticky" ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+    const above = Math.max(fixedTop, host.getBoundingClientRect().top + window.scrollY);
+    const fit = window.innerHeight - above - heightBelow(host);
+    const h = fit >= min ? fit : window.innerHeight - fixedTop;
+    host.style.setProperty(name, `${Math.floor(h)}px`);
+  }, [document.body, ...(header ? [header] : [])]);
+}
+
 /**
  * El anfitrión de borde a borde de la ventana aunque esté en una columna estrecha (el
  * bloque de código de Squarespace): se corre hasta el borde izquierdo y toma el ancho de

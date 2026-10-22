@@ -7,23 +7,50 @@
 <meta name="description" content="Vista previa del hub de checklists de Torrente Arcano: una franja por Dofus que lleva a su checklist.">
 <!-- Vista previa: el hub de verdad vive en torrentearcano.com/checklists -->
 <meta name="robots" content="noindex, nofollow">
-<!-- Una página oscura y neutra como la de Torrente Arcano. El bloque de abajo es el mismo
-     snippet que se pega en Squarespace y carga el mismo embebido publicado -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap">
+<!-- La página como quedará en Squarespace: la cabecera fija y el pie de Torrente Arcano con
+     sus altos de verdad y, entre ellos, solo el bloque de código con el hub. El bloque es el
+     mismo snippet que se pega en Squarespace y carga el mismo embebido publicado -->
 <style>
-  html, body { margin: 0; background: #0d0f0c; color: #e9ece4; font-family: 'Barlow', system-ui, sans-serif; }
-  header { padding: 18px 24px; border-bottom: 1px solid #1f231d; font-family: 'Barlow Condensed', system-ui, sans-serif; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 14px; color: #9aa394; }
-  main { max-width: 1100px; margin: 0 auto; padding: 48px 20px 64px; }
-  h1 { margin: 0; font-family: 'Barlow Condensed', system-ui, sans-serif; font-weight: 800; font-size: clamp(40px, 7vw, 64px); letter-spacing: .04em; line-height: 1; color: #fff; text-align: center; }
-  .intro { margin: 12px 0 36px; text-align: center; font-size: 18px; color: #c9cfc2; }
+  html, body { margin: 0; background: #18181b; font-family: 'Montserrat', system-ui, sans-serif; }
+  #header { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 90px; box-sizing: border-box; padding: 0 5vw;
+    display: flex; align-items: center; gap: 4vw; background: #18181b; color: #fff; }
+  .logo { font-weight: 600; font-size: 22px; letter-spacing: -.01em; white-space: nowrap; }
+  nav { display: flex; gap: 44px; font-size: 17px; font-weight: 500; }
+  .search { margin-left: auto; width: 300px; height: 40px; border: 1px solid #3f3f46; border-radius: 999px; background: #0f0f11; color: #71717a;
+    display: flex; align-items: center; padding: 0 18px; box-sizing: border-box; font-size: 14px; }
+  .social { display: flex; gap: 16px; }
+  .social span { width: 40px; height: 40px; border-radius: 50%; background: #fff; }
+  .page-section { padding-top: 90px; }
+  #footer-sections { box-sizing: border-box; height: 223px; overflow: hidden; padding: 48px 12.5vw; color: #fff; font-weight: 600; font-size: 16px; line-height: 1.5;
+    background: linear-gradient(180deg, rgba(20, 30, 32, .82), rgba(20, 30, 32, .65)), url("../img/zones/reino-de-amakna.jpg") center / cover; }
+  #footer-sections p { margin: 0 0 12px; }
+  #footer-sections a { color: #fff; }
+  @media (max-width: 900px) { nav, .search, .social { display: none; } }
+  @media (max-width: 767px) {
+    #header { height: 84px; }
+    .page-section { padding-top: 84px; }
+    #footer-sections { height: 545px; padding: 40px 6vw; font-size: 15px; }
+  }
 </style>
 </head>
 <body>
-<header>Torrente Arcano · Vista previa</header>
+<header id="header">
+  <div class="logo">Torrente Arcano</div>
+  <nav><span>INICIO</span><span>CLASES</span><span>MISIONES</span></nav>
+  <div class="search">Buscar…</div>
+  <div class="social"><span></span><span></span><span></span><span></span></div>
+</header>
 <main>
-  <h1>CHECKLISTS</h1>
-  <p class="intro">Completa, colecciona y conquista todos los Dofus.</p>
+  <section class="page-section">
 <div id="checklists-root"></div>
 <script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/checklists.js"></script>
+  </section>
 </main>
+<footer id="footer-sections">
+  <p>Dofus es un MMORPG publicado por Ankama. "Torrentearcano" es una página web no oficial y no está afiliada ni asociada con Ankama. Algunas ilustraciones y contenidos son propiedad de Ankama y de Dofus. Todos los derechos reservados.</p>
+  <p>Copyright © 2026 Torrentearcano — Gracias por no copiar ni reproducir el contenido de este sitio sin autorización.</p>
+  <p><a href="#">Aviso legal</a> - <a href="#">Política de cookies</a> - <a href="#">Política de Privacidad</a></p>
+</footer>
 </body>
 </html>

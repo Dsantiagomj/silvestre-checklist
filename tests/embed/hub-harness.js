@@ -6,15 +6,20 @@ import { SITE, servePages } from "./harness.js";
 // disco con sus direcciones de verdad, como la del Silvestre (harness.js)
 export const HUB_URL = "https://www.torrentearcano.com/checklists";
 const HARNESS = path.join(import.meta.dirname, "fixtures/checklists.html");
+/** La página como quedará: solo el hub entre la cabecera fija y el pie de Torrente Arcano. */
+export const PAGE_FIXTURE = path.join(import.meta.dirname, "fixtures/checklists-page.html");
 
-/** Abre la página con el hub y espera a que pinte sus franjas. Devuelve los errores. */
-export async function openHub(page) {
+/**
+ * Abre la página con el hub y espera a que pinte sus franjas. Devuelve los errores. Por
+ * defecto la de CSS agresivo y texto alrededor; `fixture` cambia la página.
+ */
+export async function openHub(page, fixture = HARNESS) {
   const errors = [];
   const context = page.context();
   await context.route(`${SITE}**`, servePages);
   await context.route("https://www.torrentearcano.com/**", route =>
     route.request().url() === HUB_URL
-      ? route.fulfill({ status: 200, path: HARNESS, headers: { "content-type": "text/html; charset=utf-8" } })
+      ? route.fulfill({ status: 200, path: fixture, headers: { "content-type": "text/html; charset=utf-8" } })
       : route.fulfill({ status: 404, body: "" }));
   page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
