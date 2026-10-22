@@ -109,7 +109,7 @@
     "items": [
      "50 x Ortiga",
      "5 x Lana de jalatín negro",
-     "5 x Hoja de kalipto",
+     "5 x Flor de kalipto",
      "2 x Misericordia de chafer de élite",
      "1 x Aceite de sésamo",
      "1 x Alas de escarahoja azul",
@@ -881,12 +881,22 @@
      "2 x Ofrenda a los espíritus celestiales",
      "20 x Madera de bambú sagrado",
      "10 x Chwile",
+     "10 x Artefacto pandawushu de madera",
+     "10 x Artefacto pandawushu de roca",
+     "10 x Artefacto pandawushu de agua",
+     "10 x Artefacto pandawushu de fuego",
+     "10 x Artefacto pandawushu de viento",
+     "1 x Pétalo de tinta",
+     "1 x Pétalo de papel",
+     "1 x Llave del recuerdo de Imagiro",
+     "1 x Llave de la memoria de Orukam",
      "1 x Especias"
     ]
    },
    {
     "category": "Consumibles",
     "items": [
+     "5 x Cerveza Tsingtawo",
      "2 x Pizwa",
      "1 x Alcohol al 99%",
      "1 x Limo d’grobe",
@@ -944,6 +954,7 @@
    {
     "category": "Recursos",
     "items": [
+     "10 x Zarza efedriana",
      "7 x Belladona",
      "7 x Cenipiedra",
      "1 x Casco de tulipaladín",
@@ -1003,13 +1014,8 @@
    {
     "category": "Recursos",
     "items": [
-     "16 x Tabla de grabado",
-     "16 x Tabla de retrete",
-     "16 x Tabla de salvación",
-     "16 x Tabla de surf",
      "10 x Petaca de azufre",
      "2 x Concentrado de selva",
-     "1 x Cuerda de escalada",
      "1 x Gran frasco"
     ]
    },
