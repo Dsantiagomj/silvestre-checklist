@@ -7,7 +7,10 @@
 import css from "./hub.css?inline";
 import { pageFonts } from "../lib/fonts.js";
 import { renderHub } from "./hub.js";
-import { fillViewportWidth, followPageHeader } from "../lib/pageHeader.js";
+import { fillViewportWidth, fitBetweenHeaderAndFooter } from "../lib/pageHeader.js";
+
+// Por debajo de este alto (un móvil con el pie alto de Torrente) el pie queda debajo
+const MIN_FIT = 300;
 
 const HOST_ID = "checklists-root";
 
@@ -25,9 +28,9 @@ function mount() {
   const root = document.createElement("div");
   root.className = "hub";
   shadow.append(style, root);
-  // A pantalla completa: de borde a borde y del alto que deja la cabecera fija (--checklists-top)
+  // A pantalla completa: de borde a borde y del alto que dejan la cabecera y el pie (--checklists-h)
   fillViewportWidth(host);
-  followPageHeader(host, "--checklists-top");
+  fitBetweenHeaderAndFooter(host, "--checklists-h", MIN_FIT);
   renderHub(root);
 }
 

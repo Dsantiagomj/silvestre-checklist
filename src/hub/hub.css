@@ -2,8 +2,8 @@
    HUB DE LOS CHECKLISTS · UNA FRANJA POR DOFUS
    Acordeón horizontal: la franja abierta pinta la zona, el PNJ y el huevo del Dofus; las
    cerradas, el huevo y el nombre en vertical. En estrecho (≤600px) va en vertical.
-   A pantalla completa: src/hub/embed.js lo lleva de borde a borde y --checklists-top es
-   lo que tapa la cabecera fija de la página; los tamaños crecen con la pantalla.
+   A pantalla completa: src/hub/embed.js lo lleva de borde a borde y --checklists-h es el
+   alto que dejan la cabecera y el pie de la página; los tamaños crecen con la pantalla.
    Vive en una shadow root (src/hub/embed.js): nada de la página entra ni sale.
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
@@ -32,10 +32,10 @@
 @keyframes sheen { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
 
 .banners {
-  /* Lo que deja la cabecera fija; svh para que la barra del navegador del móvil no lo corte */
-  height: calc(100vh - var(--checklists-top, 0px));
-  height: calc(100svh - var(--checklists-top, 0px));
-  min-height: 460px;
+  /* Lo que dejan la cabecera y el pie (src/hub/embed.js); sin script, la pantalla */
+  height: var(--checklists-h, 100svh);
+  /* Los tamaños de dentro siguen también al alto (cqh): una pantalla baja no los corta */
+  container: banners / size;
   display: flex;
   gap: 6px;
   margin: 0;
@@ -146,7 +146,7 @@
   position: absolute;
   left: 50%;
   top: 44%;
-  height: clamp(84px, 10vh, 120px);
+  height: clamp(56px, min(10vh, 18cqh), 120px);
   width: auto;
   max-width: none;
   border: 0;
@@ -154,7 +154,7 @@
   transition: all .65s var(--ease);
   filter: drop-shadow(0 0 12px var(--c)) drop-shadow(0 10px 10px rgba(0, 0, 0, .8));
 }
-.pane.open .egg { left: 22%; top: 33%; height: clamp(150px, 28vh, 300px); }
+.pane.open .egg { left: 22%; top: 33%; height: clamp(90px, min(28vh, 34cqh), 300px); }
 
 /* El nombre en vertical de las cerradas, con su marca del color del Dofus */
 .pane .vert {
@@ -193,7 +193,7 @@
   position: absolute;
   z-index: 8;
   left: clamp(22px, 3.5vw, 64px);
-  bottom: clamp(20px, 6vh, 72px);
+  bottom: clamp(16px, min(6vh, 7cqh), 72px);
   right: clamp(22px, 3.5vw, 64px);
   pointer-events: none;
   visibility: hidden;
@@ -219,7 +219,7 @@
   margin: 2px 0 0;
   font-family: var(--fd);
   font-weight: 800;
-  font-size: clamp(44px, 4.6vw, 84px);
+  font-size: clamp(30px, min(4.6vw, 12cqh), 84px);
   line-height: .92;
   text-transform: uppercase;
   letter-spacing: .02em;
@@ -227,7 +227,7 @@
   text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
 }
 .pane .lead {
-  margin: clamp(8px, 1.2vh, 14px) 0 clamp(14px, 2.4vh, 26px);
+  margin: clamp(6px, 1.2vh, 14px) 0 clamp(10px, min(2.4vh, 4cqh), 26px);
   max-width: clamp(460px, 38vw, 640px);
   font-size: clamp(16px, 1.25vw, 21px);
   font-weight: 500;
@@ -267,7 +267,7 @@
    puede ser estrecha en una pantalla ancha */
 @container hub (max-width: 600px) {
   /* La abierta llena lo que dejan las cerradas */
-  .banners { flex-direction: column; min-height: 520px; }
+  .banners { flex-direction: column; }
   .pane { flex: 0 0 64px; min-width: 0; transition: flex-grow .65s var(--ease); }
   .pane.open { flex: 1 0 64px; }
   .pane .egg { left: 40px; top: 50%; height: 46px; }
