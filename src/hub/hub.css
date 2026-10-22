@@ -1,0 +1,289 @@
+/* ============================================================================
+   HUB DE LOS CHECKLISTS · UNA FRANJA POR DOFUS
+   Acordeón horizontal: la franja abierta pinta la zona, el PNJ y el huevo del Dofus; las
+   cerradas, el huevo y el nombre en vertical. En estrecho (≤600px) va en vertical.
+   Vive en una shadow root (src/hub/embed.js): nada de la página entra ni sale.
+   ============================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
+
+:host { display: block; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.hub {
+  --fd: 'Barlow Condensed', sans-serif;
+  --fb: 'Barlow', sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  container: hub / inline-size;
+  font-family: var(--fb);
+  font-size: 16px;
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #f2f5ee;
+  text-align: left;
+}
+
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes kb { from { transform: scale(1.04); } to { transform: scale(1.12) translateX(-2%); } }
+@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.01); } }
+@keyframes sheen { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+
+.banners {
+  height: 420px;
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #050605;
+}
+
+.pane {
+  --c: #b7dc69;
+  position: relative;
+  flex: 1;
+  min-width: 64px;
+  overflow: hidden;
+  border-radius: 9px;
+  isolation: isolate;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+  transition: flex .65s var(--ease), height .65s var(--ease);
+}
+.pane.open { flex: 5; box-shadow: inset 0 0 0 2px var(--c), 0 0 24px -6px var(--c); }
+
+/* Toda la franja es el botón que la abre; el contenido va por encima sin tapar los clics */
+.pane-toggle {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pane-toggle:focus { outline: none; }
+.pane-toggle:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
+.pane.open .pane-toggle { cursor: default; }
+
+.pane .bg {
+  position: absolute;
+  inset: -4%;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(.42) saturate(.75);
+}
+.pane.open .bg { animation: kb 16s ease-in-out infinite alternate; }
+
+/* El PNJ pintado sobre el fondo: en luminancia, desaturado y fundido por los bordes */
+.pane .guard {
+  position: absolute;
+  z-index: 2;
+  right: -2%;
+  top: -2%;
+  height: 112%;
+  width: auto;
+  max-width: none;
+  border: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .9s ease;
+  filter: saturate(.45) contrast(1.05) brightness(.95);
+  mix-blend-mode: luminosity;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 78%, transparent 100%), linear-gradient(0deg, transparent 16%, #000 48%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 78%, transparent 100%), linear-gradient(0deg, transparent 16%, #000 48%);
+  mask-composite: intersect;
+}
+.pane.open .guard { opacity: .8; animation: breathe 7s ease-in-out infinite; }
+
+.pane .tint {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--c) 24%, transparent);
+  mix-blend-mode: color;
+}
+
+/* Sombra abajo y a la izquierda: el texto claro siempre va sobre oscuro */
+.pane .shade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, rgba(5, 6, 5, .97) 0%, rgba(5, 6, 5, .88) 30%, rgba(5, 6, 5, 0) 62%),
+    linear-gradient(90deg, rgba(5, 6, 5, .6) 0%, rgba(5, 6, 5, 0) 55%);
+}
+
+.pane .foil {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: overlay;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .28) 48%, transparent 60%);
+  background-size: 220% 100%;
+}
+.pane.open .foil { opacity: 1; animation: sheen 6s ease-in-out infinite; }
+
+.pane .eggwrap { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.pane.open .eggwrap { animation: float 5s ease-in-out infinite; }
+.pane .egg {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  height: 84px;
+  width: auto;
+  max-width: none;
+  border: 0;
+  transform: translate(-50%, -50%);
+  transition: all .65s var(--ease);
+  filter: drop-shadow(0 0 12px var(--c)) drop-shadow(0 10px 10px rgba(0, 0, 0, .8));
+}
+.pane.open .egg { left: 22%; top: 33%; height: 150px; }
+
+/* El nombre en vertical de las cerradas, con su marca del color del Dofus */
+.pane .vert {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  transition: opacity .3s;
+}
+.pane.open .vert { opacity: 0; }
+.pane .vert::after {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 22px;
+  margin-top: 8px;
+  background: var(--c);
+  border-radius: 2px;
+}
+
+/* Texto de la abierta: por encima del botón de la franja, que sigue recibiendo los clics */
+.pane .meta {
+  position: absolute;
+  z-index: 8;
+  left: 22px;
+  bottom: 20px;
+  right: 22px;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .45s .15s, transform .45s .15s, visibility 0s .6s;
+}
+.pane.open .meta {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity .45s .15s, transform .45s .15s, visibility 0s;
+}
+.pane .kick {
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--c);
+}
+.pane .name {
+  margin: 2px 0 0;
+  font-family: var(--fd);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: .92;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
+}
+.pane .lead {
+  margin: 8px 0 14px;
+  max-width: 460px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #f2f5ee;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+.pane.lock .lead { margin-bottom: 2px; }
+
+.cta {
+  display: inline-block;
+  pointer-events: auto;
+  font-family: var(--fd);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: var(--c);
+  color: #0b0c0a;
+  cursor: pointer;
+  transition: filter .2s, transform .2s;
+}
+.cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.cta:focus { outline: none; }
+.cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.pane.lock .egg { filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .35)); }
+.pane.lock .bg { filter: brightness(.25) grayscale(1); }
+
+/* Estrecho (el bloque de Squarespace en un móvil): las franjas van una debajo de otra y
+   la abierta es la alta. Por el ancho del hub, no de la ventana: la columna de la página
+   puede ser estrecha en una pantalla ancha */
+@container hub (max-width: 600px) {
+  .banners { flex-direction: column; height: auto; }
+  .pane { flex: none; height: 64px; min-width: 0; }
+  .pane.open { flex: none; height: 400px; }
+  .pane .egg { left: 40px; top: 50%; height: 46px; }
+  .pane.open .egg { left: 28%; top: 26%; height: 100px; }
+  .pane .guard { right: -18%; top: 2%; height: 92%; }
+  .pane .vert {
+    left: 76px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    writing-mode: horizontal-tb;
+    rotate: none;
+  }
+  .pane .vert::after { width: 22px; height: 3px; margin: 0 0 0 10px; vertical-align: middle; }
+  .pane .meta { left: 18px; right: 18px; bottom: 18px; }
+  .pane .name { font-size: 30px; }
+  .pane .lead { font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pane.open .bg, .pane.open .guard, .pane.open .eggwrap, .pane.open .foil { animation: none; }
+  .pane.open .foil { opacity: 0; }
+  .pane, .pane .egg, .pane .meta, .pane.open .meta, .pane .guard, .pane .vert { transition: none; }
+}

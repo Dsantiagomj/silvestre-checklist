@@ -6,19 +6,20 @@ import path from "node:path";
 // verdad: el snippet es el mismo que se pega en Squarespace y el embebido, el mismo build
 // que se publica (EMBED_OUT lo deja aparte para no pisar dist/)
 export const PAGE_URL = "https://www.torrentearcano.com/checklist-silvestre";
-const SITE = "https://dsantiagomj.github.io/silvestre-checklist/";
+export const SITE = "https://dsantiagomj.github.io/silvestre-checklist/";
 const ROOT = path.resolve(import.meta.dirname, "../..");
 export const EMBED_OUT = path.join(ROOT, process.env.EMBED_OUT || ".embed-test");
 const HARNESS = path.join(import.meta.dirname, "fixtures/squarespace.html");
 
 const TYPES = {
   ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg",
-  ".webp": "image/webp", ".svg": "image/svg+xml", ".css": "text/css",
+  ".webp": "image/webp", ".svg": "image/svg+xml", ".css": "text/css", ".html": "text/html; charset=utf-8",
 };
 
 /** GitHub Pages: /embed/ sale del build del embebido, el resto de public/, con CORS abierto como Pages. */
-async function servePages(route) {
-  const rel = decodeURIComponent(new URL(route.request().url()).pathname.slice(new URL(SITE).pathname.length));
+export async function servePages(route) {
+  let rel = decodeURIComponent(new URL(route.request().url()).pathname.slice(new URL(SITE).pathname.length));
+  if (rel.endsWith("/")) rel += "index.html"; // como Pages: una carpeta sirve su index.html
   const file = rel.startsWith("embed/") ? path.join(EMBED_OUT, rel) : path.join(ROOT, "public", rel);
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return route.fulfill({ status: 404, body: "" });
   return route.fulfill({

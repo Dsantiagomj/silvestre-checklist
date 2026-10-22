@@ -10,22 +10,9 @@ import css from "./styles/global.css?inline";
 import App from "./App.jsx";
 import { applyTheme, getState } from "./state/store.js";
 import { mountIn } from "./lib/root.js";
+import { pageFonts } from "./lib/fonts.js";
 
 const HOST_ID = "silvestre-root";
-
-// Las fuentes van en la página: dentro de una shadow root @font-face no se aplica. Es la
-// misma hoja que importa global.css, que dentro se quita para no pedirla dos veces
-// (el build la deja como `@import "…";` y en desarrollo va como `@import url('…');`)
-const FONTS = css.match(/@import\s+(?:url\(\s*)?(['"])(.+?)\1\s*\)?[^;]*;/);
-
-function addFonts() {
-  if (!FONTS || document.querySelector("link[data-silvestre-fonts]")) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = FONTS[2];
-  link.dataset.silvestreFonts = "";
-  document.head.appendChild(link);
-}
 
 /**
  * Lo que tapa arriba la cabecera fija de la página (la de Squarespace, #header), en
@@ -57,10 +44,10 @@ function mount() {
     return;
   }
   if (host.shadowRoot) return; // el script se pegó dos veces
-  addFonts();
   const shadow = host.attachShadow({ mode: "open" });
   const style = document.createElement("style");
-  style.textContent = FONTS ? css.replace(FONTS[0], "") : css;
+  // Las fuentes van en la página: dentro de una shadow root @font-face no se aplica
+  style.textContent = pageFonts(css, "silvestre-fonts");
   // .app-root hace de <body> y lleva el tema
   const app = document.createElement("div");
   app.className = "app-root is-embed";
