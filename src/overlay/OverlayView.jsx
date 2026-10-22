@@ -1,10 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
-import { currentQuest, flatObjectives, questsOf } from "../lib/quests.js";
+import { flatObjectives, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { stepCalls, stepTitle } from "../lib/journal.js";
 import {
-  goQuest, moveObjective, overlayGo, overlayStep, progressPct, rowHave, useAppState,
+  currentOf, goQuest, moveObjective, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
 import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri, progressOf } from "../components/Journal.jsx";
@@ -312,7 +312,7 @@ export default function OverlayView() {
   const s = useAppState();
   const n = overlayStep(s);
   const step = STEPS[n - 1];
-  const cur = s.questsLoaded ? currentQuest(n, s.questPos, s.questObj) : null;
+  const cur = s.questsLoaded ? currentOf(s, n) : null;
   const [picking, setPicking] = useState(false);
   return (
     <div className="ov journal">

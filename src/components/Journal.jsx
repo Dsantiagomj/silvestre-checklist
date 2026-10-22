@@ -1,7 +1,7 @@
 import { Fragment, createContext, useContext, useEffect, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
-import { childrenOf, groupsOf, questsOf } from "../lib/quests.js";
+import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
@@ -9,7 +9,7 @@ import {
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  alsoText, closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDoneElsewhere, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  alsoText, closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -167,23 +167,22 @@ export function Needs({ n, s }) {
 }
 
 /**
- * Hasta dónde vas en cada misión, con el avance que guarda el overlay: las misiones
- * antes de la actual, hechas; en la actual, los objetivos antes del que toca; y
- * cualquiera pasada de su último objetivo. Con el paso hecho, todo; también la que
- * terminó otro paso hecho que la lleva (questDoneElsewhere). Una opcional solo lleva lo
- * suyo: ni el paso hecho ni pasar de largo la terminan, pero sí el paso que la termina
- * (optionalDoneBy). Devuelve el índice (en la lista
- * aplanada) del objetivo actual.
+ * Hasta dónde vas en cada misión, con el avance que guarda el overlay: terminada
+ * (questDone: pasada de su último objetivo, pedida por otra terminada, terminada en otro
+ * paso hecho o con el paso hecho), toda; en la que está en curso (questFocus) y en
+ * cualquiera con objetivos hechos, los suyos. Ir por una misión no da por hechas las de
+ * antes. Una opcional solo lleva lo suyo: ni el paso hecho la termina, pero sí el paso
+ * que la termina (optionalDoneBy). Devuelve el índice (en la lista aplanada) del
+ * objetivo actual.
  */
 export function progressOf(s, n, quests, i, q) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
-  // Hasta `total`: una misión terminada sale toda hecha
+  if (questDone(s, n, q, total)) return total;
   const own = Math.min(s.questObj[q.id] || 0, total);
-  const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
-  if (q.kind === "optional") return optionalDoneBy(s, q.id) ? total : s.questObj[q.id] != null || i === pos ? own : -1;
-  if (s.done[n] || i < pos || own >= total || questDoneElsewhere(s, q.id, n)) return total;
-  // Una que va por delante con objetivos hechos (se avanzó en ella fuera de orden): los suyos
-  return i === pos || (i > pos && own > 0) ? own : -1;
+  const pos = questFocus(s, n, quests);
+  if (q.kind === "optional") return s.questObj[q.id] != null || i === pos ? own : -1;
+  // Una con objetivos hechos fuera de la que está en curso (se avanzó en ella fuera de orden): los suyos
+  return i === pos || own > 0 ? own : -1;
 }
 
 /**
@@ -247,12 +246,16 @@ function QuestStart({ q }) {
   );
 }
 
-/** «Completar» / «✓ Completada» de una misión; terminada en otro paso, no se pulsa. */
-function QuestDone({ finished, elsewhere, onClick }) {
+/**
+ * «Completar» / «✓ Completada» de una misión; terminada en otro paso, o porque otra
+ * terminada la pide (`by`, su nombre), no se pulsa: se deshace allí.
+ */
+function QuestDone({ finished, elsewhere, by, onClick }) {
   return (
     <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-      disabled={!!elsewhere}
-      title={elsewhere ? `Completada en el paso ${elsewhere}` : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
+      disabled={!!elsewhere || !!by}
+      title={elsewhere ? `Completada en el paso ${elsewhere}` : by ? `Completada: la pide terminada «${by}»`
+        : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
       aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
       {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
   );
@@ -268,7 +271,8 @@ export function CurrentQuestDone({ n, cur, s }) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
   const finished = progressOf(s, n, list, i, q) >= total;
   const elsewhere = q.kind === "optional" ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, n);
-  return <QuestDone finished={finished} elsewhere={elsewhere} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
+  const by = !elsewhere && (s.questObj[q.id] || 0) < total ? impliedBy(s.questObj, q.id) : null;
+  return <QuestDone finished={finished} elsewhere={elsewhere} by={by} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
 }
 
 /** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
@@ -336,13 +340,15 @@ export function Quests({ step, quests, loaded, s }) {
     // Terminada en otro paso: sale hecha y aquí no se deshace (se deshace desmarcando ese)
     // Una opcional, si la termina otro paso hecho (OPTIONAL_DONE_BY: «Arma letal», en el 93)
     const elsewhere = optional ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, step.n);
+    // Terminada porque la pide otra terminada: se deshace deshaciendo esa
+    const by = !elsewhere && (s.questObj[q.id] || 0) < total ? impliedBy(s.questObj, q.id) : null;
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
     const pick = k => {
       setObjective(step.n, i, q.id, k, total);
       // La que queda en curso: la siguiente sin terminar o, tras una hija, su madre
-      const next = quests[getState().questPos[step.n]];
+      const next = quests[questFocus(getState(), step.n, quests)];
       if (k >= total && !optional && next && next.id !== q.id) setOpen(next.id, true);
     };
     // «Completar» la termina de una vez y la pliega (si hay siguiente, se abre ella);
@@ -361,7 +367,7 @@ export function Quests({ step, quests, loaded, s }) {
           <QuestMark className="q-mark" />
           <span className="q-name">{q.n}</span>
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          <QuestDone finished={finished} elsewhere={elsewhere} onClick={toggleDone} />
+          <QuestDone finished={finished} elsewhere={elsewhere} by={by} onClick={toggleDone} />
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
           {missionGuide(q.n) && (
             <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
@@ -376,7 +382,7 @@ export function Quests({ step, quests, loaded, s }) {
           return (
             <Fragment key={j}>
               {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-              <Objectives route objs={stg.o} at={at - from} onPick={elsewhere ? undefined : k => pick(from + k)}
+              <Objectives route objs={stg.o} at={at - from} onPick={elsewhere || by ? undefined : k => pick(from + k)}
                 stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))}
                 kids={kids.filter(c => c.index >= from && c.index < offset).map(c => ({ ...c, index: c.index - from }))} onKid={toKid} />
             </Fragment>

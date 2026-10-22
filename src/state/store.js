@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "../data/weights.json";
-import { childrenOf, currentQuest, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, questsData, questsOf } from "../lib/quests.js";
+import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
@@ -129,7 +129,7 @@ function initialState() {
     prereqs,
     owned: readObj(LS.owned),
     theme: localStorage.getItem(LS.theme) || "dark",
-    questPos, // paso -> índice de misión
+    questPos, // paso -> índice de la misión en curso (solo eso: no da por hechas las de antes)
     questObj: readObj(LS.questObj), // misión -> índice de objetivo
     // El paso abierto en la ventana sobrevive a recargar: se puede ir por delante del
     // siguiente pendiente. El hero sigue mostrando el siguiente pendiente
@@ -291,15 +291,42 @@ export function questDoneElsewhere(s, qid, except) {
 export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIONAL_DONE_BY[qid] : null);
 
 /**
+ * La misión `q` del paso `n`, terminada: pasada de su último objetivo, en este paso o en
+ * otro; porque otra terminada de verdad la necesitaba terminada para empezar
+ * (impliedDone), o porque la terminó otro paso hecho que la lleva (questDoneElsewhere).
+ * Con el paso hecho, sus obligatorias también. Ir por una misión no da por hechas las de
+ * antes: solo las que esta pide. Una opcional, ni con el paso hecho: la termina el paso
+ * que la termina (optionalDoneBy).
+ */
+export function questDone(s, n, q, total = objCount(q)) {
+  if ((s.questObj[q.id] || 0) >= total || impliedDone(s.questObj).has(String(q.id))) return true;
+  if (q.kind === "optional") return !!optionalDoneBy(s, q.id);
+  return !!s.done[n] || !!questDoneElsewhere(s, q.id, n);
+}
+
+/**
+ * La misión en curso del paso (su puesto en `list`): la elegida (questPos) o, sin
+ * ninguna, la primera que se hace y no está terminada (o la primera que se hace).
+ */
+export function questFocus(s, n, list = questsOf(n)) {
+  if (s.questPos[n] != null) return Math.min(s.questPos[n], Math.max(list.length - 1, 0));
+  const j = list.findIndex(q => q.kind !== "take" && !questDone(s, n, q));
+  return j >= 0 ? j : Math.max(0, list.findIndex(q => q.kind !== "take"));
+}
+
+/** currentQuest del paso n con la misión en curso de questFocus. */
+export const currentOf = (s, n) => currentQuest(n, s.questPos, s.questObj, questFocus(s, n));
+
+/**
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
- * el diario: las de antes de la actual, cualquiera pasada de su último objetivo, aunque
- * vaya por delante, y las que terminó otro paso hecho (questDoneElsewhere). Las
- * opcionales y las de solo tomarla valen 0.
+ * el diario (questDone, con los pesos: sin esperar a las misiones). Las que dan por
+ * hechas otras (impliedDone) o otro paso hecho (questDoneElsewhere) se suman cuando
+ * llegan las misiones. Las opcionales y las de solo tomarla valen 0.
  */
 function questPts(s, n) {
   const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
-  const pos = Math.min(s.questPos[n] || 0, q.length - 1);
-  return q.reduce((a, p, i) => a + (i < pos || (s.questObj[ids[i]] || 0) >= os[i] || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
+  const implied = impliedDone(s.questObj);
+  return q.reduce((a, p, i) => a + ((s.questObj[ids[i]] || 0) >= os[i] || implied.has(ids[i]) || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -497,7 +524,8 @@ export function toggleStep(n) {
 /**
  * Desmarcar un paso con todas sus misiones hechas lo deja como antes del último clic:
  * su última misión obligatoria vuelve a su último objetivo. Si no, el paso seguiría
- * con todo completado y se volvería a marcar solo al tocar cualquier objetivo.
+ * con todo completado y se volvería a marcar solo al tocar cualquier objetivo. Las
+ * demás siguen hechas: las que esa daba por hechas (impliedDone), ahora de verdad.
  */
 function reopenLast(n) {
   if (!questsAllDone(state, n)) return;
@@ -505,9 +533,11 @@ function reopenLast(n) {
   const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n));
   if (j < 0) return;
   const q = quests[j];
+  const keep = quests.filter((x, i) => i !== j && x.kind === "mandatory" && (state.questObj[x.id] || 0) < objCount(x)
+    && !questDoneElsewhere(state, x.id, n));
   setState(s => ({
     questPos: { ...s.questPos, [n]: j },
-    questObj: { ...s.questObj, [q.id]: Math.max(objCount(q) - 1, 0) },
+    questObj: { ...s.questObj, ...Object.fromEntries(keep.map(x => [x.id, objCount(x)])), [q.id]: Math.max(objCount(q) - 1, 0) },
   }));
 }
 
@@ -535,22 +565,28 @@ const objCount = q => q.s.reduce((a, stg) => a + stg.o.length, 0);
  */
 export function closingPlan(s, closes) {
   const out = { questObj: {}, done: [], pending: [] };
-  for (const c of closes) {
+  const plans = closes.map(c => {
     const quests = questsOf(c);
     const { open, later, stops } = openOf(STEPS[c - 1], quests);
     // Sin las misiones (llegan en diferido) o sin parada que situar no se sabe qué deja
     // el paso a medias: se marca entero, como siempre
-    if (!stops.some(p => quests.some(q => q.id === p.quest))) {
-      out.done.push(c);
-      continue;
-    }
+    if (!stops.some(p => quests.some(q => q.id === p.quest))) return { c, whole: true };
     quests.forEach(q => {
       if (open.has(String(q.id)) && !(String(q.id) in later)) out.questObj[q.id] = objCount(q);
     });
-    // Hecha como en el diario y en el porcentaje: pasada de largo o en su último objetivo
-    const pos = Math.min(s.questPos[c] || 0, quests.length - 1);
-    const missing = quests.filter((q, i) => q.kind === "mandatory" && i >= pos
-      && (out.questObj[q.id] ?? s.questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
+    return { c, quests, later };
+  });
+  // Hecha como en el diario y en el porcentaje (questDone), con lo que este clic termina:
+  // también las que piden terminadas las que termina, de este paso cerrado o de otro
+  const questObj = { ...s.questObj, ...out.questObj };
+  const implied = impliedDone(questObj);
+  for (const { c, whole, quests, later } of plans) {
+    if (whole) {
+      out.done.push(c);
+      continue;
+    }
+    const missing = quests.filter(q => q.kind === "mandatory" && !implied.has(String(q.id))
+      && (questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
     if (missing.length) out.pending.push({ n: c, missing });
     else out.done.push(c);
   }
@@ -614,15 +650,12 @@ export function closeSteps(n, closes) {
 }
 
 /**
- * Las misiones obligatorias del paso, todas hechas (pasadas de largo o en su último
- * objetivo, como en el diario). Sin misiones cargadas o sin ninguna obligatoria, no.
+ * Las misiones obligatorias del paso, todas hechas (questDone, como en el diario). Sin
+ * misiones cargadas o sin ninguna obligatoria, no.
  */
 function questsAllDone(s, n) {
-  const quests = questsOf(n);
-  const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
-  const needed = quests.filter(q => q.kind === "mandatory");
-  return needed.length > 0 && quests.every((q, i) => q.kind !== "mandatory" || i < pos
-    || (s.questObj[q.id] || 0) >= objCount(q) || questDoneElsewhere(s, q.id, n));
+  const needed = questsOf(n).filter(q => q.kind === "mandatory");
+  return needed.length > 0 && needed.every(q => questDone(s, n, q));
 }
 
 /**
@@ -769,7 +802,7 @@ export function loadQuests() {
 
 export function moveQuest(delta) {
   const n = overlayStep(state);
-  const cur = currentQuest(n, state.questPos, state.questObj);
+  const cur = currentOf(state, n);
   if (!cur) return;
   // Entre las que se hacen: las de solo tomarla se saltan
   const i = cur.walked[Math.max(0, Math.min(cur.walked.length - 1, cur.at + delta))];
@@ -778,7 +811,7 @@ export function moveQuest(delta) {
 
 /** Del desplegable de misiones del overlay: lleva a la misión `at` de las que se hacen (walked). */
 export function goQuest(at) {
-  const cur = currentQuest(overlayStep(state), state.questPos, state.questObj);
+  const cur = currentOf(state, overlayStep(state));
   if (cur) moveQuest(at - cur.at);
 }
 
@@ -792,13 +825,15 @@ export function setObjective(n, qi, qid, k, total) {
   const list = questsOf(n);
   const next = nextWalked(list, qi);
   // En un paso hecho todas sus obligatorias cuentan como completadas. Deshacer una lo
-  // desmarca: las demás quedan completadas de verdad y esa, donde se ha dejado
+  // desmarca: las demás quedan completadas de verdad y esa, donde se ha dejado. Las que
+  // la piden terminada no: sin ella no pueden estarlo, y vuelven a lo suyo
   if (state.done[n] && list[qi]?.kind !== "optional") {
     if (k >= total) return;
     setState(s => {
       const done = { ...s.done };
       delete done[n];
-      const full = Object.fromEntries(list.filter(q => q.kind === "mandatory").map(q => [q.id, objCount(q)]));
+      const needs = q => (prereqsOf(q.id) || []).some(x => String(x) === String(qid));
+      const full = Object.fromEntries(list.filter(q => q.kind === "mandatory" && !needs(q)).map(q => [q.id, objCount(q)]));
       return {
         done,
         questPos: { ...s.questPos, [n]: qi },
@@ -809,39 +844,44 @@ export function setObjective(n, qi, qid, k, total) {
     return;
   }
   setState(s => {
-    // Deshacer una terminada que va por delante del avance no lo adelanta: las de antes
-    // siguen como estaban (se terminó la 2.ª, se deshizo la 1.ª y luego la 2.ª)
+    // Lo que queda hecho con este clic: la misión y las que pide terminadas (impliedDone),
+    // que no se guardan: deshacerla las deja como estaban
+    const questObj = { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) };
+    const after = { ...s, questObj };
+    const isDone = q => questDone(after, n, q);
+    const pos = questFocus(s, n, list);
+    // Deshacer una terminada que va por delante de la que está en curso no la adelanta
+    // (se terminó la 2.ª, se deshizo la 1.ª y luego la 2.ª)
     const undo = k < total && (s.questObj[qid] || 0) >= total;
     // Terminada, se sigue por la siguiente sin terminar (las hijas ya hechas se saltan)
-    let at = k >= total && next >= 0 ? nextOpen(list, qi, { ...s.questObj, [qid]: total }) : undo ? Math.min(s.questPos[n] || 0, qi) : qi;
+    let at = k >= total && next >= 0 ? nextOpen(list, qi, isDone) : undo ? Math.min(pos, qi) : qi;
     // Una hija no pasa de largo a su madre sin terminar: le quedan los objetivos de después
     const mother = k >= total ? parentIn(list, qid) : -1;
-    if (mother >= 0 && mother < at && (s.questPos[n] || 0) <= mother
-      && (s.questObj[list[mother].id] || 0) < objCount(list[mother])) at = mother;
+    if (mother >= 0 && mother < at && pos <= mother && !isDone(list[mother])) at = mother;
     // Una que va por delante («Cómo perder la pluma», en el 21: «en algún punto» del paso)
-    // no pasa de largo a las de antes sin terminar: el avance sigue en la que iba, y lo
-    // hecho en ella queda en sus objetivos
-    const pos = s.questPos[n] || 0;
-    if (qi > pos && list.some((q, j) => j >= pos && j < qi && q.kind === "mandatory"
-      && (s.questObj[q.id] || 0) < objCount(q) && !questDoneElsewhere(s, q.id, n))) at = pos;
-    return {
-      questPos: list[qi]?.kind === "optional" ? s.questPos : { ...s.questPos, [n]: at },
-      questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
-    };
+    // y deja sin terminar las de antes no se lleva la misión en curso: sigue la que iba
+    if (qi > pos && list.some((q, j) => j >= pos && j < qi && q.kind === "mandatory" && !isDone(q))) at = pos;
+    // Sin ninguna elegida, la que toca sigue siendo la primera sin terminar (questFocus)
+    const keep = list[qi]?.kind === "optional" || (s.questPos[n] == null && at === pos);
+    return { questPos: keep ? s.questPos : { ...s.questPos, [n]: at }, questObj };
   });
   completeIfDone(n);
 }
 
 export function moveObjective(delta) {
   const n = overlayStep(state);
-  const cur = currentQuest(n, state.questPos, state.questObj);
+  const cur = currentOf(state, n);
   if (!cur) return;
   const next = cur.k + delta;
   if (next < 0) return;
   // Fin de la misión: queda terminada y el overlay sigue en ella («Misión completada»,
   // con «Siguiente misión» para pasar). En la última, el paso puede quedar hecho
   const k = Math.min(next, cur.objs.length);
-  setState(s => ({ questObj: { ...s.questObj, [cur.q.id]: k } }));
+  // Sin ninguna elegida, la en curso se fija: terminada, no salta a la primera sin terminar
+  setState(s => ({
+    questObj: { ...s.questObj, [cur.q.id]: k },
+    questPos: s.questPos[n] == null ? { ...s.questPos, [n]: cur.i } : s.questPos,
+  }));
   completeIfDone(n);
 }
 

@@ -48,12 +48,50 @@ export const nextWalked = (list, i) => list.findIndex((q, j) => j > i && q.kind 
 const objTotal = q => q.s.reduce((a, stg) => a + stg.o.length, 0);
 
 /**
- * La siguiente que se hace tras la `i` y no está terminada según `questObj`: tras una
- * misión madre, sus hijas ya hechas se saltan. Si lo están todas, la siguiente (o -1).
+ * La siguiente que se hace tras la `i` y no está terminada (`done(q)`): tras una misión
+ * madre, sus hijas ya hechas se saltan. Si lo están todas, la siguiente (o -1).
  */
-export function nextOpen(list, i, questObj) {
-  const j = list.findIndex((q, k) => k > i && q.kind !== "take" && (questObj[q.id] || 0) < objTotal(q));
+export function nextOpen(list, i, done) {
+  const j = list.findIndex((q, k) => k > i && q.kind !== "take" && !done(q));
   return j >= 0 ? j : nextWalked(list, i);
+}
+
+/**
+ * Las misiones que necesitan terminada a `id` para empezar (build_quests_js.py: su
+ * startCriterion, también a través de otras), solo las de la ruta, o null.
+ */
+export const prereqsOf = id => data?.PREREQS?.[id] || null;
+
+const NONE = new Set();
+const impliedMemo = new WeakMap();
+/**
+ * Las misiones que alguna terminada de verdad (`questObj` pasado de su último objetivo,
+ * en cualquier paso) necesitaba terminadas para empezar: también lo están. Es la única
+ * forma de que una misión dé por hecha a otra. No se guardan: deshacer la que las pedía
+ * las deja como estaban. Sin las misiones cargadas, ninguna. Ids como texto.
+ */
+export function impliedDone(questObj) {
+  if (!data?.PREREQS) return NONE;
+  let out = impliedMemo.get(questObj);
+  if (out) return out;
+  out = new Set();
+  for (const [id, k] of Object.entries(questObj)) {
+    const need = data.PREREQS[id];
+    if (need && data.QUESTS[id] && k >= objTotal(data.QUESTS[id])) need.forEach(x => out.add(String(x)));
+  }
+  impliedMemo.set(questObj, out);
+  return out;
+}
+
+/**
+ * El nombre de la misión terminada de verdad que da por hecha a `id` (impliedDone): esa
+ * no se deshace sola, se deshace la que la pide. O null.
+ */
+export function impliedBy(questObj, id) {
+  if (!impliedDone(questObj).has(String(id))) return null;
+  const by = Object.keys(questObj).find(x => data.QUESTS[x] && questObj[x] >= objTotal(data.QUESTS[x])
+    && (data.PREREQS[x] || []).some(y => String(y) === String(id)));
+  return by ? data.QUESTS[by].n : null;
 }
 
 /**
@@ -73,12 +111,13 @@ export const flatObjectives = q => q.s.flatMap((stg, j) => stg.o.map(o => ({ ...
 /**
  * La misión en curso del paso. El overlay recorre las que se hacen (las opcionales
  * también); las de solo tomarla se saltan. `at` y `walk` son su puesto y cuántas hay.
+ * Sin ninguna elegida (`questPos`), la de `fallback`.
  */
-export function currentQuest(n, questPos, questObj) {
+export function currentQuest(n, questPos, questObj, fallback = 0) {
   const list = questsOf(n);
   const walked = list.map((q, j) => j).filter(j => list[j].kind !== "take");
   if (!walked.length) return null;
-  const pos = Math.min(questPos[n] || 0, list.length - 1);
+  const pos = Math.min(questPos[n] ?? fallback, list.length - 1);
   // Un avance guardado sobre una de solo tomarla vuelve a la anterior que se hace
   const i = walked.findLast(j => j <= pos) ?? walked[0];
   const q = list[i];

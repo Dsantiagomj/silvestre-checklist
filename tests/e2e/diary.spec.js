@@ -108,15 +108,13 @@ test("si el paso cierra otros pendientes, «Completar» termina lo que les queda
   // Un solo botón, con el número del paso; lo que termina en el 33 va debajo
   await expect(page.locator("#closesBtn")).toHaveCount(0);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
-  await expect(page.locator("#journal .cta-also")).toHaveText("Además: en el 33 completa «Muchos cuerboks en la cabeza».");
+  // Lo que termina del 33, «Muchos cuerboks en la cabeza», pide terminadas las tres de
+  // antes de su parada: el 33 queda completado
+  await expect(page.locator("#journal .cta-also")).toHaveText("Además: el 33 queda completado.");
   await page.click("#toggleBtn");
   await expect(row(page, 34)).toHaveClass(/done/);
-  // El 33 tiene tres misiones antes de su parada: sigue pendiente
-  await expect(row(page, 33)).not.toHaveClass(/done/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 33 sigue pendiente: le faltan 3 misiones.");
-  await expect(page.locator("#journal .journal-num")).toHaveText("35");
-  await page.click("#toastAction");
   await expect(row(page, 33)).toHaveClass(/done/);
+  await expect(page.locator("#journal .journal-num")).toHaveText("35");
   // Hecho el 34, sin la línea; con lo cerrado ya hecho, al deshacerlo tampoco
   await row(page, 34).locator(".row-main").click();
   await expect(page.locator("#journal .cta-also")).toHaveCount(0);
@@ -126,20 +124,27 @@ test("si el paso cierra otros pendientes, «Completar» termina lo que les queda
 });
 
 test("un paso que cierra varios los nombra todos en la línea «Además» y avisa de los que siguen pendientes", async ({ page }) => {
+  // El 28 cierra el 25, el 26 y el 27: «Los cazadores» y «El recadero» piden terminadas
+  // las de antes de sus pasos, así que con ellas quedan completados
   await openApp(page, { "silvestre:done": range(1, 24) });
   await row(page, 28).locator(".row-main").click();
   await waitQuests(page);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 28");
   await expect(page.locator("#journal .cta-also"))
-    .toHaveText("Además: en el 25 completa «Los cazadores», en el 26 completa «El recadero» y el 27 queda completado.");
+    .toHaveText("Además: el 25 queda completado, el 26 queda completado y el 27 queda completado.");
+  // El 91 cierra el 41 y el 90: lo que termina del 90 no pide las demás, que siguen pendientes
+  await openApp(page, { "silvestre:done": Object.fromEntries(Object.entries(range(1, 90)).filter(([n]) => n !== "41" && n !== "90")) });
+  await row(page, 91).locator(".row-main").click();
+  await waitQuests(page);
+  await expect(page.locator("#journal .cta-also"))
+    .toHaveText("Además: el 41 queda completado y en el 90 completa «El peso de su mirada».");
   await page.click("#toggleBtn");
-  // El 27 solo tenía pendiente lo de tras su parada (la otra es opcional); el 25 y el 26, no
-  for (const n of [27, 28]) await expect(row(page, n)).toHaveClass(/done/);
-  for (const n of [25, 26]) await expect(row(page, n)).not.toHaveClass(/done/);
-  await expect(page.locator("#toastTxt")).toHaveText("El 25 y el 26 siguen pendientes: les faltan misiones.");
-  await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 25 y 26");
+  for (const n of [41, 91]) await expect(row(page, n)).toHaveClass(/done/);
+  await expect(row(page, 90)).not.toHaveClass(/done/);
+  await expect(page.locator("#toastTxt")).toHaveText(/^El 90 sigue pendiente: /);
+  await expect(page.locator("#toastAction")).toHaveText("Las hice, marcar el 90");
   await page.click("#toastAction");
-  for (const n of [25, 26]) await expect(row(page, n)).toHaveClass(/done/);
+  await expect(row(page, 90)).toHaveClass(/done/);
 });
 
 test("la línea «Además» cuenta las misiones si en un paso cerrado se completan varias", async ({ page }) => {

@@ -172,7 +172,7 @@ test("marcar el 93 termina «Los tótems de Maimane», donde para el 92, y el 92
 });
 
 test("el 87 termina «Las cuatro voluntades», que el 73 deja a medias, y deja tomada «Toma de conciencia» antes de sus dos misiones", async ({ page }) => {
-  const errors = await openApp(page, { "silvestre:done": doneOf([86]), "silvestre:questPos": { 73: 1 } });
+  const errors = await openApp(page, { "silvestre:done": doneOf([86]), "silvestre:questObjective": { 2121: 26 } });
   await expect(row(page, 73).locator(".row-closed")).toHaveText("se cierra en el 87");
   await expect(row(page, 87).locator(".row-closes")).toHaveText("cierra el 72, 73, 85, 86");
   await openStep(page, 87);
@@ -245,7 +245,9 @@ test("tras la parada solo queda abierta la misión que la lleva: el 66 termina �
 });
 
 test("en el 68 queda abierta «La última muralla» y su madre, que la espera; las de después las termina el 68", async ({ page }) => {
-  await openApp(page);
+  // Con lo de antes hecho: «Cuando el despertar…», terminada, pide terminadas misiones de
+  // pasos anteriores, que quedarían hechos con ella
+  await openApp(page, { "silvestre:done": doneOf(Array.from({ length: 71 }, (_, i) => i + 1).filter(n => n !== 68)) });
   await openStep(page, 72);
   await page.locator("#toggleBtn").click();
   await expect(row(page, 72)).toHaveClass(/\bdone\b/);
@@ -279,7 +281,7 @@ test("una madre que espera a una hija de otro paso para ahí en rojo: la termina
 });
 
 test("«Hecho» en el 93 termina «Los tótems de Maimane» pero no «Un legado atormentado», que termina el 98", async ({ page }) => {
-  await openApp(page, { "silvestre:done": doneOf([91]), "silvestre:questPos": { 92: 2 }, "silvestre:questObjective": { 2423: 2 } });
+  await openApp(page, { "silvestre:done": doneOf([91]), "silvestre:questObjective": { 2422: 11, 2423: 2 } });
   await openStep(page, 93);
   await page.locator("#toggleBtn").click();
   await expect(row(page, 93)).toHaveClass(/\bdone\b/);

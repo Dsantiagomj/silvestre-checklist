@@ -74,7 +74,7 @@ test("paso 28: terminar «Pesca en aguas congeladas» no lleva a «Luces y sombr
   await pesca.locator("summary .q-name").click();
   await pesca.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
   expect(await routeStates(pesca.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
-  expect((await readLS(page, "silvestre:questPos"))["28"]).toBe(0);
+  expect((await readLS(page, "silvestre:questPos"))?.["28"] ?? 0).toBe(0);
   // Terminada la única obligatoria, cuenta el paso entero
   await expect(heroPct(page)).toHaveText(`${pctOf(base(28))}%`);
 });
@@ -89,17 +89,19 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   const btn = arma.locator(".q-done-btn");
   await expect(btn).toHaveText("Completar");
 
-  // Completar la opcional no mueve ni el porcentaje ni la misión en curso
+  // Completar la opcional no mueve la misión en curso, pero pide terminada «La cólera de
+  // los dioses»: con ella, la única obligatoria, el paso queda hecho solo. La opcional
+  // sigue sin pesar
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(6))}%`);
+  await expect(colera.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('.diary-row[data-n="7"]')).toHaveClass(/\bdone\b/);
+  await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
   expect((await readLS(page, "silvestre:questPos"))?.["7"] ?? 0).toBe(0);
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(6))}%`);
 
   // Con el paso hecho, la cólera sale hecha y «Arma letal» sigue pendiente
-  await page.locator("#toggleBtn").click();
   await openStep(page, 7);
   await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
   await colera.locator("summary .q-name").click();
