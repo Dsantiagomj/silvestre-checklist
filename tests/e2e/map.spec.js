@@ -385,3 +385,33 @@ test("el estandarte de la ficha lleva un solo fondo, alojado aquí: sin el paisa
   await expect.poll(bgOf).toMatch(/^url\("[^"]*\/img\/zones\/[^"]+\.jpg"\)$/);
   expect(remote).toEqual([]);
 });
+
+test("lo que cierra el paso se ve en el mapa: su sello se resalta y el arco no queda bajo la ficha", async ({ page }) => {
+  await openMap(page);
+  // El 45 cierra dos: el 43 y el 44
+  for (const [n, closed] of [[36, [35]], [34, [33]], [20, [19]], [45, [43, 44]]]) {
+    await node(page, n).click();
+    await stable(page, "#mapCard");
+    for (const c of closed) await expect(node(page, c)).toHaveClass(/\blinked\b/);
+    await expect(page.locator(".map-node.linked")).toHaveCount(closed.length);
+    await expect(page.locator(".map-arc")).toHaveCount(closed.length);
+    // Los arcos van por el lado contrario a la ficha: no se cruzan
+    const card = await page.locator("#mapCard").boundingBox();
+    for (const arc of await page.locator(".map-arc").all()) {
+      const a = await arc.boundingBox();
+      const overlap = Math.max(0, Math.min(card.x + card.width, a.x + a.width) - Math.max(card.x, a.x))
+        * Math.max(0, Math.min(card.y + card.height, a.y + a.height) - Math.max(card.y, a.y));
+      expect(overlap, `paso ${n}`).toBe(0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#mapCard")).toHaveCount(0);
+  }
+});
+
+test("un paso que se termina más adelante señala en el mapa el paso que lo cierra", async ({ page }) => {
+  await openMap(page);
+  await node(page, 35).click();
+  await stable(page, "#mapCard");
+  await expect(node(page, 36)).toHaveClass(/\blinked\b/);
+  await expect(page.locator(".map-arc")).toHaveCount(1);
+});

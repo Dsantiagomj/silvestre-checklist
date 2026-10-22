@@ -1,7 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "../data/steps.js";
 import { BRAND_ICON, DOFUS_ROAD, imgUrl } from "../lib/assets.js";
-import { bannerFigure, resolvedBoss, stepTitle } from "../lib/journal.js";
+import { CLOSED_BY, bannerFigure, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import {
   clearSelection, nextPending, revealMapNode, selectStep, stepMatchesFilters,
@@ -77,9 +77,14 @@ export function mapPoint(width, n) {
   return layout(width).pos[n - 1];
 }
 
-/** Arco del paso abierto a cada paso que su combate cierra (el verde de la guía). */
-function arcPath(a, b) {
+/**
+ * Arco entre el paso abierto y el que su combate cierra o el que lo cierra (el verde de
+ * la guía). Va por encima de los sellos; por debajo (`down`) si la ficha va encima, que
+ * lo tapaba.
+ */
+function arcPath(a, b, down = false) {
   const lift = Math.max(46, Math.abs(a.x - b.x) / 3);
+  if (down) return `M${b.x} ${b.y + 26} Q${(a.x + b.x) / 2} ${Math.max(a.y, b.y) + lift} ${a.x} ${a.y + 26}`;
   return `M${b.x} ${b.y - 26} Q${(a.x + b.x) / 2} ${Math.min(a.y, b.y) - lift} ${a.x} ${a.y - 26}`;
 }
 
@@ -133,7 +138,7 @@ function placeCard({ at, r, w, h, width, height, view, avoid }) {
 const nodeEl = (box, n) => box?.querySelector(`.map-node[data-n="${n}"]`);
 
 /** La ficha flotante junto al paso elegido (escritorio). */
-function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen }) {
+function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen, onSide }) {
   const ref = useRef(null);
   const [place, setPlace] = useState(null);
   const leaving = useLeaving();
@@ -152,6 +157,7 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen }) {
     const avoid = [n - 1, n, n + 1].filter(m => m >= 1 && m <= STEPS.length).map(m => ({ ...pos[m - 1], r: radius(m) + 4 }));
     const next = placeCard({ at, r: radius(n), w: card.offsetWidth, h: card.offsetHeight, width, height, view, avoid });
     setPlace(prev => (prev && prev.side === next.side && prev.left === next.left && prev.top === next.top && prev.arrow === next.arrow ? prev : next));
+    onSide(next.side);
     // No cabía en lo que se ve: el mapa se desplaza lo justo para ver la ficha y el paso
     const nodeSeen = at.y >= view.top && at.y <= view.bottom;
     if (!next.seen && allowScroll && nodeSeen) {
@@ -254,12 +260,14 @@ function Tip({ n, r, at, width }) {
 }
 
 /** Los 100 sellos. Aparte y memorizados: pasar el ratón o mover la ficha no los repinta. */
-const Nodes = memo(function Nodes({ pos, done, filters, here, selected, onPick }) {
+// `linked`: los pasos que el elegido cierra o el que lo cierra, separados por comas
+const Nodes = memo(function Nodes({ pos, done, filters, here, selected, linked, onPick }) {
+  const links = new Set(linked ? linked.split(",").map(Number) : []);
   return STEPS.map((st, i) => {
     const n = st.n;
     const road = ROAD_AT[n];
     const boss = resolvedBoss(n);
-    const cls = "map-node" + (done[n] ? " done" : "") + (n === here ? " current" : "") + (n === selected ? " selected" : "") +
+    const cls = "map-node" + (done[n] ? " done" : "") + (n === here ? " current" : "") + (n === selected ? " selected" : "") + (links.has(n) ? " linked" : "") +
       (road ? " dofus" : "") + (stepMatchesFilters({ filters }, st) ? "" : " dimmed");
     return (
       <button key={n} type="button" className={cls} data-n={n}
@@ -332,6 +340,10 @@ export default function StepMap({ s, current, mobile }) {
   // Lo andado: del primer paso al último hecho
   const lastDone = STEPS.reduce((m, st) => (s.done[st.n] ? st.n : m), 0);
   const sel = selected != null ? STEPS[selected - 1] : null;
+  // Lo que cierra el elegido y el que lo cierra a él, con su arco; la ficha dice de qué
+  // lado va, para que el arco vaya por el otro
+  const [cardSide, setCardSide] = useState(null);
+  const links = sel ? [...(sel.closes || []).map(c => [c, sel.n]), ...(CLOSED_BY[sel.n] ? [[CLOSED_BY[sel.n], sel.n]] : [])] : [];
 
   // Un clic de teclado (detail 0) deja el foco en la ficha
   const onPick = useRef(e => {
@@ -364,12 +376,14 @@ export default function StepMap({ s, current, mobile }) {
                   <path className="map-trail-lit" data-to={lastDone} d={info.start + info.segs.slice(0, lastDone - 1).join(" ")} />
                 </>
               )}
-              {sel?.closes?.map(c => <path key={c} className="map-arc" d={arcPath(info.pos[c - 1], info.pos[sel.n - 1])} />)}
+              {links.map(([c, m]) => <path key={c} className="map-arc" d={arcPath(info.pos[c - 1], info.pos[m - 1], !mobile && cardSide === "above")} />)}
             </svg>
-            <Nodes pos={info.pos} done={s.done} filters={s.filters} here={here} selected={selected} onPick={onPick} />
+            <Nodes pos={info.pos} done={s.done} filters={s.filters} here={here} selected={selected}
+              linked={links.map(([c]) => c).join(",")} onPick={onPick} />
             {tip && tip.n !== selected && <Tip n={tip.n} r={tip.r} at={info.pos[tip.n - 1]} width={width} />}
             {!mobile && sel && (
-              <FloatingCard key={sel.n} step={sel} s={s} layoutInfo={info} width={width} scrollRef={scrollRef} focusOnOpen={focusOnOpen} />
+              <FloatingCard key={sel.n} step={sel} s={s} layoutInfo={info} width={width} scrollRef={scrollRef} focusOnOpen={focusOnOpen}
+                onSide={setCardSide} />
             )}
           </>
         )}
