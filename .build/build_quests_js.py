@@ -17,14 +17,17 @@ How a step maps to quests:
     "take" for the ones it only asks to have taken (TAKE_ONLY).
   * A quest that starts inside another one the same step lists, and fulfils its
     objectives, is its child (PARENT: parent -> [objective index, children]).
+  * What a quest needs finished before it can start (its startCriterion, through
+    every quest it needs in turn) is PREREQS: quest -> [route quests]. Finishing a
+    quest finishes those; the app counts no other quest done by being behind it.
   * "Alineamiento Bontariano: Misión N" maps to the Bontarian alignment quest
     whose start criterion is `Ps=1&Pa=N-1` (side Bonta, alignment level N-1).
     The step covers the run from the previous alignment step's mission, which
     was left paused, up to N.
 
 Reads  : .build/data/{step_assets,achievements,quests}.json
-Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT and
-         QUESTS; the app loads it lazily)
+Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT,
+         QUESTS and PREREQS; the app loads it lazily)
 Caches : .build/data/lookup_<kind>.json  (names and map positions from the API)
 Run    : python3 -I .build/build_quests_js.py   (after match_assets.py)
 """
@@ -572,6 +575,90 @@ def parents(step_quests, quests):
     return {p: [[at, kids] for at, kids in sorted(by.items())] for p, by in sorted(found.items())}
 
 
+CRITERION_TOKEN = re.compile(r"[()&|]|[^()&|]+")
+FINISHED = re.compile(r"Qf=(\d+)|QF>(\d+),0")
+
+
+def finished_required(criterion, token_of):
+    """The quests a start criterion needs finished: `Qf=X` and `QF>X,0` (finished at
+    least once). `Qa=` only needs it active and counts for nothing. An "|" needs only
+    what every one of its branches needs (the intersection), so "(Qa=1523&Qo>8635)|Qf=1523"
+    needs nothing. token_of maps a quest id to the id it counts as (a class quest is
+    "clase"), so an "|" of class quests needs "clase". "&" binds tighter than "|"."""
+    tokens = CRITERION_TOKEN.findall(criterion or "")
+    pos = 0
+
+    def atom():
+        nonlocal pos
+        tok = tokens[pos]
+        pos += 1
+        if tok == "(":
+            out = either()
+            pos += 1  # ")"
+            return out
+        m = FINISHED.fullmatch(tok.strip())
+        return {token_of(int(m[1] or m[2]))} if m else set()
+
+    def both():
+        nonlocal pos
+        out = atom()
+        while pos < len(tokens) and tokens[pos] == "&":
+            pos += 1
+            out |= atom()
+        return out
+
+    def either():
+        nonlocal pos
+        out = both()
+        while pos < len(tokens) and tokens[pos] == "|":
+            pos += 1
+            out &= both()
+        return out
+
+    return either() if tokens else set()
+
+
+def prerequisites(step_quests, quests, alts, class_quests):
+    """Every route row -> the route rows it needs finished before it can start, the
+    transitive closure of its start criterion (finished_required) through every quest,
+    on the route or not. A generic row ("clase", "alt:...") needs what all of its
+    quests need, and a quest that needs one of them needs the row. Only rows with
+    something to need: {row: [rows]}, numbers first in order, then the generic ones."""
+    route = {q for ids in step_quests.values() for q in ids}
+    groups = {k: v for k, v in alts.items() if k in route}
+    if "clase" in route:
+        groups["clase"] = class_quests
+    token = {q: k for k, ids in groups.items() for q in ids}
+    token_of = lambda q: token.get(q, q)
+    memo, busy = {}, set()
+
+    def closure(row):
+        if row in memo:
+            return memo[row]
+        if row in busy:  # a loop in the data: what is behind it is already counted
+            return set()
+        busy.add(row)
+        if row in groups:
+            direct = set.intersection(*[closure(q) for q in groups[row]])
+        else:
+            direct = finished_required((quests.get(row) or {}).get("startCriterion"), token_of)
+        out = set(direct)
+        for d in direct:
+            out |= closure(d)
+        out.discard(row)
+        busy.discard(row)
+        memo[row] = out
+        return out
+
+    order = lambda r: (isinstance(r, str), r if isinstance(r, str) else int(r))
+    out = {}
+    for row in sorted(route, key=order):
+        need = sorted(closure(row) & route, key=order)
+        if need:
+            out[str(row)] = need
+    return out
+
+
 def main():
     report = json.loads((DATA / "step_assets.json").read_text())
     achievements = {a["id"]: a for a in json.loads((DATA / "achievements.json").read_text())}
@@ -722,9 +809,12 @@ def main():
     payload = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     parent = parents(step_quests, quests)
+    class_quests = [int(q) for a in achievements.values() for o in (a.get("objectives") or [])
+                    if o and o["id"] == CLASS_OBJECTIVE for q in re.findall(r"Qf=(\d+)", o.get("criterion") or "")]
+    prereqs = prerequisites(step_quests, quests, {k: v[1] for k, v in alts.items()}, class_quests)
     OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups,
                                     "STEP_QUEST_KINDS": step_kinds_out, "PARENT": parent,
-                                    "QUESTS": out_quests}) + "\n")
+                                    "QUESTS": out_quests, "PREREQS": prereqs}) + "\n")
     OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
@@ -735,6 +825,7 @@ def main():
     print(f"pasos agrupados  : {len(step_groups)} (misiones de varios logros)")
     print(f"no obligatorias  : {step_kinds_out}")
     print(f"misiones madre   : {len(parent)} ({sum(len(k) for v in parent.values() for _, k in v)} hijas)")
+    print(f"prerrequisitos   : {len(prereqs)} filas ({sum(len(v) for v in prereqs.values())} en total)")
     print(f"misiones         : {len(out_quests)}")
     print(f"objetivos        : {len(objs)} ({len(located)} con ubicación)")
     print(f"con NPC inicial  : {sum(1 for q in out_quests.values() if q['st'] and q['st'].get('npc'))}")
