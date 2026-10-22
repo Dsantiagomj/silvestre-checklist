@@ -182,7 +182,8 @@ export function progressOf(s, n, quests, i, q) {
   const pos = Math.min(s.questPos[n] || 0, quests.length - 1);
   if (q.kind === "optional") return optionalDoneBy(s, q.id) ? total : s.questObj[q.id] != null || i === pos ? own : -1;
   if (s.done[n] || i < pos || own >= total || questDoneElsewhere(s, q.id, n)) return total;
-  return i === pos ? own : -1;
+  // Una que va por delante con objetivos hechos (se avanzó en ella fuera de orden): los suyos
+  return i === pos || (i > pos && own > 0) ? own : -1;
 }
 
 /**
