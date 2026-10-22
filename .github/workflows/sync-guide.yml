@@ -92,8 +92,9 @@ jobs:
         with:
           python-version: "3.12"
       # Los datos crudos de DofusDB (~190 MB) y las cachés de la API: así regenerar no
-      # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución para guardar lo nuevo
-      - uses: actions/cache@v4
+      # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución para guardar lo nuevo;
+      # se guarda aunque el job falle (Save the caches), así un reintento no lo baja de nuevo
+      - uses: actions/cache/restore@v4
         with:
           path: .build/data
           key: dofusdb-${{ github.run_id }}
@@ -102,25 +103,40 @@ jobs:
         with:
           name: page
           path: ${{ runner.temp }}/ta
-      # La misma página que vio `check`; los scripts solo usan la biblioteca estándar
+      # La misma página que vio `check`; los scripts solo usan la biblioteca estándar.
+      # DofusDB y Torrente fallan a veces (502, conexiones cortadas): cada script que va a la
+      # red se reintenta hasta 3 veces. Repetirlos es seguro, guardan en caché lo que ya bajaron
       - name: Import and regenerate the assets
         run: |
+          retry() {
+            for i in 1 2 3; do
+              "$@" && return 0
+              echo "::warning::falló el intento $i de 3: $*"
+              [ "$i" -lt 3 ] && sleep $((i * 30))
+            done
+            return 1
+          }
           mkdir -p .build/data
           python3 -I .build/import_guide.py "$RUNNER_TEMP/ta/page.html"
-          python3 -I .build/fetch_dofusdb.py
-          python3 -I .build/match_assets.py
-          python3 -I .build/build_assets_js.py
-          python3 -I .build/build_quests_js.py
-          python3 -I .build/build_weights.py
-          python3 -I .build/build_figures.py
-          python3 -I .build/fetch_start_maps.py
-          python3 -I .build/build_resources.py
+          retry python3 -I .build/fetch_dofusdb.py
+          retry python3 -I .build/match_assets.py
+          retry python3 -I .build/build_assets_js.py
+          retry python3 -I .build/build_quests_js.py
+          retry python3 -I .build/build_weights.py
+          retry python3 -I .build/build_figures.py
+          retry python3 -I .build/fetch_start_maps.py
+          retry python3 -I .build/build_resources.py
       # Para qué misión es cada objeto (item_quests.json): el audit lee los objetos que
       # acaba de escribir build_resources.py y este los vuelve a escribir ya con su misión.
       # Lo que ninguna misión pide (?) o falta (+) queda en el resumen del run
       - name: Audit the items against their quests
         run: |
-          python3 -I .build/audit_resources.py > "$RUNNER_TEMP/audit.txt"
+          for i in 1 2 3; do
+            python3 -I .build/audit_resources.py > "$RUNNER_TEMP/audit.txt" && break
+            echo "::warning::falló el intento $i de 3 del audit"
+            [ "$i" -eq 3 ] && exit 1
+            sleep $((i * 30))
+          done
           cat "$RUNNER_TEMP/audit.txt"
           {
             echo "### Objetos de los pasos frente a sus misiones"
@@ -129,6 +145,12 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           python3 -I .build/build_resources.py
+      - name: Save the caches
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .build/data
+          key: dofusdb-${{ github.run_id }}
       - name: Push the branch and open the PR
         id: pr
         env:
