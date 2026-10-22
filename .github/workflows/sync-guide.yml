@@ -115,6 +115,20 @@ jobs:
           python3 -I .build/build_figures.py
           python3 -I .build/fetch_start_maps.py
           python3 -I .build/build_resources.py
+      # Para qué misión es cada objeto (item_quests.json): el audit lee los objetos que
+      # acaba de escribir build_resources.py y este los vuelve a escribir ya con su misión.
+      # Lo que ninguna misión pide (?) o falta (+) queda en el resumen del run
+      - name: Audit the items against their quests
+        run: |
+          python3 -I .build/audit_resources.py > "$RUNNER_TEMP/audit.txt"
+          cat "$RUNNER_TEMP/audit.txt"
+          {
+            echo "### Objetos de los pasos frente a sus misiones"
+            echo '```'
+            cat "$RUNNER_TEMP/audit.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          python3 -I .build/build_resources.py
       - name: Push the branch and open the PR
         id: pr
         env:
