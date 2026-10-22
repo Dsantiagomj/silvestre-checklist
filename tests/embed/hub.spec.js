@@ -58,7 +58,7 @@ test("pasar el ratón por otra franja la abre y cierra la anterior", async ({ pa
   await expect(panes(page).nth(0).locator("a.cta")).toBeHidden();
   // La abierta crece y las cerradas quedan estrechas
   await expect.poll(async () => (await open.boundingBox()).width).toBeGreaterThan(500);
-  expect((await panes(page).nth(0).boundingBox()).width).toBeLessThan(200);
+  await expect.poll(async () => (await panes(page).nth(0).boundingBox()).width * 3).toBeLessThan((await open.boundingBox()).width);
 });
 
 test("un clic abre la franja", async ({ page }) => {
@@ -124,6 +124,36 @@ test("el CSS de la página no entra en el hub ni el del hub sale a la página", 
   expect(await style(page.locator("body"), "backgroundColor")).toBe("rgb(250, 250, 250)");
   expect(await style(page.locator("#below p"), "fontFamily")).toBe("serif");
   expect(await style(page.locator("#below p"), "color")).toBe("rgb(204, 0, 0)");
+});
+
+// La página imita Squarespace: cabecera fija de 80px y el bloque en una columna de 1100px
+const HEADER_H = 80;
+const banners = page => hub(page).locator(".banners");
+
+test("a pantalla completa: de borde a borde de la ventana y del alto que deja la cabecera fija", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHub(page);
+  const width = await page.evaluate(() => document.documentElement.clientWidth);
+  const box = await banners(page).boundingBox();
+  expect(Math.abs(box.x)).toBeLessThan(1);
+  expect(Math.abs(box.width - width)).toBeLessThan(1);
+  expect(Math.abs(box.height - (900 - HEADER_H))).toBeLessThan(2);
+  // Salirse de la columna no deja scroll horizontal
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  // Y sigue el tamaño de la ventana
+  await page.setViewportSize({ width: 1100, height: 700 });
+  await expect.poll(async () => (await banners(page).boundingBox()).height).toBeLessThan(700 - HEADER_H + 2);
+  await expect.poll(async () => (await banners(page).boundingBox()).width).toBeGreaterThan(1099 - 20);
+});
+
+test("en móvil también ocupa la pantalla: la abierta llena lo que dejan las cerradas", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openHub(page);
+  const box = await banners(page).boundingBox();
+  expect(Math.abs(box.x)).toBeLessThan(1);
+  expect(Math.abs(box.height - (844 - HEADER_H))).toBeLessThan(2);
+  const open = await panes(page).nth(0).boundingBox();
+  expect(open.height).toBeGreaterThan(box.height - 2 * 64 - 40);
 });
 
 test("en móvil las franjas van una debajo de otra y la abierta es la más alta", async ({ page }) => {
