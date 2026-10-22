@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { HUB } from "../../src/hub/manifest.js";
-import { hub, openHub, openHubPreview } from "./hub-harness.js";
+import { PAGE_FIXTURE, hub, openHub, openHubPreview } from "./hub-harness.js";
 
 const style = (loc, prop) => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
 const panes = page => hub(page).locator(".pane");
@@ -126,32 +126,41 @@ test("el CSS de la página no entra en el hub ni el del hub sale a la página", 
   expect(await style(page.locator("#below p"), "color")).toBe("rgb(204, 0, 0)");
 });
 
-// La página imita Squarespace: cabecera fija de 80px y el bloque en una columna de 1100px
-const HEADER_H = 80;
 const banners = page => hub(page).locator(".banners");
+const noScroll = page => page.evaluate(() => document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= document.documentElement.clientWidth);
 
-test("a pantalla completa: de borde a borde de la ventana y del alto que deja la cabecera fija", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await openHub(page);
-  const width = await page.evaluate(() => document.documentElement.clientWidth);
-  const box = await banners(page).boundingBox();
-  expect(Math.abs(box.x)).toBeLessThan(1);
-  expect(Math.abs(box.width - width)).toBeLessThan(1);
-  expect(Math.abs(box.height - (900 - HEADER_H))).toBeLessThan(2);
-  // Salirse de la columna no deja scroll horizontal
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  // Y sigue el tamaño de la ventana
-  await page.setViewportSize({ width: 1100, height: 700 });
-  await expect.poll(async () => (await banners(page).boundingBox()).height).toBeLessThan(700 - HEADER_H + 2);
-  await expect.poll(async () => (await banners(page).boundingBox()).width).toBeGreaterThan(1099 - 20);
+test("en escritorio cabe entre la cabecera y el pie de la página, de borde a borde y sin scroll", async ({ page }) => {
+  for (const [w, h, header, footer] of [[1440, 900, 90, 223], [1280, 720, 90, 223]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await openHub(page, PAGE_FIXTURE);
+    await expect.poll(() => noScroll(page)).toBe(true);
+    const box = await banners(page).boundingBox();
+    expect(Math.abs(box.x)).toBeLessThan(1);
+    expect(Math.abs(box.width - w)).toBeLessThan(1);
+    expect(Math.abs(box.y - header)).toBeLessThan(2);
+    expect(Math.abs(box.height - (h - header - footer))).toBeLessThan(2);
+    // El pie se ve entero, justo debajo
+    const foot = await page.locator("#footer-sections").boundingBox();
+    expect(Math.abs(foot.y + foot.height - h)).toBeLessThan(2);
+  }
 });
 
-test("en móvil también ocupa la pantalla: la abierta llena lo que dejan las cerradas", async ({ page }) => {
+test("sigue el tamaño de la ventana", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHub(page, PAGE_FIXTURE);
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await expect.poll(async () => (await banners(page).boundingBox()).height).toBeLessThan(800 - 90 - 223 + 2);
+  await expect.poll(() => noScroll(page)).toBe(true);
+});
+
+test("en un móvil el pie no cabe: el hub llena la pantalla bajo la cabecera y el pie va debajo", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openHub(page);
+  await openHub(page, PAGE_FIXTURE);
   const box = await banners(page).boundingBox();
   expect(Math.abs(box.x)).toBeLessThan(1);
-  expect(Math.abs(box.height - (844 - HEADER_H))).toBeLessThan(2);
+  expect(Math.abs(box.y - 84)).toBeLessThan(2);
+  expect(Math.abs(box.height - (844 - 84))).toBeLessThan(2);
+  // La abierta llena lo que dejan las dos cerradas
   const open = await panes(page).nth(0).boundingBox();
   expect(open.height).toBeGreaterThan(box.height - 2 * 64 - 40);
 });
@@ -197,8 +206,11 @@ test("la vista previa en GitHub Pages (/checklists/) monta el hub con el mismo s
   await expect(page).toHaveTitle(/Checklists/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /.+/);
-  await expect(page.locator("h1")).toHaveText("CHECKLISTS");
-  await expect(page.getByText("Completa, colecciona y conquista todos los Dofus.")).toBeVisible();
+  // Solo las franjas entre la cabecera y el pie de Torrente Arcano: sin título ni scroll
+  await expect(page.locator("h1")).toHaveCount(0);
+  await expect(page.locator("#header")).toBeVisible();
+  await expect(page.locator("#footer-sections")).toBeVisible();
+  await expect.poll(() => noScroll(page)).toBe(true);
   await expect(hub(page).locator(".pane")).toHaveCount(3);
   await expect(hub(page).locator(".pane").nth(0).locator("a.cta")).toBeVisible();
   expect(await page.locator('script[type="module"]').getAttribute("src")).toMatch(/embed\/checklists\.js$/);

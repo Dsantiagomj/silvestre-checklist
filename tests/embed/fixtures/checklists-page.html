@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklists — Torrente Arcano</title>
+<!-- La página de los checklists como quedará en Squarespace: la cabecera fija y el pie de
+     Torrente Arcano con sus altos de verdad (90px y 223px a 1280 de ancho; 84px y 545px en
+     un móvil) y, entre ellos, solo el bloque de código con el hub. La sección compensa la
+     cabecera fija con su padding, como hace Squarespace -->
+<style>
+  html, body { margin: 0; background: #fff; font-family: sans-serif; }
+  #header { position: fixed; top: 0; left: 0; right: 0; height: 90px; z-index: 1000; background: #18181b; color: #fff; }
+  .page-section { padding-top: 90px; }
+  .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 3vw; }
+  #footer-sections { height: 223px; background: #2a3a2a; color: #fff; }
+  @media (max-width: 767px) {
+    #header { height: 84px; }
+    .page-section { padding-top: 84px; }
+    #footer-sections { height: 545px; }
+  }
+</style>
+</head>
+<body>
+<header id="header">Torrente Arcano · Inicio · Clases · Misiones</header>
+<main id="page">
+  <article id="sections">
+    <section class="page-section">
+      <div class="content-wrapper">
+        <div class="sqs-block code-block"><div class="sqs-block-content">
+<div id="checklists-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/checklists.js"></script>
+        </div></div>
+      </div>
+    </section>
+  </article>
+</main>
+<footer id="footer-sections">Dofus es un MMORPG publicado por Ankama…</footer>
+</body>
+</html>
