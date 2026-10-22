@@ -818,6 +818,12 @@ export function setObjective(n, qi, qid, k, total) {
     const mother = k >= total ? parentIn(list, qid) : -1;
     if (mother >= 0 && mother < at && (s.questPos[n] || 0) <= mother
       && (s.questObj[list[mother].id] || 0) < objCount(list[mother])) at = mother;
+    // Una que va por delante («Cómo perder la pluma», en el 21: «en algún punto» del paso)
+    // no pasa de largo a las de antes sin terminar: el avance sigue en la que iba, y lo
+    // hecho en ella queda en sus objetivos
+    const pos = s.questPos[n] || 0;
+    if (qi > pos && list.some((q, j) => j >= pos && j < qi && q.kind === "mandatory"
+      && (s.questObj[q.id] || 0) < objCount(q) && !questDoneElsewhere(s, q.id, n))) at = pos;
     return {
       questPos: list[qi]?.kind === "optional" ? s.questPos : { ...s.questPos, [n]: at },
       questObj: { ...s.questObj, [qid]: Math.max(0, Math.min(k, total)) },
