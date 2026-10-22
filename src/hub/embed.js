@@ -7,6 +7,7 @@
 import css from "./hub.css?inline";
 import { pageFonts } from "../lib/fonts.js";
 import { renderHub } from "./hub.js";
+import { fillViewportWidth, followPageHeader } from "../lib/pageHeader.js";
 
 const HOST_ID = "checklists-root";
 
@@ -24,6 +25,9 @@ function mount() {
   const root = document.createElement("div");
   root.className = "hub";
   shadow.append(style, root);
+  // A pantalla completa: de borde a borde y del alto que deja la cabecera fija (--checklists-top)
+  fillViewportWidth(host);
+  followPageHeader(host, "--checklists-top");
   renderHub(root);
 }
 

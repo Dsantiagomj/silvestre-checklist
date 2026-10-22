@@ -11,31 +11,9 @@ import App from "./App.jsx";
 import { applyTheme, getState } from "./state/store.js";
 import { mountIn } from "./lib/root.js";
 import { pageFonts } from "./lib/fonts.js";
+import { followPageHeader } from "./lib/pageHeader.js";
 
 const HOST_ID = "silvestre-root";
-
-/**
- * Lo que tapa arriba la cabecera fija de la página (la de Squarespace, #header), en
- * --silvestre-top: la cabecera de la app se pega debajo y la ventana de pasos cabe en lo
- * que queda. Si la página ya lo pone en el anfitrión, manda el suyo.
- */
-function followPageHeader(host) {
-  if (host.style.getPropertyValue("--silvestre-top")) return;
-  const header = document.getElementById("header") || document.querySelector("body > header");
-  if (!header) return;
-  let frame = 0;
-  const sync = () => {
-    frame = 0;
-    const pos = getComputedStyle(header).position;
-    const top = pos === "fixed" || pos === "sticky" ? Math.max(0, Math.round(header.getBoundingClientRect().bottom)) : 0;
-    host.style.setProperty("--silvestre-top", `${top}px`);
-  };
-  const later = () => { if (!frame) frame = requestAnimationFrame(sync); };
-  sync();
-  new ResizeObserver(later).observe(header);
-  window.addEventListener("resize", later, { passive: true });
-  window.addEventListener("scroll", later, { passive: true });
-}
 
 function mount() {
   const host = document.getElementById(HOST_ID);
@@ -53,7 +31,8 @@ function mount() {
   app.className = "app-root is-embed";
   shadow.append(style, app);
   mountIn(shadow, app);
-  followPageHeader(host);
+  // --silvestre-top: la cabecera de la app se pega debajo de la fija de la página
+  followPageHeader(host, "--silvestre-top");
   applyTheme(getState().theme);
   createRoot(app).render(
     <StrictMode>
