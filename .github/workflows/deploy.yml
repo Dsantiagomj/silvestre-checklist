@@ -30,6 +30,8 @@ jobs:
       # El embebido para Torrente Arcano (dist/embed/silvestre.js), junto al sitio:
       # carga sus trozos y las imágenes de este mismo despliegue
       - run: npm run build:embed
+      # El hub de los checklists (dist/embed/checklists.js), con las imágenes de public/img/hub/
+      - run: npm run build:hub
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
