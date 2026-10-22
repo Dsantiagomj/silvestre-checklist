@@ -1,5 +1,18 @@
 import { test, expect } from "@playwright/test";
+import fs from "node:fs";
 import { openApp, readLS } from "./helpers.js";
+
+// Los recuentos de la ventana de objetos salen de los datos, no van escritos: la
+// sincronización con Torrente Arcano añade y quita objetos. Sin progreso la app cuenta un
+// objeto distinto por fila (k) de todos los pasos, sin las de un caso concreto (x)
+const RESOURCES = JSON.parse(fs.readFileSync(new URL("../../src/data/resources.json", import.meta.url), "utf8"));
+const ITEM_CAT = new Map();
+for (const rows of Object.values(RESOURCES.steps)) {
+  for (const row of rows) if (!row.x && !ITEM_CAT.has(row.k)) ITEM_CAT.set(row.k, row.c);
+}
+const ITEMS = ITEM_CAT.size;
+const ITEMS_BY_CAT = { todo: ITEMS };
+for (const c of ITEM_CAT.values()) ITEMS_BY_CAT[c] = (ITEMS_BY_CAT[c] || 0) + 1;
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const ALL_PREREQS = Object.fromEntries(
@@ -24,7 +37,7 @@ test("prerrequisitos y objetos son pestañas de la ventana de pasos, con lo que 
   await expect(tabs).toHaveText([/Mapa/, /Diario/, /Prerrequisitos/, /Objetos/]);
   // Cada una dice cuántos le faltan
   await expect(page.locator("#prereqsCount")).toHaveText("20");
-  await expect(page.locator("#itemsCount")).toHaveText("426");
+  await expect(page.locator("#itemsCount")).toHaveText(String(ITEMS));
   await page.click("#tabPrereqs");
   await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "false");
@@ -91,7 +104,7 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
   await page.click('.needs-sort [data-sort="qty"]');
   await expect(page.locator("#bandSoon")).toHaveCount(0);
   // Sin progreso: la guía entera, una casilla por objeto
-  await expect(page.locator("#items .slot")).toHaveCount(426);
+  await expect(page.locator("#items .slot")).toHaveCount(ITEMS);
   await expect(page.locator("#items .slot").first()).toHaveAttribute("data-id", "14635");
   await page.click('.needs-sort [data-sort="az"]');
   await expect(page.locator("#items .slot .q").first()).toBeVisible();
@@ -99,24 +112,23 @@ test("ordenar por cantidad o A–Z quita las franjas", async ({ page }) => {
 
 test("las categorías filtran y cuentan objetos distintos", async ({ page }) => {
   await openItems(page);
-  const counts = { todo: 426, recursos: 338, consumibles: 49, equipables: 20, almas: 9, criaturas: 9, cosmeticos: 1 };
-  for (const [cat, n] of Object.entries(counts)) {
+  for (const [cat, n] of Object.entries(ITEMS_BY_CAT)) {
     await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
   }
   await page.click('.needs-cat[data-cat="almas"]');
   await page.click('.needs-sort [data-sort="az"]');
-  await expect(page.locator("#items .slot")).toHaveCount(9);
+  await expect(page.locator("#items .slot")).toHaveCount(ITEMS_BY_CAT.almas);
 });
 
 test("el buscador resalta coincidencias sin quitar casillas y entiende sin tildes", async ({ page }) => {
   await openItems(page);
   await page.click('.needs-sort [data-sort="az"]');
   await page.fill("#needsSearch", "bambu");
-  await expect(page.locator("#needsMatches")).toHaveText(/^\d+ de 426$/);
+  await expect(page.locator("#needsMatches")).toHaveText(new RegExp(`^\\d+ de ${ITEMS}$`));
   const matches = page.locator("#items .slot.match");
   await expect(matches.first()).toBeVisible();
-  await expect(page.locator("#items .slot")).toHaveCount(426);
-  expect(await page.locator("#items .slot.dim").count()).toBe(426 - await matches.count());
+  await expect(page.locator("#items .slot")).toHaveCount(ITEMS);
+  expect(await page.locator("#items .slot.dim").count()).toBe(ITEMS - await matches.count());
   // Los recuentos pasan a contar coincidencias ("bambu" también encuentra criaturas de bambú)
   await expect(page.locator('.needs-cat[data-cat="todo"] .n')).toHaveText(String(await matches.count()));
   await expect(page.locator('.needs-cat[data-cat="criaturas"] .n')).not.toHaveText("0");
