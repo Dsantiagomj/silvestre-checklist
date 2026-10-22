@@ -2324,6 +2324,8 @@ header.is-scrolled .title-bar{
 }
 .map-node.dofus .map-here{ bottom:calc(100% + 18px); }
 .map-node.selected{ outline:3px solid var(--egg-gold); outline-offset:4px; z-index:3; }
+/* Lo que cierra el paso elegido, o el que lo cierra: el dorado del arco, discontinuo */
+.map-node.linked{ outline:3px dashed var(--egg-gold); outline-offset:4px; z-index:2; box-shadow:0 0 18px color-mix(in srgb, var(--egg-gold) 55%, transparent); }
 .map-node.dimmed{ opacity:.25; filter:grayscale(1); }
 /* El jefe que se pasa en el paso, pequeño junto al sello */
 .node-boss{
