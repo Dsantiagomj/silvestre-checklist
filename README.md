@@ -322,6 +322,13 @@ producción. Comprueba que el CSS no cruza en ningún sentido, marcar pasos, el 
 desplazamiento del diario, la cabecera bajo la de la página, la importación del clásico,
 el overlay y la hoja inferior en móvil.
 
+La misma suite construye y prueba el hub de los checklists (`tests/embed/hub.spec.js`) en
+una página como `https://www.torrentearcano.com/checklists`
+(`tests/embed/fixtures/checklists.html`): una franja por Dofus del manifiesto más la de
+Próximamente, la primera abierta con su botón, abrir otra con el ratón, un clic o el
+teclado, el CSS aislado, las franjas apiladas en móvil y sin animaciones con movimiento
+reducido.
+
 ---
 
 ## Limitaciones honestas
@@ -377,7 +384,10 @@ APP_URL=http://127.0.0.1:4318/silvestre-checklist/ npx playwright test
 
 El mismo workflow construye también el embebido (`npm run build:embed`), que queda en
 `dist/embed/silvestre.js` con sus trozos en `dist/embed/chunks/`. Carga los trozos y las
-imágenes de la dirección absoluta de Pages; las imágenes no se copian dos veces.
+imágenes de la dirección absoluta de Pages; las imágenes no se copian dos veces. Después
+construye el hub de los checklists (`npm run build:hub`), que queda en
+`dist/embed/checklists.js`. Cada build borra solo lo suyo dentro de `dist/embed/`, así que
+el orden da igual.
 
 `dist/` pesa unos 15 MB, casi todo imágenes del juego. Las misiones (`quests.json`) van en un
 archivo aparte que solo se descarga cuando hace falta.
@@ -405,6 +415,28 @@ sí se añaden al `<head>` de la página, porque dentro de una shadow root no se
 la página tiene la cabecera fija de Squarespace (`#header`), la app mide su alto y pega su
 propia cabecera debajo. Las media queries miran el ancho de la ventana, no el del bloque:
 la sección debe ir a todo el ancho o la app se verá apretada en escritorio.
+
+### El hub de los checklists
+
+En https://www.torrentearcano.com/checklists va otro bloque de código, con las franjas que
+llevan a cada checklist:
+
+```html
+<div id="checklists-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/checklists.js"></script>
+```
+
+Es un widget aparte (`src/hub/`), sin React ni los datos de la app: pesa unos 9 KB. Se
+monta en una shadow root sobre `#checklists-root` y añade sus fuentes al `<head>`, como la
+app. Los Dofus salen de `src/hub/manifest.js`. Para sumar uno se añade una entrada con su
+color, la dirección de su checklist, su frase y sus imágenes (el huevo y el PNJ en
+`public/img/hub/`, el fondo en `public/img/zones/`). `showSoon` pone al final la franja
+bloqueada de Próximamente. A diferencia de la app, el hub pasa a vertical por el ancho del
+bloque (una container query), no por el de la ventana.
+
+Antes de pegarlo se puede ver en https://dsantiagomj.github.io/silvestre-checklist/checklists/
+(`public/checklists/index.html`). Es una página oscura con el mismo snippet y el embebido
+publicado, marcada `noindex`.
 
 ### La página de datos
 
@@ -475,6 +507,7 @@ silvestre-checklist/
 ├── src/
 │   ├── main.jsx, App.jsx
 │   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
+│   ├── hub/                  ← el hub de los checklists: manifiesto, franjas y su entrada (npm run build:hub)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
 │   ├── overlay/              ← ventana Picture-in-Picture (portal de React)

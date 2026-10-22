@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:embed": "EMBED=1 vite build",
+    "build:hub": "HUB=1 vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:embed": "playwright test -c playwright.embed.config.js"
