@@ -66,15 +66,15 @@ test("el porcentaje suma cada misión hecha de un paso pendiente y la resta al d
   await btn.click();
   await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
   expect(pctOf(BASE + Q12[0])).toBeGreaterThan(pctOf(BASE));
-  // La siguiente se suma encima
-  const tesor = page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn");
-  await tesor.click();
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
-  // Deshacer la primera resta solo esa: Tesorfanato sigue terminada, en el diario y en el %
+  // Otra se suma encima («Las grandes galerías» no pide «Cofrología»)
+  const galerias = page.locator("#journal .q-item", { hasText: "Las grandes galerías" }).locator(".q-done-btn");
+  await galerias.click();
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[3])}%`);
+  // Deshacer la primera resta solo esa: la otra sigue terminada, en el diario y en el %
   await btn.click();
-  await expect(tesor).toHaveAttribute("aria-pressed", "true");
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[1])}%`);
-  await tesor.click();
+  await expect(galerias).toHaveAttribute("aria-pressed", "true");
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[3])}%`);
+  await galerias.click();
   await expect(heroPct(page)).toHaveText(`${pctOf(BASE)}%`);
 });
 
@@ -86,19 +86,19 @@ test("el avance del overlay mueve el porcentaje sin abrir el diario", async ({ p
     }, [questPos, questObj]);
     await page.reload();
     await expect(page.locator(".map-node")).toHaveCount(100);
-    return page.locator("#heroPct").innerText();
+    return heroPct(page);
   };
   await openApp(page, { "silvestre:done": upTo(11) }, { view: "map" });
-  // Va por la segunda misión: la primera, hecha
-  expect(await pctWith({ 12: 1 })).toBe(`${pctOf(BASE + Q12[0])}%`);
-  // En la última, sin terminar: las cuatro de antes
-  expect(await pctWith({ 12: 4 }, { 1510: 11 })).toBe(`${pctOf(BASE + sum(Q12.slice(0, 4)))}%`);
-  // La última, pasada de su último objetivo: el paso entero, como marcarlo
-  expect(await pctWith({ 12: 4 }, { 1510: 12 })).toBe(`${pctOf(BASE + WEIGHTS[12].w)}%`);
+  // La primera, pasada de su último objetivo
+  await expect(await pctWith({ 12: 1 }, { 1504: 16 })).toHaveText(`${pctOf(BASE + Q12[0])}%`);
+  // Ir por una misión no da por hechas las de antes: solo las que pide terminadas
+  await expect(await pctWith({ 12: 4 }, { 1510: 11 })).toHaveText(`${pctOf(BASE)}%`);
+  // La última, pasada de su último objetivo: pide todas las de antes, el paso entero
+  await expect(await pctWith({ 12: 4 }, { 1510: 12 })).toHaveText(`${pctOf(BASE + WEIGHTS[12].w)}%`);
   // Una misión terminada por delante de la actual (se terminó la 2.ª y se reinició la 1.ª)
-  // cuenta, igual que el diario la muestra hecha
-  expect(await pctWith({ 12: 0 }, { 1505: 11 })).toBe(`${pctOf(BASE + Q12[1])}%`);
-  expect(await pctWith({})).toBe(`${pctOf(BASE)}%`);
+  // cuenta, igual que el diario la muestra hecha; y con ella, la 1.ª, que pide terminada
+  await expect(await pctWith({ 12: 0 }, { 1505: 11 })).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
+  await expect(await pctWith({})).toHaveText(`${pctOf(BASE)}%`);
 });
 
 test("en un paso hecho, desmarcar una misión desmarca el paso y deja las demás completadas", async ({ page }) => {
@@ -110,23 +110,38 @@ test("en un paso hecho, desmarcar una misión desmarca el paso y deja las demás
     await expect(b).toBeEnabled();
     await expect(b).toHaveAttribute("aria-pressed", "true");
   }
-  // Un clic de más en Tesorfanato: solo esa vuelve a su inicio, y el paso deja de estar hecho
-  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  // Un clic de más en «Espionaje industrial»: solo esa vuelve a su inicio, y el paso deja de estar hecho
+  const espionaje = page.locator("#journal .q-item", { hasText: "Espionaje industrial" }).locator(".q-done-btn");
+  await espionaje.click();
   await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
-  expect(await btns.evaluateAll(els => els.map(e => e.getAttribute("aria-pressed")))).toEqual(["true", "false", "true", "true", "true"]);
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + sum(Q12) - Q12[1])}%`);
+  expect(await btns.evaluateAll(els => els.map(e => e.getAttribute("aria-pressed")))).toEqual(["true", "true", "true", "true", "false"]);
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + sum(Q12) - Q12[4])}%`);
   await expect(page.locator("#journal .journal-num")).toHaveText("12");
   // Volver a completarla deja el paso hecho otra vez
-  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  await espionaje.click();
   await expect(page.locator('.diary-row[data-n="12"]')).toHaveClass(/\bdone\b/);
+});
+
+test("en un paso hecho, deshacer una misión deshace también las que la piden terminada", async ({ page }) => {
+  await openApp(page, { "silvestre:done": upTo(12) });
+  await openStep12(page);
+  const btns = page.locator("#journal .q-item .q-done-btn");
+  await expect(btns).toHaveCount(5);
+  // «El maleficio del cofre» y «Espionaje industrial» piden «Tesorfanato»: sin ella no
+  // pueden estar terminadas
+  await page.locator("#journal .q-item", { hasText: "Tesorfanato" }).locator(".q-done-btn").click();
+  await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  expect(await btns.evaluateAll(els => els.map(e => e.getAttribute("aria-pressed")))).toEqual(["true", "false", "false", "true", "false"]);
+  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[3])}%`);
 });
 
 test("en un paso hecho, pulsar un medallón hecho vuelve a él y desmarca el paso", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(12) });
   await openStep12(page);
-  const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
-  await cofre.locator("summary .q-name").click();
-  const rows = cofre.locator(".obj-list.route > .obj-row");
+  // La última, que ninguna pide terminada
+  const espionaje = page.locator("#journal .q-item", { hasText: "Espionaje industrial" });
+  await espionaje.locator("summary .q-name").click();
+  const rows = espionaje.locator(".obj-list.route > .obj-row");
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await rows.nth(2).locator(".obj-med").click();
   await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
