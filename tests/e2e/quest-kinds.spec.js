@@ -26,24 +26,26 @@ async function openStep(page, n) {
 
 test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", async () => {
   const { STEP_QUESTS, STEP_QUEST_KINDS } = read("quests.json");
-  // 38: «La sombra del reino» no es de «Azul turquesa» y se puede hacer hasta el 80
+  // 38: «La sombra del reino» no es de «Azul turquesa» y se puede hacer hasta el 80; 50:
+  // «Lavandería automática» tampoco, y la pide el 52
   expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 33: { 439: "take" },
-    38: { 1665: "optional" }, 83: { 2013: "take" }, 87: { 2138: "take" } });
+    38: { 1665: "optional" }, 50: { 622: "optional" }, 83: { 2013: "take" }, 87: { 2138: "take" } });
   for (const [n, kinds] of Object.entries(STEP_QUEST_KINDS)) {
     const { w, q } = WEIGHTS[n];
     STEP_QUESTS[n].forEach((id, i) => { if (kinds[id]) expect(q[i]).toBe(0); });
-    expect(sum(q)).toBeCloseTo(w, 3);
+    // Cada peso va redondeado a 3 decimales: la suma puede bailar en el último
+    expect(sum(q)).toBeCloseTo(w, 2);
   }
   expect(WEIGHTS[7].w).toBeCloseTo(100, 3);
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
-  expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
-  expect(WEIGHTS[83].w).toBeCloseTo(2497.186, 3);
-  expect(TOTAL).toBeCloseTo(159605, 0);
+  expect(WEIGHTS[28].w).toBeCloseTo(451.431, 3);
+  expect(WEIGHTS[83].w).toBeCloseTo(2410.583, 3);
+  expect(TOTAL).toBeCloseTo(159518, 0);
   // El id y los objetivos de cada misión, en el orden del paso
   expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
   expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);
-  expect([WEIGHTS[28].ids, WEIGHTS[28].os]).toEqual([["577", "1286"], [11, 3]]);
-  expect([WEIGHTS[83].ids, WEIGHTS[83].os]).toEqual([["624", "2010", "2011", "2019", "2012", "2013"], [3, 9, 27, 12, 10, 17]]);
+  expect([WEIGHTS[28].ids, WEIGHTS[28].os]).toEqual([["577", "620", "1286"], [11, 3, 3]]);
+  expect([WEIGHTS[83].ids, WEIGHTS[83].os]).toEqual([["2010", "2011", "2019", "2012", "2013"], [9, 27, 12, 10, 17]]);
 });
 
 test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Completar»", async ({ page }) => {
@@ -68,15 +70,18 @@ test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Comp
   expect(errors).toEqual([]);
 });
 
-test("paso 28: terminar «Pesca en aguas congeladas» no lleva a «Luces y sombras»", async ({ page }) => {
+test("paso 28: terminar «Pesca en aguas congeladas» lleva a «Las joyas de la corona», no a «Luces y sombras»", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(27) });
   await openStep(page, 28);
   const pesca = quest(page, "Pesca en aguas congeladas");
   await pesca.locator("summary .q-name").click();
   await pesca.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
   expect(await routeStates(pesca.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
-  expect((await readLS(page, "silvestre:questPos"))?.["28"] ?? 0).toBe(0);
-  // Terminada la única obligatoria, cuenta el paso entero
+  expect((await readLS(page, "silvestre:questPos"))?.["28"]).toBe(1);
+  // Terminadas las dos obligatorias, cuenta el paso entero
+  const joyas = quest(page, "Las joyas de la corona");
+  await joyas.locator("summary .q-name").click();
+  await joyas.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
   await expect(barPct(page)).toHaveText(`${pctOf(base(28))}%`);
 });
 
@@ -166,8 +171,8 @@ test("el overlay entra en «Arma letal» y salta «Luces y sombras»", async ({ 
   await page.bringToFront();
   await openStep(page, 28);
   await expect(qname).toHaveText("Pesca en aguas congeladas");
-  await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 1");
-  await expect(ov.locator(".ov-tab-body .ov-qsel")).toBeDisabled();
+  // «Luces y sombras» no cuenta: «Pesca en aguas congeladas» y «Las joyas de la corona»
+  await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 2");
 });
 
 test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos que da y «La biblia de los rencores» solo tomada", async ({ page }) => {
@@ -176,7 +181,7 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
   // No el logro entero: la misión que nombra, las que la abren, las dos que da Birk y hay
   // que terminar antes de la parada, y la que deja tomada
   await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
-    ["Canozzirujana", "Llama, amigo y entra", "Birk, hija de Bork", "Los enemigos de mis enemigos son mis enemigos",
+    ["Llama, amigo y entra", "Birk, hija de Bork", "Los enemigos de mis enemigos son mis enemigos",
       "Los nanoinsumisos", "La biblia de los rencores"]);
   const biblia = quest(page, "La biblia de los rencores");
   await expect(biblia.locator(".q-take")).toHaveText("Solo tomarla");
