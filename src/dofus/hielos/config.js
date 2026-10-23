@@ -78,6 +78,44 @@ export default {
   // lleva hero: el suyo es el de siempre
   hero: { fx: "snow" },
 
+  // La paleta (lib/palette.js): la del Silvestre es carbón verdoso con acento lima; la del
+  // Hielos, gris azulado frío con acento azul hielo (#9fd8f0, el color del Hielos en el hub).
+  // Mismas variables que global.css, por tema; -light solo cuenta en el tema claro. Lo
+  // hecho también va en azul hielo; el rojo de las paradas y el ámbar siguen igual.
+  // Contraste (WCAG): texto de los botones sobre el acento 11,0:1 en oscuro y 9,0:1 en
+  // claro; el acento como texto, 12,5:1 sobre el fondo oscuro y 7,3:1 (#1b5c7d) sobre blanco
+  palette: {
+    dark: {
+      "--bg": "#0b0e12", "--bg-2": "#10141a", "--panel": "#151b22", "--panel-2": "#1b232c", "--inset": "#0d1116",
+      "--txt": "#e9f0f5", "--txt-soft": "#9fb0bd", "--txt-mute": "#66788a",
+      "--line": "#1f2a33", "--line-2": "#2b3a46", "--line-warm": "#3a4f5e",
+      "--terracotta": "#10151a", "--terracotta-2": "#0b0f13",
+      "--amber": "#9fd8f0", "--amber-2": "#6fb8da", "--gold": "#c8ecfa", "--gold-2": "#86c6e3",
+      "--success": "#9fd8f0", "--success-2": "#6fb8da",
+      "--accent-rgb": "159,216,240", "--accent-flash-rgb": "225,246,255",
+      "--accent-hi": "#c8ecfa", "--accent-hl-light": "#6cc0e4", "--on-accent": "#0a1e2a",
+      "--done": "#7cc8ea", "--done-line": "#5fa6c6", "--done-light": "#2f7fa6",
+      "--done-ink-light": "#1d5f80", "--resume-ink-light": "#1d5f80",
+      "--on-walked": "#0a1e2a",
+      "--node-done-line": "#d4f1fd", "--node-done-hi": "#bfe9fb", "--node-done-lo": "#4f9bc4", "--on-node-done": "#0a1e2a",
+      "--node-dofus-hi": "#2f5f78", "--node-dofus-lo": "#173547", "--on-node-dofus": "#e3f5fd",
+      "--cta-hi": "#9fd8f0", "--cta-lo": "#4f9bc4", "--cta-line": "#c8ecfa", "--on-cta": "#0a1e2a",
+      "--bg-rgb": "11,14,18", "--bg-light-rgb": "245,248,250", "--bg-tint-rgb": "20,40,60",
+      "--shadow-light-rgb": "30,50,70", "--veil-shade-light-rgb": "40,60,80",
+      "--walked": "#8fd6f5", "--walked-glow": "rgba(143,214,245,.32)",
+    },
+    light: {
+      "--bg": "#edf2f6", "--bg-2": "#f5f8fa", "--panel": "#ffffff", "--panel-2": "#eef3f7", "--inset": "#e1e9ef",
+      "--txt": "#10171d", "--txt-soft": "#41525f", "--txt-mute": "#6a7b88",
+      "--line": "#d2dde5", "--line-2": "#bccbd6", "--line-warm": "#8ea3b3",
+      "--terracotta": "#10171d", "--terracotta-2": "#0b1015",
+      "--amber": "#7ec6e6", "--amber-2": "#5fb0d6", "--gold": "#a9dcf1", "--gold-2": "#5fb0d6",
+      "--accent-ink": "#1b5c7d", "--gold-ink": "#1b5c7d",
+      "--success": "#7ec6e6", "--success-2": "#5fb0d6",
+      "--walked": "#2f86b5", "--walked-glow": "rgba(47,134,181,.3)",
+    },
+  },
+
   // El huevo del hero y de la barra: apagado hasta el paso 69, donde Jiva da el Dofus. No
   // hay ningún Dofus antes que se convierta en él (pre)
   egg: { pre: null, final: 69 },

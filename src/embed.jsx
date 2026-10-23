@@ -12,6 +12,7 @@ import App from "./App.jsx";
 import { applyTheme, getState } from "./state/store.js";
 import { mountIn } from "./lib/root.js";
 import { pageFonts } from "./lib/fonts.js";
+import { paletteCss } from "./lib/palette.js";
 import { fillViewportWidth, followPageHeader } from "./lib/pageHeader.js";
 import DOFUS from "@dofus/config.js";
 
@@ -28,7 +29,9 @@ function mount() {
   const style = document.createElement("style");
   // Las fuentes van en la página: dentro de una shadow root @font-face no se aplica.
   // global.css lee --silvestre-top: si el Dofus usa otro nombre (embed.topVar), se cambia aquí
-  style.textContent = pageFonts(topVar === "--silvestre-top" ? css : css.replaceAll("--silvestre-top", topVar), fonts);
+  // La paleta del Dofus (lib/palette.js) va detrás, en la misma hoja
+  style.textContent = pageFonts(topVar === "--silvestre-top" ? css : css.replaceAll("--silvestre-top", topVar), fonts)
+    + paletteCss();
   // .app-root hace de <body> y lleva el tema
   const app = document.createElement("div");
   app.className = "app-root is-embed";

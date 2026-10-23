@@ -41,6 +41,8 @@ test("el Hielos se monta en #hielos-root con sus 70 pasos, sin errores", async (
   expect(await egg.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
   // La cabecera fija de la página: la barra de la ventana se pega debajo (--hielos-top)
   expect(await app(page).evaluate(el => getComputedStyle(el).getPropertyValue("--hielos-top"))).toBe("80px");
+  // Su paleta va dentro de la shadow root: el acento azul hielo en «Siguiente»
+  expect(await app(page).locator("#diaryNext").evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgb(159, 216, 240)");
   expect(errors).toEqual([]);
 });
 

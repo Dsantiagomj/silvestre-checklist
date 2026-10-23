@@ -315,8 +315,12 @@ npm run build:embed:hielos   # su embebido, en dist/embed/hielos.js
 Su sitio vive en `hielos/`, debajo del del Silvestre, y no lleva otra copia de `public/`:
 sus imágenes son las de la raíz (`__SITE_ROOT__` en `src/lib/assets.js`). Lleva sus propios
 favicons (`html.icons` en su `config.js`). Lo que cambia en pantalla sale de su
-`config.js`: el hero (`hero.fx` pone copos de nieve), el ejemplo de la nota y su pie
-(`nota.caption`) y los nombres del interruptor de tema (`themeNames`). La guía no da ningún Dofus antes del suyo, así que la franja de la
+`config.js`: la paleta (`palette`, azul hielo sobre gris azulado frío en vez del lima del
+Silvestre), el hero (`hero.fx` pone copos de nieve), el ejemplo de la nota y su pie
+(`nota.caption`) y los nombres del interruptor de tema (`themeNames`). La paleta cambia las
+variables de `global.css` (el acento, lo hecho, el mapa, los fondos) con un bloque de CSS
+que `src/lib/palette.js` pone detrás: en el `<head>` en su página y dentro de la shadow root
+embebida. El Silvestre no lleva paleta y usa los valores de `global.css`. La guía no da ningún Dofus antes del suyo, así que la franja de la
 ventana lleva solo el Dofus de los Hielos, que se consigue en el paso 69 (`egg.final`), y en
 pantalla baja no hay botón de Dofus del camino.
 
