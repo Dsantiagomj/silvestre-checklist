@@ -70,7 +70,9 @@ UPDATES = {60: [58], 61: [58]}
 # import_guide_links.py
 # ---------------------------------------------------------------------------
 TEXT_MISSIONS = []
-MISSION_URLS = {}
+# "Paseemos por el bosque" (step 8) has its page with a "-1": the plain slug does not
+# answer. "Los caminantes blancos" (step 67, only taken) has no page: it stays unlinked.
+MISSION_URLS = {"Paseemos por el bosque": SITE + "paseemos-por-el-bosque-1"}
 EXTRA_ACHIEVEMENTS = {}
 
 
