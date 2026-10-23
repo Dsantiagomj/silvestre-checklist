@@ -129,9 +129,9 @@ test("el buscador resalta coincidencias sin quitar casillas y entiende sin tilde
   await expect(matches.first()).toBeVisible();
   await expect(page.locator("#items .slot")).toHaveCount(ITEMS);
   expect(await page.locator("#items .slot.dim").count()).toBe(ITEMS - await matches.count());
-  // Los recuentos pasan a contar coincidencias ("bambu" también encuentra criaturas de bambú)
+  // Los recuentos pasan a contar coincidencias ("bambu" encuentra la Madera de bambú)
   await expect(page.locator('.needs-cat[data-cat="todo"] .n')).toHaveText(String(await matches.count()));
-  await expect(page.locator('.needs-cat[data-cat="criaturas"] .n')).not.toHaveText("0");
+  await expect(page.locator('.needs-cat[data-cat="recursos"] .n')).not.toHaveText("0");
   await page.click("#needsSearchClear");
   await expect(page.locator("#needsSearch")).toHaveValue("");
   await expect(page.locator("#items .slot.dim")).toHaveCount(0);
