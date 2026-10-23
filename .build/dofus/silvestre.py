@@ -113,6 +113,10 @@ OCRE_ICON = "items/23012.png"
 # "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna cosecha".
 MISSING_OBJECTIVES = {565: [439]}
 
+# Mission names the guide misspells -> DofusDB's, to find the mission by its name: none
+# (step 92's "Los tótems de Maimame" is found by its number)
+MISSION_TYPOS = {}
+
 # Quests a step needs that its text doesn't name, put first. Step 78 is "hasta la misión
 # de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
 # previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
