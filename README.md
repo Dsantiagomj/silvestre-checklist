@@ -303,6 +303,24 @@ aclaratoria, las notas escritas a mano del diario y dónde se construye (el Silv
 `dist/` y `dist/embed/silvestre.js`). `index.html` lleva marcas `%DOFUS_*%` que rellena el
 build con el título y la descripción.
 
+El otro Dofus es el de los Hielos (`src/dofus/hielos/`, 70 pasos de la guía de Torrente
+Arcano):
+
+```bash
+DOFUS=hielos npm run dev     # el Hielos en desarrollo
+npm run build:hielos         # su sitio, en dist/hielos/
+npm run build:embed:hielos   # su embebido, en dist/embed/hielos.js
+```
+
+Su sitio vive en `hielos/`, debajo del del Silvestre, y no lleva otra copia de `public/`:
+sus imágenes son las de la raíz (`__SITE_ROOT__` en `src/lib/assets.js`). Lleva sus propios
+favicons (`html.icons` en su `config.js`). Lo que cambia en pantalla sale de su
+`config.js`: el hero (`hero.fx` pone copos de nieve y `hero.npc` al Conde Kontatrás junto al
+huevo), el ejemplo de la nota y su pie (`nota.caption`) y los nombres del interruptor de
+tema (`themeNames`). La guía no da ningún Dofus antes del suyo, así que la franja de la
+ventana lleva solo el Dofus de los Hielos, que se consigue en el paso 69 (`egg.final`), y en
+pantalla baja no hay botón de Dofus del camino.
+
 El progreso se guarda en `localStorage`, con las mismas claves que la versión anterior, así
 que quien ya tuviera progreso lo conserva.
 
@@ -346,12 +364,26 @@ producción. Comprueba que el CSS no cruza en ningún sentido, marcar pasos, el 
 desplazamiento del diario, la cabecera bajo la de la página, la importación del clásico,
 el overlay y la hoja inferior en móvil.
 
-La misma suite construye y prueba el hub de los checklists (`tests/embed/hub.spec.js`) en
+La misma suite prueba el embebido del Hielos (`tests/embed/hielos.spec.js`) en una página
+como `https://www.torrentearcano.com/checklist-dofus-de-los-hielos`, y construye y prueba
+el hub de los checklists (`tests/embed/hub.spec.js`) en
 una página como `https://www.torrentearcano.com/checklists`
 (`tests/embed/fixtures/checklists.html`): una franja por Dofus del manifiesto más la de
 Próximamente, la primera abierta con su botón, abrir otra con el ratón, un clic o el
 teclado, el CSS aislado, las franjas apiladas en móvil y sin animaciones con movimiento
 reducido.
+
+El Hielos tiene una prueba de humo aparte, en `tests/hielos/`:
+
+```bash
+npm run test:hielos
+```
+
+Construye su sitio en `.hielos-test/` y lo sirve en el puerto 4321 como en Pages
+(`tests/hielos/serve.js`): la app en `/hielos/` y las imágenes en la raíz. Comprueba lo que
+cambia de un Dofus a otro: los 70 pasos sin errores, el hero con el Conde Kontatrás, la
+franja de un solo Dofus, la pantalla baja y el móvil, la nota con el ejemplo de los pasos 8,
+12 y 13, el Dofus que se enciende al marcar el 69 y la misión con parada del paso 12.
 
 ---
 
@@ -391,7 +423,7 @@ reducido.
 La app se publica en GitHub Pages: https://dsantiagomj.github.io/silvestre-checklist/
 
 `main` está protegida: no se puede borrar ni reescribir, y todo cambio entra por un pull
-request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, las dos suites), sin
+request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, todas las suites), sin
 excepciones ni para el administrador. No hace falta aprobación, así que el PR se fusiona
 en cuanto pasan las pruebas. Al fusionar se borra la rama.
 
@@ -412,6 +444,11 @@ imágenes de la dirección absoluta de Pages; las imágenes no se copian dos vec
 construye el hub de los checklists (`npm run build:hub`), que queda en
 `dist/embed/checklists.js`. Cada build borra solo lo suyo dentro de `dist/embed/`, así que
 el orden da igual.
+
+El Hielos se publica en el mismo despliegue: su sitio en
+https://dsantiagomj.github.io/silvestre-checklist/hielos/ (`npm run build:hielos`, después
+del del Silvestre, que vacía `dist/`) y su embebido en `dist/embed/hielos.js` con sus
+trozos en `dist/embed/hielos-chunks/`.
 
 `dist/` pesa unos 15 MB, casi todo imágenes del juego. Las misiones (`quests.json`) van en un
 archivo aparte que solo se descarga cuando hace falta.
@@ -439,6 +476,17 @@ sí se añaden al `<head>` de la página, porque dentro de una shadow root no se
 la página tiene la cabecera fija de Squarespace (`#header`), la app mide su alto y pega su
 propia cabecera debajo. Las media queries miran el ancho de la ventana, no el del bloque:
 la sección debe ir a todo el ancho o la app se verá apretada en escritorio.
+
+El Hielos va igual en https://www.torrentearcano.com/checklist-dofus-de-los-hielos, con su
+`<div>` y su script:
+
+```html
+<div id="hielos-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/hielos.js"></script>
+```
+
+Guarda su progreso con el prefijo `hielos:` y lee el de su checklist clásico de
+`dofus_hielos_clean_v2`.
 
 ### El hub de los checklists
 
@@ -507,6 +555,12 @@ prueba), `main` no cambia y se abre un issue "La sincronización con Torrente Ar
 con el enlace a la ejecución. Si ya hay uno abierto con ese título, se comenta en él.
 Mientras la página de datos no exista, cada ejecución fallará y comentará en ese issue.
 
+El Hielos se sincroniza en la misma ejecución, después del Silvestre aunque este falle
+(`sync-guide.yml` llama a `sync-guide-dofus.yml` una vez por Dofus). Lee
+`https://www.torrentearcano.com/checklist-hielos-datos` (o la variable `GUIDE_URL_HIELOS`),
+mira `src/dofus/hielos` y `.build/lists/hielos`, abre su PR desde `sync/guia-hielos` y, si
+falla, su issue es "La sincronización del Hielos con Torrente Arcano falló".
+
 El horario solo corre desde la rama por defecto: el workflow tiene que estar en `main`.
 
 ### Orden para ponerlo en marcha
@@ -539,10 +593,12 @@ silvestre-checklist/
 │   │                           root.js (dónde vive la app: el documento o la shadow root)
 │   ├── dofus/silvestre/      ← config.js (textos, claves y notas del Silvestre), steps.js (los 100
 │   │                           pasos de Sandglass) y los JSON generados; la app los lee por @dofus
+│   ├── dofus/hielos/         ← lo mismo del Dofus de los Hielos (70 pasos), con sus favicons en icons/
 │   └── styles/global.css
 ├── public/img/               ← las 336 imágenes del juego, auto-alojadas (5.2 MB)
 ├── tests/e2e/                ← pruebas de Playwright
 ├── tests/embed/              ← pruebas del embebido en una página como la de Squarespace
+├── tests/hielos/             ← prueba de humo del Hielos, servido como en Pages (npm run test:hielos)
 └── .build/                   ← internos (no enviar al usuario final)
     ├── import_guide.py       ← importa los pasos de la guía desde torrentearcano
     ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
@@ -553,9 +609,9 @@ silvestre-checklist/
     ├── build_figures.py      ← mapa de inicio y figura del estandarte de cada paso
     ├── fetch_start_maps.py   ← esos mapas, recortados y alojados aquí
     ├── build_resources.py    ← objetos de cada paso desde la lista de torrentearcano
-    ├── dofus/                ← silvestre.py: las tablas a mano de la guía de cada Dofus;
+    ├── dofus/                ← silvestre.py, hielos.py: las tablas a mano de la guía de cada Dofus;
     │                           __init__.py lee --dofus/DOFUS
-    ├── lists/silvestre/      ← datos importados de torrentearcano y su compilado
+    ├── lists/<dofus>/        ← datos importados de torrentearcano y su compilado
     ├── steps.js
     └── data/                 ← datos crudos y cachés de la API (gitignored)
 ```
