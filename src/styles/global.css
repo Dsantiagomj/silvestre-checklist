@@ -1432,20 +1432,6 @@ html.vt-to-light::view-transition-old(root){ z-index:2; animation:vt-night 1s cu
   100%{ transform:translate(-16px, 92vh); opacity:0; }
 }
 
-/* Quien espera al final de la guía (hero.npc en config.js: el Conde Kontatrás en el
-   Hielos), de pie junto al huevo en su propia columna. Sin sitio, no va */
-.hero.has-npc .hero-inner{ grid-template-columns:minmax(0, 1fr) auto auto; gap:24px; }
-.hero-npc{
-  align-self:end; width:clamp(240px, 23vw, 340px); height:auto; margin:0 -56px -40px -36px;
-  pointer-events:none; user-select:none;
-  filter:drop-shadow(0 16px 22px rgba(0,0,0,.55));
-}
-[data-theme="light"] .hero-npc{ filter:drop-shadow(0 14px 18px rgba(40,60,80,.28)); }
-@media (max-width:1180px){
-  .hero.has-npc .hero-inner{ grid-template-columns:minmax(0, 1fr) auto; gap:40px; }
-  .hero-npc{ display:none; }
-}
-
 @media (prefers-reduced-motion:reduce){
   .hero-fx{ display:none; }
   .egg-body, .hero-egg.obtained .egg-body{ animation:none; }

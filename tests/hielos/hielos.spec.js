@@ -72,16 +72,14 @@ test("el sitio vive en hielos/ y sus imágenes y favicons salen de la raíz y de
 test.describe("pantalla alta", () => {
   test.use({ viewport: TALL });
 
-  test("el hero lleva el huevo de los Hielos, nieve y al Conde Kontatrás", async ({ page }) => {
+  test("el hero lleva el huevo de los Hielos y nieve", async ({ page }) => {
     const errors = await openHielos(page);
     const hero = page.locator(".hero");
     await expect(hero).toBeVisible();
     await expect(hero).toHaveClass(/\bfx-snow\b/);
-    const npc = hero.locator(".hero-npc");
-    await expect(npc).toBeVisible();
-    await expect(npc).toHaveAttribute("src", /\/img\/hub\/conde-kontatras\.png$/);
-    expect(await loaded(npc)).toBe(true);
-    await expect(hero.locator(".egg-off")).toHaveAttribute("src", /\/img\/items\/23005\.png$/);
+    const egg = hero.locator(".egg-off");
+    await expect(egg).toHaveAttribute("src", /\/img\/items\/23005\.png$/);
+    expect(await loaded(egg)).toBe(true);
     await expect(page.locator("#heroNext .hero-step-title")).toHaveText("Un alma helada");
     expect(errors).toEqual([]);
   });

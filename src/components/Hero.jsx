@@ -35,8 +35,8 @@ function goToStep(n) {
 // el Dofus Silvestre. Sin ella (el Hielos), el huevo pasa de apagado a encendido
 const EGG = DOFUS.egg;
 const PINATA = DOFUS_ROAD.find(d => d.step === EGG.pre);
-// Lo propio del hero de cada Dofus (config.js): el ambiente y quién espera al final de la
-// guía junto al huevo (en el Hielos, el Conde Kontatrás). Sin nada, el del Silvestre
+// Lo propio del hero de cada Dofus (config.js): el ambiente (en el Hielos, nieve). Sin
+// nada, el del Silvestre
 const LOOK = DOFUS.hero || {};
 // Lo que dura la transformación (egg-morph-* en el CSS): subir al hero y convertirse
 const MORPH_MS = 3400;
@@ -190,7 +190,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className={"hero" + (nextStep ? "" : " is-complete") + (LOOK.fx ? ` fx-${LOOK.fx}` : "") + (LOOK.npc ? " has-npc" : "")}
+    <section className={"hero" + (nextStep ? "" : " is-complete") + (LOOK.fx ? ` fx-${LOOK.fx}` : "")}
       aria-label="Progreso global" ref={heroRef}>
       {/* Lo casi negro de los mapas (el vacío alrededor de la sala), transparente */}
       <svg className="hero-defs" aria-hidden="true" focusable="false">
@@ -236,8 +236,6 @@ export default function Hero() {
           </div>
         )}
 
-        {/* Quien espera al final de la guía, de pie junto al huevo: solo adorna */}
-        {LOOK.npc && <img className="hero-npc" src={imgUrl(LOOK.npc.img)} alt="" aria-hidden="true" title={LOOK.npc.name} />}
         <div className="hero-visual">
           <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph ? " morphing" : "")} data-stage={stage}
             style={{ "--p": pct }} aria-hidden="true">
