@@ -10,7 +10,7 @@ import { rowsOf } from "../lib/resources.js";
 import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle, stopBoss } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import Banner from "./Banner.jsx";
-import { appRoot, appTopY, scrolledInApp } from "../lib/root.js";
+import { appRoot, appTopY, popRoot, scrolledInApp } from "../lib/root.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
 // Posiciones y ritmos fijos (no aleatorios) para que el render sea estable.
@@ -211,7 +211,7 @@ export default function Hero() {
               <span>siguiente paso</span>
             </div>
             <div className="hero-stage">
-              <AnimatePresence mode="popLayout" initial={false}>
+              <AnimatePresence mode="popLayout" initial={false} root={popRoot()}>
                 <motion.div key={next} className="hero-step" {...swap(still)}>
                   <HeroStep s={s} step={nextStep} />
                 </motion.div>

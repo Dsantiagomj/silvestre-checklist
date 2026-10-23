@@ -20,7 +20,7 @@ import StepMap, { mapPoint, mapScrollTop } from "./StepMap.jsx";
 import WinBar from "./WinBar.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import SearchField from "./SearchField.jsx";
-import { appRoot, eventTarget } from "../lib/root.js";
+import { appRoot, eventTarget, popRoot } from "../lib/root.js";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -542,7 +542,7 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null && flow ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>
-            <AnimatePresence mode="popLayout" initial={false}
+            <AnimatePresence mode="popLayout" initial={false} root={popRoot()}
               onExitComplete={() => {
                 if (switching.current) endHeight.current = stageRef.current.offsetHeight;
                 switching.current = false;
