@@ -18,6 +18,8 @@ resources.json:
     a  alternatives: [[item key, qty], ...]; usually just one
     p  in step 0 only: the prerequisite (steps.js id) the item is spent on
     m  the quests that use it up (from .build/lists/<dofus>/item_quests.json), if known
+    x  listed in its step but left out of the totals: the Elixir de los barquerontes
+       (Silvestre) and the page's "Opcional" group (Hielos, step 65)
 """
 import json
 import pathlib
@@ -53,6 +55,9 @@ DUPLICATES = D.DUPLICATES  # per Dofus, in .build/dofus/<id>.py
 MOVED = D.MOVED  # per Dofus, in .build/dofus/<id>.py
 EXTRA = D.EXTRA_ITEMS  # per Dofus, in .build/dofus/<id>.py
 OPTIONAL = D.OPTIONAL_ITEM  # per Dofus, in .build/dofus/<id>.py
+# The page's group for what nothing on the route needs (Hielos, step 65: the key of the
+# Forjafría de Mizz Frizz). Its rows are listed apart and left out of the totals
+OPTIONAL_GROUP = "Opcional"
 
 
 def slug(name):
@@ -67,6 +72,8 @@ def category(label):
         return CATEGORY[label], None
     if label == "Recursos (misión opcional)":
         return "recursos", "Misión opcional"
+    if label == OPTIONAL_GROUP:
+        return "recursos", "Opcional"
     m = re.match(r"^(.+) - Recursos$", label)
     if m:
         return "recursos", f"Orden {m.group(1)}"
@@ -134,7 +141,8 @@ def check_against_compiled(steps, items):
     got = {}
     for rows in steps.values():
         for row in rows:
-            if row.get("x"):
+            # The elixir is out of the page's compiled list; the "Opcional" group is in it
+            if row.get("x") and row["src"] != OPTIONAL_GROUP:
                 continue
             # The page counts the alternative underwear as the first option only
             names = row["names"][:1] if slug(row["names"][0]) == "calzoncillo de jefe bwork" else row["names"]
@@ -180,7 +188,7 @@ def main():
                     row["n"] = "; ".join(notes)
                 if slug(names[0]) in REUSABLE:
                     row["r"] = 1
-                if OPTIONAL.search(text):
+                if OPTIONAL.search(text) or group["category"] == OPTIONAL_GROUP:
                     row["x"] = 1
                 if n == "0":
                     row["p"] = PREREQ_OF.get(alts[0][0])
@@ -195,7 +203,8 @@ def main():
     for n, (to, move) in MOVED.items():
         steps.setdefault(to, []).extend(row for row in steps[n] if row["k"] in move)
         steps[n] = [row for row in steps[n] if row["k"] not in move]
-        print(f"paso {n} → {to}: {', '.join(items[k]['name'] for k in move)}")
+        # A row with alternatives ("13423|6812") is named by its first item
+        print(f"paso {n} → {to}: {', '.join(items[k.split('|')[0]]['name'] for k in move)}")
     steps = {n: rows for n, rows in steps.items() if rows}
     for n, drop in DUPLICATES.items():
         steps[n] = [row for row in steps[n] if row["k"] not in drop]
