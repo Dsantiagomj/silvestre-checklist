@@ -2051,8 +2051,8 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
    dentro: la lista y el detalle en el diario, el camino en el mapa y las listas en
    Prerrequisitos y Objetos. En pantallas muy bajas manda min-height: la ventana deja de
    caber y entonces sí se baja la página.
-   El diario es la excepción: mide como poco lo mismo que las demás pestañas, pero crece
-   con el paso, que no se desplaza por dentro: un paso largo se lee bajando la página, con
+   El diario es la excepción: mide como poco 1,3 veces lo que las demás pestañas
+   (--diary-min-h) y crece con el paso, que no se desplaza por dentro: un paso largo se lee bajando la página, con
    la barra y la lista pegadas arriba (ver «El diario», más abajo).
    En móvil todo sigue el flujo de la página (el detalle vive en la hoja inferior) y la
    barra se queda pegada arriba al bajar por los pasos */
@@ -2064,11 +2064,15 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
     margin-bottom:8px;
   }
   /* Solo con el diario que llega o se queda, no con el que se va (inerte): el mapa que
-     llega mediría todo su camino. Con la altura de las demás como mínimo */
+     llega mediría todo su camino. Como mínimo, un poco más alto que las demás:
+     --diary-min-h, 1,3 veces lo que queda bajo la cabecera. Un paso corto alarga la
+     ventana y la página baja un poco; la lista de pasos sigue midiendo la pantalla
+     (--diary-side-h) y, al final de la ventana, se va con ella */
   .diary:has(.steps-layer:not([inert]) > .diary-window){
+    --diary-min-h:max(520px, calc(1.3 * (100dvh - var(--silvestre-top, 0px) - 16px)));
     height:auto;
-    min-height:max(520px, calc(100vh - var(--silvestre-top, 0px) - 16px));
-    min-height:max(520px, calc(100dvh - var(--silvestre-top, 0px) - 16px));
+    min-height:max(520px, calc(1.3 * (100vh - var(--silvestre-top, 0px) - 16px)));
+    min-height:var(--diary-min-h);
   }
   .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .win-bar{ flex:none; }

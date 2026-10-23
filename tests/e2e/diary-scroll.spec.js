@@ -105,3 +105,49 @@ test("cambiar de paso con el principio del detalle a la vista no mueve la págin
   await page.waitForTimeout(150);
   expect(await page.evaluate(() => scrollY)).toBe(y);
 });
+
+/**
+ * El alto que queda bajo la cabecera de la página (--silvestre-top), con los 8 px de aire
+ * de arriba y de abajo de la sección; la sección del diario, la ventana y la lista.
+ */
+const diaryHeights = root => {
+  const diary = root.getElementById("diary");
+  const cs = getComputedStyle(diary);
+  const top = parseFloat(cs.getPropertyValue("--silvestre-top")) || 0;
+  const winbar = parseFloat(getComputedStyle(root.querySelector(".diary-window")).getPropertyValue("--winbar-h")) || 0;
+  return {
+    avail: innerHeight - top - 16, section: diary.getBoundingClientRect().height,
+    win: root.querySelector(".steps-win").getBoundingClientRect().bottom - diary.getBoundingClientRect().top,
+    side: root.querySelector(".diary-side").getBoundingClientRect().height, sideWant: innerHeight - top - winbar - 18,
+    // Hasta dónde llega el detalle, respecto al final de la ventana: la llena, sin hueco debajo
+    detailGap: root.querySelector(".steps-win").getBoundingClientRect().bottom - root.querySelector(".diary-detail").getBoundingClientRect().bottom,
+    page: document.documentElement.scrollHeight, vh: innerHeight,
+  };
+};
+
+test("a 1440×900, en un paso corto el diario mide 1,3 veces el alto disponible y la lista sigue cabiendo en la pantalla", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page, { "silvestre:done": upTo(3) });
+  // El 4: una sola misión
+  await page.locator('.diary-row[data-n="4"] .row-num').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("4");
+  await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
+  await page.waitForLoadState("networkidle");
+  await align(page);
+  await page.waitForTimeout(200);
+  const m = await page.evaluate(`(${diaryHeights})(document)`);
+  const msg = JSON.stringify(m);
+  // La sección y la ventana, un poco más altas que la pantalla: la página baja un poco
+  expect(Math.abs(m.section - 1.3 * m.avail), msg).toBeLessThanOrEqual(2);
+  expect(Math.abs(m.win - m.section), msg).toBeLessThanOrEqual(2);
+  expect(m.page, msg).toBeGreaterThan(m.vh);
+  expect(m.detailGap, msg).toBeLessThanOrEqual(3);
+  // La lista, como antes: lo que queda de pantalla bajo la barra de la ventana
+  expect(Math.abs(m.side - m.sideWant), msg).toBeLessThanOrEqual(1);
+  const side = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().bottom);
+  expect(side, msg).toBeLessThanOrEqual(m.vh + 0.5);
+  // Al bajar, la lista no encoge: al final de la ventana se va con ella, entera
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await page.waitForTimeout(150);
+  expect(Math.abs((await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().height)) - m.side)).toBeLessThanOrEqual(1);
+});
