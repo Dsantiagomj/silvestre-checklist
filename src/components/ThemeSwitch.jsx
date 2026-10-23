@@ -4,6 +4,7 @@ import { applyTheme, getState, useAppState } from "../state/store.js";
 import { THEME_ICONS, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { isEmbedded } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 const SPARKS = [
   [0, -14], [12, -8], [13, 7], [0, 14], [-12, 8], [-13, -7],
@@ -13,7 +14,8 @@ const SPARKS = [
 function syncThemeSwitch(btn, t) {
   btn.classList.toggle("is-dark", t === "dark");
   btn.setAttribute("aria-checked", String(t === "dark"));
-  const label = t === "dark" ? "Modo oscuro · Dofus Ébano" : "Modo claro · Dofus Marfil";
+  // Lo que es cada huevo (themeNames en config.js): en el Silvestre, el Dofus Ébano y el Marfil
+  const label = t === "dark" ? `Modo oscuro · ${DOFUS.themeNames.dark}` : `Modo claro · ${DOFUS.themeNames.light}`;
   btn.setAttribute("aria-label", label);
   btn.title = `${label}. Pulsa para cambiar`;
 }
