@@ -255,7 +255,7 @@ function NoteChips({ step, done }) {
   if (!notes.length) return null;
   const paused = notes.some(x => x.kind === "stop" || x.kind === "closedin");
   return (
-    <div className={"goal-calls is-chips" + (notes.length > 3 ? " is-many" : "")}>
+    <div className={"goal-calls is-chips" + (notes.length > 4 ? " is-many" : "")}>
       {notes.map((x, i) => (
         <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
       ))}
