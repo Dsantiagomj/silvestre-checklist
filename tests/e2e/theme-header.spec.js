@@ -1,8 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { openApp, readLS } from "./helpers.js";
 
+/** El tema y el reinicio van en el menú «⋯» de la barra de la ventana. */
+const openMore = page => page.click("#moreBtn");
+
 test("el interruptor alterna el tema y lo recuerda", async ({ page }) => {
   await openApp(page);
+  await openMore(page);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("#themeBtn")).toHaveAttribute("aria-checked", "true");
   await page.click("#themeBtn");
@@ -15,37 +19,15 @@ test("el interruptor alterna el tema y lo recuerda", async ({ page }) => {
 
 test("los huevos del interruptor cargan", async ({ page }) => {
   await openApp(page);
+  await openMore(page);
   for (const id of ["#tsLight", "#tsDark"]) {
     await expect.poll(() => page.locator(id).evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
   }
 });
 
-test("el header es transparente arriba, sólido al bajar y sin barra de progreso", async ({ page }) => {
-  await openApp(page);
-  const header = page.locator("header");
-  await expect(header).not.toHaveClass(/is-scrolled/);
-  await page.evaluate(() => window.scrollTo(0, 120));
-  await expect(header).toHaveClass(/is-scrolled/);
-  // El progreso vive en la ventana de los pasos, no en el header
-  await page.evaluate(() => window.scrollTo(0, 1000));
-  await expect(header.locator(".tb-progress")).toHaveCount(0);
-});
-
-test("la marca es un logotipo con la tipografía de Dofus y se lee entera", async ({ page }) => {
-  await openApp(page);
-  const brand = page.locator("header .brand");
-  // 14 letras animables: "Dofus" + "Silvestre"
-  await expect(brand.locator(".logo i")).toHaveCount(14);
-  await expect.poll(() => page.evaluate(() => document.fonts.check('27px "Lilita One"'))).toBe(true);
-  expect(await brand.locator(".logo").evaluate(el => getComputedStyle(el).fontFamily)).toContain("Lilita One");
-  // Las letras sueltas se ocultan a lectores de pantalla; el nombre se anuncia completo
-  await expect(brand.locator(".logo")).toHaveAttribute("aria-hidden", "true");
-  await expect(page.getByText("Dofus Silvestre", { exact: true })).toHaveCount(1);
-  await expect.poll(() => page.locator("#brandIcon").evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
-});
-
 test("los botones de overlay y reinicio usan objetos del juego", async ({ page }) => {
   await openApp(page);
+  await openMore(page);
   for (const id of ["#overlayBtn", "#resetBtn"]) {
     const img = page.locator(`${id} img.btn-icon`);
     await expect.poll(() => img.evaluate(el => el.naturalWidth)).toBeGreaterThan(0);
@@ -57,20 +39,6 @@ test("los botones de overlay y reinicio usan objetos del juego", async ({ page }
   await page.hover("#resetBtn");
   await expect.poll(() => page.locator("#resetBtn img.btn-icon").evaluate(el => getComputedStyle(el).transform))
     .toMatch(/^matrix\(-1, [^,]+, [^,]+, -1/);
-});
-
-test("en móvil el contenido del header cabe con márgenes simétricos", async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await ctx.newPage();
-  await openApp(page);
-  const left = await page.locator("header .brand").evaluate(el => el.getBoundingClientRect().left);
-  const right = () => page.locator("#resetBtn").evaluate(el => innerWidth - el.getBoundingClientRect().right);
-  expect(await right()).toBeGreaterThanOrEqual(left - 2);
-  // Al bajar sigue cabiendo
-  await page.evaluate(() => window.scrollTo(0, 1500));
-  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
-  await expect.poll(right).toBeGreaterThanOrEqual(left - 2);
-  await ctx.close();
 });
 
 test("en el tema claro el acento tiene contraste suficiente como relleno y como texto", async ({ page }) => {
@@ -86,7 +54,6 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
     return (a + .05) / (b + .05);
   }, [fg, bg]);
   const style = (sel, prop) => page.locator(sel).first().evaluate((el, p) => getComputedStyle(el)[p], prop);
-  const pageBg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   // Se mide hasta que los colores se asientan: leerlos a mitad de la transición de tema
   // da un contraste falso. Uno que de verdad no llega a 4.5 sigue fallando.
   const settles = (fg, bg) => expect.poll(async () => ratio(await fg(), await bg()), { timeout: 3_000 })
@@ -94,20 +61,13 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
 
   // Botón principal: texto sobre el relleno del acento
   await settles(() => style("#overlayBtn", "color"), () => style("#overlayBtn", "backgroundColor"));
-  await settles(() => style("#heroNextGo", "color"), () => style("#heroNextGo", "backgroundColor"));
-  // Acento usado como texto sobre el fondo de la página
-  await settles(() => style(".hero-eyebrow", "color"), pageBg);
-  // El porcentaje de la ventana de pasos, en acento sobre su panel
+  await settles(() => style("#diaryNext", "color"), () => style("#diaryNext", "backgroundColor"));
+  // El porcentaje de la barra, en acento sobre su panel, y los pasos hechos
   await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
-});
-
-test("al bajar solo hay un Dofus Silvestre en el header", async ({ page }) => {
-  await openApp(page);
-  await page.evaluate(() => window.scrollTo(0, 1600));
-  await expect(page.locator("header")).toHaveClass(/is-scrolled/);
-  // El del logo
-  await expect(page.locator('header img[src*="items/23036.png"]')).toHaveCount(1);
-  await expect(page.locator(".brand img")).toBeVisible();
+  await settles(() => style(".win-done", "color"), () => style(".steps-win", "backgroundColor"));
+  // Las fichas de notas del paso, sobre el pergamino de su cabecera
+  await page.locator('.diary-row[data-n="1"] .row-num').click();
+  await settles(() => style("#journal .call-peek", "color"), () => style("#journal .journal-top", "backgroundColor"));
 });
 
 test("el botón de copiar de los objetos se lee en los dos temas", async ({ page }) => {
@@ -133,7 +93,7 @@ test("el botón de copiar de los objetos se lee en los dos temas", async ({ page
 test("las cantidades de «Necesitas» se leen en los dos temas", async ({ page }) => {
   for (const theme of ["light", "dark"]) {
     await openApp(page, { "silvestre:theme": theme });
-    await page.click('.diary-row[data-n="35"] .row-main');
+    await page.click('.diary-row[data-n="35"] .row-num');
     const q = page.locator("#journal .journal-needs .slot .q").first();
     await expect.poll(() => q.evaluate(el => {
       const lum = c => {
@@ -164,7 +124,7 @@ test("la pestaña lleva de favicon el huevo del Dofus Silvestre", async ({ page,
 test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
   await openApp(page, { "silvestre:theme": "light" });
   // El 1 lleva un aviso («Incluye») en la cabecera
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   const lum = c => {
     const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
       v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
@@ -174,7 +134,7 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
   const bg = await page.locator("#journal .journal-top").evaluate(el => getComputedStyle(el).backgroundColor);
   // Fondo claro, como el resto del diario en este tema
   expect(lum(bg)).toBeGreaterThan(.6);
-  for (const sel of [".journal-title", ".journal-goal .journal-base", ".goal-calls .call", ".journal-to-map"]) {
+  for (const sel of [".journal-title", ".journal-meta", ".journal-goal .journal-base", ".goal-calls .call-head", ".journal-to-map"]) {
     await expect.poll(async () => {
       const fg = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).color);
       const own = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).backgroundColor);
@@ -187,9 +147,9 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
 
 test("los textos con contorno lo dibujan con sombras, sin -webkit-text-stroke (en algunos navegadores raya el interior de las letras)", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="83"] .row-main');
+  await page.click('.diary-row[data-n="83"] .row-num');
   await expect(page.locator("#journal .journal-title")).toBeVisible();
-  for (const sel of [".logo i", "#journal .journal-num", "#journal .journal-title", "#journal .journal-show-name", ".egg-pct-row > b"]) {
+  for (const sel of ["#journal .journal-num", "#journal .journal-title", "#journal .journal-show-name", "#journal .journal-badge-num"]) {
     const [stroke, shadows] = await page.locator(sel).first().evaluate(el => {
       const s = getComputedStyle(el);
       return [s.webkitTextStrokeWidth, (s.textShadow.match(/rgb/g) || []).length];

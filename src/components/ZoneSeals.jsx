@@ -4,7 +4,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ZONES, ZONE_COLOR } from "../data/steps.js";
 import { BRAND_ICON, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { setZone } from "../state/store.js";
-import { eventTarget } from "../lib/root.js";
+import { useDismiss } from "../lib/useDismiss.js";
 
 const TOTAL = Object.fromEntries(ZONES.map(z => [z, STEPS.filter(st => st.zone === z).length]));
 
@@ -66,29 +66,17 @@ export default function ZoneSeals({ s, current }) {
   const doneIn = z => STEPS.filter(st => st.zone === z && s.done[st.n]).length;
   const allDone = STEPS.filter(st => s.done[st.n]).length;
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = e => { if (!boxRef.current?.contains(eventTarget(e))) setOpen(false); };
-    // En captura y antes que nadie: Escape cierra el desplegable, no el paso abierto
-    const onKey = e => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("keydown", onKey, true);
-    };
-  }, [open]);
+  useDismiss(open, () => setOpen(false), boxRef);
 
   const pick = z => { setZone(z); setOpen(false); };
   return (
     <div className="zone-menu" ref={boxRef}>
       <button type="button" className="zone-btn" id="zoneBtn" aria-expanded={open} aria-controls="zoneSeals"
         onClick={() => setOpen(o => !o)}>
-        Zona: <b>{active ?? "Todas"}</b> · {active ? doneIn(active) : allDone}/{active ? TOTAL[active] : STEPS.length}
+        {/* En la barra, un marcador en vez del «Zona:» (que sigue para los lectores de pantalla) */}
+        <svg className="zone-ic" viewBox="0 0 16 20" aria-hidden="true"><path d="M8 19s6-6.2 6-11A6 6 0 0 0 2 8c0 4.8 6 11 6 11z" /><circle cx="8" cy="8" r="2.4" /></svg>
+        <span className="sr-only">Zona:</span> <b>{active ?? "Todas"}</b>
+        <span className="zone-count"> · {active ? doneIn(active) : allDone}/{active ? TOTAL[active] : STEPS.length}</span>
         <span className="zone-caret" aria-hidden="true">▾</span>
       </button>
       <AnimatePresence>

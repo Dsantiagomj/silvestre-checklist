@@ -3,7 +3,7 @@ import { openApp } from "./helpers.js";
 
 /**
  * En escritorio la ventana de los 100 pasos nunca es más alta que la pantalla: su
- * cabecera (los Dofus del camino, las pestañas y el buscador) queda fija y lo que no
+ * barra (el progreso, las pestañas y sus herramientas) queda fija y lo que no
  * cabe se desplaza por dentro: en el mapa, en las listas y, en el diario, la lista de
  * pasos y el detalle del paso, cada uno por su lado. Abrir una misión alarga el detalle
  * por dentro: ni la ventana ni la página cambian de altura.
@@ -21,11 +21,11 @@ async function align(page) {
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
 }
 
-/** Dónde quedan la cabecera de la página, la sección y la ventana. */
+/** Dónde quedan la cabecera de la página (en su página no hay: 0), la sección y la ventana. */
 const boxes = page => page.evaluate(() => {
   const r = el => el.getBoundingClientRect();
   return {
-    header: r(document.querySelector("header")).bottom,
+    header: 0,
     section: r(document.getElementById("diary")).top,
     win: r(document.querySelector(".steps-win")),
     vh: innerHeight,
@@ -40,7 +40,7 @@ const fits = b => b.section >= b.header - 0.5 && b.win.top >= b.header - 0.5 && 
  * objetivo) arriba del detalle, entera.
  */
 const fitsDiary = page => page.evaluate(() => {
-  const header = document.querySelector("header").getBoundingClientRect().bottom;
+  const header = 0;
   const win = document.querySelector(".steps-win").getBoundingClientRect();
   const top = document.querySelector("#journal .journal-top")?.getBoundingClientRect();
   return win.top >= header - 0.5 && win.bottom <= innerHeight + 0.5
@@ -108,13 +108,13 @@ for (const view of VIEWS) {
     await page.setViewportSize({ width: 1280, height: 720 });
     await openApp(page, { "silvestre:done": Object.fromEntries([1, 2, 3].map(n => [n, true])) }, { view });
     if (view === "diary") {
-      await page.click('.diary-row[data-n="1"] .row-main');
+      await page.click('.diary-row[data-n="1"] .row-num');
       await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
     }
     await align(page);
     await page.waitForTimeout(400);
     const { scrollers, fixed } = SCROLL[view];
-    const watch = [".win-strip", ".win-tabs", ".win-tools", ...fixed];
+    const watch = ["#winBar", ...(view === "prereqs" || view === "items" ? [".win-tools"] : []), ...fixed];
     const snap = () => page.evaluate(sels => ({
       y: scrollY,
       tops: sels.map(s => Math.round(document.querySelector(s).getBoundingClientRect().top)),
@@ -145,24 +145,17 @@ test("con la rueda sobre la lista, se desplaza la lista y no la página", async 
   expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
-test("«Siguiente» de la franja deja a la vista la ventana desde arriba y la cabecera del paso", async ({ page }) => {
+test("«Siguiente» de la barra deja a la vista la ventana desde arriba y la cabecera del paso", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
-  await page.click(".win-strip .diary-next");
-  await expect.poll(() => fitsDiary(page), { timeout: 4000 }).toBe(true);
-});
-
-test("«Continuar» del hero deja a la vista la ventana desde arriba y la cabecera del paso", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await openApp(page);
-  await page.click("#heroNextGo");
+  await page.click("#diaryNext");
   await expect.poll(() => fitsDiary(page), { timeout: 4000 }).toBe(true);
 });
 
 test("en el diario, la rueda sobre el detalle lo desplaza por dentro y no mueve la página", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
   await align(page);
   await page.waitForTimeout(200);
@@ -182,7 +175,7 @@ test("al volver al mapa, el paso se busca dentro del mapa y la página no se mue
   await openApp(page);
   await align(page);
   // Clics sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
-  await page.locator('.diary-row[data-n="97"] .row-main').evaluate(el => el.click());
+  await page.locator('.diary-row[data-n="97"] .row-num').evaluate(el => el.click());
   await page.waitForTimeout(300);
   const y = await page.evaluate(() => scrollY);
   await page.locator("#journal .journal-to-map").evaluate(el => el.click());

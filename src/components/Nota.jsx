@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { STEPS } from "../data/steps.js";
 import { assetsFor, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
-import { setSearch } from "../state/store.js";
+import { setSearch, showStepsWindow } from "../state/store.js";
 import { appRoot } from "../lib/root.js";
 
 // La instrucción que explica la nota, tal como la escribe Sandglass en los pasos
@@ -20,16 +20,25 @@ const CHECK_AT = { 45: 3.6, 44: 4.3, 43: 5.0 };
 // Lo que tarda el rebobinado antes de repetir (ms); igual que en el CSS
 const REWIND_MS = 450;
 
+const dialog = () => appRoot().getElementById("notaDialog");
+
+/** Abre la nota (desde el menú «⋯» o la «i» junto a las notas del paso). */
+export function openNota() {
+  dialog()?.showModal();
+}
+
 function showPaused() {
+  dialog()?.close();
   setSearch(PHRASE);
-  appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  showStepsWindow();
 }
 
 /**
  * NOTA ACLARATORIA · qué significa "Hasta tener que pasar X jefe", con un ejemplo de la guía.
- * Siempre visible: es la clave para leer un tercio de los pasos.
+ * Es la clave para leer un tercio de los pasos, pero no ocupa sitio en la página: se abre
+ * en un diálogo (openNota) y el ejemplo se cuenta al verlo.
  */
-export default function Nota() {
+function Nota() {
   // run: 0 = aún sin ver; cada valor nuevo remonta la pista y repite la animación
   const [run, setRun] = useState(0);
   // La historia terminó (se puede repetir) o se está rebobinando para repetirla
@@ -65,7 +74,7 @@ export default function Nota() {
   };
 
   return (
-    <aside className="nota" id="nota" aria-labelledby="notaTitle">
+    <div className="nota" id="nota">
       <figure className="nota-example" ref={figRef} onMouseEnter={replay}>
         {/* Solo ilustra: el pie de foto lo cuenta para quien no lo ve */}
         <div key={run} className={"nota-track" + (rewinding ? " rewind" : run ? " play" : "")} data-run={run}
@@ -83,7 +92,7 @@ export default function Nota() {
         </figcaption>
       </figure>
       <div className="nota-body">
-        <p className="nota-title" id="notaTitle">Hasta tener que pasar X jefe de mazmorra</p>
+        <h2 className="nota-title" id="notaTitle">Hasta tener que pasar X jefe de mazmorra</h2>
         <p className="nota-text">
           Ahí el paso queda en pausa: puedes avanzar en la mazmorra hasta la sala del jefe y abandonarla. Un paso
           posterior te pedirá pasar y completar esa misma mazmorra, y al hacerlo se terminan dos o más pasos a la vez.
@@ -92,6 +101,18 @@ export default function Nota() {
           <button type="button" id="notaSteps" onClick={showPaused}>Ver los {PAUSED} pasos</button>
         </p>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+/** El diálogo de la nota: nativo (foco atrapado y Escape gratis); un clic fuera lo cierra. */
+export default function NotaDialog() {
+  const ref = useRef(null);
+  return (
+    <dialog className="nota-dialog" id="notaDialog" aria-labelledby="notaTitle" ref={ref}
+      onClick={e => { if (e.target === ref.current) ref.current.close(); }}>
+      <button type="button" className="nota-close" id="notaClose" aria-label="Cerrar" onClick={() => ref.current.close()}>×</button>
+      <Nota />
+    </dialog>
   );
 }

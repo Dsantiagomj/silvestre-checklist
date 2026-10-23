@@ -7,14 +7,16 @@ const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Object.values(WEIGHTS).map(x => x.w));
-// El mismo redondeo que el hero: un decimal
+// El mismo redondeo que el porcentaje de la barra: un decimal
 const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
 /** Las misiones del paso abierto, ya cargadas (llegan en diferido). */
 const waitQuests = page => expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 
 test("el diario lista los 100 pasos seguidos, sin capítulos por Dofus", async ({ page }) => {
   await openApp(page);
+  // El título de la sección, solo para lectores de pantalla
   await expect(page.locator("#diaryTitle")).toHaveText("Los 100 pasos");
+  await expect(page.locator("#diaryTitle")).toHaveClass(/sr-only/);
   await expect(page.locator(".diary-row")).toHaveCount(100);
   await expect(page.locator(".diary-group-head")).toHaveCount(0);
   const nums = await page.locator(".diary-row .row-num").allInnerTexts();
@@ -36,7 +38,7 @@ test("sin nada seleccionado, el detalle muestra el siguiente pendiente", async (
 
 test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra", async ({ page }) => {
   await openApp(page);
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   const j = page.locator("#journal");
   await expect(j.locator(".journal-num")).toHaveText("34");
   await expect(j.locator(".journal-title")).toHaveText("El árbol que esconde el bosque");
@@ -50,6 +52,8 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   await expect(j.locator(".call.tip")).toContainText("primeras 4 salas");
   await expect(j.locator(".call.done")).toContainText("Se pasa Lasoberaña");
   // Los incisos del verde llevan a esos pasos
+  // Las notas van plegadas en fichas: se despliega la suya
+  await j.locator('.call.done .call-head').click();
   await j.locator('.call.done .step-ref[data-n="33"]').click();
   await expect(j.locator(".journal-num")).toHaveText("33");
 });
@@ -62,7 +66,7 @@ test("en la lista, un paso que se termina más adelante lo dice", async ({ page 
 
 test("donde el paso se resuelve, la línea es verde y dice qué se termina, justo antes de vencer a Lasoberaña", async ({ page }) => {
   await openApp(page);
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   const quest = page.locator("#journal .q-item", { hasText: "Arak-hais, ¿dónde vais?" });
   await expect(quest.locator(".obj-resume")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop")).toHaveCount(0);
@@ -72,11 +76,11 @@ test("donde el paso se resuelve, la línea es verde y dice qué se termina, just
 
 test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota", async ({ page }) => {
   await openApp(page);
-  await row(page, 22).locator(".row-main").click();
+  await row(page, 22).locator(".row-num").click();
   await expect(page.locator("#journal .call.stop")).toHaveCount(0);
   await expect(page.locator("#journal .obj-resume").first()).toContainText("Se pasa Nelwynn", { timeout: 15_000 });
   // El 54 decía más en el rojo: eso no se pierde
-  await row(page, 54).locator(".row-main").click();
+  await row(page, 54).locator(".row-num").click();
   await expect(page.locator("#journal .call.stop")).toHaveCount(0);
   await expect(page.locator("#journal .call.note")).toContainText("Retomar sala 5");
 });
@@ -84,7 +88,7 @@ test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota",
 test("«Completar paso N» marca el paso y salta al siguiente pendiente", async ({ page }) => {
   // Con el 33 hecho, el 34 ya no cierra nada pendiente: sin la línea «Además»
   await openApp(page, { "silvestre:done": range(1, 33) });
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
   await expect(page.locator("#toggleBtn")).toHaveAttribute("title", "Marca el paso y abre el 35");
@@ -94,7 +98,7 @@ test("«Completar paso N» marca el paso y salta al siguiente pendiente", async 
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
   expect((await readLS(page, "silvestre:done"))["34"]).toBe(true);
   // Hecho, el botón lo dice y lo deshace
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   await expect(page.locator("#toggleBtn")).toHaveText("Paso completado · deshacer");
   await page.click("#toggleBtn");
   await expect(row(page, 34)).not.toHaveClass(/done/);
@@ -103,7 +107,7 @@ test("«Completar paso N» marca el paso y salta al siguiente pendiente", async 
 
 test("si el paso cierra otros pendientes, «Completar» termina lo que les queda y una línea aparte lo dice", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   await waitQuests(page);
   // Un solo botón, con el número del paso; lo que termina en el 33 va debajo
   await expect(page.locator("#closesBtn")).toHaveCount(0);
@@ -116,7 +120,7 @@ test("si el paso cierra otros pendientes, «Completar» termina lo que les queda
   await expect(row(page, 33)).toHaveClass(/done/);
   await expect(page.locator("#journal .journal-num")).toHaveText("35");
   // Hecho el 34, sin la línea; con lo cerrado ya hecho, al deshacerlo tampoco
-  await row(page, 34).locator(".row-main").click();
+  await row(page, 34).locator(".row-num").click();
   await expect(page.locator("#journal .cta-also")).toHaveCount(0);
   await page.click("#toggleBtn");
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 34");
@@ -127,14 +131,14 @@ test("un paso que cierra varios los nombra todos en la línea «Además» y avis
   // El 28 cierra el 25, el 26 y el 27: «Los cazadores» y «El recadero» piden terminadas
   // las de antes de sus pasos, así que con ellas quedan completados
   await openApp(page, { "silvestre:done": range(1, 24) });
-  await row(page, 28).locator(".row-main").click();
+  await row(page, 28).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 28");
   await expect(page.locator("#journal .cta-also"))
     .toHaveText("Además: el 25 queda completado, el 26 queda completado y el 27 queda completado.");
   // El 91 cierra el 41 y el 90: lo que termina del 90 no pide las demás, que siguen pendientes
   await openApp(page, { "silvestre:done": Object.fromEntries(Object.entries(range(1, 90)).filter(([n]) => n !== "41" && n !== "90")) });
-  await row(page, 91).locator(".row-main").click();
+  await row(page, 91).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#journal .cta-also"))
     .toHaveText("Además: el 41 queda completado y en el 90 completa «El peso de su mirada».");
@@ -150,7 +154,7 @@ test("un paso que cierra varios los nombra todos en la línea «Además» y avis
 test("la línea «Además» cuenta las misiones si en un paso cerrado se completan varias", async ({ page }) => {
   // El 80 cierra el 77 y el 78
   await openApp(page, { "silvestre:done": range(1, 76) });
-  await row(page, 80).locator(".row-main").click();
+  await row(page, 80).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 80");
   await expect(page.locator("#journal .cta-also")).toHaveText(/^Además: .*\bel 77\b.* y .*\bel 78\b.*\.$/);
@@ -167,7 +171,7 @@ const questBtn = (page, name) => page.locator("#journal .q-item", { hasText: nam
 
 test("«Completar» en el 22 termina la misión del 5 tras su parada y avisa de la que falta", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5() });
-  await row(page, 22).locator(".row-main").click();
+  await row(page, 22).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 22");
   await expect(page.locator("#journal .cta-also")).toHaveText("Además: en el 5 completa «¿Dónde se ha ido la 7.ª compañía?».");
@@ -186,7 +190,7 @@ test("«Completar» en el 22 termina la misión del 5 tras su parada y avisa de 
 
 test("con lo anterior del 5 ya hecho, «Completar» en el 22 marca el 5 sin avisar", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5(), "silvestre:questObjective": { 894: 11 } });
-  await row(page, 22).locator(".row-main").click();
+  await row(page, 22).locator(".row-num").click();
   await waitQuests(page);
   await expect(page.locator("#journal .cta-also")).toHaveText("Además: el 5 queda completado.");
   await page.click("#toggleBtn");
@@ -197,13 +201,13 @@ test("con lo anterior del 5 ya hecho, «Completar» en el 22 marca el 5 sin avis
 test("lo que termina el 22 en el 5 se ve en su detalle y suma al porcentaje", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5() });
   const base = sum(Object.keys(BUT_5()).map(n => WEIGHTS[n].w));
-  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base)}%`);
-  await row(page, 22).locator(".row-main").click();
+  await expect(page.locator("#winPct")).toHaveText(`${pctOf(base)}%`);
+  await row(page, 22).locator(".row-num").click();
   await waitQuests(page);
   await page.click("#toggleBtn");
   // Con el 22 hecho, «Veneno de scorbuto para la prisión», que también lleva el 36, cuenta allí
-  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(base + WEIGHTS[22].w + WEIGHTS[5].q[1] + WEIGHTS[36].q[0])}%`);
-  await row(page, 5).locator(".row-main").click();
+  await expect(page.locator("#winPct")).toHaveText(`${pctOf(base + WEIGHTS[22].w + WEIGHTS[5].q[1] + WEIGHTS[36].q[0])}%`);
+  await row(page, 5).locator(".row-num").click();
   await waitQuests(page);
   await expect(questBtn(page, "7.ª compañía")).toHaveAttribute("aria-pressed", "true");
   await expect(questBtn(page, "Las primeras impresiones")).toHaveAttribute("aria-pressed", "false");
@@ -211,7 +215,7 @@ test("lo que termina el 22 en el 5 se ve en su detalle y suma al porcentaje", as
 
 test("Intro sobre un paso que cierra otros hace lo mismo que «Hecho»", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5() });
-  await row(page, 22).locator(".row-main").click();
+  await row(page, 22).locator(".row-num").click();
   await waitQuests(page);
   await page.keyboard.press("Enter");
   await expect(row(page, 22)).toHaveClass(/done/);
@@ -222,7 +226,7 @@ test("Intro sobre un paso que cierra otros hace lo mismo que «Hecho»", async (
 
 test("la casilla de cada fila marca el paso sin cambiar lo que se ve", async ({ page }) => {
   await openApp(page);
-  await row(page, 50).locator(".row-main").click();
+  await row(page, 50).locator(".row-num").click();
   await row(page, 10).locator(".row-check").click();
   await expect(row(page, 10)).toHaveClass(/done/);
   await expect(page.locator("#journal .journal-num")).toHaveText("50");
@@ -275,7 +279,7 @@ test("el desplegable de zona muestra los sellos con su avance y filtra la lista"
 
 test("el desplegable de zona se cierra con Escape o pulsando fuera", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   await page.click("#zoneBtn");
   await expect(page.locator("#zoneSeals")).toBeVisible();
   await page.keyboard.press("Escape");
@@ -283,13 +287,14 @@ test("el desplegable de zona se cierra con Escape o pulsando fuera", async ({ pa
   // Escape cierra el desplegable, no el paso abierto
   await expect(page.locator("#journal .journal-num")).toHaveText("34");
   await page.click("#zoneBtn");
-  await page.locator("#diaryTitle").click();
+  // Fuera de la ventana, en el margen de la página
+  await page.mouse.click(5, 600);
   await expect(page.locator("#zoneSeals")).toHaveCount(0);
 });
 
 test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   await page.click("#zoneBtn");
   await expect(page.locator('#zoneSeals .seal[data-zone="Reino de Amakna"]')).toHaveClass(/here/);
   await expect(page.locator("#zoneSeals .seal.here")).toHaveCount(1);
@@ -309,7 +314,7 @@ test("el sello de la zona del paso abierto lo indica", async ({ page }) => {
 test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
   await expect(page.locator("#diaryNext")).toContainText("33");
-  await page.click('.diary-row[data-n="60"] .row-main');
+  await page.click('.diary-row[data-n="60"] .row-num');
   await page.click("#diaryNext");
   await expect(page.locator("#journal .journal-num")).toHaveText("33");
   await page.fill("#searchInput", "Lasoberaña");
@@ -318,7 +323,7 @@ test("la barra del diario busca y lleva al siguiente pendiente", async ({ page }
 
 test("misiones y logros enlazan a su guía en Torrente Arcano", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   const j = page.locator("#journal");
   const mission = j.locator('.journal-base a[href="https://www.torrentearcano.com/arak-hais-donde-vais"]');
   await expect(mission).toHaveText("Arak-hais, ¿dónde vais?");
@@ -331,14 +336,16 @@ test("misiones y logros enlazan a su guía en Torrente Arcano", async ({ page })
 
 test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="77"] .row-main');
+  await page.click('.diary-row[data-n="77"] .row-num');
+  // Las notas van plegadas en fichas: se despliega la suya
+  await page.locator('#journal .call.stop .call-head').click();
   await page.locator('#journal .call.stop .step-ref[data-n="78"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("78");
 });
 
 test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una nota dice por qué", async ({ page }) => {
   await openApp(page);
-  await row(page, 64).locator(".row-main").click();
+  await row(page, 64).locator(".row-num").click();
   await waitQuests(page);
   const j = page.locator("#journal");
   // La misión 2 (paso 66) pide «De la mano» pasada la entrega de la cerveza
@@ -357,10 +364,13 @@ test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una
     .toHaveAttribute("href", "https://www.torrentearcano.com/dos-alientos-una-inspiracion");
   await expect(note.locator("a.guide-link", { hasText: "De la mano" })).toHaveAttribute("href", "https://www.torrentearcano.com/de-la-mano");
   await expect(note.locator(".step-ref")).toHaveCount(2);
+  await note.locator('.call-head').click();
   await note.locator('.step-ref[data-n="66"]').click();
   await expect(j.locator(".journal-num")).toHaveText("66");
-  await row(page, 64).locator(".row-main").click();
+  await row(page, 64).locator(".row-num").click();
   await expect(j.locator(".journal-num")).toHaveText("64");
+  // Las notas van plegadas en fichas: se despliega la suya
+  await j.locator('.call.note .call-head').click();
   await j.locator('.call.note .step-ref[data-n="67"]').click();
   await expect(j.locator(".journal-num")).toHaveText("67");
 });
@@ -369,7 +379,7 @@ test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el 
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openApp(page);
   // La glándula se gasta en el paso 35 («Munster descubre el misterio»)
-  await page.click('.diary-row[data-n="35"] .row-main');
+  await page.click('.diary-row[data-n="35"] .row-num');
   const slot = page.locator('#journal .journal-needs .slot[data-id="16215"]');
   await slot.hover();
   await slot.locator(".slot-copy").click();
@@ -379,16 +389,16 @@ test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el 
   await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("en el detalle, los objetos van antes que las misiones y se marcan como en «Lo que necesitas»", async ({ page }) => {
+test("en el detalle, los objetos van después de las misiones y se marcan como en «Lo que necesitas»", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   const j = page.locator("#journal");
   await expect(j.locator(".journal-quests")).toBeVisible({ timeout: 15_000 });
-  const before = await j.evaluate(el => {
+  const after = await j.evaluate(el => {
     const needs = el.querySelector(".journal-needs"), quests = el.querySelector(".journal-quests");
-    return !!(needs.compareDocumentPosition(quests) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return !!(quests.compareDocumentPosition(needs) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
-  expect(before).toBe(true);
+  expect(after).toBe(true);
   // La Ortiga y la Lana de «El despertar de Pandala» van en los prerrequisitos (l11), no aquí
   await expect(j.locator(".journal-needs .journal-h")).toContainText("(3)");
   await expect(j.locator('.journal-needs .slot[data-id="421"]')).toHaveCount(0);
@@ -411,7 +421,7 @@ test("en el detalle, los objetos van antes que las misiones y se marcan como en 
 
 test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de misión", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   await expect(page.locator("#journal .q-item summary .quest-mark")).toHaveCount(2, { timeout: 15_000 });
   // En la lista, sin icono de relleno: lo que no da un Dofus ni resuelve un jefe va en blanco
   await expect(page.locator(".diary-row .row-art .quest-mark")).toHaveCount(0);
@@ -419,16 +429,16 @@ test("las misiones del paso y los pasos sin imagen usan el mismo símbolo de mis
 
 test("un paso que pide el logro completo lo dice en la cabecera, no como consejo", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="18"] .row-main');
+  await page.click('.diary-row[data-n="18"] .row-num');
   await expect(page.locator("#journal .goal-ach .is-complete")).toHaveAttribute("title", "Logro completo");
   await expect(page.locator("#journal .call", { hasText: /^\W*Consejo\s*Completo$/ })).toHaveCount(0);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   await expect(page.locator("#journal .goal-ach .is-complete")).toHaveCount(0);
 });
 
 test("el paso 79 da el Dofus Ocre", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="79"] .row-main');
+  await page.click('.diary-row[data-n="79"] .row-num');
   await expect(page.locator("#journal .journal-show-label")).toHaveText("Se gana");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Dofus Ocre");
   await expect(page.locator("#journal .call.ocre")).toHaveCount(0);
@@ -436,46 +446,48 @@ test("el paso 79 da el Dofus Ocre", async ({ page }) => {
 
 test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   const icon = kind => page.locator(`#journal .call.${kind} i img`);
   // Lo que se resuelve: el jefe que se pasa (Lasoberaña), no un logro
   await expect(icon("done")).toHaveAttribute("src", /monsters\/1267\.png$/);
   await expect(icon("tip")).toHaveAttribute("src", /items\/25019\.png$/);
   expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", ""]);
   // Sin jefe, la espada del juego
-  await page.click('.diary-row[data-n="38"] .row-main');
+  await page.click('.diary-row[data-n="38"] .row-num');
   await expect(icon("done")).toHaveAttribute("src", /items\/6009\.png$/);
   // El rojo, en un paso que se queda a medias
-  await page.click('.diary-row[data-n="77"] .row-main');
+  await page.click('.diary-row[data-n="77"] .row-num');
   await expect(icon("stop")).toHaveAttribute("src", /items\/84228\.png$/);
 });
 
 test("cada tipo de aviso azul tiene su nombre y su icono", async ({ page }) => {
   await openApp(page);
   const call = (kind) => page.locator(`#journal .call.${kind}`);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await expect(call("includes").locator("b")).toHaveText("Incluye");
   await expect(call("includes").locator("i img")).toHaveAttribute("src", /items\/24041\.png$/);
   await expect(page.locator("#journal .call.tip")).toHaveCount(0);
-  await page.click('.diary-row[data-n="54"] .row-main');
-  await expect(call("must").locator("b")).toHaveText("También hay que");
+  await page.click('.diary-row[data-n="54"] .row-num');
+  // En la ficha, el rótulo corto; el entero, en su título
+  await expect(call("must").locator("b")).toHaveText("También");
+  await expect(call("must").locator(".call-head")).toHaveAttribute("title", "También hay que");
   // Lo que también hay que hacer es una misión: lleva la «!» del juego
   await expect(call("must").locator("i .quest-mark")).toHaveCount(1);
-  await page.click('.diary-row[data-n="50"] .row-main');
+  await page.click('.diary-row[data-n="50"] .row-num');
   await expect(call("note").locator("b")).toHaveText("Nota");
   await expect(call("note").locator("i img")).toHaveAttribute("src", /items\/24055\.png$/);
 });
 
 test("el paso 99 da la Piñata de pino", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="99"] .row-main');
+  await page.click('.diary-row[data-n="99"] .row-num');
   await expect(page.locator("#journal .journal-show-label")).toHaveText("Se gana");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Piñata de pino");
 });
 
 test("las misiones de cada paso son las de su logro, en su orden", async ({ page }) => {
   await openApp(page);
-  const quests = n => page.click(`.diary-row[data-n="${n}"] .row-main`)
+  const quests = n => page.click(`.diary-row[data-n="${n}"] .row-num`)
     .then(() => page.locator("#journal .q-item").first().waitFor({ timeout: 15_000 }))
     .then(() => page.locator("#journal .q-item summary").allInnerTexts());
   // Un aviso que nombra otro logro no mete sus misiones
@@ -496,7 +508,7 @@ test("las misiones de cada paso son las de su logro, en su orden", async ({ page
 
 test("la misión de clase sale como una sola fila con su guía, no la de una clase", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   const j = page.locator("#journal");
   const quest = j.locator(".q-item", { hasText: "Misión de clase" });
   await expect(quest).toHaveCount(1, { timeout: 15_000 });
@@ -510,7 +522,7 @@ test("la misión de clase sale como una sola fila con su guía, no la de una cla
 test("el «Prólogo invernal» del 63 depende del alineamiento: no es la misión de clase del 1", async ({ page }) => {
   // Hecho el 1, su misión de clase está terminada; la del 63 sigue pendiente
   await openApp(page, { "silvestre:done": { 1: true } });
-  await row(page, 63).locator(".row-main").click();
+  await row(page, 63).locator(".row-num").click();
   await waitQuests(page);
   const j = page.locator("#journal");
   const names = await j.locator(".q-item .q-name").allInnerTexts();
@@ -533,7 +545,7 @@ test("el «Prólogo invernal» del 63 depende del alineamiento: no es la misión
 
 test("las misiones del paso enlazan su guía de Torrente Arcano aunque el texto no las nombre", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   const q = name => page.locator("#journal .q-item", { has: page.locator(".q-name", { hasText: new RegExp(`^${name}$`) }) });
   await expect(q("Destino Astrub").locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/destino-astrub", { timeout: 15_000 });
   await expect(q("Ver a Dark Vlad y morir\\.\\.\\. o no").locator(".q-guide")).toHaveAttribute("href", "https://www.torrentearcano.com/ver-a-dark-vlad-y-morir-o-no");
@@ -544,10 +556,10 @@ test("las misiones del paso enlazan su guía de Torrente Arcano aunque el texto 
 
 test("los objetos del paso 5 van en el 5, no en el 4 (Barnabé solo pide un combate)", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="4"] .row-main');
+  await page.click('.diary-row[data-n="4"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
   await expect(page.locator("#journal .journal-needs")).toHaveCount(0);
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const needs = page.locator("#journal .journal-needs");
   await expect(needs.locator(".slot")).toHaveCount(2);
   for (const k of ["384", "12073"]) await expect(needs.locator(`.slot[data-id="${k}"]`)).toHaveCount(1);
@@ -556,7 +568,7 @@ test("los objetos del paso 5 van en el 5, no en el 4 (Barnabé solo pide un comb
 test("los objetivos de una misión son una ruta de medallones con su avance", async ({ page }) => {
   // Paso 5, primera misión («Las primeras impresiones son engañosas», 894): vas por el 4.º objetivo
   await openApp(page, { "silvestre:questPos": { 5: 0 }, "silvestre:questObjective": { 894: 3 } });
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item", { hasText: "Las primeras impresiones" });
   await quest.locator("summary").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
@@ -577,7 +589,7 @@ test("los objetivos de una misión son una ruta de medallones con su avance", as
 
 test("con el paso hecho, todos sus objetivos salen hechos", async ({ page }) => {
   await openApp(page, { "silvestre:done": { 4: true, 5: true } });
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
   await page.locator("#journal .q-item").first().locator("summary").click();
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
@@ -588,7 +600,7 @@ const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.
 
 test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden desmarcar", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item").first();
   await quest.locator("summary").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
@@ -609,7 +621,7 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
 
 test("abrir una misión pliega la que estaba abierta: solo va una abierta", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
   await quests.nth(0).locator("summary .q-name").click();
@@ -622,7 +634,7 @@ test("abrir una misión pliega la que estaba abierta: solo va una abierta", asyn
 
 test("«Completar» en la misión abierta la pliega", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
   const open = () => quests.evaluateAll(els => els.filter(e => e.open).map(e => e.dataset.qid));
@@ -647,12 +659,12 @@ test("«Completar» en la misión abierta la pliega", async ({ page }) => {
 test("al abrir un paso todas sus misiones salen plegadas, también la de la parada y la que va en curso", async ({ page }) => {
   // Paso 17: la primera misión es la que va en curso y otra lleva la línea verde
   await openApp(page, { "silvestre:questPos": { 17: 0 } });
-  await page.click('.diary-row[data-n="17"] .row-main');
+  await page.click('.diary-row[data-n="17"] .row-num');
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
   expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
   // Una sola misión, igual
-  await page.click('.diary-row[data-n="4"] .row-main');
+  await page.click('.diary-row[data-n="4"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
   await expect(quests).toHaveCount(1);
   await expect(quests.first()).not.toHaveAttribute("open", "");
@@ -667,7 +679,7 @@ test("al abrir un paso todas sus misiones salen plegadas, también la de la para
 
 test("«hasta que puedas entrar a la mazmorra» pone la parada antes de entrar en ella", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
   await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Bodega del albergue");
@@ -689,8 +701,12 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
   // En el detalle, sin botones repetidos: el 5 dice en una línea dónde se termina, y el
   // 22 lleva al 5 desde la ficha de su aviso verde
   await expect(page.locator("#journal .badge.closed-in, #journal .badge.closes")).toHaveCount(0);
+  // Las notas van plegadas en fichas: se despliega la suya
+  await page.locator('#journal .call.closedin .call-head').click();
   await page.locator('#journal .call.closedin .step-ref[data-n="22"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("22");
+  // Las notas van plegadas en fichas: se despliega la suya
+  await page.locator('#journal .call.done .call-head').click();
   await page.locator('#journal .call.done .step-ref[data-n="5"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
 });
@@ -698,18 +714,19 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
 test("«se retoma más adelante» lleva al paso que actualiza la misión, y va antes de «se termina»", async ({ page }) => {
   await openApp(page);
   // El 54 pasa Kumijo y actualiza la misión del 53: el 53 lo dice y lleva al 54
-  await row(page, 53).locator(".row-main").click();
+  await row(page, 53).locator(".row-num").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("53");
   const resumed = page.locator("#journal .call.resumedin");
   await expect(resumed).toHaveCount(1);
-  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed).toContainText("Se retoma");
   await expect(resumed.locator("img")).toHaveAttribute("src", /\.png$/);
+  await resumed.locator('.call-head').click();
   await resumed.locator('.step-ref[data-n="54"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("54");
   // El 54 no se retoma en ningún otro
   await expect(page.locator("#journal .call.resumedin")).toHaveCount(0);
   // El 58 se retoma en el 59 y se termina en el 61: las dos líneas, en orden de paso
-  await row(page, 58).locator(".row-main").click();
+  await row(page, 58).locator(".row-num").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("58");
   const later = page.locator("#journal .call.resumedin, #journal .call.closedin");
   await expect(later).toHaveCount(2);
@@ -721,7 +738,7 @@ test("«se retoma más adelante» lleva al paso que actualiza la misión, y va a
 
 test("las coordenadas llevan la brújula del juego, no un símbolo", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="5"] .row-main');
+  await page.click('.diary-row[data-n="5"] .row-num');
   const chip = page.locator("#journal .coord-chip").first();
   await expect(chip.locator("img")).toHaveAttribute("src", /items\/126014\.png$/, { timeout: 15_000 });
   await expect(chip).not.toContainText("⌖");
@@ -729,7 +746,7 @@ test("las coordenadas llevan la brújula del juego, no un símbolo", async ({ pa
 
 test("la parada de Maxilubo (paso 10) cae antes del hueso que se consigue venciéndolo", async ({ page }) => {
   await openApp(page);
-  await row(page, 10).locator(".row-main").click();
+  await row(page, 10).locator(".row-num").click();
   const quest = page.locator("#journal .q-item", { hasText: "Encender la mecha" });
   await expect(quest.locator(".obj-stop")).toHaveCount(1, { timeout: 15_000 });
   await expect(quest.locator(".obj-stop")).toContainText("Hasta tener que pasar Maxilubo");
@@ -907,8 +924,8 @@ test("en la fila, el título usa todo el ancho y a la derecha van el Dofus o el 
   }
   const [tags, art] = [await box(22, ".row-tags"), await box(22, ".row-art img")];
   expect(art.x).toBeGreaterThanOrEqual(tags.x + tags.width - 0.5);
-  // El retrato, más grande que antes
-  expect(art.width).toBeGreaterThanOrEqual(36);
+  // El retrato, pequeño: la fila es baja (42 px) y la columna estrecha
+  expect(art.width).toBeGreaterThanOrEqual(26);
   // Sin etiquetas, el título llega hasta el retrato: el del 2 se lee entero
   const title = row(page, 2).locator(".row-title");
   expect(await title.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
@@ -977,9 +994,10 @@ test("la cabecera es corta: sin esfuerzo, «Incluye» en una línea y «Necesita
   await stepData(page, 1);
   const goal = page.locator("#journal .journal-goal");
   // Sin etiquetas ni relojes de arena: bajo el título no se dice el esfuerzo
-  await expect(goal.locator(".journal-meta, .badge, .goal-effort")).toHaveCount(0);
-  // «Incluye», una línea bajo el texto de la guía
-  await expect(goal.locator(".goal-calls .call.includes b")).toHaveText("Incluye");
+  await expect(goal.locator(".badge, .goal-effort")).toHaveCount(0);
+  await expect(goal.locator(".journal-meta")).not.toContainText(/esfuerzo|dificultad/i);
+  // «Incluye», una ficha bajo el texto de la guía
+  await expect(page.locator("#journal .journal-top .goal-calls .call.includes b")).toHaveText("Incluye");
   // «Necesitas» vuelve al cuerpo, antes de las misiones
   await expect(goal.locator(".journal-needs")).toHaveCount(0);
   await expect(page.locator("#journal .journal-body .journal-needs .slot")).toHaveCount(3);
@@ -1042,7 +1060,7 @@ const alignDiary = async page => {
 
 test("en escritorio el detalle se desplaza por dentro y la barra de pasos queda pegada a su pie", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
   await alignDiary(page);
   const detail = page.locator(".diary-detail");
@@ -1069,7 +1087,7 @@ test("en escritorio el detalle se desplaza por dentro y la barra de pasos queda 
 
 test("pasar de paso desde la barra, al final de un paso largo, vuelve al principio del detalle", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await expect(page.locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
   await alignDiary(page);
   await page.locator(".diary-detail").evaluate(el => el.scrollTo(0, el.scrollHeight));
@@ -1136,17 +1154,16 @@ test("a 1440×900, en el paso 12 el estandarte es compacto y al final del detall
   for (const b of bottoms) expect(b).toBeLessThanOrEqual(ctaTop + 0.5);
 });
 
-test("en el estandarte compacto, quien da el paso va en una línea bajo el objetivo", async ({ page }) => {
+test("en el estandarte compacto, quien da el paso va en la línea bajo el título", async ({ page }) => {
   await openApp(page);
   await stepData(page, 12);
   await expect(page.locator("#journal .journal-banner figcaption")).toBeHidden();
-  const by = page.locator("#journal .journal-goal .goal-by");
-  await expect(by).toBeVisible();
-  await expect(by).toHaveText("Inicia el paso: Profesor Max Ymillán");
-  await expect(by.locator("b")).toHaveText("Profesor Max Ymillán");
+  const meta = page.locator("#journal .journal-goal .journal-meta");
+  await expect(meta).toBeVisible();
+  await expect(meta).toContainText("Profesor Max Ymillán");
   // Con otras figuras, su propia etiqueta
   await stepData(page, 1);
-  await expect(by).toHaveText("Se gana: Dofawa");
+  await expect(meta).toContainText("Se gana: Dofawa");
   // El estandarte guarda el número, la zona y la figura, sin recortar nada
   const fits = await page.locator("#journal .journal-banner").evaluate(b => {
     const r = b.getBoundingClientRect();
@@ -1162,7 +1179,7 @@ test("el texto de la guía va con su rótulo, sin cita en cursiva ni flechas", a
   await openApp(page);
   await stepData(page, 1);
   const guide = page.locator("#journal .goal-guide");
-  await expect(guide.locator(".goal-guide-label")).toHaveText("Texto de la guía");
+  await expect(guide.locator(".goal-guide-label")).toHaveText("Qué hacer");
   await expect(guide.locator("img")).toHaveAttribute("src", /items\/25007\.png$/);
   const base = guide.locator(".journal-base");
   await expect(base).toHaveText("Misiones de mundo: Logro \"Pero ¿Dónde están los dofus?\"");
@@ -1177,7 +1194,8 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
   for (const [n, name] of [[27, "Star ski y Dutch"], [7, "Arma letal"]]) {
     await stepData(page, n);
     // Sin el número del logro: en el 27 es la 2.ª del logro pero la 1.ª del paso
-    await expect(page.locator("#journal .goal-calls .call.note")).toHaveText(new RegExp(`^Nota\\s*La misión «${name}» es opcional pero útil\\.$`, "i"));
+    await expect(page.locator("#journal .goal-calls .call.note b")).toHaveText("Nota");
+    await expect(page.locator("#journal .goal-calls .call.note .call-body")).toHaveText(new RegExp(`^La misión «${name}» es opcional pero útil\\.$`, "i"));
     const optional = page.locator("#journal .q-item .q-optional");
     await expect(optional).toHaveCount(1);
     await expect(page.locator("#journal .q-item", { has: page.locator(".q-optional") }).locator(".q-name")).toHaveText(new RegExp(name, "i"));
@@ -1212,11 +1230,12 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
   // El número y la zona, en el estandarte
   await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
   await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");
-  // Los avisos van en la cabecera, como líneas; en el cuerpo solo «Necesitas» y las misiones
-  await expect(goal.locator(".goal-calls .call.done")).toHaveCount(1);
+  // Los avisos van en la cabecera, en fichas; en el cuerpo solo las misiones y «Necesitas»
+  const calls = page.locator("#journal .journal-top .goal-calls .call");
+  await expect(page.locator("#journal .journal-top .goal-calls .call.done")).toHaveCount(1);
   await expect(page.locator("#journal .journal-body .call")).toHaveCount(0);
   await stepData(page, 28);
-  await expect(goal.locator(".goal-calls .call")).toHaveClass([/tip/, /done/, /must/]);
+  await expect(calls).toHaveClass([/tip/, /done/, /must/]);
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
@@ -1224,9 +1243,12 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
 test("la ventana de pasos abre con los Dofus del camino, conseguidos o apagados", async ({ page }) => {
   // Esmeralda (paso 18) y Púrpura (21); el 17 solo lleva "Verde esmeralda" hasta la misión 7
   await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
+  // En la barra, la cuenta; al pulsarla, los doce
+  await expect(page.locator("#roadBtn .road-count")).toHaveText("2/12");
+  await page.click("#roadBtn");
   const road = page.locator("#diary .steps-win #winRoad");
   await expect(road.locator(".road-title")).toHaveText("Dofus del camino");
-  await expect(road.locator(".road-count")).toHaveText("2/12");
+  await expect(road.locator(".road-total")).toHaveText("2/12");
   // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
   // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
   const dofus = road.locator(".road-dofus");
@@ -1254,27 +1276,28 @@ test("la ventana de pasos abre con los Dofus del camino, conseguidos o apagados"
 
 test("la ventana de pasos muestra el progreso global y lleva al siguiente pendiente", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 32) });
-  const pct = await page.locator("#heroPct").innerText();
+  const pct = await page.locator("#winPct").innerText();
   await expect(page.locator("#winPct")).toHaveText(pct);
   await expect(page.locator("#winDone")).toHaveText("32");
-  const fill = await page.locator("#winFill").evaluate(el => el.style.width);
-  expect(parseFloat(fill)).toBeCloseTo(parseFloat(pct), 1);
+  // El anillo se llena con el porcentaje
+  const ring = await page.locator(".win-ring").evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue("--p")));
+  expect(ring).toBeCloseTo(parseFloat(pct), 1);
   await expect(page.locator(".steps-win #diaryNext")).toContainText("33");
-  // Lleva al siguiente y deja la ventana a la vista, con su franja arriba
+  // Lleva al siguiente y deja la ventana a la vista, con su barra arriba
   await page.click("#diaryNext");
   await expect(page.locator("#journal .journal-num")).toHaveText("33");
-  await expect(page.locator("#winRoad")).toBeInViewport();
+  await expect(page.locator("#winBar")).toBeInViewport();
 });
 
 
-test("al recargar, la ventana sigue en el paso abierto; el hero, en el siguiente pendiente", async ({ page }) => {
+test("al recargar, la ventana sigue en el paso abierto; «Siguiente», en el siguiente pendiente", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 10) });
-  await row(page, 50).locator(".row-main").click();
+  await row(page, 50).locator(".row-num").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("50");
   await page.reload();
   await expect(page.locator("#journal .journal-num")).toHaveText("50");
   await expect(row(page, 50)).toHaveAttribute("aria-current", "step");
-  await expect(page.locator("#heroNext .journal-num")).toHaveText("11");
+  await expect(page.locator("#diaryNext")).toContainText("Siguiente: 11");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:selectedStep")))).toBe(50);
   // En el mapa también: abre la ficha del paso en el que estaba
   await page.click("#stepsViewMap");
@@ -1444,7 +1467,7 @@ test("el paso 47 pide el Filtro de amor, con su imagen, y no el Filtro de dragon
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openApp(page);
   // «En busca de un herrero» pide el objeto 33380 en DofusDB; la lista de la página lo llama de otra forma
-  await page.click('.diary-row[data-n="47"] .row-main');
+  await page.click('.diary-row[data-n="47"] .row-num');
   const slot = page.locator('#journal .journal-needs .slot[data-id="33380"]');
   await expect(slot.locator("img")).toHaveAttribute("src", /items\//);
   await slot.hover();
@@ -1459,34 +1482,34 @@ test("la lista del diario no lleva la miniatura de la zona y deja más ancho al 
   await expect(page.locator(".diary-row").first()).toBeVisible();
   await expect(page.locator(".diary-list .row-thumb")).toHaveCount(0);
   const side = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().width);
-  expect(side).toBeLessThanOrEqual(380);
-  // El título sigue teniendo el mismo sitio que antes, sin la miniatura
+  expect(side).toBeLessThanOrEqual(320);
+  // Sin la miniatura, el título se queda casi todo el ancho de la fila
   const title = await page.locator('.diary-row[data-n="4"] .row-title').evaluate(el => el.getBoundingClientRect().width);
-  expect(title).toBeGreaterThanOrEqual(200);
+  expect(title).toBeGreaterThanOrEqual(170);
 });
 
 test("un paso que se termina más adelante avisa bajo el botón de que no se marca todavía", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 9) });
   const wait = page.locator("#journal .cta-wait");
   // El 10 para «hasta tener que pasar Maxilubo» y lo termina el combate del 17
-  await row(page, 10).locator(".row-main").click();
+  await row(page, 10).locator(".row-num").click();
   await expect(wait).toHaveText("No lo marques todavía. Llega hasta donde indica y sigue; al completar el paso 17, este se marca con él.");
   // El 13 para, pero ningún paso lo cierra: se marca a mano
-  await row(page, 13).locator(".row-main").click();
+  await row(page, 13).locator(".row-num").click();
   await expect(wait).toHaveCount(0);
   // El 17 es el que cierra
-  await row(page, 17).locator(".row-main").click();
+  await row(page, 17).locator(".row-num").click();
   await expect(wait).toHaveCount(0);
   // Hecho el 10, sin aviso
-  await row(page, 10).locator(".row-main").click();
+  await row(page, 10).locator(".row-num").click();
   await page.click("#toggleBtn");
-  await row(page, 10).locator(".row-main").click();
+  await row(page, 10).locator(".row-num").click();
   await expect(wait).toHaveCount(0);
 });
 
 test("bajo «Misiones», las etapas se presentan como referencia y la guía de cada misión como el camino", async ({ page }) => {
   await openApp(page, { "silvestre:done": range(1, 9) });
-  await row(page, 10).locator(".row-main").click();
+  await row(page, 10).locator(".row-num").click();
   await waitQuests(page);
   const ref = page.locator("#journal .journal-quests > .journal-h + .q-howto");
   await expect(ref).toHaveText("Las etapas sirven para saber hasta dónde llegar en cada misión. Para saber adónde ir y qué hacer, abre su Guía de Torrente Arcano.");

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openApp, readLS } from "./helpers.js";
+import { openApp, openReset, readLS } from "./helpers.js";
 
 // Progreso guardado con la versión anterior de la guía (sin "silvestre:guide").
 // En la v4: el 41 junta los antiguos 41 y 90, el 69 junta 69 y 70, el antiguo 75
@@ -29,7 +29,7 @@ test("el progreso ya migrado no se toca", async ({ page }) => {
 
 test("una copia de seguridad de la versión anterior se migra al restaurarla", async ({ page }) => {
   await openApp(page);
-  await page.click("#resetBtn");
+  await openReset(page);
   const backup = { app: "silvestre-checklist", version: 1, exportedAt: "2026-01-01T00:00:00Z", data: { done: V3_DONE } };
   await page.setInputFiles("#rdFile", { name: "copia.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
   await expect.poll(async () => Object.keys(await readLS(page, "silvestre:done")).length).toBe(7);

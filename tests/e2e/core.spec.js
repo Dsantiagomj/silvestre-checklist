@@ -13,7 +13,7 @@ test("carga los 100 pasos con su arte y sin errores", async ({ page }) => {
 
 test("el detalle del paso 93 muestra su Dofus y objetos, sin «Recompensa» ni fichas de jefes", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   await expect(page.locator('.diary-row[data-n="93"]')).toHaveAttribute("aria-current", "step");
   await expect(page.locator("#journal .journal-show-name")).toHaveText("Dofus Marfil");
   await expect(page.locator("#journal .journal-reward")).toHaveCount(0);
@@ -25,20 +25,19 @@ test("el detalle del paso 93 muestra su Dofus y objetos, sin «Recompensa» ni f
 
 test("el detalle lista las misiones del paso cuando cargan", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   await expect(page.locator("#journal .journal-quests .journal-h")).toContainText("(10)", { timeout: 15_000 });
   await expect(page.locator("#journal .q-item")).toHaveCount(10);
   await expect(page.locator(".q-item .q-name").first()).toHaveText("El dragón blanco");
 });
 
-test("marcar un paso actualiza la fila, hero, ventana de pasos y almacenamiento", async ({ page }) => {
+test("marcar un paso actualiza la fila, la barra de la ventana y el almacenamiento", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   await page.click("#toggleBtn");
   await expect(page.locator('.diary-row[data-n="93"]')).toHaveClass(/done/);
-  await expect(page.locator("#statDone")).toHaveText("1");
   await expect(page.locator("#winDone")).toHaveText("1");
-  await expect(page.locator("#heroPct")).not.toHaveText(/^0%?$/);
+  await expect(page.locator("#winPct")).not.toHaveText(/^0%?$/);
   expect(await readLS(page, "silvestre:done")).toEqual({ "93": true });
   // «Paso hecho» ya llevó al 94; se desmarca desde la casilla de la fila
   await expect(page.locator("#journal .journal-num")).toHaveText("94");
@@ -52,7 +51,7 @@ test("«Completar paso» antes de que lleguen las misiones cierra lo mismo que c
   const held = new Promise(r => { release = r; });
   await page.route(/quests-[\w-]+\.js$/, async route => { await held; await route.continue(); });
   await openApp(page);
-  await page.click('.diary-row[data-n="93"] .row-main');
+  await page.click('.diary-row[data-n="93"] .row-num');
   await page.click("#toggleBtn");
   release();
   await expect(page.locator('.diary-row[data-n="93"]')).toHaveClass(/done/);

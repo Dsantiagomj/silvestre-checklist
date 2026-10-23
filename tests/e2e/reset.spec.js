@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import fs from "node:fs";
-import { openApp, readLS } from "./helpers.js";
+import { openApp, openReset, readLS } from "./helpers.js";
 
 const SEED = {
   "silvestre:done": { 1: true, 2: true, 3: true, 17: true, 19: true },
@@ -16,7 +16,7 @@ test("el diálogo muestra los conteos reales y exige elegir algo", async ({ page
   const total = Number(await page.locator("#itemsCount").textContent());
   await openApp(page, SEED);
   const pending = Number(await page.locator("#itemsCount").textContent());
-  await page.click("#resetBtn");
+  await openReset(page);
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator("#rdNSteps")).toHaveText("5");
   await expect(page.locator("#rdNPre")).toHaveText("2");
@@ -31,7 +31,7 @@ test("el diálogo muestra los conteos reales y exige elegir algo", async ({ page
 
 test("reiniciar borra solo lo elegido y se puede deshacer", async ({ page }) => {
   await openApp(page, SEED);
-  await page.click("#resetBtn");
+  await openReset(page);
   await page.click("#rdConfirm");
   await expect(page.locator("#toast")).toHaveClass(/show/, { timeout: 3_000 });
   await expect(page.locator("#resetDialog")).toBeHidden();
@@ -47,7 +47,7 @@ test("reiniciar borra solo lo elegido y se puede deshacer", async ({ page }) => 
 
 test("la copia descargada se puede restaurar tras un reinicio", async ({ page }, info) => {
   await openApp(page, SEED);
-  await page.click("#resetBtn");
+  await openReset(page);
   const [download] = await Promise.all([page.waitForEvent("download"), page.click("#rdBackup")]);
   const file = info.outputPath("copia.json");
   await download.saveAs(file);
@@ -68,7 +68,7 @@ test("la copia descargada se puede restaurar tras un reinicio", async ({ page },
   expect(await readLS(page, "silvestre:owned")).toMatchObject({ 421: true, 306: true });
   expect(await readLS(page, "silvestre:questObjective")).toEqual({});
 
-  await page.click("#resetBtn");
+  await openReset(page);
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click("#rdRestore")]);
   await chooser.setFiles(file);
   await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
@@ -90,20 +90,20 @@ async function dropFile(page, selector, name, content) {
 
 test("la copia de seguridad recuerda cuándo se hizo la última", async ({ page }) => {
   await openApp(page, SEED);
-  await page.click("#resetBtn");
+  await openReset(page);
   await expect(page.locator("#rdBackupWhen")).toContainText("Todavía no");
   await Promise.all([page.waitForEvent("download"), page.click("#rdBackup")]);
   await expect(page.locator("#rdBackupWhen")).toContainText("hace un momento");
   expect(await page.evaluate(() => localStorage.getItem("silvestre:lastBackup"))).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 
   await page.reload();
-  await page.click("#resetBtn");
+  await openReset(page);
   await expect(page.locator("#rdBackupWhen")).toContainText("Última copia");
 });
 
 test("soltar una copia sobre la tarjeta la restaura", async ({ page }) => {
   await openApp(page);
-  await page.click("#resetBtn");
+  await openReset(page);
   const copy = JSON.stringify({ app: "silvestre-checklist", version: 1, data: { done: { 5: true, 6: true }, prereqs: {}, owned: {}, questPos: {}, questObj: {} } });
   await dropFile(page, "#rdBackupCard", "copia.json", copy);
   await expect(page.locator("#toastTxt")).toHaveText("Copia restaurada.");
@@ -112,7 +112,7 @@ test("soltar una copia sobre la tarjeta la restaura", async ({ page }) => {
 
 test("una copia de antes, con la misión en curso, se restaura con las de antes completadas", async ({ page }) => {
   await openApp(page);
-  await page.click("#resetBtn");
+  await openReset(page);
   // Sin questModel: cada misión de antes de la que iba en curso contaba como terminada
   const copy = JSON.stringify({ app: "silvestre-checklist", version: 1, data: { guide: 4, done: { 5: true }, prereqs: {}, owned: {}, questPos: { 12: 2 }, questObj: { 1507: 2 } } });
   await dropFile(page, "#rdBackupCard", "copia.json", copy);
@@ -123,7 +123,7 @@ test("una copia de antes, con la misión en curso, se restaura con las de antes 
 
 test("un archivo que no es una copia muestra el error en la tarjeta", async ({ page }) => {
   await openApp(page, SEED);
-  await page.click("#resetBtn");
+  await openReset(page);
   await dropFile(page, "#rdBackupCard", "otra-cosa.json", JSON.stringify({ hola: "mundo" }));
   await expect(page.locator("#rdBackupCard")).toHaveAttribute("data-state", "error");
   await expect(page.locator("#rdBackupMsg")).toContainText("no es una copia");
@@ -134,7 +134,7 @@ test("un archivo que no es una copia muestra el error en la tarjeta", async ({ p
 test("con la guía completa, reiniciar solo los pasos conserva los prerrequisitos", async ({ page }) => {
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
-  await page.click("#resetBtn");
+  await openReset(page);
   await page.locator('#resetDialog input[name="prereqs"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
@@ -147,7 +147,7 @@ test("con la guía completa, reiniciar solo los pasos conserva los prerrequisito
 test("con la guía completa, conservar los objetos los deja marcados al reiniciar los pasos", async ({ page }) => {
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
-  await page.click("#resetBtn");
+  await openReset(page);
   await page.locator('#resetDialog input[name="owned"]').uncheck();
   await page.click("#rdConfirm");
   await expect(page.locator("#resetDialog")).toBeHidden({ timeout: 3_000 });
@@ -158,13 +158,13 @@ test("con la guía completa, conservar los objetos los deja marcados al reinicia
 
 test("reiniciar los pasos borra también el avance de las misiones, y deshacer lo devuelve", async ({ page }) => {
   await openApp(page, { ...SEED, "silvestre:questPos": { 1: 2 } });
-  await page.click("#resetBtn");
+  await openReset(page);
   await page.click("#rdConfirm");
   await expect(page.locator("#toast")).toHaveClass(/show/, { timeout: 3_000 });
   expect(await readLS(page, "silvestre:questObjective")).toEqual({});
   expect(await readLS(page, "silvestre:questPos")).toEqual({});
   // En el diario, los objetivos vuelven a empezar
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await page.locator("#journal .q-item").first().locator("summary").click();
   const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
