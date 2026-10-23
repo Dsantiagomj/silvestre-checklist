@@ -37,7 +37,6 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-from build_assets_js import mirror  # noqa: E402
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
 D = dofus.CONFIG
 
@@ -345,6 +344,9 @@ def main():
     used = {k for rows in steps.values() for row in rows for k, _ in row["a"]}
     items = {k: v for k, v in items.items() if k in used}
 
+    # Imported here: build_assets_js loads the big .build/data tables, which the tests
+    # (and CI) don't have
+    from build_assets_js import mirror
     results = mirror({it["img"] for it in items.values() if it["img"]})
     failed = {p for p, status in results if status not in ("ok", "cached")}
     for it in items.values():
