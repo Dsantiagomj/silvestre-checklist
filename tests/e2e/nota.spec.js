@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
-// En pantalla baja la nota va en un diálogo; en alta, en la página (al final)
+// La nota va siempre en un diálogo, que se abre desde el menú «⋯» o la «i» del paso
 test.use({ viewport: { width: 1280, height: 720 } });
 
 /** Abre la aclaración desde el menú «⋯» de la barra. */
@@ -161,22 +161,17 @@ test("el rebobinado parte del final, sin saltar al principio", async ({ page }) 
   expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
 });
 
-test("en pantalla alta la aclaración va en la página, antes de la ventana, siempre a la vista y se cuenta al verla", async ({ page }) => {
+test("en pantalla alta la aclaración también va en el diálogo, no en la página", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  const nota = page.locator(".wrap > #nota");
-  await expect(nota).toBeVisible();
-  await expect(page.locator("#notaClose, #notaDialog")).toHaveCount(0);
-  const order = await page.evaluate(() => ["#nota", "#diary"]
-    .map(sel => document.querySelector(sel).getBoundingClientRect().top + scrollY));
-  expect(order).toEqual([...order].sort((a, b) => a - b));
-  // Sin líneas encima ni debajo: el hero y la ventana ya tienen las suyas
-  for (const side of ["borderTopStyle", "borderBottomStyle"]) {
-    expect(await nota.evaluate((el, p) => getComputedStyle(el)[p], side)).toBe("none");
-  }
-  await nota.scrollIntoViewIfNeeded();
+  await expect(page.locator(".hero")).toBeVisible();
+  await expect(page.locator(".wrap > #nota")).toHaveCount(0);
+  await expect(page.locator("#notaDialog")).toBeHidden();
+  await openNota(page);
+  await expect(page.locator("#notaDialog #nota")).toBeVisible();
   await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
   await page.click("#notaSteps");
+  await expect(page.locator("#notaDialog")).toBeHidden();
   await expect(page.locator("#searchInput")).toHaveValue("hasta tener que pasar");
   await expect(page.locator("#diary")).toBeInViewport();
 });
