@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import { STEPS } from "@dofus/steps.js";
-import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
+import { SOLO_ROAD, STRIP_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 
@@ -24,26 +24,48 @@ function useDofusWon(listRef, countRef, won) {
 }
 
 /**
+ * La cabecera de la franja. Con Dofus del camino, cuántos van. Sin ellos (SOLO_ROAD, el
+ * Hielos) la franja lleva solo el del checklist: su nombre y en qué paso se consigue, o
+ * que ya se tiene.
+ */
+function RoadHead({ s, countRef }) {
+  if (SOLO_ROAD) {
+    const [d] = STRIP_ROAD;
+    return (
+      <div className="road-head">
+        <p className="road-title">El Dofus de la guía</p>
+        <b className="road-name">{d.name}</b>
+        <b className="road-count" ref={countRef}>{s.done[d.step] ? "¡Obtenido!" : `Paso ${d.step}`}</b>
+      </div>
+    );
+  }
+  const got = STRIP_ROAD.filter(d => s.done[d.step]).length;
+  return (
+    <div className="road-head">
+      <p className="road-title">Dofus del camino</p>
+      <b className="road-count" ref={countRef}>{got}/{STRIP_ROAD.length}</b>
+    </div>
+  );
+}
+
+/**
  * Franja de arriba de la ventana de pasos en pantalla alta (la primera fila de WinBar):
  * los Dofus que da la guía antes del Silvestre (cada uno se consigue en el paso que
- * completa su logro), el progreso global y el acceso al siguiente pendiente. En pantalla
- * baja la barra lo resume en una fila (WinProgress, RoadMenu).
+ * completa su logro), el progreso global y el acceso al siguiente pendiente. Sin Dofus
+ * del camino, el huevo del del checklist en grande (is-solo). En pantalla baja la barra
+ * lo resume en una fila (WinProgress, RoadMenu).
  */
 export default function WinStrip({ s }) {
-  const got = DOFUS_ROAD.filter(d => s.done[d.step]).length;
   const pct = progressPct(s);
   const next = nextPending(s);
   const listRef = useRef(null);
   const countRef = useRef(null);
   useDofusWon(listRef, countRef, s.dofusWon);
   return (
-    <div className="win-strip" id="winRoad">
-      <div className="road-head">
-        <p className="road-title">Dofus del camino</p>
-        <b className="road-count" ref={countRef}>{got}/{DOFUS_ROAD.length}</b>
-      </div>
+    <div className={"win-strip" + (SOLO_ROAD ? " is-solo" : "")} id="winRoad">
+      <RoadHead s={s} countRef={countRef} />
       <ul className="road-list" ref={listRef}>
-        {DOFUS_ROAD.map(d => {
+        {STRIP_ROAD.map(d => {
           const ok = !!s.done[d.step];
           // Pulsar uno abre su paso: es donde se consigue. "won" solo dura la celebración
           return (

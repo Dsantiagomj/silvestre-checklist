@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS } from "@dofus/steps.js";
-import { BRAND_ICON, DOFUS_ROAD, HEADER_ICONS, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, DOFUS_ROAD, HEADER_ICONS, SOLO_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { useDismiss } from "../lib/useDismiss.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
@@ -202,7 +202,8 @@ function MoreMenu({ onReset }) {
 /**
  * La barra de la ventana de los pasos, pegada arriba bajo la cabecera fija de la página
  * que aloja la app (--silvestre-top). En pantalla baja, una sola fila (dos o tres si no
- * cabe): el progreso, los Dofus del camino y «Siguiente»; las pestañas y sus
+ * cabe): el progreso, los Dofus del camino (sin ellos, como en el Hielos, nada: el anillo
+ * del progreso ya lleva el huevo del Dofus) y «Siguiente»; las pestañas y sus
  * herramientas; el overlay y el menú «⋯». En pantalla alta (lib/screen.js), dos: la
  * franja de los Dofus del camino de siempre (WinStrip) y, debajo, las pestañas, el
  * buscador entero, la zona, el overlay y el menú.
@@ -215,7 +216,7 @@ export default function WinBar({ s, tall, tabs, tools, onOverlay, onReset }) {
         {!tall && (
           <div className="win-bar-status">
             <WinProgress s={s} />
-            <RoadMenu s={s} />
+            {!SOLO_ROAD && <RoadMenu s={s} />}
             <NextButton s={s} />
           </div>
         )}
