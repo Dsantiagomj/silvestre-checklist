@@ -311,7 +311,8 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
         expect(Math.abs(m.list - first.list), JSON.stringify({ first, m })).toBeLessThanOrEqual(1);
       }
       // Cada parte del detalle, de arriba abajo, se ve entera y sin nada encima al bajar la página
-      for (const sel of ["#journal .journal-top", "#journal .q-item >> nth=0", "#journal .q-item >> nth=-1"]) {
+      // La cabecera de cada misión: una abierta, con sus etapas, puede ser más alta que la pantalla
+      for (const sel of ["#journal .journal-top", "#journal .q-head >> nth=0", "#journal .q-head >> nth=-1"]) {
         const el = app(page).locator(sel);
         await el.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" }));
         await page.waitForTimeout(100);

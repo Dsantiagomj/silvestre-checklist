@@ -10,7 +10,7 @@ const QUESTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/quests
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 const quest = (page, name) => page.locator("#journal .q-item")
   .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
-const btn = (page, name) => quest(page, name).locator(".q-done-btn");
+const btn = (page, name) => quest(page, name).locator(".q-check");
 
 async function openStep(page, n) {
   await row(page, n).locator(".row-num").click();
@@ -43,7 +43,6 @@ test("en la ruta de la madre, una línea dice qué hijas se hacen ahí y lleva a
   const errors = await openApp(page);
   await openStep(page, 83);
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary .q-lv").click();
   const kids = birk.locator(".obj-kids");
   await expect(kids).toHaveText(["Aquí se hace «Los enemigos de mis enemigos son mis enemigos»", "Aquí se hace «Los nanoinsumisos»"]);
   // No es una parada
@@ -69,9 +68,8 @@ test("en escritorio, llevar a una hija baja la página hasta ella, bajo la barra
   await page.waitForLoadState("networkidle");
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary").evaluate(el => el.click());
   // La madre, ya abierta del todo
-  await expect(birk).toHaveAttribute("open", "");
+  await expect(birk.locator(".obj-list").first()).toBeVisible();
   await page.waitForTimeout(600);
   const y = await page.evaluate(() => scrollY);
   // Sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
@@ -100,19 +98,17 @@ test("una madre que no para en el paso no se despliega ni dice dónde van sus hi
   await expect(nordalia.locator("summary, .obj-kids")).toHaveCount(0);
   // Sus hijas siguen en la lista, cada una con su fila
   for (const name of ["La felicidad está en campo rociado", "Una voz de cristal", "Muerto en vida", "El Guerrero Negro"]) {
-    await expect(quest(page, name).locator(".q-done-btn")).toHaveCount(1);
+    await expect(quest(page, name).locator(".q-check")).toHaveCount(1);
   }
 });
 
 test("solo con la hija en el mismo paso: «La bruja mala del Este» en el 38 no la nombra", async ({ page }) => {
   await openApp(page);
   await openStep(page, 38);
-  await quest(page, "La bruja mala del Este").locator("summary .q-lv").click();
   await expect(page.locator("#journal .obj-kids")).toHaveCount(0);
   // Una de solo tomarla no se hace: «La biblia de los rencores» no sale en «Birk, hija de Bork»
   await openStep(page, 83);
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary .q-lv").click();
   await expect(birk.locator(".obj-kids")).toHaveText(["Aquí se hace «Los enemigos de mis enemigos son mis enemigos»",
     "Aquí se hace «Los nanoinsumisos»"]);
 });
@@ -133,6 +129,6 @@ test("terminar una hija no da por terminada a la madre; al terminar la madre se 
   await expect(btn(page, "Un remedio draconiano")).toHaveAttribute("aria-pressed", "true");
   expect((await readLS(page, "silvestre:questPos"))["81"]).toBe(5);
   // La que sigue no se abre sola: queda plegada hasta que se abra a mano
-  await expect(quest(page, "El dragón de los vientos")).not.toHaveAttribute("open", "");
+  await expect(quest(page, "El dragón de los vientos").locator(".obj-list")).toHaveCount(0);
   await expect(row(page, 81)).not.toHaveClass(/\bdone\b/);
 });

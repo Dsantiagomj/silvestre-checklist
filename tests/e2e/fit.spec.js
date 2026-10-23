@@ -233,7 +233,7 @@ for (const [w, h] of SIZES.slice(0, 1)) {
   });
 }
 
-test("a 1440×900, al final de la página, abrir la última misión alarga la ventana sin mover la misión ni la página ni encoger la lista", async ({ page }) => {
+test("a 1440×900, al final de la página, deshacer la última misión la abre y alarga la ventana sin mover la misión ni la página ni encoger la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   // El 92: su última misión, «Los tótems de Maimane», para en el paso y se despliega
@@ -241,19 +241,22 @@ test("a 1440×900, al final de la página, abrir la última misión alarga la ve
   await expect(page.locator("#journal .journal-num")).toHaveText("92");
   await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
   await page.waitForLoadState("networkidle");
+  // Hecha, plegada: deshacerla la vuelve a abrir
+  await page.locator("#journal .q-item.is-expandable .q-check").last().evaluate(el => el.click());
+  await expect(page.locator("#journal .q-item").last().locator(".obj-list")).toHaveCount(0);
   await page.waitForTimeout(300);
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await page.waitForTimeout(100);
   const snap = () => page.evaluate(() => ({
     win: document.querySelector(".diary-window").getBoundingClientRect().height,
     side: document.querySelector(".diary-side").getBoundingClientRect().height,
-    sum: [...document.querySelectorAll("#journal .q-item summary")].at(-1).getBoundingClientRect().top,
+    sum: [...document.querySelectorAll("#journal .q-item.is-expandable .q-check")].at(-1).getBoundingClientRect().top,
     y: scrollY,
   }));
   const before = await snap();
   // Sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
-  await page.locator("#journal .q-item summary").last().evaluate(el => el.click());
-  await expect(page.locator("#journal .q-item").last()).toHaveAttribute("open", "");
+  await page.locator("#journal .q-item.is-expandable .q-check").last().evaluate(el => el.click());
+  await expect(page.locator("#journal .q-item").last().locator(".obj-list").first()).toBeVisible();
   await page.waitForTimeout(600);
   const after = await snap();
   const msg = JSON.stringify({ before, after });

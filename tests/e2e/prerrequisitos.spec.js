@@ -20,7 +20,7 @@ const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 // Por el nombre exacto: otras misiones nombran a esta en sus objetivos
 const quest = (page, name) => page.locator("#journal .q-item")
   .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
-const btn = (page, name) => quest(page, name).locator(".q-done-btn");
+const btn = (page, name) => quest(page, name).locator(".q-check");
 const done = (page, name) => expect(btn(page, name)).toHaveAttribute("aria-pressed", "true");
 const pending = (page, name) => expect(btn(page, name)).toHaveAttribute("aria-pressed", "false");
 
