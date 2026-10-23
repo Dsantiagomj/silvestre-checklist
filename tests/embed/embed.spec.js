@@ -141,6 +141,51 @@ test("en una pantalla ancha la app sale de la columna del bloque y usa el ancho 
   expect(win).toBeLessThanOrEqual(1600);
 });
 
+// popLayout (AnimatePresence) saca del flujo lo que se va con una regla CSS: si va al
+// <head> de la página no llega a la shadow root y lo que se va empuja a lo que llega
+test("al marcar un paso, el hero cambia de paso sin crecer ni empujar la ventana", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1250 });
+  await openHarness(page, { "silvestre:done": Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, true])) });
+  await page.waitForLoadState("networkidle");
+  await expect(app(page).locator(".hero")).toBeVisible();
+  const seen = await app(page).evaluate(async host => {
+    const R = host.shadowRoot;
+    const hero = R.querySelector(".hero"), win = R.getElementById("diary");
+    const h0 = hero.getBoundingClientRect().height, y0 = win.getBoundingClientRect().top;
+    R.querySelector('.diary-row[data-n="11"] .row-check').click();
+    let grew = 0, moved = 0;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 1200) {
+      await new Promise(r => requestAnimationFrame(r));
+      grew = Math.max(grew, hero.getBoundingClientRect().height - h0);
+      moved = Math.max(moved, Math.abs(win.getBoundingClientRect().top - y0));
+    }
+    return { grew, moved };
+  });
+  // Antes crecía ~90px a mitad del fundido (el paso que se iba seguía en el flujo)
+  expect(seen.grew).toBeLessThan(30);
+  expect(seen.moved).toBeLessThan(30);
+});
+
+test("del diario al mapa, la vista que se va sale del flujo y no empuja a la que llega", async ({ page }) => {
+  await openHarness(page);
+  await page.waitForLoadState("networkidle");
+  const seen = await app(page).evaluate(async host => {
+    const R = host.shadowRoot;
+    R.getElementById("stepsViewMap").click();
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const layers = [...R.querySelectorAll(".steps-stage > .steps-layer")];
+    const leaving = layers.find(l => l.hasAttribute("inert"));
+    const coming = layers.find(l => !l.hasAttribute("inert"));
+    return { layers: layers.length, position: leaving && getComputedStyle(leaving).position,
+      // En la maquetación (offsetTop, sin el zoom que las escala): las dos en el mismo sitio
+      sameTop: leaving && coming && Math.abs(leaving.offsetTop - coming.offsetTop) < 2 };
+  });
+  expect(seen.layers).toBe(2);
+  expect(seen.position).toBe("absolute");
+  expect(seen.sameTop).toBe(true);
+});
+
 test("las teclas y los clics dentro de la app llegan a su sitio", async ({ page }) => {
   await openHarness(page);
   // Un espacio en el buscador se escribe: no marca el paso abierto
