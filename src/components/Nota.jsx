@@ -22,9 +22,14 @@ const REWIND_MS = 450;
 
 const dialog = () => appRoot().getElementById("notaDialog");
 
-/** Abre la nota (desde el menú «⋯» o la «i» junto a las notas del paso). */
+/**
+ * Lleva a la nota (desde el menú «⋯» o la «i» junto a las fichas del paso): en pantalla
+ * baja la abre en su diálogo; en alta va en la página y se baja hasta ella.
+ */
 export function openNota() {
-  dialog()?.showModal();
+  const d = dialog();
+  if (d) return d.showModal();
+  appRoot().getElementById("nota")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
 }
 
 function showPaused() {
@@ -35,10 +40,11 @@ function showPaused() {
 
 /**
  * NOTA ACLARATORIA · qué significa "Hasta tener que pasar X jefe", con un ejemplo de la guía.
- * Es la clave para leer un tercio de los pasos, pero no ocupa sitio en la página: se abre
- * en un diálogo (openNota) y el ejemplo se cuenta al verlo.
+ * Es la clave para leer un tercio de los pasos: en pantalla alta va en la página, entre
+ * el hero y la ventana; en baja no ocupa sitio y se abre en un diálogo (NotaDialog). El
+ * ejemplo se cuenta al verlo.
  */
-function Nota() {
+export function Nota() {
   // run: 0 = aún sin ver; cada valor nuevo remonta la pista y repite la animación
   const [run, setRun] = useState(0);
   // La historia terminó (se puede repetir) o se está rebobinando para repetirla

@@ -134,9 +134,8 @@ test("al completar los 100 pasos se obtiene el Dofus", async ({ page }) => {
   await expect(page.locator(".hero h1.hero-title")).toHaveText("Checklist del Dofus Silvestre");
   expect(await page.locator(".hero h1").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(34);
   await expect(page.locator(".hero-sub")).toContainText("Los 100 pasos para obtener el Dofus Silvestre");
-  await expect(page.locator("#roadBtn .road-count")).toHaveText("12/12");
-  await page.click("#roadBtn");
   await expect(page.locator("#winRoad .road-dofus.obtained")).toHaveCount(12);
+  await expect(page.locator("#winRoad .road-count")).toHaveText("12/12");
   await expect(page.locator("#diaryNext")).toBeDisabled();
 });
 
@@ -301,7 +300,7 @@ test("el brillo del Dofus obtenido no deja un borde cuadrado en oscuro", async (
 });
 
 for (const [w, h] of [[1440, 900], [1920, 1080]]) {
-  test(`a ${w}×${h} el hero va encima de la ventana y la barra sigue en una sola fila`, async ({ page }) => {
+  test(`a ${w}×${h} el hero va encima de la ventana y la barra lleva la franja de los Dofus y una fila de herramientas`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await openApp(page);
     const hero = await page.locator(".hero").boundingBox();
@@ -312,11 +311,12 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
     // Sin cabecera de la app: el hero arranca arriba
     await expect(page.locator("header, .title-bar")).toHaveCount(0);
     expect(hero.y).toBeLessThanOrEqual(1);
-    const bar = await page.locator("#winBar").boundingBox();
-    expect(bar.height).toBeLessThanOrEqual(64);
-    for (const sel of ["#winProgress", "#roadBtn", "#diaryNext", '[role="tablist"]', "#searchInput", "#zoneBtn", "#overlayBtn", "#moreBtn"]) {
+    await expect(page.locator("#winBar > .win-strip .road-dofus")).toHaveCount(12);
+    const tools = await page.locator("#winBar > .win-bar-in").boundingBox();
+    expect(tools.height).toBeLessThanOrEqual(64);
+    for (const sel of ['[role="tablist"]', "#searchInput", "#zoneBtn", "#overlayBtn", "#moreBtn"]) {
       const b = await page.locator(sel).first().boundingBox();
-      expect(b.y + b.height, sel).toBeLessThanOrEqual(bar.y + bar.height + 0.5);
+      expect(b.y + b.height, sel).toBeLessThanOrEqual(tools.y + tools.height + 0.5);
     }
   });
 }

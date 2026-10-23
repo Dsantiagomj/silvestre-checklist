@@ -28,8 +28,8 @@ test("el CSS de la página no entra en la app ni el de la app sale a la página"
   const overlay = app(page).locator("#overlayBtn");
   expect(await style(overlay, "cursor")).toBe("pointer");
   expect(await style(overlay, "display")).not.toBe("inline");
-  // `img { max-width: 50% }`: el huevo del progreso no se encoge ni lleva su borde
-  const icon = app(page).locator(".win-ring img");
+  // `img { max-width: 50% }`: los huevos de la franja no se encogen ni llevan su borde
+  const icon = app(page).locator(".win-strip .road-dofus img").first();
   expect(await style(icon, "borderTopWidth")).toBe("0px");
   expect(await style(icon, "maxWidth")).not.toBe("50%");
   // Las variables de la página (--bg, --header-h) no pisan las de la app

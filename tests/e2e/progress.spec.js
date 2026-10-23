@@ -59,6 +59,8 @@ test("con el Dofus obtenido, prerrequisitos y objetos cuentan como completos", a
 });
 
 test("con los 100 pasos hechos, la barra dice que el Dofus está obtenido y los del camino, todos", async ({ page }) => {
+  // La barra compacta, la de las pantallas bajas
+  await page.setViewportSize({ width: 1280, height: 720 });
   const all = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [i + 1, true]));
   await openApp(page, { "silvestre:done": all });
   await expect(page.locator("#winPct")).toHaveText("100%");

@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
+// En pantalla baja la nota va en un diálogo; en alta, en la página (al final)
+test.use({ viewport: { width: 1280, height: 720 } });
+
 /** Abre la aclaración desde el menú «⋯» de la barra. */
 async function openNota(page) {
   await page.click("#moreBtn");
@@ -129,7 +132,7 @@ test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia a
 });
 
 test("con movimiento reducido el ejemplo muestra directamente el final", async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage();
   await openApp(page);
   await openNota(page);
@@ -156,4 +159,24 @@ test("el rebobinado parte del final, sin saltar al principio", async ({ page }) 
   await expect(page.locator(".nota-track")).toHaveClass(/\brewind\b/);
   // Al empezar a rebobinar todo sigue como al final: ✓ visibles y el jefe en gris
   expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
+});
+
+test("en pantalla alta la aclaración va en la página, antes de la ventana, siempre a la vista y se cuenta al verla", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  const nota = page.locator(".wrap > #nota");
+  await expect(nota).toBeVisible();
+  await expect(page.locator("#notaClose, #notaDialog")).toHaveCount(0);
+  const order = await page.evaluate(() => ["#nota", "#diary"]
+    .map(sel => document.querySelector(sel).getBoundingClientRect().top + scrollY));
+  expect(order).toEqual([...order].sort((a, b) => a - b));
+  // Sin líneas encima ni debajo: el hero y la ventana ya tienen las suyas
+  for (const side of ["borderTopStyle", "borderBottomStyle"]) {
+    expect(await nota.evaluate((el, p) => getComputedStyle(el)[p], side)).toBe("none");
+  }
+  await nota.scrollIntoViewIfNeeded();
+  await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
+  await page.click("#notaSteps");
+  await expect(page.locator("#searchInput")).toHaveValue("hasta tener que pasar");
+  await expect(page.locator("#diary")).toBeInViewport();
 });
