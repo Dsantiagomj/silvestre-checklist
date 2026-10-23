@@ -40,10 +40,13 @@ QUESTS = dofus.SRC / "quests.json"
 STEPS_JS = dofus.SRC / "steps.js"
 SITE = D.SITE
 
-# The page's own pattern (linkMissions), on the raw text instead of escaped HTML
+# The page's own pattern (linkMissions), on the raw text instead of escaped HTML. One
+# stop more than the page's: ", y el logro" ends the title too. Step 69 of the Hielos
+# ("misión: El dofus de los hielos, y el logro “Epílogo invernal”, misión: …") otherwise
+# reads "El dofus de los hielos, y el logro “Epílogo invernal" as one mission
 MISSION = re.compile(
     r"(Misi[oó]n(?:\s+de\s+orden)?(?:\s+\d+)?(?:\s*\([^)]*\))?\s*:\s*[\"“]?)"
-    r"([^<\n\[”\"]+?)(?=[\"”]?(?:\.|,\s*misi[oó]n|\s*\[\[|$))",
+    r"([^<\n\[”\"]+?)(?=[\"”]?(?:\.|,\s*misi[oó]n|,\s*y\s+el\s+logro|\s*\[\[|$))",
     re.I,
 )
 
