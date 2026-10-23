@@ -59,8 +59,8 @@ test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Comp
   await expect(luces.locator("summary, .obj-row")).toHaveCount(0);
   await expect(luces.locator("a.q-name")).toHaveAttribute("href", /^https:\/\/www\.torrentearcano\.com\//);
   // Solo tomarla no lleva «Completar»; la obligatoria sí
-  await expect(luces.locator(".q-done-btn")).toHaveCount(0);
-  await expect(quest(page, "Pesca en aguas congeladas").locator(".q-done-btn")).toHaveText("Completar");
+  await expect(luces.locator(".q-check")).toHaveCount(0);
+  await expect(quest(page, "Pesca en aguas congeladas").locator(".q-check")).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("#journal .q-take")).toHaveCount(1);
   await expect(page.locator("#journal .q-optional")).toHaveCount(0);
 
@@ -74,14 +74,13 @@ test("paso 28: terminar «Pesca en aguas congeladas» lleva a «Las joyas de la 
   await openApp(page, { "silvestre:done": upTo(27) });
   await openStep(page, 28);
   const pesca = quest(page, "Pesca en aguas congeladas");
-  await pesca.locator("summary .q-lv").click();
   await pesca.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
-  expect(await routeStates(pesca.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
+  // Terminada, se pliega
+  await expect(pesca.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
+  await expect(pesca.locator(".obj-list")).toHaveCount(0);
   expect((await readLS(page, "silvestre:questPos"))?.["28"]).toBe(1);
   // Terminadas las dos obligatorias, cuenta el paso entero
-  const joyas = quest(page, "Las joyas de la corona");
-  await joyas.locator("summary .q-name").click();
-  await joyas.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
+  await quest(page, "Las joyas de la corona").locator(".q-check").click();
   await expect(barPct(page)).toHaveText(`${pctOf(base(28))}%`);
 });
 
@@ -91,16 +90,16 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   const colera = quest(page, "La cólera de los dioses");
   const arma = quest(page, "Arma letal");
   // Las dos llevan «Completar», también la única obligatoria
-  await expect(colera.locator(".q-done-btn")).toHaveText("Completar");
-  const btn = arma.locator(".q-done-btn");
-  await expect(btn).toHaveText("Completar");
+  await expect(colera.locator(".q-check")).toHaveAttribute("aria-pressed", "false");
+  const btn = arma.locator(".q-check");
+  await expect(btn).toHaveAttribute("aria-pressed", "false");
 
   // Completar la opcional no mueve la misión en curso, pero pide terminada «La cólera de
   // los dioses»: con ella, la única obligatoria, el paso queda hecho solo. La opcional
   // sigue sin pesar
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
-  await expect(colera.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(colera.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator('.diary-row[data-n="7"]')).toHaveClass(/\bdone\b/);
   await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   expect((await readLS(page, "silvestre:questPos"))?.["7"] ?? 0).toBe(0);
@@ -110,8 +109,7 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   // Con el paso hecho, la cólera sale hecha y «Arma letal» sigue pendiente
   await openStep(page, 7);
   await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
-  await expect(colera.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await arma.locator("summary .q-lv").click();
+  await expect(colera.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(arma.locator(".obj-list.route > .obj-row"))).not.toMatch(/^d+$/);
   await expect(btn).toBeEnabled();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
@@ -121,7 +119,7 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   // Y se completa a mano, también con el paso hecho, sin mover el porcentaje
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
-  expect(await routeStates(arma.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
+  await expect(arma.locator(".obj-list")).toHaveCount(0);
   await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
@@ -137,23 +135,21 @@ test("paso 27: «La marcha de la emperatriz» suma sus puntos; «Star ski y Dutc
   await expect(barPct(page)).toHaveText(`${pctOf(base(26))}%`);
 
   // La opcional: ni el porcentaje ni la misión en curso se mueven
-  await star.locator(".q-done-btn").click();
-  await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await star.locator(".q-check").click();
+  await expect(star.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   await expect(barPct(page)).toHaveText(`${pctOf(base(26))}%`);
   expect((await readLS(page, "silvestre:questPos"))?.["27"] ?? 0).toBe(0);
-  await star.locator(".q-done-btn").click();
-  await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
+  await star.locator(".q-check").click();
+  await expect(star.locator(".q-check")).toHaveAttribute("aria-pressed", "false");
 
-  // La única obligatoria también lleva «Completar»; aquí se termina con su último
-  // medallón. Suma lo que vale y la opcional sigue sin hacer
-  await expect(marcha.locator(".q-done-btn")).toHaveText("Completar");
-  await marcha.locator("summary .q-lv").click();
+  // La única obligatoria también lleva su ✓; aquí se termina con su último medallón.
+  // Suma lo que vale y la opcional sigue sin hacer
+  await expect(marcha.locator(".q-check")).toHaveAttribute("aria-pressed", "false");
   const rows = marcha.locator(".obj-list.route > .obj-row");
   await rows.last().locator(".obj-med").click();
-  expect(await routeStates(rows)).toMatch(/^d+$/);
+  await expect(marcha.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   await expect(barPct(page)).toHaveText(`${pctOf(base(26) + WEIGHTS[27].q[1])}%`);
-  await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
-  await star.locator("summary .q-lv").click();
+  await expect(star.locator(".q-check")).toHaveAttribute("aria-pressed", "false");
   expect(await routeStates(star.locator(".obj-list.route > .obj-row"))).not.toMatch(/^d+$/);
 });
 
@@ -186,11 +182,10 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
   await expect(biblia.locator(".q-take")).toHaveText("Solo tomarla");
   for (const name of ["Los enemigos de mis enemigos son mis enemigos", "Los nanoinsumisos"]) {
     await expect(quest(page, name).locator(".q-take")).toHaveCount(0);
-    await expect(quest(page, name).locator(".q-done-btn")).toHaveCount(1);
+    await expect(quest(page, name).locator(".q-check")).toHaveCount(1);
   }
   // La parada roja, justo tras vencer a Dazahk y recibir «La biblia de los rencores»
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary .q-lv").click();
   await expect(birk.locator(".obj-stop")).toHaveCount(1);
   await expect(birk.locator(".obj-stop")).toContainText("Hasta justo después de pasar Dazahk Martegel");
   await expect(page.locator("#journal .obj-stop")).toHaveCount(1);
@@ -212,8 +207,8 @@ test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más 
   await openStep(page, 79);
   await expect(page.locator("#journal .q-item .q-take")).toHaveCount(0);
   const cosecha = quest(page, "La eterna cosecha");
-  await expect(cosecha.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
-  await expect(cosecha.locator(".q-done-btn")).toBeEnabled();
+  await expect(cosecha.locator(".q-check")).toHaveAttribute("aria-pressed", "false");
+  await expect(cosecha.locator(".q-check")).toBeEnabled();
   await expect(page.locator(".diary-row[data-n=\"79\"]")).not.toHaveClass(/\bdone\b/);
   // Y «Paso hecho» en el 79 la termina
   await page.locator("#toggleBtn").click();
@@ -224,7 +219,7 @@ test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más 
 test("paso 7: con el 93 hecho, «Arma letal» sale completada en el 93 y el 7 no se marca", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": { 93: true } });
   await openStep(page, 7);
-  const arma = quest(page, "Arma letal").locator(".q-done-btn");
+  const arma = quest(page, "Arma letal").locator(".q-check");
   await expect(arma).toHaveAttribute("aria-pressed", "true");
   await expect(arma).toHaveAttribute("title", "Completada en el paso 93");
   await expect(arma).toBeDisabled();

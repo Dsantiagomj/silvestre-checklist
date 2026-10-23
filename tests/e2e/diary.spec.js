@@ -185,7 +185,7 @@ const BUT_5 = () => {
   delete done[5];
   return done;
 };
-const questBtn = (page, name) => page.locator("#journal .q-item", { hasText: name }).locator(".q-done-btn");
+const questBtn = (page, name) => page.locator("#journal .q-item", { hasText: name }).locator(".q-check");
 
 test("«Completar» en el 22 termina la misión del 5 tras su parada y avisa de la que falta", async ({ page }) => {
   await openApp(page, { "silvestre:done": BUT_5() });
@@ -366,7 +366,6 @@ test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una
   const j = page.locator("#journal");
   // La misión 2 (paso 66) pide «De la mano» pasada la entrega de la cerveza
   const quest = j.locator(".q-item", { has: page.locator(".q-name", { hasText: "De la mano" }) });
-  await quest.locator("summary .q-lv").click();
   await expect(quest.locator(".obj-stop")).toHaveCount(1);
   await expect(quest.locator(".obj-stop")).toHaveText("Hasta poder entrar en la taberna");
   await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Habla con la diosa Pandawa a través de Pandawelo");
@@ -546,7 +545,7 @@ test("el «Prólogo invernal» del 63 depende del alineamiento: no es la misión
   for (const [name, slug] of [["El destino", "el-destino"], ["La fatalidad", "la-fatalidad"], ["La rivalidad", "la-rivalidad"]]) {
     await expect(q.locator(".q-start a", { hasText: name })).toHaveAttribute("href", `https://www.torrentearcano.com/${slug}`);
   }
-  const btn = q.locator(".q-done-btn");
+  const btn = q.locator(".q-check");
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   await expect(btn).toBeEnabled();
   // Pesa como una misión de nivel 50 con 6 objetivos
@@ -581,7 +580,6 @@ test("los objetivos de una misión que se despliega son una ruta de medallones c
   await openApp(page, { "silvestre:questPos": { 5: 1 }, "silvestre:questObjective": { 703: 3 } });
   await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
-  await quest.locator("summary .q-lv").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   // Medallón con un objeto del juego por tipo: carta para hablar, bolsa para entregar…
@@ -597,14 +595,13 @@ test("los objetivos de una misión que se despliega son una ruta de medallones c
   await expect(bring.locator(".obj-item")).toContainText("1 × Llave del Laboratorio de Brumen Tinctorias");
 });
 
-test("con el paso hecho, todos sus objetivos salen hechos", async ({ page }) => {
+test("con el paso hecho, sus misiones salen hechas y la de la parada, plegada", async ({ page }) => {
   await openApp(page, { "silvestre:done": { 4: true, 5: true } });
   await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
-  const rows = quest.locator(".obj-list.route > .obj-row");
-  await quest.locator("summary .q-lv").click();
-  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
-  expect(await rows.evaluateAll(els => els.every(el => el.classList.contains("done")))).toBe(true);
+  await expect(quest.locator(".q-check")).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+  await expect(quest.locator(".obj-list")).toHaveCount(0);
+  await expect(page.locator("#journal .q-check[aria-pressed=false]")).toHaveCount(0);
 });
 
 const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
@@ -614,7 +611,6 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   await openApp(page, { "silvestre:questPos": { 5: 1 } });
   await page.click('.diary-row[data-n="5"] .row-num');
   const quest = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
-  await quest.locator("summary .q-lv").click();
   const rows = quest.locator(".obj-list.route > .obj-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   expect(await routeStates(rows)).toMatch(/^n-+$/);
@@ -627,26 +623,21 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   expect(await routeStates(rows)).toMatch(/^dn-+$/);
   // El último de la misión la termina y la pliega; la siguiente no se abre sola
   await rows.last().locator("button.obj-med").click();
-  await expect(quest).not.toHaveAttribute("open", "");
-  expect(await routeStates(rows)).toMatch(/^d+$/);
-  expect(await page.locator("#journal .q-item").evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
+  await expect(quest.locator(".obj-list")).toHaveCount(0);
+  await expect(quest.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
 });
 
-test("abrir una misión pliega la que estaba abierta: solo va una abierta", async ({ page }) => {
-  // El 27 para en sus dos misiones: las dos se despliegan
+test("las misiones que paran en el paso van abiertas a la vez mientras no estén hechas", async ({ page }) => {
+  // El 27 para en sus dos misiones
   await openApp(page);
   await page.click('.diary-row[data-n="27"] .row-num');
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
-  await quests.nth(0).locator("summary .q-lv").click();
-  await expect(quests.nth(0)).toHaveAttribute("open", "");
-  await quests.nth(1).locator("summary .q-lv").click();
-  await expect(quests.nth(1)).toHaveAttribute("open", "");
-  await expect(quests.nth(0)).not.toHaveAttribute("open", "");
-  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(1);
+  await expect(quests.nth(0).locator(".obj-stop")).toBeVisible();
+  await expect(quests.nth(1).locator(".obj-stop")).toBeVisible();
 });
 
-test("«Completar» en la misión abierta la pliega", async ({ page }) => {
+test("completar la misión abierta la pliega y no toca las demás", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="27"] .row-num');
   const quests = page.locator("#journal .q-item");
@@ -654,41 +645,40 @@ test("«Completar» en la misión abierta la pliega", async ({ page }) => {
   const open = () => quests.evaluateAll(els => els.filter(e => e.open).map(e => e.dataset.qid));
   // La primera: se pliega y no se abre ninguna otra
   const first = quests.first();
-  await first.locator("summary .q-lv").click();
-  await expect(first).toHaveAttribute("open", "");
-  await first.locator(".q-done-btn").click();
-  await expect(first.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await expect(first).not.toHaveAttribute("open", "");
+  await expect(first.locator(".obj-list").first()).toBeVisible();
+  await first.locator(".q-check").click();
+  await expect(first.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
+  await expect(first.locator(".obj-list")).toHaveCount(0);
   await expect.poll(open).toEqual([]);
-  // La última, que se abre a mano: también se pliega
+  // La última, que seguía abierta: también se pliega
   const last = quests.last();
-  await last.locator("summary .q-lv").click();
-  await expect(last).toHaveAttribute("open", "");
-  await last.locator(".q-done-btn").click();
-  await expect(last.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await expect(last).not.toHaveAttribute("open", "");
+  await expect(last.locator(".obj-list").first()).toBeVisible();
+  await last.locator(".q-check").click();
+  await expect(last.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
+  await expect(last.locator(".obj-list")).toHaveCount(0);
   expect((await open()).length).toBeLessThanOrEqual(1);
 });
 
-test("al abrir un paso todas sus misiones salen plegadas, también la de la parada y la que va en curso", async ({ page }) => {
-  // Paso 17: la primera misión es la que va en curso y otra lleva la línea verde
+test("al abrir un paso solo va abierta la misión de la línea, no la que va en curso", async ({ page }) => {
+  // Paso 17: la primera misión es la que va en curso y la última lleva la línea verde
   await openApp(page, { "silvestre:questPos": { 17: 0 } });
   await page.click('.diary-row[data-n="17"] .row-num');
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
-  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
+  await expect(page.locator("#journal .obj-list")).toHaveCount(1);
+  await expect(quests.last().locator(".obj-resume")).toBeVisible();
   // Una sola misión, igual
   await page.click('.diary-row[data-n="4"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("4");
   await expect(quests).toHaveCount(1);
-  await expect(quests.first()).not.toHaveAttribute("open", "");
+  await expect(quests.first().locator(".obj-list")).toHaveCount(0);
   // Desde el mapa, igual
   await page.click("#journal .journal-to-map");
   await page.locator('.map-node[data-n="17"]').click();
   await page.locator("#mapCard .map-card-open").click();
   await expect(page.locator("#journal .journal-num")).toHaveText("17");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
-  expect(await quests.evaluateAll(els => els.filter(e => e.open).length)).toBe(0);
+  await expect(page.locator("#journal .obj-list")).toHaveCount(1);
 });
 
 test("«hasta que puedas entrar a la mazmorra» pone la parada antes de entrar en ella", async ({ page }) => {
@@ -1449,7 +1439,7 @@ test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una n
   // Opcional: no es de «Azul turquesa» y no impide que el 38 quede hecho (el 62 lo
   // arrastra), pero se puede completar desde aquí
   await expect(sombra.locator(".q-optional")).toHaveText("Opcional");
-  await expect(sombra.locator(".q-done-btn")).toHaveCount(1);
+  await expect(sombra.locator(".q-check")).toHaveCount(1);
   const note = sombra.locator(".q-note");
   await expect(note).toHaveText("Se puede hacer en cualquier momento antes del paso 80.");
   await note.locator('.step-ref[data-n="80"]').click();
@@ -1465,7 +1455,6 @@ test("las misiones que la guía deja a medias y no retoma lo dicen dentro: 13, 1
   for (const [n, name] of [[13, "El daño de Búril"], [15, "Su nombre es Ninguno"], [83, "Birk, hija de Bork"]]) {
     await stepData(page, n);
     const q = questItem(page, name);
-    await q.locator("summary .q-lv").click();
     await expect(q.locator(".q-note")).toHaveText(text);
     await expect(page.locator("#journal .q-note")).toHaveCount(1);
   }

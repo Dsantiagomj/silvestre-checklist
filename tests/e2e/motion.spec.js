@@ -317,7 +317,7 @@ test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page })
 /** Posición de la lista en cada fotograma, tras pintar, mientras se pulsan las cabeceras indicadas. */
 const listTops = (page, clicks) => page.evaluate(async clicks => {
   const box = document.querySelector(".diary-list");
-  const sums = document.querySelectorAll("#journal .q-item summary");
+  const sums = document.querySelectorAll("#journal .q-item.is-expandable .q-check");
   const out = [Math.round(box.getBoundingClientRect().top)];
   for (const k of clicks) {
     sums[k].click();
@@ -332,7 +332,7 @@ const listTops = (page, clicks) => page.evaluate(async clicks => {
 /** El alto de la lista en cada fotograma, tras pintar, mientras se pulsan las cabeceras indicadas. */
 const listHeights = (page, clicks) => page.evaluate(async clicks => {
   const box = document.querySelector(".diary-list");
-  const sums = document.querySelectorAll("#journal .q-item summary");
+  const sums = document.querySelectorAll("#journal .q-item.is-expandable .q-check");
   const out = [Math.round(box.getBoundingClientRect().height)];
   for (const k of clicks) {
     sums[k].click();
@@ -349,7 +349,7 @@ test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) 
   await openApp(page);
   // El 92: sus dos últimas misiones paran en el paso y se despliegan
   await page.click('.diary-row[data-n="92"] .row-num');
-  await page.locator("#journal .q-item summary").nth(1).waitFor({ timeout: 15_000 });
+  await page.locator("#journal .q-item.is-expandable .q-check").nth(1).waitFor({ timeout: 15_000 });
   // Con la sección arriba, bajo la cabecera de la página, como al ir a ella
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
   await page.waitForTimeout(600);
@@ -362,8 +362,8 @@ test("con el final del detalle a la vista, desplegar y plegar misiones no cambia
   await openApp(page);
   // El 43: la primera y la última misión paran en el paso y se despliegan
   await page.click('.diary-row[data-n="43"] .row-num');
-  await page.locator("#journal .q-item summary").nth(1).waitFor({ timeout: 15_000 });
-  await page.locator("#journal .q-item summary").first().click();
+  await page.locator("#journal .q-item.is-expandable .q-check").nth(1).waitFor({ timeout: 15_000 });
+  await page.locator("#journal .q-item.is-expandable .q-check").first().click();
   await page.waitForTimeout(600);
   // La página al final del detalle, como al bajar hasta las últimas misiones
   await page.evaluate(() => {
@@ -377,18 +377,20 @@ test("con el final del detalle a la vista, desplegar y plegar misiones no cambia
   expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
 });
 
-test("al final de la página, desplegar una misión no mueve la página ni la misión, ni cambia el alto de la lista", async ({ page }) => {
+test("al final de la página, deshacer una misión (se despliega) no mueve la página ni la misión, ni cambia el alto de la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 820 });
   await openApp(page);
   await page.click('.diary-row[data-n="11"] .row-num');
   await page.locator("#journal .q-item").nth(2).waitFor({ timeout: 15_000 });
+  // Hecha y plegada: deshacerla es lo que la despliega
+  await page.locator("#journal .q-item.is-expandable .q-check").first().evaluate(el => el.click());
   await page.waitForTimeout(800);
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await page.waitForTimeout(600);
   const frames = await page.evaluate(async () => {
     const side = document.querySelector(".diary-side");
     // La última del 11, «La risueña miaumiena», la única que se despliega
-    const sum = document.querySelectorAll("#journal .q-item summary")[0];
+    const sum = document.querySelectorAll("#journal .q-item.is-expandable .q-check")[0];
     const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top),
       top: Math.round(side.getBoundingClientRect().top), h: Math.round(side.offsetHeight) });
     const out = [snap()];
