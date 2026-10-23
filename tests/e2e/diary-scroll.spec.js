@@ -41,18 +41,22 @@ for (const [w, h, n] of [[1280, 720, 41], [1920, 1080, 1]]) {
     await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
 
     const y0 = await page.evaluate(() => scrollY);
+    const side0 = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().height);
     await page.evaluate(() => scrollBy({ top: 150, behavior: "instant" }));
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y0 + 100);
     await page.waitForTimeout(100);
     await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
-    // La lista sigue entera a la vista (pegada bajo la barra de la ventana, que tampoco se va)
+    // La barra de la ventana se queda; la lista, con su alto entero, pegada bajo ella o, al
+    // final de la ventana, yéndose con ella (nunca encoge)
     await expect(page.locator("#winBar")).toBeInViewport({ ratio: 1 });
     const r = await page.evaluate(() => ({
       bar: document.getElementById("winBar").getBoundingClientRect().bottom,
       side: document.querySelector(".diary-side").getBoundingClientRect(),
+      win: document.querySelector(".diary-window").getBoundingClientRect().bottom,
     }));
-    expect(r.side.top).toBeGreaterThanOrEqual(r.bar - 1.5);
+    expect(Math.abs(r.side.height - side0), JSON.stringify(r)).toBeLessThanOrEqual(1);
     expect(r.side.bottom).toBeLessThanOrEqual(h + 0.5);
+    expect(Math.abs(r.side.top - r.bar) <= 1.5 || Math.abs(r.side.bottom - r.win) <= 1.5, JSON.stringify(r)).toBe(true);
 
     // La lista, en cambio, se desplaza por dentro sin mover la página
     const y1 = await page.evaluate(() => scrollY);

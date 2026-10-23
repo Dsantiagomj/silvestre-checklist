@@ -2962,8 +2962,8 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
    la ventana. La columna de la lista se queda pegada bajo la barra de la ventana (que va
    bajo la cabecera de la página, --silvestre-top) y mide lo que queda de pantalla, menos
    los 8 px de aire de arriba y de abajo de la sección y el borde de la ventana: con la
-   sección alineada, lo mismo que la ventana más baja (--winbar-h lo mide DiaryWindow). Al
-   final de la ventana se acorta por abajo con ella (--diary-fit), sin meterse bajo la barra. Así la ventana nunca es más
+   sección alineada, lo mismo que la ventana más baja (--winbar-h lo mide DiaryWindow). No
+   encoge nunca: al final de la ventana se va con ella, entera. Así la ventana nunca es más
    baja que la lista y, con poco contenido, la barra de pasos va al pie del detalle con el
    hueco entre el contenido y ella. Con mucho, se queda pegada al pie de la pantalla
    mientras se baja y, al final, va tras el contenido. Nunca sube por encima de los
@@ -2979,12 +2979,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   }
   .diary-side{
     position:sticky; top:calc(var(--silvestre-top, 0px) + var(--winbar-h, 0px));
-    height:min(var(--diary-side-h), var(--diary-fit, 100vh));
-    /* Sin este margen, la ventana que acaba empujaría la lista hacia arriba, bajo la barra,
-       en el fotograma en que --diary-fit aún no se ha puesto al día: así lo que sobre queda
-       recortado al pie de la ventana y la lista no se mueve. El alto de la fila lo pone el
-       detalle (min-height) */
-    margin-bottom:calc(-1 * var(--diary-side-h));
+    height:var(--diary-side-h);
   }
   .diary-detail{ align-self:stretch; display:flex; flex-direction:column; min-height:var(--diary-side-h); }
   .diary-detail .journal, .diary-detail .journal-main{ flex:1 0 auto; display:flex; flex-direction:column; }
