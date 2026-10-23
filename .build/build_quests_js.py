@@ -36,6 +36,7 @@ import json
 import pathlib
 import re
 import sys
+import unicodedata
 import urllib.request
 
 ROOT = pathlib.Path(__file__).parent.parent
@@ -179,9 +180,10 @@ def achievement_quests(ach):
 
 
 UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
-NUMBERED = re.compile(r"misi[oó]n(?:es)?\s+(\d+)", re.I)
-# "misión: Birk, hija de Bork." (step 83): the mission by its name, no number
-BY_NAME = re.compile(r"misi[oó]n:\s*\"?([^\".(]+)", re.I)
+# "misión 4", "misión 4: Nombre" or, with no number, "misión: Birk, hija de Bork." (step 83)
+MENTION = re.compile(r"misi[oó]n(?:es)?(?:\s+(\d+))?(\s*:\s*\"?)?", re.I)
+# Names the guide misspells, as DofusDB writes them (per Dofus, in .build/dofus/<id>.py)
+MISSION_TYPOS = D.MISSION_TYPOS
 LOGRO = re.compile(r"\blogro\b", re.I)
 INCLUDES = re.compile(r"\bincluye\b", re.I)
 
@@ -224,23 +226,49 @@ def step_kinds(step, plan, achievements, ids):
 IN_TEXT_ORDER = D.IN_TEXT_ORDER  # per Dofus, in .build/dofus/<id>.py
 
 
+def plain(text):
+    """Lowercase words without accents or punctuation: "Frío… caliente…" and DofusDB's
+    "Frío... caliente..." read the same, and so do "El SLIP" and "El S.L.I.P."."""
+    text = "".join(c for c in unicodedata.normalize("NFD", text.lower()) if not unicodedata.combining(c))
+    return " ".join(re.sub(r"[^a-z0-9 ]+", "", re.sub(r"[\s\-–—:,;!¡?¿«»\"“”]+", " ", text)).split())
+
+
+def named_mission(after, names):
+    """The number of the mission whose name `after` starts with (the longest, so "Mel" does
+    not take "Mel odiosa"), or None."""
+    said = plain(after) + " "
+    hits = [(len(plain(name)), i + 1) for i, name in enumerate(names)
+            if name and plain(name) and said.startswith(plain(name) + " ")]
+    return max(hits)[1] if hits else None
+
+
 def missions_for(text, start, names=(), in_text_order=False):
     """Mission numbers referenced in the text segment that starts at `start`.
 
     The segment runs until the next "Logro" mention, so numbers are attributed to
-    the achievement they follow. With no number, "misión: Nombre" is the mission of
-    that name among `names` (the achievement's, in order). Returns None to mean "the
-    whole achievement".
+    the achievement they follow. "misión N: Nombre" is the mission of that name among
+    `names` (the achievement's, in order) when the guide's number is off (the Hielos one
+    counts "Los supervivientes de Frigost" one short from its 8th mission), and N when no
+    name matches (a misspelt one). With no number, "misión: Nombre" is the mission of
+    that name. Returns None to mean "the whole achievement".
     """
     nxt = LOGRO.search(text, start + 1)
     segment = text[start:nxt.start() if nxt else len(text)]
+    for wrong, right in MISSION_TYPOS.items():
+        segment = segment.replace(wrong, right)
     until = UNTIL.search(segment)
     if until:
         return list(range(1, int(until[1]) + 1))
-    nums = [int(n) for n in NUMBERED.findall(segment)]
-    if not nums:
-        wanted = [m.strip().lower() for m in BY_NAME.findall(segment)]
-        nums = [i + 1 for i, name in enumerate(names) if name and name.lower() in wanted]
+    nums, named = [], []
+    for m in MENTION.finditer(segment):
+        by_name = named_mission(segment[m.end():], names) if m[2] else None
+        if m[1]:
+            nums.append(by_name or int(m[1]))
+        elif by_name:
+            named.append(by_name)
+    # Mentions by name alone count only where the guide numbers none (step 1 of Hielos
+    # numbers its mission and then names the three it may be)
+    nums = nums or named
     if in_text_order:
         return list(dict.fromkeys(nums)) or None
     return sorted(set(nums)) or None
@@ -604,7 +632,7 @@ def prerequisites(step_quests, quests, alts, class_quests):
 
 
 def main():
-    report = json.loads((DATA / "step_assets.json").read_text())
+    report = json.loads((dofus.WORK / "step_assets.json").read_text())
     achievements = {a["id"]: a for a in json.loads((DATA / "achievements.json").read_text())}
     quests = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
 
