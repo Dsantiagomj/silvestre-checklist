@@ -3,6 +3,7 @@
 // ============================================================================
 import DATA from "@dofus/assets.json";
 import ZONES from "@dofus/zones.json";
+import DOFUS from "@dofus/config.js";
 
 export const ASSETS = DATA.STEP_ASSETS || {};
 export const PREREQ_ICONS = DATA.PREREQ_ICONS || {};
@@ -20,6 +21,13 @@ export const CALL_ICONS = DATA.CALL_ICONS || {};
 export const OBJ_ICONS = DATA.OBJ_ICONS || {};
 /** Los Dofus que da la guía antes del Silvestre: { name, img, step, achievement }. */
 export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
+/**
+ * Los Dofus de la franja de la ventana (WinStrip) y de su aviso al conseguirlos: los del
+ * camino o, si la guía no da ninguno antes (el Hielos), solo el del checklist, que se
+ * consigue en el paso egg.final de config.js. SOLO_ROAD dice que es este último.
+ */
+export const SOLO_ROAD = !DOFUS_ROAD.length && !!BRAND_ICON && DOFUS.egg.final != null;
+export const STRIP_ROAD = SOLO_ROAD ? [{ name: DOFUS.name, img: BRAND_ICON, step: DOFUS.egg.final }] : DOFUS_ROAD;
 
 const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
 
