@@ -315,9 +315,8 @@ npm run build:embed:hielos   # su embebido, en dist/embed/hielos.js
 Su sitio vive en `hielos/`, debajo del del Silvestre, y no lleva otra copia de `public/`:
 sus imágenes son las de la raíz (`__SITE_ROOT__` en `src/lib/assets.js`). Lleva sus propios
 favicons (`html.icons` en su `config.js`). Lo que cambia en pantalla sale de su
-`config.js`: el hero (`hero.fx` pone copos de nieve y `hero.npc` al Conde Kontatrás junto al
-huevo), el ejemplo de la nota y su pie (`nota.caption`) y los nombres del interruptor de
-tema (`themeNames`). La guía no da ningún Dofus antes del suyo, así que la franja de la
+`config.js`: el hero (`hero.fx` pone copos de nieve), el ejemplo de la nota y su pie
+(`nota.caption`) y los nombres del interruptor de tema (`themeNames`). La guía no da ningún Dofus antes del suyo, así que la franja de la
 ventana lleva solo el Dofus de los Hielos, que se consigue en el paso 69 (`egg.final`), y en
 pantalla baja no hay botón de Dofus del camino.
 
@@ -381,7 +380,7 @@ npm run test:hielos
 
 Construye su sitio en `.hielos-test/` y lo sirve en el puerto 4321 como en Pages
 (`tests/hielos/serve.js`): la app en `/hielos/` y las imágenes en la raíz. Comprueba lo que
-cambia de un Dofus a otro: los 70 pasos sin errores, el hero con el Conde Kontatrás, la
+cambia de un Dofus a otro: los 70 pasos sin errores, el hero con nieve, la
 franja de un solo Dofus, la pantalla baja y el móvil, la nota con el ejemplo de los pasos 8,
 12 y 13, el Dofus que se enciende al marcar el 69 y la misión con parada del paso 12.
 

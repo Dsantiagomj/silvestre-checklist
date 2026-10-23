@@ -31,8 +31,8 @@ test("el Hielos se monta en #hielos-root con sus 70 pasos, sin errores", async (
   const errors = await openHielos(page);
   expect(await app(page).evaluate(el => el.shadowRoot?.mode)).toBe("open");
   expect(await page.evaluate(() => document.querySelectorAll(".diary-row, .hero").length)).toBe(0);
-  // Pantalla alta: el hero con el Conde Kontatrás y la franja de un solo Dofus
-  await expect(app(page).locator(".hero-npc")).toBeVisible();
+  // Pantalla alta: el hero con nieve y la franja de un solo Dofus
+  await expect(app(page).locator(".hero")).toHaveClass(/\bfx-snow\b/);
   await expect(app(page).locator("#winRoad")).toHaveClass(/\bis-solo\b/);
   await expect(app(page).locator("#winRoad")).not.toContainText("0/0");
   // Las imágenes, de la raíz del sitio en Pages
