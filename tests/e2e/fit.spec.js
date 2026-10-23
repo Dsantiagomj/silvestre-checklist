@@ -221,7 +221,7 @@ for (const [w, h] of SIZES.slice(0, 1)) {
   });
 }
 
-test("a 1440×900, al final de la página, abrir la última misión alarga la ventana sin mover la lista, la misión ni la página", async ({ page }) => {
+test("a 1440×900, al final de la página, abrir la última misión alarga la ventana sin mover la misión ni la página ni encoger la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.locator('.diary-row[data-n="12"] .row-num').evaluate(el => el.click());
@@ -233,7 +233,7 @@ test("a 1440×900, al final de la página, abrir la última misión alarga la ve
   await page.waitForTimeout(100);
   const snap = () => page.evaluate(() => ({
     win: document.querySelector(".diary-window").getBoundingClientRect().height,
-    side: document.querySelector(".diary-side").getBoundingClientRect().top,
+    side: document.querySelector(".diary-side").getBoundingClientRect().height,
     sum: [...document.querySelectorAll("#journal .q-item summary")].at(-1).getBoundingClientRect().top,
     y: scrollY,
   }));

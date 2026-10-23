@@ -96,10 +96,12 @@ for (const [w, h, n] of [[1280, 720, 41], [1920, 1080, 1]]) {
       return {
         bar: R.getElementById("winBar").getBoundingClientRect(),
         side: R.querySelector(".diary-side").getBoundingClientRect(),
+        win: R.querySelector(".diary-window").getBoundingClientRect().bottom,
       };
     });
     expect(r.bar.top).toBeGreaterThanOrEqual(80);
-    expect(r.side.top).toBeGreaterThanOrEqual(r.bar.bottom - 1.5);
+    // La lista, pegada bajo la barra o, al final de la ventana, yéndose con ella
+    expect(Math.abs(r.side.top - r.bar.bottom) <= 1.5 || Math.abs(r.side.bottom - r.win) <= 1.5, JSON.stringify(r)).toBe(true);
     expect(r.side.bottom).toBeLessThanOrEqual(h + 0.5);
     // La lista se desplaza por dentro sin mover la página
     const y1 = await page.evaluate(() => scrollY);
@@ -289,6 +291,7 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
         return {
           y: scrollY, win: win.getBoundingClientRect().height, detail: detail.getBoundingClientRect().height,
           extra: detail.scrollHeight - detail.clientHeight, journal: R.getElementById("journal").getBoundingClientRect().height,
+          list: R.querySelector(".diary-list").getBoundingClientRect().height,
         };
       });
       const first = await measure();
@@ -304,6 +307,8 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
         const m = await measure();
         expect(Math.abs(m.win - first.win), JSON.stringify({ first, m })).toBeLessThanOrEqual(1);
         expect(Math.abs(m.detail - first.detail)).toBeLessThanOrEqual(1);
+        // La lista tampoco encoge: al final de la ventana se va con ella, entera
+        expect(Math.abs(m.list - first.list), JSON.stringify({ first, m })).toBeLessThanOrEqual(1);
       }
       // Cada parte del detalle, de arriba abajo, se ve entera y sin nada encima al bajar la página
       for (const sel of ["#journal .journal-top", "#journal .q-item >> nth=0", "#journal .q-item >> nth=-1"]) {

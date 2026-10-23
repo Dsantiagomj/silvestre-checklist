@@ -94,9 +94,7 @@ const Row = memo(function Row({ step, done, current, instant }) {
  * La ventana del diario (lista y detalle). En escritorio la lista se desplaza por dentro y
  * se queda pegada bajo la barra de la ventana; el detalle no tiene scroll propio y un paso
  * largo se lee bajando la página. El CSS necesita el alto de esa barra (--winbar-h), que
- * cambia con su ancho, y lo que queda de ventana bajo ella (--diary-fit): al final de la
- * ventana, la lista se acorta por abajo en vez de subir y meterse bajo la barra, que sigue
- * pegada. Al cambiar de paso, si el principio del detalle quedó por encima de
+ * cambia con su ancho. Al cambiar de paso, si el principio del detalle quedó por encima de
  * la barra, la página sube hasta él; si se ve, la página no se mueve.
  */
 function DiaryWindow({ step, children }) {
@@ -106,28 +104,11 @@ function DiaryWindow({ step, children }) {
     const win = ref.current;
     const bar = win.closest(".steps-win")?.querySelector("#winBar");
     if (!bar) return;
-    // Sin esperar a otro fotograma: el scroll llega una vez por fotograma, antes de pintar,
-    // y el ResizeObserver, tras maquetar y antes de pintar; un fotograma tarde, la lista
-    // asomaría un instante bajo la barra
-    const view = win.ownerDocument.defaultView;
-    const measure = () => {
-      win.style.setProperty("--winbar-h", `${bar.offsetHeight}px`);
-      const r = win.getBoundingClientRect();
-      win.style.setProperty("--diary-fit", `${Math.max(0, r.bottom - Math.max(r.top, bar.getBoundingClientRect().bottom))}px`);
-    };
+    const measure = () => win.style.setProperty("--winbar-h", `${bar.offsetHeight}px`);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(bar);
-    ro.observe(win);
-    // Lo de encima que cambia de alto (el hero) mueve la ventana sin cambiar la suya
-    ro.observe(win.ownerDocument.body);
-    view.addEventListener("scroll", measure, { passive: true });
-    view.addEventListener("resize", measure, { passive: true });
-    return () => {
-      ro.disconnect();
-      view.removeEventListener("scroll", measure);
-      view.removeEventListener("resize", measure);
-    };
+    return () => ro.disconnect();
   }, []);
   useLayoutEffect(() => {
     if (lastStep.current === step) return;
