@@ -6,6 +6,7 @@ import { useDismiss } from "../lib/useDismiss.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
 import { openNota } from "./Nota.jsx";
+import WinStrip from "./WinStrip.jsx";
 
 /** Icono de botón sacado de un objeto del juego; sin datos, cae al glifo de siempre. */
 function GameIcon({ path, fallback, kind }) {
@@ -196,20 +197,25 @@ function MoreMenu({ onReset }) {
 }
 
 /**
- * La barra de la ventana de los pasos, una sola fila (dos o tres si no cabe): el
- * progreso, los Dofus del camino y «Siguiente»; las pestañas y sus herramientas
- * (`children`); el overlay y el menú «⋯». Va pegada arriba, bajo la cabecera fija de la
- * página que aloja la app (--silvestre-top).
+ * La barra de la ventana de los pasos, pegada arriba bajo la cabecera fija de la página
+ * que aloja la app (--silvestre-top). En pantalla baja, una sola fila (dos o tres si no
+ * cabe): el progreso, los Dofus del camino y «Siguiente»; las pestañas y sus
+ * herramientas; el overlay y el menú «⋯». En pantalla alta (lib/screen.js), dos: la
+ * franja de los Dofus del camino de siempre (WinStrip) y, debajo, las pestañas, el
+ * buscador entero, la zona, el overlay y el menú.
  */
-export default function WinBar({ s, tabs, tools, onOverlay, onReset }) {
+export default function WinBar({ s, tall, tabs, tools, onOverlay, onReset }) {
   return (
-    <div className="win-bar" id="winBar">
+    <div className={"win-bar" + (tall ? " is-tall" : "")} id="winBar">
+      {tall && <WinStrip s={s} />}
       <div className="win-bar-in">
-        <div className="win-bar-status">
-          <WinProgress s={s} />
-          <RoadMenu s={s} />
-          <NextButton s={s} />
-        </div>
+        {!tall && (
+          <div className="win-bar-status">
+            <WinProgress s={s} />
+            <RoadMenu s={s} />
+            <NextButton s={s} />
+          </div>
+        )}
         <div className="win-bar-views">
           {tabs}
           {tools}

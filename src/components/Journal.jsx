@@ -17,6 +17,7 @@ import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
 import { openNota } from "./Nota.jsx";
+import { useTallScreen } from "../lib/screen.js";
 
 // Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
 // que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
@@ -116,6 +117,37 @@ function Goal({ step, done, s }) {
         </button>
       </div>
       <GuideText step={step} label="Qué hacer" />
+    </div>
+  );
+}
+
+/**
+ * El objetivo en pantalla alta, como antes de la versión compacta: «Ver en el mapa»
+ * arriba a la derecha, el logro y el título, el texto de la guía con sus avisos en
+ * bloques (GuideCalls) y, debajo, quién da el paso.
+ */
+function GoalTall({ step, done }) {
+  const plan = PLANS[step.n] || [];
+  const head = plan.find(e => e.t === "a");
+  const fig = bannerFigure(step.n);
+  return (
+    <div className="journal-goal">
+      <button type="button" className="journal-to-map is-corner" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z" /><path d="M7 3v12M13 5v12" /></svg>
+        Ver en el mapa
+      </button>
+      <div className="goal-head">
+        <span className="goal-ach">
+          {head?.img ? <img src={imgUrl(head.img)} alt="" /> : <QuestMark />}
+          {step.complete && <span className="is-complete" title="Logro completo">✓</span>}
+        </span>
+        <div>
+          {/* Sin enlace: la guía del logro ya va enlazada en el texto de la guía */}
+          <h2 className="journal-title">{stepTitle(step)}</h2>
+        </div>
+      </div>
+      <GuideCalls step={step} done={done} />
+      {fig && <p className="goal-by">{fig.as}: <b>{fig.name}</b></p>}
     </div>
   );
 }
@@ -223,7 +255,7 @@ function NoteChips({ step, done }) {
   if (!notes.length) return null;
   const paused = notes.some(x => x.kind === "stop" || x.kind === "closedin");
   return (
-    <div className={"goal-calls" + (notes.length > 3 ? " is-many" : "")}>
+    <div className={"goal-calls is-chips" + (notes.length > 3 ? " is-many" : "")}>
       {notes.map((x, i) => (
         <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
       ))}
@@ -625,6 +657,8 @@ export function Actions({ step, s }) {
 /** Detalle de un paso en el diario. Lo usan el panel (escritorio) y la hoja (móvil). */
 export default function Journal({ n, id }) {
   const s = useAppState();
+  // Pantalla alta: el detalle de antes; baja: el compacto (lib/screen.js)
+  const tall = useTallScreen();
   const leaving = useLeaving();
   const step = STEPS[n - 1];
   const quests = s.questsLoaded ? questsOf(n) : [];
@@ -634,19 +668,25 @@ export default function Journal({ n, id }) {
   useEffect(loadQuests, []);
 
   return (
-    <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
+    <article className={"journal" + (tall ? "" : " is-compact")} id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <div className="journal-top">
         <Banner step={step} />
-        <Goal step={step} done={!!s.done[n]} s={s} />
-        {/* Las notas, bajo el estandarte y el objetivo: a todo el ancho caben en una línea */}
-        <NoteChips step={step} done={!!s.done[n]} />
+        {tall ? <GoalTall step={step} done={!!s.done[n]} /> : (
+          <>
+            <Goal step={step} done={!!s.done[n]} s={s} />
+            {/* Las notas, bajo el distintivo y el objetivo: a todo el ancho caben en una línea */}
+            <NoteChips step={step} done={!!s.done[n]} />
+          </>
+        )}
       </div>
       {/* El cuerpo y la barra juntos: en escritorio, el tope hasta donde sube la barra pegada */}
       <div className="journal-main">
         <div className="journal-body">
-          {/* Después de qué hacer y sus notas: las misiones y, al final, lo que hay que reunir */}
+          {/* En alta, lo que hay que reunir antes de las misiones (como antes); en baja,
+              después de qué hacer y sus notas van las misiones y, al final, los objetos */}
+          {tall && <Needs n={n} s={s} />}
           <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
-          <Needs n={n} s={s} />
+          {!tall && <Needs n={n} s={s} />}
           <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
         </div>
         <Actions step={step} s={s} />

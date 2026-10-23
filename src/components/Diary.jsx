@@ -163,14 +163,14 @@ function DiaryList({ s, current }) {
 }
 
 /**
- * Buscador de pasos, en la barra de la ventana: una lupa que se despliega en el campo
- * al recibir el foco (con el teclado o al pulsarla) y se queda desplegada mientras
- * tenga algo escrito.
+ * Buscador de pasos, en la barra de la ventana. En pantalla alta (full), el campo
+ * entero; en baja, una lupa que se despliega en el campo al recibir el foco (con el
+ * teclado o al pulsarla) y se queda desplegada mientras tenga algo escrito.
  */
-function DiaryBar({ s }) {
+function DiaryBar({ s, full }) {
   return (
     <div className="diary-bar">
-      <SearchField className={"diary-search" + (s.filters.search ? " is-filled" : "")} id="searchInput" matchesId="searchMatches" clearId="searchClear"
+      <SearchField className={"diary-search" + (full ? " is-full" : "") + (s.filters.search ? " is-filled" : "")} id="searchInput" matchesId="searchMatches" clearId="searchClear"
         value={s.filters.search} onChange={setSearch} placeholder="Buscar paso por número o texto" label="Buscar paso"
         matches={STEPS.filter(st => stepMatchesFilters(s, st)).length} total={STEPS.length} />
     </div>
@@ -332,14 +332,14 @@ function ToolSet({ group, enter, reduce, children }) {
  * diario), dentro de la barra. Al ir a una lista se apagan mientras se apaga la vista
  * vieja, y vuelven con la vista nueva al volver a los pasos.
  */
-function StepsTools({ s, current, enter, reduce }) {
+function StepsTools({ s, current, enter, reduce, full }) {
   const steps = isStepsView(s.stepsView);
   return (
     <div className="win-bar-tools">
       <AnimatePresence initial={false}>
         {steps && (
           <ToolSet key="steps" group="steps" enter={enter} reduce={reduce}>
-            <DiaryBar s={s} />
+            <DiaryBar s={s} full={full} />
             <ZoneSeals s={s} current={current} />
           </ToolSet>
         )}
@@ -461,7 +461,7 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
  * pestañas, el overlay y el menú) y, en pestañas, el mapa del camino, el diario (lista y
  * detalle), los prerrequisitos y los objetos.
  */
-export default function Diary({ mobile, onOverlay, onReset }) {
+export default function Diary({ mobile, tall, onOverlay, onReset }) {
   const s = useAppState();
   useSlashToItems();
   const next = nextPending(s) ?? STEPS.length;
@@ -536,9 +536,9 @@ export default function Diary({ mobile, onOverlay, onReset }) {
       {/* Una sola ventana: arriba la barra (progreso, Dofus del camino, pestañas y sus
           herramientas, overlay y menú) y, debajo, lo que se elija */}
       <div className="steps-win">
-        <WinBar s={s} onOverlay={onOverlay} onReset={onReset}
+        <WinBar s={s} tall={tall} onOverlay={onOverlay} onReset={onReset}
           tabs={<WinTabs s={s} />}
-          tools={<StepsTools s={s} current={current} enter={mounted.current} reduce={reduce} />} />
+          tools={<StepsTools s={s} current={current} enter={mounted.current} reduce={reduce} full={tall} />} />
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null && flow ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>

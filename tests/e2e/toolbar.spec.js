@@ -1,6 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
+// La barra de una fila es la de las pantallas bajas (lib/screen.js); en las altas va la
+// franja de los Dofus encima (screens.spec.js)
+test.use({ viewport: { width: 1280, height: 720 } });
+
 /**
  * La ventana de los pasos lleva arriba una sola fila de herramientas: el progreso, los
  * Dofus del camino, «Siguiente», las pestañas, el buscador, la zona, el overlay y el

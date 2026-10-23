@@ -2,16 +2,20 @@ import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
 /**
- * El diario compacto: filas bajas en una columna estrecha y, en el detalle, primero qué
- * hacer, luego las notas en fichas que se despliegan, las misiones y los objetos. En
- * pantallas bajas el estandarte se queda en un distintivo junto al título.
+ * El diario compacto: filas bajas en una columna estrecha y, en pantallas bajas (menos
+ * de 900 px de alto o de 901 de ancho, lib/screen.js), un detalle con primero qué hacer,
+ * luego las notas en fichas que se despliegan, las misiones y los objetos, y el
+ * estandarte en un distintivo junto al título. En pantallas altas, el detalle de antes
+ * (screens.spec.js).
  */
+test.use({ viewport: { width: 1280, height: 720 } });
 
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 const waitQuests = page => expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
 
 test("la lista es compacta: filas de unos 42 px en una columna de unos 300 px", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   const side = await page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().width);
   expect(side).toBeGreaterThanOrEqual(280);
@@ -40,7 +44,7 @@ test("la lista es compacta: filas de unos 42 px en una columna de unos 300 px", 
   expect(visible).toBeGreaterThanOrEqual(15);
 });
 
-test("el detalle va en orden: cabecera, qué hacer, notas, misiones y objetos", async ({ page }) => {
+test("en pantalla baja el detalle va en orden: cabecera, qué hacer, notas, misiones y objetos", async ({ page }) => {
   await openApp(page);
   await row(page, 1).locator(".row-num").click();
   await waitQuests(page);
@@ -117,40 +121,28 @@ test("las acciones del paso se quedan fijas al pie del detalle", async ({ page }
   await expect(page.locator("#toggleBtn")).toBeVisible();
 });
 
-/** El alto del detalle: lo que decide entre el estandarte y el distintivo. */
-const detailHeight = page => page.locator(".diary-detail").evaluate(el => el.getBoundingClientRect().height);
-
-test("con poco alto para el detalle, el estandarte se queda en un distintivo de 48 px junto al título", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 640 });
-  await openApp(page, { "silvestre:done": upTo(40) });
-  await row(page, 41).locator(".row-num").click();
-  expect(await detailHeight(page)).toBeLessThan(620);
-  await expect(page.locator("#journal .journal-top .journal-banner")).toBeHidden();
-  // Solo el distintivo: el icono del logro junto al título sobra
-  await expect(page.locator("#journal .journal-top .goal-ach")).toBeHidden();
-  const badge = page.locator("#journal .journal-badge");
-  await expect(badge).toBeVisible();
-  await expect(badge.locator(".journal-badge-num")).toHaveText("41");
-  await expect(badge.locator("img")).toHaveAttribute("src", /\.(png|webp|jpg)$/);
-  const b = await badge.boundingBox();
-  expect(Math.round(b.width)).toBe(48);
-  expect(Math.round(b.height)).toBe(48);
-  const title = await page.locator("#journal .journal-title").boundingBox();
-  expect(title.x).toBeGreaterThan(b.x + b.width - 0.5);
-  expect(Math.abs(title.y + title.height / 2 - (b.y + b.height / 2))).toBeLessThan(30);
-  // Lo primero del detalle, qué hacer, a la vista sin desplazarlo
-  await expect(page.locator("#journal .goal-guide")).toBeInViewport({ ratio: 1 });
-});
-
-test("con sitio para el detalle (un portátil de 1279×804) va el estandarte de siempre", async ({ page }) => {
-  await page.setViewportSize({ width: 1279, height: 804 });
-  await openApp(page, { "silvestre:done": upTo(40) });
-  await row(page, 41).locator(".row-num").click();
-  expect(await detailHeight(page)).toBeGreaterThanOrEqual(620);
-  await expect(page.locator("#journal .journal-top .journal-banner")).toBeVisible();
-  await expect(page.locator("#journal .journal-badge")).toBeHidden();
-  await expect(page.locator("#journal .journal-top .goal-ach")).toBeVisible();
-});
+for (const [w, h] of [[1280, 720], [1279, 804]]) {
+  test(`a ${w}×${h} (pantalla baja) el estandarte se queda en un distintivo de 48 px junto al título`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await openApp(page, { "silvestre:done": upTo(40) });
+    await row(page, 41).locator(".row-num").click();
+    await expect(page.locator("#journal .journal-top .journal-banner")).toBeHidden();
+    // Solo el distintivo: el icono del logro junto al título sobra
+    await expect(page.locator("#journal .journal-top .goal-ach")).toBeHidden();
+    const badge = page.locator("#journal .journal-badge");
+    await expect(badge).toBeVisible();
+    await expect(badge.locator(".journal-badge-num")).toHaveText("41");
+    await expect(badge.locator("img")).toHaveAttribute("src", /\.(png|webp|jpg)$/);
+    const b = await badge.boundingBox();
+    expect(Math.round(b.width)).toBe(48);
+    expect(Math.round(b.height)).toBe(48);
+    const title = await page.locator("#journal .journal-title").boundingBox();
+    expect(title.x).toBeGreaterThan(b.x + b.width - 0.5);
+    expect(Math.abs(title.y + title.height / 2 - (b.y + b.height / 2))).toBeLessThan(30);
+    // Lo primero del detalle, qué hacer, a la vista sin desplazarlo
+    await expect(page.locator("#journal .goal-guide")).toBeInViewport({ ratio: 1 });
+  });
+}
 
 test("a 1920×1080 el detalle lleva el estandarte de siempre", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
