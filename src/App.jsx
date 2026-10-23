@@ -6,7 +6,7 @@ import {
 } from "./state/store.js";
 import { useMediaQuery } from "./lib/useMediaQuery.js";
 import { eventTarget } from "./lib/root.js";
-import NotaDialog, { Nota } from "./components/Nota.jsx";
+import NotaDialog from "./components/Nota.jsx";
 import Hero from "./components/Hero.jsx";
 import { useTallScreen } from "./lib/screen.js";
 import ClassicNotice from "./components/ClassicNotice.jsx";
@@ -45,8 +45,8 @@ function onKeyDown(e) {
 
 export default function App() {
   const mobile = useMediaQuery("(max-width: 900px)");
-  // Pantalla alta (lib/screen.js): el hero y la nota en la página. En las bajas ni se
-  // montan (el hero no carga su mapa) y la nota va en un diálogo
+  // Pantalla alta (lib/screen.js): el hero en la página. En las bajas ni se monta (no
+  // carga su mapa). La nota va siempre en su diálogo
   const tall = useTallScreen();
   const resetRef = useRef(null);
   const [overlayWin, openOverlay] = useOverlayWindow();
@@ -73,7 +73,6 @@ export default function App() {
         {/* Sin hero (que lleva el suyo), el título va solo para lectores de pantalla */}
         {!tall && <h1 className="sr-only">{DOFUS.texts.title}</h1>}
         <ClassicNotice />
-        {tall && <Nota />}
         <Diary mobile={mobile} tall={tall} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
         <footer>
           {DOFUS.texts.footerLead} <b>{DOFUS.texts.author}</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
@@ -83,7 +82,7 @@ export default function App() {
       </div>
       <BottomSheet mobile={mobile} />
       <ResetDialog ref={resetRef} />
-      {!tall && <NotaDialog />}
+      <NotaDialog />
       <Toast />
       <OverlayWindow win={overlayWin} />
     </>
