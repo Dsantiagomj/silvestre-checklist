@@ -50,6 +50,10 @@ export default {
   // El nombre de la ventana popup del overlay
   overlayWindow: "hielos-overlay",
 
+  // Lo que es cada icono del interruptor de tema (THEME_ICONS, .build/dofus/hielos.py): la
+  // guía no da otro Dofus que los represente, así que dos cosas de Frigost
+  themeNames: { light: "Copo de nieve", dark: "Kama de hielo" },
+
   // El embebido (src/embed.jsx): todavía sin página que lo aloje
   embed: { hostId: "hielos-root", topVar: "--hielos-top", fonts: "hielos-fonts", logName: "Checklist Hielos" },
 

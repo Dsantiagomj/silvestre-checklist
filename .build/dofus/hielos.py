@@ -88,9 +88,11 @@ HERO_MAPS = {"dark": "maps/1/112204547.jpg", "light": "maps/1/54167350.jpg"}
 # Header logo: the Dofus de los Hielos item itself.
 BRAND_ICON = "items/23005.png"
 
-# Theme switch: the same eggs as the Silvestre (Dofus Marfil and Dofus Ébano) until the
-# UI of this Dofus picks its own.
-THEME_ICONS = {"light": "items/23011.png", "dark": "items/23007.png"}
+# Theme switch: the guide hands out no other Dofus to stand for each theme (the
+# Silvestre's are Marfil and Ébano), so two things of Frigost: the Copo de nieve (item
+# 12845) for light and the Kama de hielo (11196, a reward of "Paseemos por el bosque",
+# step 8) for dark. Their names go in themeNames of src/dofus/hielos/config.js.
+THEME_ICONS = {"light": "items/153007.png", "dark": "items/24825.png"}
 
 # Prerequisites from the guide's introduction (the page has no step "0"). Jobs and
 # spells use their DofusDB ids: Herrero 11, Manitas 65, Sastre 27, Joyero 16, Minero 24.
@@ -163,12 +165,32 @@ LEVEL_FROM_MONSTERS = set()
 # ---------------------------------------------------------------------------
 # build_figures.py
 # ---------------------------------------------------------------------------
-# No curated figures yet (the UI of this Dofus picks them): each step shows the NPC that
-# starts it or, without one, the boss it resolves.
+# No curated figures by achievement: every achievement step has the NPC that starts it,
+# and no line has a face that stands for it better (the Silvestre's are the primordial
+# dragons). Each step shows that NPC or, without one, the boss it resolves (step 30, the
+# Tengu Gélifux).
 MERIANA = None
 DRAGON = None
 CURATED = {}
-STEP_FIGURE = {}
+
+# Step -> figure for the steps with no NPC of their own. Looks from DofusDB (npcs and
+# monsters), with a scale: the bare ones ({6205}) do not render.
+#   1: "Prólogo invernal" starts with the NPC of your alignment; its first objective is
+#      the boat to Frigost in the Bahía de Cania, Capitán Ardier's (he starts step 2).
+#   3–24, 27–42: "Agricultura o alquimia" starts with the theme you pick, no NPC. Its
+#      rows go to Mónica M'pesina (farmer) in Frigost I and to Ayfer Eales in Frigost II
+#      (the alchemists are Bisale Vinlenta and Eric Azaraille): the farmers stand for it.
+#   67: "Se busca: conde Kontatrás" has no start: the Conde Kontatrás himself.
+FARMING = "Agricultura o alquimia"
+_MONICA = ("monica-mpesina", "Mónica M'pesina", FARMING, "{6205|||100}")
+_AYFER = ("ayfer-eales", "Ayfer Eales", FARMING, "{6206|||100}")
+STEP_FIGURE = {
+    "1": ("npc-1236", "Capitán Ardier", "El barco a Frigost",
+          "{1|30,2044,454|5=#c8c8c9,2=#ffffce,4=#c7c43a,1=#f3bc5e,3=#769eae,6=#773F29|43}"),
+    **{str(n): _MONICA for n in (3, 7, 10, 19, 22, 24)},
+    **{str(n): _AYFER for n in (27, 31, 38, 42)},
+    "67": ("conde-kontatras", "Conde Kontatrás", "Se busca: conde Kontatrás", "{2069|||150}"),
+}
 
 # Step 58 opens with "Al maestro, cuchillada" (STEP_EXTRA), taken from André Davul; the
 # banner is the one of the step's own quest, "Más allá de la muralla" (Hazieff Tarún).
