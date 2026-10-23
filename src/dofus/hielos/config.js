@@ -80,6 +80,8 @@ export default {
     closer: 13,
     pauseAt: { 8: 0.5, 12: 1.2 },
     checkAt: { 13: 3.6, 12: 4.3, 8: 5.0 },
+    // El pie de foto del ejemplo; {boss} es el jefe del paso que cierra (Morsagüino Real)
+    caption: "Los pasos 8 y 12 se detienen ante el {boss}. En el 13 se pasa la mazmorra y se terminan los tres.",
   },
 
   journal: {

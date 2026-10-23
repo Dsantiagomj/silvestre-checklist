@@ -88,6 +88,8 @@ export default {
     closer: 45,
     pauseAt: { 43: 0.5, 44: 1.2 },
     checkAt: { 45: 3.6, 44: 4.3, 43: 5.0 },
+    // El pie de foto del ejemplo; {boss} es el jefe del paso que cierra (Kodámade)
+    caption: "Los pasos 43 y 44 se detienen ante {boss}. En el 45 se pasa la mazmorra y se terminan los tres.",
   },
 
   journal: {
