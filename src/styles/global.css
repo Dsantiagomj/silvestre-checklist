@@ -55,7 +55,7 @@
   --radius-lg: 12px;
   --radius-sm: 6px;
   --sticky-h:  44px;
-  --maxw:      1320px;
+  --maxw:      1440px;
 
   /* Tipografía */
   --font-display: 'Barlow Condensed', 'Barlow', 'Arial Narrow', system-ui, sans-serif;
@@ -496,7 +496,7 @@ input,select,textarea{font-family:inherit; color:inherit}
 /* Embebida, lo que va fijo a la ventana pasa por encima de la cabecera fija de la página */
 /* Embebida va de borde a borde de la ventana (src/embed.jsx): más ancho que la página
    propia, con tope para que en un monitor muy ancho la lista y el detalle no se estiren */
-.is-embed{ --maxw:1600px; }
+.is-embed{ --maxw:1720px; }
 .is-embed .sheet-overlay{ z-index:2147483000; }
 .is-embed .sheet{ z-index:2147483001; }
 .sheet-handle{

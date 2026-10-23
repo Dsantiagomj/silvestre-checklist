@@ -130,3 +130,14 @@ test("al redimensionar entre 1440×900 y 1280×720 se pasa de una versión a la 
   await expect(page.locator("#journal .journal-top .journal-banner")).toBeVisible();
   expect(await sections(page)).toEqual(["journal-needs", "journal-quests"]);
 });
+
+test("a 1920×1080 la ventana de pasos va algo más ancha que el hero, con tope de 1440 px", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await openApp(page);
+  const win = (await page.locator("#diary").boundingBox()).width;
+  expect(win).toBeGreaterThan(1360);
+  expect(win).toBeLessThanOrEqual(1440);
+  // Centrada en la pantalla
+  const x = (await page.locator("#diary").boundingBox()).x;
+  expect(Math.abs(x - (1920 - x - win))).toBeLessThanOrEqual(2);
+});
