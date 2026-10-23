@@ -6,17 +6,19 @@ import { setSearch, showStepsWindow } from "../state/store.js";
 import { appRoot } from "../lib/root.js";
 import DOFUS from "@dofus/config.js";
 
-// La instrucción que explica la nota, tal como la escribe Sandglass en los pasos
+// La instrucción que explica la nota, tal como la escribe la guía en los pasos
 const PHRASE = "hasta tener que pasar";
 const PAUSED = STEPS.filter(s => s.text.toLowerCase().includes(PHRASE)).length;
 
-// Ejemplo real (nota en config.js): los pasos 43 y 44 se detienen ante Kodámade; el 45
-// pasa la mazmorra y "se terminan las misiones de los incisos 43, 44 y 45"
+// Ejemplo real (nota en config.js): en el Silvestre, los pasos 43 y 44 se detienen ante
+// Kodámade; el 45 pasa la mazmorra y "se terminan las misiones de los incisos 43, 44 y 45"
 const EXAMPLE = { paused: DOFUS.nota.paused, closer: DOFUS.nota.closer };
 const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
+// El pie de foto, con el jefe del paso que cierra donde dice {boss}
+const CAPTION = DOFUS.nota.caption.replace("{boss}", BOSS?.name ?? "el jefe");
 // Cuándo pasa el punto por cada casilla en pausa y la deja marcada (s)
 const PAUSE_AT = DOFUS.nota.pauseAt;
-// Cuándo se marca cada casilla (s): primero el 45 al vencer al jefe, luego hacia atrás
+// Cuándo se marca cada casilla (s): primero la del que cierra al vencer al jefe, luego hacia atrás
 const CHECK_AT = DOFUS.nota.checkAt;
 // Lo que tarda el rebobinado antes de repetir (ms); igual que en el CSS
 const REWIND_MS = 450;
@@ -69,7 +71,7 @@ export function Nota() {
       setRun(r => r + 1);
     }, REWIND_MS);
   };
-  // La última ✓ (la del 43) cierra la historia
+  // La última ✓ (la del primero en pausa: el 43 en el Silvestre) cierra la historia
   const onAnimationEnd = e => {
     if (e.animationName === "nota-check" && e.target.dataset.last) setEnded(true);
   };
@@ -88,9 +90,7 @@ export function Nota() {
           <span className="nota-boss">{BOSS && <img src={imgUrl(BOSS.img)} alt="" />}</span>
           <span className="nota-step closer" style={{ "--check-at": `${CHECK_AT[EXAMPLE.closer]}s` }}>{EXAMPLE.closer}</span>
         </div>
-        <figcaption>
-          Los pasos 43 y 44 se detienen ante {BOSS?.name ?? "el jefe"}. En el 45 se pasa la mazmorra y se terminan los tres.
-        </figcaption>
+        <figcaption>{CAPTION}</figcaption>
       </figure>
       <div className="nota-body">
         <h2 className="nota-title" id="notaTitle">Hasta tener que pasar X jefe de mazmorra</h2>
