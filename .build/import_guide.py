@@ -36,7 +36,8 @@ reminder about step 63).
 
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
-split out of an old one use SPLIT_TIERS.
+split out of an old one use SPLIT_TIERS. A guide with no previous version gives them
+by hand (STEP_ZONE: step -> (zone, tier)).
 """
 import json
 import pathlib
@@ -52,6 +53,7 @@ SNAPSHOT = dofus.LISTS / "torrentearcano.json"
 
 TIER_ORDER = ["trivial", "corto", "medio", "largo", "epico"]
 SPLIT_TIERS = D.SPLIT_TIERS  # per Dofus, in .build/dofus/<id>.py
+STEP_ZONE = D.STEP_ZONE  # per Dofus, in .build/dofus/<id>.py
 
 
 def js_value(html, name):
@@ -111,7 +113,7 @@ def unwrap(text):
 def mark_text(raw):
     """A mark on its own: no leading punctuation, no wrapping parentheses and no
     "(Completo)", which is a property of the step (see complete), not advice."""
-    text = unwrap(COMPLETE.sub("", unwrap(clean(raw).lstrip(".,; "))))
+    text = unwrap(COMPLETE.sub("", unwrap(clean(raw).lstrip(".,; "))).lstrip(".,; "))
     return text[:1].upper() + text[1:]
 
 
@@ -136,11 +138,18 @@ def base(raw):
     return re.sub(r"\s+([.,;:])", r"\1", text).strip()
 
 
-CLAUSE = re.compile(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)")
+# "…y actualiza la etapa 36" (Hielos, step 41) has no "se": the verb starts the clause
+CLAUSE = re.compile(r",\s*(?=(?:y\s+)?se\s)|\.\s+|\s+y\s+(?=se\s)|\s+y\s+(?=actualiza)")
 
+# How a guide names its steps: Silvestre's "inciso(s)", the Hielos one's "etapa(s)"
+STEP_WORD = r"(?:incisos?|etapas?)"
+# The steps it names: "33", "9, 10 y 11"; what follows is no step ("…de Frigost 3")
+STEP_LIST = r"\d+(?:\s*(?:,|y)\s*\d+)*"
 
-# In a blue mark, only a clause that is the statement itself
-STATED = re.compile(r"^\(?se\s+(?:terminan?|completan?|actualizan?)\s+las?\s+misi[oó]n(?:es)?\s+de(?:l|\s+los)\s+incisos?\b", re.I)
+# In a blue mark, only a clause that is the statement itself. Hielos may leave out "las
+# misiones de" ("Se terminan las etapas 3 y 6")
+STATED = re.compile(r"^\(?se\s+(?:terminan?|completan?|actualizan?)\s+"
+                    r"(?:las?\s+misi[oó]n(?:es)?\s+de(?:l|\s+los|\s+las?)\s+|las?\s+)" + STEP_WORD + r"\b", re.I)
 
 
 def clauses(raw):
@@ -162,7 +171,7 @@ def closes(n, raw):
     found = list(CLOSES.get(n, []))
     for clause in clauses(raw):
         if re.search(r"termin|complet", clause) and not re.search(r"actualiza|opcional", clause):
-            after = re.search(r"incisos?\s+(.*)", clause)
+            after = re.search(STEP_WORD + r"\s+(" + STEP_LIST + ")", clause)
             if after:
                 found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
     return sorted(set(found))
@@ -176,7 +185,7 @@ def updates(n, raw):
     ones UPDATES adds."""
     found = list(UPDATES.get(n, []))
     for clause in clauses(raw):
-        after = re.search(r"actualiza\s+la\s+misi[oó]n\b.*?\bincisos?\s+(.*)", clause)
+        after = re.search(r"actualiza\s+la\s+(?:misi[oó]n\b.*?\b)?" + STEP_WORD + r"\s+(" + STEP_LIST + ")", clause)
         if after:
             found += [int(x) for x in re.findall(r"\d+", after.group(1)) if int(x) != n]
     return sorted(set(found))
@@ -242,7 +251,9 @@ def main(page):
 
     lines = []
     for n, (text, raw, prev) in enumerate(zip(texts, raws, previous), 1):
-        if imported:
+        if n in STEP_ZONE:
+            zone, effort = STEP_ZONE[n]
+        elif imported:
             zone, effort = old[n]["zone"], old[n]["effort"]
         elif n in SPLIT_TIERS:
             zone, effort = old[prev[0]]["zone"], SPLIT_TIERS[n]

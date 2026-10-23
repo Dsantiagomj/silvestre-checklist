@@ -26,6 +26,10 @@ PREVIOUS_REQUIRED = True
 # Old step 75 bundled four Selocalipsis achievements; v4 gives each its own step.
 SPLIT_TIERS = {74: "largo", 75: "largo", 76: "largo", 77: "medio"}
 
+# Zone and effort tier by hand (step -> (zone, tier)): none, every step keeps the ones of
+# the previous version of the guide
+STEP_ZONE = {}
+
 # Earlier steps a step finishes that its text does not name. Step 87 finishes "Las
 # cuatro voluntades", which step 73 leaves at its 2nd objective: its quests need
 # "Toma de conciencia", which needs it finished.
