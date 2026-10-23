@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import { BRAND_ICON, DOFUS_ROAD, HEADER_ICONS, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { useDismiss } from "../lib/useDismiss.js";
@@ -7,6 +7,7 @@ import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from
 import ThemeSwitch from "./ThemeSwitch.jsx";
 import { openNota } from "./Nota.jsx";
 import WinStrip from "./WinStrip.jsx";
+import DOFUS from "@dofus/config.js";
 
 /** Icono de botón sacado de un objeto del juego; sin datos, cae al glifo de siempre. */
 function GameIcon({ path, fallback, kind }) {
@@ -14,14 +15,16 @@ function GameIcon({ path, fallback, kind }) {
   return <img className="btn-icon" data-kind={kind} src={imgUrl(path)} alt="" />;
 }
 
-// La Piñata de pino: la da el paso 99 y es la que se convierte en el Dofus Silvestre
-const PINATA = DOFUS_ROAD.find(d => d.step === 99);
+// La Piñata de pino: la da el paso 99 (egg.pre en config.js) y es la que se convierte en
+// el Dofus Silvestre
+const EGG = DOFUS.egg;
+const PINATA = DOFUS_ROAD.find(d => d.step === EGG.pre);
 
 /**
  * El huevo del anillo: el Silvestre apagado hasta el final; con el paso 99 hecho, la
  * Piñata de pino; con el 100, el Silvestre encendido.
  */
-const eggStage = s => (s.done[100] ? "silvestre" : s.done[99] && PINATA ? "pinata" : "off");
+const eggStage = s => (s.done[EGG.final] ? "silvestre" : s.done[EGG.pre] && PINATA ? "pinata" : "off");
 
 /**
  * El progreso en pequeño, al principio de la barra: el anillo con el huevo del Silvestre

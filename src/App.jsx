@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { STEPS } from "./data/steps.js";
+import { STEPS } from "@dofus/steps.js";
+import DOFUS from "@dofus/config.js";
 import {
   clearSelection, closeSheet, closeSteps, getState, isMobile, loadQuests, pendingCloses, selectStep, toggleStep,
 } from "./state/store.js";
@@ -70,12 +71,12 @@ export default function App() {
       {tall && <Hero />}
       <div className="wrap">
         {/* Sin hero (que lleva el suyo), el título va solo para lectores de pantalla */}
-        {!tall && <h1 className="sr-only">Checklist del Dofus Silvestre</h1>}
+        {!tall && <h1 className="sr-only">{DOFUS.texts.title}</h1>}
         <ClassicNotice />
         {tall && <Nota />}
         <Diary mobile={mobile} tall={tall} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
         <footer>
-          Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
+          {DOFUS.texts.footerLead} <b>{DOFUS.texts.author}</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />
           <small>El progreso se guarda en tu navegador. Si cambias de dispositivo o borras la caché, se pierde.</small>
         </footer>

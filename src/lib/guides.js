@@ -2,7 +2,7 @@
 // Enlaces a las guías de Torrente Arcano (.build/import_guide_links.py) y a
 // otros pasos mencionados en el texto ("véase el inciso 78")
 // ---------------------------------------------------------------------------
-import GUIDES from "../data/guides.json";
+import GUIDES from "@dofus/guides.json";
 
 const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const byName = obj => new Map(Object.entries(obj).map(([k, v]) => [norm(k), v]));

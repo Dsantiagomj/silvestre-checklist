@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import { assetsFor, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import { setSearch, showStepsWindow } from "../state/store.js";
 import { appRoot } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 // La instrucción que explica la nota, tal como la escribe Sandglass en los pasos
 const PHRASE = "hasta tener que pasar";
 const PAUSED = STEPS.filter(s => s.text.toLowerCase().includes(PHRASE)).length;
 
-// Ejemplo real: los pasos 43 y 44 se detienen ante Kodámade; el 45 pasa la mazmorra
-// y "se terminan las misiones de los incisos 43, 44 y 45".
-const EXAMPLE = { paused: [43, 44], closer: 45 };
+// Ejemplo real (nota en config.js): los pasos 43 y 44 se detienen ante Kodámade; el 45
+// pasa la mazmorra y "se terminan las misiones de los incisos 43, 44 y 45"
+const EXAMPLE = { paused: DOFUS.nota.paused, closer: DOFUS.nota.closer };
 const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
 // Cuándo pasa el punto por cada casilla en pausa y la deja marcada (s)
-const PAUSE_AT = { 43: 0.5, 44: 1.2 };
+const PAUSE_AT = DOFUS.nota.pauseAt;
 // Cuándo se marca cada casilla (s): primero el 45 al vencer al jefe, luego hacia atrás
-const CHECK_AT = { 45: 3.6, 44: 4.3, 43: 5.0 };
+const CHECK_AT = DOFUS.nota.checkAt;
 // Lo que tarda el rebobinado antes de repetir (ms); igual que en el CSS
 const REWIND_MS = 450;
 

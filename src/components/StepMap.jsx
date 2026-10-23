@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { STEPS, ZONE_COLOR } from "../data/steps.js";
+import { STEPS, ZONE_COLOR } from "@dofus/steps.js";
 import { BRAND_ICON, DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, bannerFigure, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
@@ -9,6 +9,7 @@ import {
 import { useLeaving, useLiveId } from "../lib/leaving.js";
 import MapCard from "./MapCard.jsx";
 import { activeElement, eventTarget } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 
@@ -413,7 +414,7 @@ export default function StepMap({ s, current, mobile }) {
         <div className={"map-end" + (s.done[STEPS.length] ? " done" : "")}>
           {BRAND_ICON && <img src={imgUrl(BRAND_ICON)} alt="" loading="lazy" decoding="async" />}
           <span className="map-end-label">Fin del camino</span>
-          <b className="map-end-name">Dofus Silvestre</b>
+          <b className="map-end-name">{DOFUS.name}</b>
         </div>
       </div>
     </div>

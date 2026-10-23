@@ -5,7 +5,7 @@ import { openApp, readLS } from "./helpers.js";
 // Los recuentos de la ventana de objetos salen de los datos, no van escritos: la
 // sincronización con Torrente Arcano añade y quita objetos. Sin progreso la app cuenta un
 // objeto distinto por fila (k) de todos los pasos, sin las de un caso concreto (x)
-const RESOURCES = JSON.parse(fs.readFileSync(new URL("../../src/data/resources.json", import.meta.url), "utf8"));
+const RESOURCES = JSON.parse(fs.readFileSync(new URL("../../src/dofus/silvestre/resources.json", import.meta.url), "utf8"));
 const ITEM_CAT = new Map();
 for (const rows of Object.values(RESOURCES.steps)) {
   for (const row of rows) if (!row.x && !ITEM_CAT.has(row.k)) ITEM_CAT.set(row.k, row.c);

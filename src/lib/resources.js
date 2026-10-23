@@ -2,7 +2,7 @@
 // OBJETOS NECESARIOS — lo que pide cada paso según la lista de torrentearcano.
 // Generado por .build/build_resources.py. El paso "0" son los prerrequisitos.
 // ============================================================================
-import DATA from "../data/resources.json";
+import DATA from "@dofus/resources.json";
 
 export const RES_ITEMS = DATA.items;
 const RES_STEPS = DATA.steps;

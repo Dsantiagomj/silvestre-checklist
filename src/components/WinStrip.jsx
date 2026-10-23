@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";

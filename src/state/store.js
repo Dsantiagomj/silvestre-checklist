@@ -4,33 +4,41 @@
 // ============================================================================
 import { useSyncExternalStore } from "react";
 import { prefersReducedMotion } from "../lib/motion.js";
-import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "../data/steps.js";
+import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "@dofus/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
-import WEIGHTS from "../data/weights.json";
+import WEIGHTS from "@dofus/weights.json";
 import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { DOFUS_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
+// Las claves de localStorage, con el prefijo del Dofus ("silvestre:done"…)
+const key = name => DOFUS.storagePrefix + name;
 export const LS = {
-  done: "silvestre:done",
-  prereqs: "silvestre:prereqs",
-  theme: "silvestre:theme",
-  owned: "silvestre:owned",
-  questPos: "silvestre:questPos",
-  questObj: "silvestre:questObjective",
-  questModel: "silvestre:questModel",
-  guide: "silvestre:guide",
-  itemsView: "silvestre:itemsView",
-  itemsPageSize: "silvestre:itemsPageSize",
-  stepsView: "silvestre:stepsView",
-  selectedStep: "silvestre:selectedStep",
+  done: key("done"),
+  prereqs: key("prereqs"),
+  theme: key("theme"),
+  owned: key("owned"),
+  questPos: key("questPos"),
+  questObj: key("questObjective"),
+  questModel: key("questModel"),
+  guide: key("guide"),
+  itemsView: key("itemsView"),
+  itemsPageSize: key("itemsPageSize"),
+  stepsView: key("stepsView"),
+  selectedStep: key("selectedStep"),
   // Ya se trajo el progreso del checklist clásico (la primera visita)
-  classicImported: "silvestre:classicImported",
+  classicImported: key("classicImported"),
   // Los pasos del clásico con los que se cerró su aviso (classicKey)
-  classicDismissed: "silvestre:classicDismissed",
+  classicDismissed: key("classicDismissed"),
+  // La fecha de la última copia de seguridad (BackupCard)
+  lastBackup: key("lastBackup"),
+  // La pestaña abierta del overlay y el modo que guardaban las versiones con modo mini
+  overlayTab: key("overlayTab"),
+  overlayMode: key("overlayMode"),
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -40,8 +48,8 @@ const readPageSize = () => {
   return v === "all" ? "all" : PAGE_SIZES.includes(Number(v)) ? Number(v) : 25;
 };
 
-// Versión de la guía de Sandglass con la que se numeran los pasos guardados
-export const GUIDE_VERSION = 4;
+// Versión de la guía con la que se numeran los pasos guardados (config.js del Dofus)
+export const GUIDE_VERSION = DOFUS.guideVersion;
 
 /**
  * Pasa progreso de la versión anterior de la guía a la numeración actual. Un paso
@@ -735,7 +743,7 @@ function completeOthers(before) {
 export function dofusWonText(road) {
   const names = road.map(d => d.name);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
-  const ending = names.length > 1 ? "obtenidos" : /^Piñata/.test(names[0]) ? "obtenida" : "obtenido";
+  const ending = names.length > 1 ? "obtenidos" : DOFUS.feminine?.test(names[0]) ? "obtenida" : "obtenido";
   return `¡${list} ${ending}!`;
 }
 
