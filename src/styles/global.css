@@ -187,9 +187,6 @@ input,select,textarea{font-family:inherit; color:inherit}
 .nota{
   display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:center; gap:28px;
 }
-/* En pantalla alta va en la página, entre el hero y la ventana, sin caja ni líneas, y
-   alineada con el contenido del hero (1320 px) aunque la ventana vaya más ancha */
-.wrap > .nota{ max-width:1284px; margin:30px auto 22px; padding:0 4px; }
 .nota-example{ margin:0; }
 .nota-track{ position:relative; display:inline-flex; align-items:center; gap:26px; }
 /* El camino entre casillas */

@@ -4,9 +4,9 @@ import { openApp } from "./helpers.js";
 /**
  * Una sola regla para toda la app (lib/screen.js): en una pantalla alta (escritorio de
  * más de 900 px de ancho y 900 o más de alto) va todo como antes de la versión
- * compacta (el hero, la nota de las pausas en la página, los avisos del paso en bloques,
+ * compacta (el hero, los avisos del paso en bloques,
  * el estandarte grande y «Necesitas» antes de las misiones); en una baja, la versión
- * compacta (sin hero, la nota en un diálogo, fichas, el distintivo y las misiones
+ * compacta (sin hero, fichas, el distintivo y las misiones
  * primero). La barra de la ventana: en alta, la franja de los Dofus del camino sobre una
  * fila de herramientas; en baja, una sola fila.
  */
@@ -32,13 +32,9 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
     expect(hero.width).toBe(w);
     expect(inner.width).toBeLessThanOrEqual(1320);
     expect(Math.abs(inner.x - (w - inner.x - inner.width))).toBeLessThanOrEqual(2);
-    // La nota de las pausas, en la página, entre el hero y la ventana, sin diálogo
-    const nota = page.locator(".wrap > #nota");
-    await expect(nota).toBeVisible();
-    await expect(page.locator("#notaDialog")).toHaveCount(0);
-    const [n, win] = [await nota.boundingBox(), await page.locator(".steps-win").boundingBox()];
-    expect(n.y).toBeGreaterThan(hero.y + hero.height - 1);
-    expect(n.y + n.height).toBeLessThanOrEqual(win.y);
+    // La nota de las pausas no va en la página: se abre en su diálogo, como en las bajas
+    await expect(page.locator(".wrap > #nota")).toHaveCount(0);
+    await expect(page.locator("#notaDialog")).toBeHidden();
     // Los avisos del paso, en bloques con su texto entero, sin fichas
     await expect(page.locator("#journal .call-head")).toHaveCount(0);
     await expect(page.locator("#journal .goal-calls .call.tip")).toBeVisible();
@@ -98,13 +94,18 @@ for (const [w, h] of [[1280, 720], [1279, 804]]) {
   });
 }
 
-test("en pantalla alta, «Qué es hasta tener que pasar» del menú lleva a la nota de la página", async ({ page }) => {
+test("en pantalla alta, «Qué es hasta tener que pasar» del menú abre la nota en su diálogo", async ({ page }) => {
   await openApp(page);
   await page.locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
+  const y = await page.evaluate(() => scrollY);
   await page.click("#moreBtn");
-  await page.click("#notaOpen");
-  await expect(page.locator("#nota")).toBeInViewport();
-  await expect(page.locator("#notaDialog")).toHaveCount(0);
+  // Con el ratón tal cual: el click de Playwright desplazaría la página por su cuenta
+  const item = await page.locator("#notaOpen").boundingBox();
+  await page.mouse.click(item.x + item.width / 2, item.y + item.height / 2);
+  await expect(page.locator("#notaDialog")).toBeVisible();
+  await expect(page.locator("#notaDialog #nota")).toBeInViewport();
+  // No baja la página hasta ninguna nota
+  expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
 test("al redimensionar entre 1440×900 y 1280×720 se pasa de una versión a la otra y se vuelve", async ({ page }) => {
@@ -125,7 +126,8 @@ test("al redimensionar entre 1440×900 y 1280×720 se pasa de una versión a la 
   await expect(page.locator("#winBar .win-strip .road-dofus")).toHaveCount(12);
   await expect(page.locator("#roadBtn")).toHaveCount(0);
   await expect(page.locator(".hero")).toHaveCount(1);
-  await expect(page.locator(".wrap > #nota")).toBeVisible();
+  await expect(page.locator(".wrap > #nota")).toHaveCount(0);
+  await expect(page.locator("#notaDialog")).toHaveCount(1);
   await expect(page.locator("#journal .call-head")).toHaveCount(0);
   await expect(page.locator("#journal .journal-top .journal-banner")).toBeVisible();
   expect(await sections(page)).toEqual(["journal-needs", "journal-quests"]);
