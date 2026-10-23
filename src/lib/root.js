@@ -15,6 +15,12 @@ export function mountIn(shadow, themeHolder) {
 /** Donde buscar los elementos de la app: getElementById, querySelector… */
 export const appRoot = () => root;
 export const isEmbedded = () => root !== document;
+/**
+ * Dónde pone AnimatePresence (mode="popLayout") la regla que saca del flujo lo que se va:
+ * embebida, en la shadow root; en el <head> de la página no le llega, y lo que se va
+ * empuja a lo que llega (el hero crecía al cambiar de paso y el mapa saltaba al entrar).
+ */
+export const popRoot = () => (isEmbedded() ? root : undefined);
 /** El elemento con data-theme: <html> en su página, el contenedor de la app embebida. */
 export const themeTarget = () => themeEl || document.documentElement;
 
