@@ -74,13 +74,9 @@ export default {
     embed: { entry: "embed/hielos.js", chunks: "embed/hielos-chunks", assets: "embed/hielos-assets" },
   },
 
-  // El hero (Hero.jsx): copos de nieve en vez de luciérnagas y hojas (fx) y, de pie junto
-  // al huevo, el Conde Kontatrás, el jefe final de la guía, como en el hub (npc, la ruta
-  // de su imagen en public/img/). El Silvestre no lleva hero: el suyo es el de siempre
-  hero: {
-    fx: "snow",
-    npc: { img: "hub/conde-kontatras.png", name: "Conde Kontatrás" },
-  },
+  // El hero (Hero.jsx): copos de nieve en vez de luciérnagas y hojas (fx). El Silvestre no
+  // lleva hero: el suyo es el de siempre
+  hero: { fx: "snow" },
 
   // El huevo del hero y de la barra: apagado hasta el paso 69, donde Jiva da el Dofus. No
   // hay ningún Dofus antes que se convierta en él (pre)
