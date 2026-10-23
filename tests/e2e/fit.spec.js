@@ -59,6 +59,13 @@ for (const [w, h] of SIZES) {
       await align(page);
       await page.waitForTimeout(150);
       const b = await boxes(page);
+      if (view === "diary") {
+        // El diario es un poco más alto: 1,3 veces lo que queda bajo la cabecera (con los
+        // 8 px de aire arriba y abajo), y la página baja un poco. La lista sí cabe
+        expect(Math.abs(b.win.bottom - b.section - 1.3 * (h - b.header - 16)), JSON.stringify(b)).toBeLessThanOrEqual(2);
+        expect(await fitsDiary(page), JSON.stringify(b)).toBe(true);
+        return;
+      }
       expect(b.win.height).toBeLessThanOrEqual(h - b.header);
       expect(fits(b), JSON.stringify(b)).toBe(true);
       // Ya alineada, no hace falta bajar la página para ver el final de la ventana
@@ -86,8 +93,9 @@ for (const [w, h] of SIZES) {
   });
 }
 
-// El diario, con un paso corto (el 4): uno largo la alarga
-test("la ventana tiene la misma altura en todas las pestañas", async ({ page }) => {
+// El diario, con un paso corto (el 4), es la excepción: 1,3 veces el alto de las demás
+// (uno largo la alarga más)
+test("la ventana tiene la misma altura en todas las pestañas salvo el diario, un poco más alto", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } }, { view: "map" });
   await align(page);
@@ -96,9 +104,13 @@ test("la ventana tiene la misma altura en todas las pestañas", async ({ page })
     await page.click(id);
     await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
     await page.waitForTimeout(350);
-    heights[id] = Math.round((await boxes(page)).win.height);
+    const b = await boxes(page);
+    heights[id] = Math.round(b.win.bottom - b.section);
   }
-  expect(new Set(Object.values(heights)).size, JSON.stringify(heights)).toBe(1);
+  const { "#stepsViewDiary": diary, ...others } = heights;
+  expect(new Set(Object.values(others)).size, JSON.stringify(heights)).toBe(1);
+  // Las demás, lo que queda bajo la cabecera con su aire; el diario, 1,3 veces eso
+  expect(Math.abs(diary - 1.3 * others["#stepsViewMap"]), JSON.stringify(heights)).toBeLessThanOrEqual(2);
 });
 
 // Lo que se desplaza en cada pestaña y lo que queda fijo encima
