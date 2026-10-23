@@ -1870,6 +1870,15 @@ html.vt-to-light::view-transition-old(root){ z-index:2; animation:vt-night 1s cu
   .win-strip{ grid-template-columns:auto minmax(0, 1fr) auto; grid-template-areas:"head prog next" "eggs eggs eggs"; }
   .win-strip .win-progress{ justify-self:end; }
 }
+/* Sin Dofus del camino (el Hielos, WinStrip.jsx): delante, el huevo del Dofus de la guía
+   en grande, su nombre y en qué paso se consigue; el progreso ocupa el sitio de la fila */
+.win-strip.is-solo{ grid-template-columns:auto auto minmax(0, 1fr) auto; grid-template-areas:"eggs head prog next"; gap:12px 18px; }
+.win-strip.is-solo .road-list{ display:block; }
+.win-strip.is-solo .road-dofus{ width:60px; height:60px; border-radius:16px; }
+.win-strip.is-solo .road-dofus img{ width:52px; height:52px; }
+.win-strip.is-solo .road-name{ font:400 22px/1.05 'Lilita One', var(--font-body); letter-spacing:.3px; color:var(--txt); }
+.win-strip.is-solo .road-count{ font-size:14px; }
+.win-strip.is-solo .win-progress{ justify-self:end; width:min(100%, 440px); }
 @media (prefers-reduced-motion:reduce){ .win-meter i{ transition:none; } }
 .win-bar.is-tall .win-bar-in{ padding:10px 18px; gap:10px; }
 .win-bar.is-tall .win-bar-views{ gap:10px; }

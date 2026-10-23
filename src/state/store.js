@@ -9,7 +9,7 @@ import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "@dofus/steps.js";
 import WEIGHTS from "@dofus/weights.json";
 import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
-import { DOFUS_ROAD } from "../lib/assets.js";
+import { STRIP_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
@@ -750,10 +750,10 @@ export function dofusWonText(road) {
 /**
  * Si al marcar se ha conseguido algún Dofus del camino que no se tenía, lo anuncia: la
  * franja de la ventana lo enciende (dofusWon) y un aviso lo dice, aunque la franja no
- * esté a la vista.
+ * esté a la vista. Sin Dofus del camino (el Hielos), el del checklist (STRIP_ROAD).
  */
 function celebrateDofus(before) {
-  const won = DOFUS_ROAD.filter(d => !before[d.step] && state.done[d.step]);
+  const won = STRIP_ROAD.filter(d => !before[d.step] && state.done[d.step]);
   if (!won.length) return;
   setState(s => ({ dofusWon: { seq: s.dofusWon.seq + 1, steps: won.map(d => d.step) } }));
   showToast(dofusWonText(won), "", null, 4500, { kind: "dofus", icons: won.map(d => d.img) });
