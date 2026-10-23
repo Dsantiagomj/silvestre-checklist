@@ -775,7 +775,7 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .ov .ov-tab-body{ padding:10px 12px 14px; }
 .ov .journal-h{ margin:2px 0 10px; font-size:13px; }
 .ov .journal-needs{ margin:0; }
-.ov .q-item > summary, .ov .q-head{ gap:8px; padding:8px 10px; font-size:13.5px; flex-wrap:wrap; }
+.ov .q-head{ gap:8px; padding:8px 10px; font-size:13.5px; flex-wrap:wrap; }
 .ov .q-start, .ov .q-note{ margin-left:10px; margin-right:10px; }
 /* En una fila aunque la ventana sea estrecha (no la disposición móvil del diario) */
 .ov .journal-cta{ flex:none; grid-template-columns:auto minmax(0, 1fr) auto; padding:8px 10px; gap:6px; }
@@ -818,13 +818,11 @@ button.ov-num:hover{ filter:brightness(1.15); }
 /* Misiones en el panel de detalle */
 .q-list{ display:flex; flex-direction:column; gap:6px; padding:0 12px 12px; }
 .q-item{ background:var(--panel); border:1px solid var(--line); border-radius:8px; }
-.q-item > summary, .q-head{
-  list-style:none; cursor:pointer;
+.q-head{
+  cursor:pointer;
   display:flex; align-items:center; gap:8px;
   padding:8px 10px; font-size:13px;
 }
-.q-item > summary::-webkit-details-marker{ display:none; }
-.q-item[open] > summary{ border-bottom:1px solid var(--line); }
 .q-name{ flex:0 1 auto; min-width:0; font-weight:600; color:var(--txt); }
 .q-lv{ font-size:11.5px; color:var(--txt-mute); }
 .q-start{ margin:8px 10px 4px; font-size:12px; color:var(--txt-soft); }
@@ -2777,10 +2775,11 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .q-howto{ margin:-4px auto 6px; max-width:560px; text-align:center; text-wrap:balance; font-size:13px; line-height:1.45; color:var(--gw-soft); }
 .q-howto b{ color:var(--gw-ink); font-weight:700; }
 .journal .q-item{ border-radius:6px; border:1px solid var(--gw-line); background:var(--gw-panel-2); }
-.journal .q-item > summary, .journal .q-head{ gap:12px; padding:10px 14px; font-size:15px; }
-.journal .q-item[open] > summary{ background:var(--gw-sel); border-bottom-color:var(--gw-line); border-radius:6px 6px 0 0; }
+.journal .q-head{ gap:12px; padding:10px 14px; font-size:15px; }
+/* Abierta (se despliega y aún no está hecha): la cabecera resaltada sobre sus etapas */
+.journal .q-item.is-expandable:not(.is-done) > .q-head{ background:var(--gw-sel); border-bottom:1px solid var(--gw-line); border-radius:6px 6px 0 0; }
 .journal .q-name{ font-weight:600; color:var(--gw-ink); }
-.journal .q-item[open] .q-name{ color:var(--gw-sel-ink); }
+.journal .q-item.is-expandable:not(.is-done) .q-name{ color:var(--gw-sel-ink); }
 .journal .q-lv{ font-size:13px; font-weight:700; color:var(--gw-gold); }
 .journal .q-start{ margin:10px 14px 4px; font-size:13px; color:var(--gw-soft); }
 /* La nota de la guía sobre esta misión, con el icono de «Nota» y su filete de aviso */
@@ -2920,7 +2919,7 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 }
 /* El nombre no ocupa todo el ancho (es el enlace a la guía y no debe tapar la fila): la
    etiqueta va pegada a él, y el estado y el nivel, a la derecha */
-.q-head > .q-done-btn, .q-item > summary > .q-done-btn, .q-take + .q-lv{ margin-left:auto; }
+.q-head > .q-lv{ margin-left:auto; }
 /* «Completar» / «✓ Completada»: un botón plano del juego, pequeño; hecha, con el verde de los medallones */
 .q-done-btn{
   flex:none; padding:3px 9px; border-radius:4px; cursor:pointer;
@@ -3093,12 +3092,25 @@ a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
    título, encima, sigue siendo su enlace */
 .q-head{ position:relative; }
 .q-head > a.q-name{ position:relative; z-index:1; }
-.q-row-toggle::after{ content:""; position:absolute; inset:0; border-radius:6px; cursor:pointer; }
-.q-row-toggle:disabled::after{ cursor:default; }
-.q-row-toggle:hover:not(:disabled){ filter:none; }
-.q-row-toggle:focus-visible{ outline:none; }
-.q-row-toggle:focus-visible::after{ outline:2px solid var(--gw-gold, var(--accent-2)); outline-offset:-2px; }
-.q-item.is-flat:has(.q-row-toggle:hover:not(:disabled)){ border-color:color-mix(in srgb, var(--gw-gold, var(--accent-2)) 55%, transparent); }
+/* La ✓ de la misión: vacía sin hacer, verde de los medallones hecha. Es el interruptor
+   de la fila: su ::after la cubre entera (la cabecera, no las etapas de debajo) */
+.q-check{
+  flex:none; display:grid; place-items:center; width:24px; height:24px; padding:0; border-radius:50%;
+  border:1.5px solid var(--gw-line, var(--line)); background:transparent; color:transparent; cursor:pointer;
+  transition:background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.q-check svg{ width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.q-check.is-done{ background:color-mix(in srgb, #8fd13a 18%, transparent); border-color:#7ea83a; color:#8fd13a; }
+[data-theme="light"] .q-check.is-done{ background:color-mix(in srgb, #4e8f1b 14%, transparent); border-color:#4e8f1b; color:#3d7414; }
+.q-check:disabled{ cursor:default; opacity:.75; }
+.q-check::after{ content:""; position:absolute; inset:0; border-radius:6px 6px 0 0; cursor:pointer; }
+.q-item.is-flat .q-check::after, .q-item.is-done .q-check::after{ border-radius:6px; }
+.q-check:disabled::after{ cursor:default; }
+.q-check:focus-visible{ outline:none; }
+.q-check:focus-visible::after{ outline:2px solid var(--gw-gold, var(--accent-2)); outline-offset:-2px; }
+/* Al pasar por la fila, la ✓ asoma: pulsar ahí la marca */
+.q-head:has(.q-check:hover:not(:disabled)) .q-check:not(.is-done){ border-color:var(--gw-gold, var(--accent-2)); color:color-mix(in srgb, var(--gw-gold, var(--accent-2)) 60%, transparent); }
+.q-item:has(> .q-head .q-check:hover:not(:disabled)){ border-color:color-mix(in srgb, var(--gw-gold, var(--accent-2)) 55%, transparent); }
 /* Hecha: el filete verde de los medallones y el nombre más apagado */
 .journal .q-item.is-done{ border-color:color-mix(in srgb, #7ea83a 55%, var(--gw-line)); background:color-mix(in srgb, #8fd13a 6%, var(--gw-panel-2)); }
 .journal .q-item.is-done .q-name{ color:var(--gw-soft); }
@@ -3173,12 +3185,6 @@ a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
   .map-node.current{ animation:node-here 2.4s ease-in-out infinite; }
   /* Los sellos llenan su anillo poco a poco */
   .seal{ transition:--seal-p .6s cubic-bezier(.2,.8,.2,1); }
-  /* Las misiones se abren y se cierran con su altura */
-  .q-item::details-content{
-    block-size:0; overflow-y:clip;
-    transition:block-size .3s cubic-bezier(.2,.8,.2,1), content-visibility .3s allow-discrete;
-  }
-  .q-item[open]::details-content{ block-size:auto; }
 }
 
 /* El resto de la página: la misma ✓ con rebote al marcar y las secciones que entran

@@ -403,21 +403,37 @@ function QuestStart({ q }) {
   );
 }
 
+/** Por qué no se pulsa una misión hecha fuera de ella, o null: se deshace allí. */
+const lockedWhy = (elsewhere, by) => (elsewhere ? `Completada en el paso ${elsewhere}`
+  : by ? `Completada: la pide terminada «${by}»` : null);
+
 /**
- * «Completar» / «✓ Completada» de una misión; terminada en otro paso, o porque otra
- * terminada la pide (`by`, su nombre), no se pulsa: se deshace allí. Con `name`, es el
- * interruptor de toda la fila (q-row-toggle: su ::after la cubre entera, salvo el título,
- * que va encima) y su nombre accesible dice de qué misión.
+ * «Completar» / «✓ Completada» de la misión en curso del overlay; terminada en otro paso,
+ * o porque otra terminada la pide (`by`, su nombre), no se pulsa: se deshace allí.
  */
-function QuestDone({ finished, elsewhere, by, onClick, name }) {
-  const label = finished ? "Misión completada" : "Completar misión";
+function QuestDone({ finished, elsewhere, by, onClick }) {
   return (
-    <button type="button" className={"q-done-btn" + (name ? " q-row-toggle" : "") + (finished ? " is-done" : "")} aria-pressed={finished}
+    <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
       disabled={!!elsewhere || !!by}
-      title={elsewhere ? `Completada en el paso ${elsewhere}` : by ? `Completada: la pide terminada «${by}»`
-        : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
-      aria-label={name ? `${label}: ${name}` : label} onClick={onClick}>
+      title={lockedWhy(elsewhere, by) || (finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada")}
+      aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
       {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
+  );
+}
+
+/**
+ * La ✓ de una misión del diario: dice si está hecha y es el interruptor de toda su fila
+ * (su ::after la cubre entera, salvo el título, que va encima y abre la guía). Hecha
+ * fuera de ella (en otro paso, o porque otra terminada la pide), no se pulsa.
+ */
+function QuestCheck({ name, finished, elsewhere, by, onClick }) {
+  const why = lockedWhy(elsewhere, by);
+  return (
+    <button type="button" className={"q-check" + (finished ? " is-done" : "")} aria-pressed={finished} disabled={!!why}
+      aria-label={finished ? `Marcar «${name}» sin hacer` : `Marcar «${name}» como hecha`}
+      title={why || (finished ? "Vuelve a dejarla sin hacer" : "Márcala como hecha")} onClick={onClick}>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>
+    </button>
   );
 }
 
@@ -436,15 +452,11 @@ export function CurrentQuestDone({ n, cur, s }) {
 }
 
 /**
- * Misiones del paso. Cada una, una fila que se completa con un clic; las que se detienen
- * o se retoman en el paso (expandableQuests) se despliegan con sus etapas y la línea.
+ * Misiones del paso. Cada una, una fila que se completa (y se deshace) con un clic; las
+ * que se detienen o se retoman en el paso (expandableQuests) van abiertas, con sus etapas
+ * y la línea, mientras no estén hechas: completarlas las pliega y deshacerlas las abre.
  */
 export function Quests({ step, quests, loaded, s }) {
-  // Al abrir el paso todas van plegadas; las que se despliegan se abren al pulsarlas
-  // (Journal se monta de nuevo en cada paso). Solo una a la vez: abrir otra pliega la
-  // que estaba abierta
-  const [openId, setOpenId] = useState(null);
-  const setOpen = (id, on) => setOpenId(prev => (on ? id : prev === id ? null : prev));
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
   // Las líneas de aquí se detiene (rojo) y aquí se retoma (verde) dentro de las misiones
@@ -458,18 +470,15 @@ export function Quests({ step, quests, loaded, s }) {
   const kidsOf = q => (childrenOf(q.id) || [])
     .map(([index, ids]) => ({ index, items: ids.map(id => quests.find(x => x.id === id)).filter(x => x && x.kind !== "take") }))
     .filter(c => c.items.length);
-  // Llevar a una hija: se despliega y se pone a la vista. Sin desplazamiento suave: lo
-  // cortaba la altura de la misión al abrirse
+  // Llevar a una hija: se pone a la vista. Sin desplazamiento suave
   // El requestAnimationFrame de la ventana de la misión: en el overlay, la de la página
   // puede estar en segundo plano y no llegar
-  // Mientras la hija se abre y la que estaba abierta se pliega (solo va una), el detalle
-  // cambia de alto y la hija se mueve: se vuelve a llevar a la vista en cada fotograma hasta
-  // que se queda quieta un rato (la que se pliega empieza a encogerse algo después; como
-  // mucho, un segundo y medio). En escritorio baja o sube la página (el
-  // detalle no se desplaza por dentro) y su scroll-margin-top la deja bajo la barra de la
-  // ventana; en móvil, la hoja del paso
+  // Si el detalle cambia de alto mientras tanto (cargan imágenes), la hija se mueve: se
+  // vuelve a llevar a la vista en cada fotograma hasta que se queda quieta un rato (como
+  // mucho, un segundo y medio). En escritorio baja o sube la página (el detalle no se
+  // desplaza por dentro) y su scroll-margin-top la deja bajo la barra de la ventana; en
+  // móvil, la hoja del paso
   const toKid = (id, el) => {
-    setOpen(id, true);
     const win = el.ownerDocument.defaultView;
     win.requestAnimationFrame(() => {
       const item = el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`);
@@ -502,50 +511,25 @@ export function Quests({ step, quests, loaded, s }) {
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
-    const pick = k => {
-      setObjective(step.n, i, q.id, k, total);
-      // Terminada, se pliega si estaba abierta; la siguiente no se abre sola: se abre a mano
-      if (k >= total) setOpen(q.id, false);
-    };
-    // «Completar» la termina de una vez y la pliega; hecha, vuelve a su inicio sin plegarla
+    const pick = k => setObjective(step.n, i, q.id, k, total);
     const finished = at >= total;
-    const toggleDone = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!finished) setOpen(q.id, false);
-      pick(finished ? 0 : total);
-    };
-    if (!expandable.has(q.id)) {
-      // Plegada siempre: la fila entera la completa o la deshace (el botón de su estado
-      // la cubre), y el título, encima, abre su guía. Las notas de la guía van debajo
-      return (
-        <div className={"q-item is-flat" + (finished ? " is-done" : "")} key={q.id} data-qid={q.id}>
-          <div className="q-head">
-            <QuestMark className="q-mark" />
-            <QuestTitle q={q} />
-            {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-            <QuestDone finished={finished} elsewhere={elsewhere} by={by} name={q.n} onClick={() => pick(finished ? 0 : total)} />
-            <span className="q-lv">{`Niv. ${q.lv}`}</span>
-          </div>
-          {/* De dónde sale solo si no es un PNJ fijo: el templo de tu clase o la misión de tu alineamiento */}
-          {(q.st?.cls || q.st?.ali) && <QuestStart q={q} />}
-          <QuestNotes notes={notesOf(q)} />
-        </div>
-      );
-    }
+    // Solo las que se despliegan, y mientras no estén hechas, enseñan sus etapas
+    const open = expandable.has(q.id) && !finished;
     return (
-      <details className={"q-item" + (finished ? " is-done" : "")} key={q.id} data-qid={q.id} open={openId === q.id}
-        onToggle={e => setOpen(q.id, e.currentTarget.open)}>
-        <summary>
+      <div className={"q-item" + (expandable.has(q.id) ? " is-expandable" : " is-flat") + (finished ? " is-done" : "")}
+        key={q.id} data-qid={q.id}>
+        {/* La fila entera la completa o la deshace (la ✓ la cubre), y el título, encima, abre su guía */}
+        <div className="q-head">
           <QuestMark className="q-mark" />
           <QuestTitle q={q} />
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
-          <QuestDone finished={finished} elsewhere={elsewhere} by={by} onClick={toggleDone} />
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
-        </summary>
-        <QuestStart q={q} />
+          <QuestCheck name={q.n} finished={finished} elsewhere={elsewhere} by={by} onClick={() => pick(finished ? 0 : total)} />
+        </div>
+        {/* Plegada, de dónde sale solo si no es un PNJ fijo: el templo de tu clase o la misión de tu alineamiento */}
+        {(open || q.st?.cls || q.st?.ali) && <QuestStart q={q} />}
         <QuestNotes notes={notesOf(q)} />
-        {q.s.map((stg, j) => {
+        {open && q.s.map((stg, j) => {
           const from = offset;
           offset += stg.o.length;
           const here = stops.filter(p => p.quest === q.id && p.index >= from && p.index < offset);
@@ -558,7 +542,7 @@ export function Quests({ step, quests, loaded, s }) {
             </Fragment>
           );
         })}
-      </details>
+      </div>
     );
   });
   // Si el paso mezcla misiones de varios logros, van bajo un título por logro

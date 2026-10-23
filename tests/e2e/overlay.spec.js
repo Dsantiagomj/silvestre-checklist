@@ -183,9 +183,9 @@ test("«Misiones» es la lista del diario y «Completar» comparte el estado", a
   const items = ov.locator(".ov-tab-body .q-item");
   await expect(items).toHaveCount(10, { timeout: 15_000 });
   const first = items.first();
-  await first.locator(".q-done-btn").click();
-  await expect(first.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await first.locator(".q-check").click();
+  await expect(first.locator(".q-check")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#journal .q-item").first().locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   // Como en el diario, las que no paran en el paso no se despliegan: su título enlaza a la guía
   await expect(items.nth(1).locator("summary, .obj-list")).toHaveCount(0);
   await expect(items.nth(1).locator("a.q-name")).toHaveAttribute("href", /^https:\/\/www\.torrentearcano\.com\//);
@@ -303,10 +303,10 @@ test("«Ahora» completa la misión en curso como el diario, y la cabecera enlaz
   const done = ov.locator(".ov-tab-body .ov-qhead .q-done-btn");
   await expect(done).toHaveText("Completar");
   await done.click();
-  await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#journal .q-item").first().locator(".q-check")).toHaveAttribute("aria-pressed", "true");
   await expect(qname(ov)).toHaveText("Examen de paso");
   await done.click();
-  await expect(page.locator("#journal .q-item").nth(1).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#journal .q-item").nth(1).locator(".q-check")).toHaveAttribute("aria-pressed", "true");
 });
 
 test("en un paso de una sola misión obligatoria, el overlay también lleva «Completar» misión", async ({ page, context }) => {
@@ -315,7 +315,7 @@ test("en un paso de una sola misión obligatoria, el overlay también lleva «Co
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
   const ov = await openOverlay(page, context);
   await expect(objCount(ov)).toHaveText("Objetivo 1 de 9", { timeout: 15_000 });
-  await expect(ov.locator(".ov-tab-body .ov-qhead .q-done-btn")).toHaveText("Completar");
+  await expect(ov.locator(".ov-tab-body .ov-qhead .q-done-btn")).toHaveAttribute("aria-pressed", "false");
   // Una sola misión que recorrer: el desplegable dice «1 de 1» y no se abre
   await expect(ov.locator(".ov-tab-body .ov-qsel")).toContainText("1 de 1");
   await expect(ov.locator(".ov-tab-body .ov-qsel")).toBeDisabled();
