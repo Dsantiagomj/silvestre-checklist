@@ -6,6 +6,7 @@ import {
 import { useMediaQuery } from "./lib/useMediaQuery.js";
 import { eventTarget } from "./lib/root.js";
 import NotaDialog from "./components/Nota.jsx";
+import Hero, { HERO_QUERY } from "./components/Hero.jsx";
 import ClassicNotice from "./components/ClassicNotice.jsx";
 import Diary from "./components/Diary.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
@@ -42,6 +43,8 @@ function onKeyDown(e) {
 
 export default function App() {
   const mobile = useMediaQuery("(max-width: 900px)");
+  // El hero solo en pantallas altas: en las bajas ni se monta (ni carga su mapa)
+  const hero = useMediaQuery(HERO_QUERY);
   const resetRef = useRef(null);
   const [overlayWin, openOverlay] = useOverlayWindow();
 
@@ -62,9 +65,10 @@ export default function App() {
 
   return (
     <>
+      {hero && <Hero />}
       <div className="wrap">
-        {/* La página la presenta la de Torrente Arcano: aquí el título va solo para lectores de pantalla */}
-        <h1 className="sr-only">Checklist del Dofus Silvestre</h1>
+        {/* Sin hero (que lleva el suyo), el título va solo para lectores de pantalla */}
+        {!hero && <h1 className="sr-only">Checklist del Dofus Silvestre</h1>}
         <ClassicNotice />
         <Diary mobile={mobile} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
         <footer>

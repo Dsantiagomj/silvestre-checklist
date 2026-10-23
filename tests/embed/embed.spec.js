@@ -97,8 +97,8 @@ test("la barra de la ventana queda bajo la cabecera fija de la página y la vent
   const diary = await app(page).locator("#diary").evaluate(el => el.getBoundingClientRect());
   expect(diary.top).toBeGreaterThanOrEqual(80);
   expect(diary.bottom).toBeLessThanOrEqual(900);
-  // Sin cabecera propia: nada de la app ocupa una fila encima de la ventana
-  await expect(app(page).locator("header, .hero")).toHaveCount(0);
+  // Sin cabecera propia (a 1440×900 el hero va encima, pero la página ya bajó hasta la ventana)
+  await expect(app(page).locator("header")).toHaveCount(0);
 });
 
 test("a 1280×720, sin hero, la ventana de pasos y su lista se ven en la primera pantalla bajo la cabecera", async ({ page }) => {
