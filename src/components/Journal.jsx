@@ -9,7 +9,7 @@ import {
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  alsoText, closeSteps, closingPlan, getState, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  alsoText, closeSteps, closingPlan, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -494,12 +494,10 @@ export function Quests({ step, quests, loaded, s }) {
     // También en un paso hecho: deshacer una misión (un clic de más) desmarca el paso
     const pick = k => {
       setObjective(step.n, i, q.id, k, total);
-      // La que queda en curso: la siguiente sin terminar o, tras una hija, su madre
-      const next = quests[questFocus(getState(), step.n, quests)];
-      if (k >= total && !optional && next && next.id !== q.id) setOpen(next.id, true);
+      // Terminada, se pliega si estaba abierta; la siguiente no se abre sola: se abre a mano
+      if (k >= total) setOpen(q.id, false);
     };
-    // «Completar» la termina de una vez y la pliega (si hay siguiente, se abre ella);
-    // hecha, vuelve a su inicio sin plegarla
+    // «Completar» la termina de una vez y la pliega; hecha, vuelve a su inicio sin plegarla
     const finished = at >= total;
     const toggleDone = e => {
       e.preventDefault();
