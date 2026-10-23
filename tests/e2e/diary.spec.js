@@ -811,22 +811,33 @@ test("el paso 12 lleva las misiones que exige «Espionaje industrial» antes de 
     "Las grandes galerías", "Espionaje industrial"]);
 });
 
-test("las misiones de «Abono de peaje» van en el paso que las pide, antes de la misión que las exige", async ({ page }) => {
+test("las misiones de «Abono de peaje» van en el paso donde se pasa su mazmorra, tras la misión que la pasa", async ({ page }) => {
   await openApp(page);
-  // «Prefiere morir en el mar» pide «Antimonárquico» y «Las joyas de la corona»
-  expect((await stepData(page, 31)).quests).toEqual(["Antimonárquico", "Las joyas de la corona", "Prefiere morir en el mar"]);
-  // «Calefacción a bajo coste» y «En busca de Javi Vito» piden «Duerme y tendrás un pastel»
+  // Jalamut Real se pasa al final del 21; Morsagüino Real, en «Pesca en aguas congeladas» (28).
+  // «Prefiere morir en el mar» (31), que las pide, se queda sola
+  expect((await stepData(page, 21)).quests.at(-1)).toBe("Antimonárquico");
+  expect((await stepData(page, 28)).quests).toEqual(["Pesca en aguas congeladas", "Las joyas de la corona", "Luces y sombras"]);
+  expect((await stepData(page, 31)).quests).toEqual(["Prefiere morir en el mar"]);
+  // Ben el Ripata no lo pasa la guía: «Duerme y tendrás un pastel» va donde se pide
   expect((await stepData(page, 40)).quests).toEqual(["Duerme y tendrás un pastel", "Calefacción a bajo coste", "En busca de Javi Vito"]);
-  // «Quién saca beneficio del jalamut» pide «Lavandería automática»; «Almacén de avituallamiento», «Hace fresco…»
-  expect((await stepData(page, 52)).quests).toEqual(["Lavandería automática", "Hace fresco, pero no importa",
+  // El Obsidiantre, en el 50 (el 40 avisa de no pasarlo); el Tengu Gélifux, en el 52
+  expect((await stepData(page, 50)).quests).toEqual(["Altar del Norte", "La bendición de Thomahon", "Lavandería automática"]);
+  expect((await stepData(page, 52)).quests).toEqual(["Hace fresco, pero no importa",
     "Quién saca beneficio del jalamut", "Almacén de avituallamiento", "El S.L.I.P. está que arde"]);
-  // «Llama, amigo y entra» pide «Canozzirujana»; «La guardia muere…», «Allá arriba, en el pico helado…»
-  expect((await stepData(page, 83)).quests.slice(0, 2)).toEqual(["Canozzirujana", "Llama, amigo y entra"]);
-  expect((await stepData(page, 86)).quests).toEqual(["Allá arriba, en el pico helado...", "La guardia muere, pero no se rinde"]);
+  // El Cil, al final del 61; el Golosotrón Real, al final del 81
+  expect((await stepData(page, 61)).quests.at(-1)).toBe("Canozzirujana");
+  expect((await stepData(page, 81)).quests.at(-1)).toBe("Allá arriba, en el pico helado...");
+  expect((await stepData(page, 83)).quests.slice(0, 2)).toEqual(["Llama, amigo y entra", "Birk, hija de Bork"]);
+  expect((await stepData(page, 86)).quests).toEqual(["La guardia muere, pero no se rinde"]);
   // Van bajo su logro, y el estandarte sigue en la misión del paso
-  await expect(page.locator("#journal .q-group-name").first()).toHaveText("Abono de peaje");
-  expect(await figure(page)).toBe("Inicia el paso:Pescador del Día sin Fin");
-  for (const [n, who] of [[31, "Germán Onelsako"], [40, "Hipólito Thermya"], [52, "Eko Lojista"], [83, "Jemor Monte"]]) {
+  await stepData(page, 50);
+  await expect(page.locator("#journal .q-group-name").last()).toHaveText("Abono de peaje");
+  const abono = ["Topordo Spesos", "Waldos FieldChester Potcobble", "Lava Azza", "Silvia Canozzi", "Billy Beja"];
+  for (const n of [21, 28, 50, 61, 81]) {
+    await stepData(page, n);
+    for (const who of abono) expect(await figure(page), `paso ${n}`).not.toContain(who);
+  }
+  for (const [n, who] of [[31, "Germán Onelsako"], [40, "Hipólito Thermya"], [52, "Eko Lojista"]]) {
     await stepData(page, n);
     expect(await figure(page)).toBe(`Inicia el paso:${who}`);
   }
@@ -1027,10 +1038,11 @@ test("las misiones de un paso con varios logros van agrupadas por logro", async 
     expect(await heads.count()).toBeGreaterThan(1);
     await expect(heads.locator("img")).toHaveCount(await heads.count());
   }
-  // El 21 mezcla las 8 de su logro con una que no es de ninguno: va aparte, con la «!»
+  // El 21 mezcla las 8 de su logro con una que no es de ninguno, que va aparte con la «!»,
+  // y «Antimonárquico», de «Abono de peaje»
   await stepData(page, 21);
-  await expect(groups.locator(".q-group-name")).toHaveText(["Púrpura profundo", "Fuera del logro"]);
-  expect(await groups.evaluateAll(gs => gs.map(g => g.querySelectorAll(".q-item").length))).toEqual([8, 1]);
+  await expect(groups.locator(".q-group-name")).toHaveText(["Púrpura profundo", "Fuera del logro", "Abono de peaje"]);
+  expect(await groups.evaluateAll(gs => gs.map(g => g.querySelectorAll(".q-item").length))).toEqual([8, 1, 1]);
   await expect(groups.nth(1).locator(".q-item .q-name")).toHaveText("Cómo perder la pluma");
   await expect(groups.locator(".q-group-head").nth(1).locator(".quest-mark")).toHaveCount(1);
   // Un paso de un solo logro, sin títulos

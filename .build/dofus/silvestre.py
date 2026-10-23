@@ -128,12 +128,13 @@ MISSION_TYPOS = {}
 # "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=). Step 83's "Birk, hija de Bork" requires
 # "Llama, amigo y entra", mission 1 of "Allá bajo la montaña" (Qf=2010).
 # "Abono de peaje" is in no step, but the Frigost lines ask for its quests (Qf=), each
-# one the run of a dungeon: each goes in the step of the first quest that asks for it.
-# 31: "Prefiere morir en el mar" asks for "Antimonárquico" and "Las joyas de la corona";
-# 40: "Calefacción a bajo coste", for "Duerme y tendrás un pastel"; 52: "Quién saca
-# beneficio del jalamut", for "Lavandería automática", and "Almacén de avituallamiento",
-# for "Hace fresco, pero no importa"; 83: "Llama, amigo y entra", for "Canozzirujana";
-# 86: "La guardia muere, pero no se rinde", for "Allá arriba, en el pico helado...".
+# one the run of a dungeon: each goes in the step where the guide passes its dungeon, or,
+# if it never says, in the step of the first quest that asks for it. Passed: Jalamut Real
+# in 21 ("Antimonárquico"), Morsagüino Real in 28 ("Las joyas de la corona"), Obsidiantre
+# in 50 ("Lavandería automática"; 40 says not to pass it), Tengu Gélifux in 52 ("Hace
+# fresco, pero no importa"), Cil in 61 ("Canozzirujana") and Golosotrón Real in 81 ("Allá
+# arriba, en el pico helado..."). The guide never passes Ben el Ripata: "Duerme y tendrás
+# un pastel" goes in 40, where "Calefacción a bajo coste" asks for it.
 # They ask for nothing among themselves, so "Allá en la montaña..." stays out.
 # Step 87's two quests need "Toma de conciencia" taken (Qa=2138), and it needs "Las
 # cuatro voluntades" finished (Qf=2122), which step 73 leaves at its 2nd objective: 87
@@ -144,8 +145,9 @@ MISSION_TYPOS = {}
 # it. Step 38's red says "La sombra del reino" can be started during mission 3 ((Qa=1656
 # &Qo>9997)) and done any time before step 80; step 81's "La sombra de lo que era" needs
 # it finished (Qf=1665). 38 does it, right after "Esto parece el Sur" (QUEST_AFTER).
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 33: [439], 38: [1665], 40: [621], 52: [622, 623],
-              78: [434, 111, 121, 423], 80: [1782], 83: [624, 2010], 86: [626], 87: [2122, 2138], 89: [1903, 1917]}
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 21: [619], 28: [620], 33: [439], 38: [1665], 40: [621], 50: [622],
+              52: [623], 61: [624], 78: [434, 111, 121, 423], 80: [1782], 81: [626], 83: [2010], 87: [2122, 2138],
+              89: [1903, 1917]}
 
 # Quests another quest gives on the way and that it waits for, right after it in every
 # step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos
@@ -164,8 +166,10 @@ STEP_SKIP = {53: [2198]}
 # after it in every step that lists both. "Hasta su último suspiro" is mission 2 of "El
 # guardián del inmaculado" but starts in mission 3, "Réquiem por un yokai" (Qa=2180).
 # "La huida es la mejor salida" (step 16) needs "Nuestros amigos los animalitos"
-# finished (Qf=1848), which the achievement lists after it.
-QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656}
+# finished (Qf=1848), which the achievement lists after it. The "Abono de peaje" quests
+# (STEP_EXTRA) go after the quest where their dungeon is passed: at the end of 21, 50, 61
+# and 81, and after "Pesca en aguas congeladas" in 28.
+QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656, 619: 1527, 620: 577, 622: 1661, 624: 1719, 626: 1793}
 
 # Quest -> the quest that needs it, where it would go elsewhere: it goes right before it
 # in every step that lists both. Step 33 takes "La eterna cosecha" for "La razón del más
@@ -192,8 +196,10 @@ TAKE_ONLY = {28: [1286], 33: [439], 83: [2013], 87: [2138]}
 # Quests a step adds (STEP_EXTRA) that do not hold it open. Step 38: "La sombra del reino"
 # is not part of "Azul turquesa"; its red says it "se puede lanzar" during mission 3 and
 # done "en cualquier punto hasta antes del inciso 80". So completing the achievement (step
-# 62) finishes step 38 too; step 81's quest still needs it finished (PREREQS).
-OPTIONAL_EXTRA = {38: [1665]}
+# 62) finishes step 38 too; step 81's quest still needs it finished (PREREQS). Step 50:
+# "Lavandería automática" (Obsidiantre, passed there) is not part of "Azul turquesa"
+# either: the same way, step 52's quest still needs it finished.
+OPTIONAL_EXTRA = {38: [1665], 50: [622]}
 
 # Steps whose missions go in the order the text names them, not the achievement's. Step
 # 87: "misión 4: La guerra de cania…, misión 3: El juicio de la muerte"; they can only be
