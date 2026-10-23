@@ -214,6 +214,27 @@ export function stopPoints(step, quests) {
   return [...ownStops(step, quests), ...(after ? [{ ...after, followUp: true }] : [])];
 }
 
+/**
+ * Las líneas que el diario pinta dentro de las misiones del paso: la roja de «hasta dónde»
+ * (aquí se detiene) y, en un paso que se resuelve solo, la verde con lo que se resuelve
+ * (aquí se retoma). La parada que deja el propio verde («…hasta tener que pasar
+ * Kodámade») y la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
+ * siguen en rojo. [{ quest, index, text, resume? }], como stopPoints.
+ */
+export function questStops(step, quests) {
+  // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
+  const done = !redIsStop(step) && step.marks.find(m => m[0] === "done")[1].replace(FOLLOW_UP, ".");
+  return stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
+}
+
+/**
+ * Las misiones que se despliegan en el diario: las que llevan, en este paso, una de las
+ * líneas de questStops (aquí se detiene o aquí se retoma) entre sus objetivos. Solo en
+ * ellas importa por qué objetivo se va; las demás se hacen enteras y se marcan con un
+ * clic. Es por paso: la misma misión se despliega en el paso que la para y no en otro.
+ */
+export const expandableQuests = (step, quests) => new Set(questStops(step, quests).map(p => p.quest));
+
 function ownStops(step, quests) {
   const stops = (step.marks || []).filter(m => m[0] === "stop").map(m => m[1]);
   const at = STOP_AT[step.n];

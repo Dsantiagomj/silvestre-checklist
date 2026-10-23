@@ -9,7 +9,7 @@ import { openApp, readLS } from "./helpers.js";
 const QUESTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/quests.json", import.meta.url), "utf8"));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 const quest = (page, name) => page.locator("#journal .q-item")
-  .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
 const btn = (page, name) => quest(page, name).locator(".q-done-btn");
 
 async function openStep(page, n) {
@@ -39,19 +39,15 @@ test("el build saca de DofusDB qué misiones empiezan dentro de otra y en qué o
 });
 
 test("en la ruta de la madre, una línea dice qué hijas se hacen ahí y lleva a ellas", async ({ page }) => {
+  // En el 83, «Birk, hija de Bork» para en el paso y se despliega; sus hijas no
   const errors = await openApp(page);
-  await openStep(page, 81);
-  const remedio = quest(page, "Un remedio draconiano");
-  await remedio.locator("summary .q-name").click();
-  const kids = remedio.locator(".obj-kids");
-  await expect(kids).toHaveCount(1);
-  await expect(kids).toHaveText("Aquí se hacen «El dragón de las aguas», «El dragón de los vientos», «El dragón de las llamas» y «El dragón de los bosques»");
-  // Justo antes del objetivo 15, tras «Ofrécele la gota de rocío a Rosal»
-  await expect(remedio.locator(".obj-kids + .obj-row")).toHaveText(/^Ve a ver a /);
-  await expect(remedio.locator(".obj-row").nth(14)).toContainText("Ofrécele la gota de rocío a Rosal");
+  await openStep(page, 83);
+  const birk = quest(page, "Birk, hija de Bork");
+  await birk.locator("summary .q-lv").click();
+  const kids = birk.locator(".obj-kids");
+  await expect(kids).toHaveText(["Aquí se hace «Los enemigos de mis enemigos son mis enemigos»", "Aquí se hace «Los nanoinsumisos»"]);
   // No es una parada
-  await expect(remedio.locator(".obj-stop, .obj-resume")).toHaveCount(0);
-  await expect(kids).not.toHaveCSS("color", await page.locator("body").evaluate(() => {
+  await expect(kids.first()).not.toHaveCSS("color", await page.locator("body").evaluate(() => {
     const el = document.createElement("li");
     el.className = "obj-stop";
     document.body.append(el);
@@ -59,67 +55,64 @@ test("en la ruta de la madre, una línea dice qué hijas se hacen ahí y lleva a
     el.remove();
     return c;
   }));
-  // Pulsar una hija la abre
-  const aguas = quest(page, "El dragón de las aguas");
-  await expect(aguas).not.toHaveAttribute("open", "");
-  await kids.getByRole("button", { name: "«El dragón de las aguas»" }).click();
-  await expect(aguas).toHaveAttribute("open", "");
-  await expect(aguas.locator(".obj-row").first()).toBeInViewport();
+  // Pulsar una hija la pone a la vista; como no para en el paso, no se despliega
+  const nano = quest(page, "Los nanoinsumisos");
+  await kids.getByRole("button", { name: "«Los nanoinsumisos»" }).click();
+  await expect(nano.locator(".q-head")).toBeInViewport();
+  await expect(nano.locator("summary")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
 test("en escritorio, llevar a una hija baja la página hasta ella, bajo la barra de la ventana", async ({ page }) => {
   await openApp(page);
-  await openStep(page, 81);
+  await openStep(page, 83);
   await page.waitForLoadState("networkidle");
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
-  const remedio = quest(page, "Un remedio draconiano");
-  await remedio.locator("summary .q-name").evaluate(el => el.click());
+  const birk = quest(page, "Birk, hija de Bork");
+  await birk.locator("summary").evaluate(el => el.click());
   // La madre, ya abierta del todo
-  await expect(remedio).toHaveAttribute("open", "");
+  await expect(birk).toHaveAttribute("open", "");
   await page.waitForTimeout(600);
   const y = await page.evaluate(() => scrollY);
   // Sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
-  await remedio.locator(".obj-kids").getByRole("button", { name: "«El dragón de los vientos»" }).evaluate(el => el.click());
-  const vientos = quest(page, "El dragón de los vientos");
-  await expect(vientos).toHaveAttribute("open", "");
-  await expect(vientos.locator("summary")).toBeInViewport();
+  await birk.locator(".obj-kids").getByRole("button", { name: "«Los nanoinsumisos»" }).evaluate(el => el.click());
+  const nano = quest(page, "Los nanoinsumisos");
+  await expect(nano.locator(".q-head")).toBeInViewport();
   await page.waitForTimeout(1200);
   // La hija queda arriba, justo bajo la barra de la ventana: lo que se ha desplazado es la página
   const r = await page.evaluate(() => {
     const detail = document.querySelector(".diary-detail");
-    const kid = [...document.querySelectorAll("#journal .q-item")].find(q => q.querySelector("summary .q-name")?.textContent === "El dragón de los vientos");
-    return { y: scrollY, scroll: detail.scrollTop, gap: kid.getBoundingClientRect().top - document.getElementById("winBar").getBoundingClientRect().bottom };
+    const kid = [...document.querySelectorAll("#journal .q-item")].find(q => q.querySelector(".q-name")?.textContent === "Los nanoinsumisos");
+    return { y: scrollY, scroll: detail.scrollTop, gap: kid.getBoundingClientRect().top - document.getElementById("winBar").getBoundingClientRect().bottom,
+      end: Math.ceil(scrollY + innerHeight) >= document.documentElement.scrollHeight - 1 };
   });
   expect(r.y).toBeGreaterThan(y);
   expect(r.scroll).toBe(0);
   expect(r.gap).toBeGreaterThanOrEqual(0);
-  expect(r.gap).toBeLessThanOrEqual(30);
+  // Arriba, bajo la barra; salvo que la página ya no baje más (la hija va al final del paso)
+  if (!r.end) expect(r.gap, JSON.stringify(r)).toBeLessThanOrEqual(30);
 });
 
-test("en el 93, cada hija de «Nordalía» va en su objetivo, una por línea", async ({ page }) => {
+test("una madre que no para en el paso no se despliega ni dice dónde van sus hijas: «Nordalía» en el 93", async ({ page }) => {
   await openApp(page);
   await openStep(page, 93);
   const nordalia = quest(page, "Nordalía");
-  await nordalia.locator("summary .q-name").click();
-  await expect(nordalia.locator(".obj-kids")).toHaveText(["Aquí se hace «La felicidad está en campo rociado»",
-    "Aquí se hace «Una voz de cristal»", "Aquí se hace «Muerto en vida»", "Aquí se hace «El Guerrero Negro»"]);
-  await expect(nordalia.locator(".obj-kids + .obj-row").first()).toHaveText(/Obtén la aprobación de Clothurd/);
+  await expect(nordalia.locator("summary, .obj-kids")).toHaveCount(0);
+  // Sus hijas siguen en la lista, cada una con su fila
+  for (const name of ["La felicidad está en campo rociado", "Una voz de cristal", "Muerto en vida", "El Guerrero Negro"]) {
+    await expect(quest(page, name).locator(".q-done-btn")).toHaveCount(1);
+  }
 });
 
-test("solo con la hija en el mismo paso: «La bruja mala del Este» en el 38 no la nombra; en el 62, sí", async ({ page }) => {
+test("solo con la hija en el mismo paso: «La bruja mala del Este» en el 38 no la nombra", async ({ page }) => {
   await openApp(page);
   await openStep(page, 38);
-  await quest(page, "La bruja mala del Este").locator("summary .q-name").click();
+  await quest(page, "La bruja mala del Este").locator("summary .q-lv").click();
   await expect(page.locator("#journal .obj-kids")).toHaveCount(0);
-  await openStep(page, 62);
-  const bruja = quest(page, "La bruja mala del Este");
-  await bruja.locator("summary .q-name").click();
-  await expect(bruja.locator(".obj-kids")).toHaveText("Aquí se hace «La bendición de Viti»");
   // Una de solo tomarla no se hace: «La biblia de los rencores» no sale en «Birk, hija de Bork»
   await openStep(page, 83);
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary .q-name").click();
+  await birk.locator("summary .q-lv").click();
   await expect(birk.locator(".obj-kids")).toHaveText(["Aquí se hace «Los enemigos de mis enemigos son mis enemigos»",
     "Aquí se hace «Los nanoinsumisos»"]);
 });

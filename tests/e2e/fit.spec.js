@@ -224,8 +224,9 @@ for (const [w, h] of SIZES.slice(0, 1)) {
 test("a 1440×900, al final de la página, abrir la última misión alarga la ventana sin mover la misión ni la página ni encoger la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.locator('.diary-row[data-n="12"] .row-num').evaluate(el => el.click());
-  await expect(page.locator("#journal .journal-num")).toHaveText("12");
+  // El 92: su última misión, «Los tótems de Maimane», para en el paso y se despliega
+  await page.locator('.diary-row[data-n="92"] .row-num').evaluate(el => el.click());
+  await expect(page.locator("#journal .journal-num")).toHaveText("92");
   await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(300);
