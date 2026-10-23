@@ -21,6 +21,10 @@ test("la lista es compacta: filas de unos 42 px en una columna de unos 300 px", 
     expect(h, `fila ${n}`).toBeGreaterThanOrEqual(38);
     expect(h, `fila ${n}`).toBeLessThanOrEqual(46);
   }
+  // En una pantalla ancha la columna crece: los títulos largos no se cortan tanto
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await expect.poll(() => page.locator(".diary-side").evaluate(el => el.getBoundingClientRect().width)).toBeGreaterThan(380);
+  await page.setViewportSize({ width: 1440, height: 900 });
   // Sigue llevando la casilla, el número, el título, la zona y la etiqueta de cierre
   const r = row(page, 5);
   for (const sel of [".row-check", ".row-num", ".row-title", ".row-zone", ".row-closed"]) await expect(r.locator(sel), sel).toBeVisible();
@@ -113,11 +117,17 @@ test("las acciones del paso se quedan fijas al pie del detalle", async ({ page }
   await expect(page.locator("#toggleBtn")).toBeVisible();
 });
 
-test("a 1280×720 el estandarte se queda en un distintivo de 48 px junto al título", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
+/** El alto del detalle: lo que decide entre el estandarte y el distintivo. */
+const detailHeight = page => page.locator(".diary-detail").evaluate(el => el.getBoundingClientRect().height);
+
+test("con poco alto para el detalle, el estandarte se queda en un distintivo de 48 px junto al título", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 640 });
   await openApp(page, { "silvestre:done": upTo(40) });
   await row(page, 41).locator(".row-num").click();
+  expect(await detailHeight(page)).toBeLessThan(620);
   await expect(page.locator("#journal .journal-top .journal-banner")).toBeHidden();
+  // Solo el distintivo: el icono del logro junto al título sobra
+  await expect(page.locator("#journal .journal-top .goal-ach")).toBeHidden();
   const badge = page.locator("#journal .journal-badge");
   await expect(badge).toBeVisible();
   await expect(badge.locator(".journal-badge-num")).toHaveText("41");
@@ -130,6 +140,16 @@ test("a 1280×720 el estandarte se queda en un distintivo de 48 px junto al tít
   expect(Math.abs(title.y + title.height / 2 - (b.y + b.height / 2))).toBeLessThan(30);
   // Lo primero del detalle, qué hacer, a la vista sin desplazarlo
   await expect(page.locator("#journal .goal-guide")).toBeInViewport({ ratio: 1 });
+});
+
+test("con sitio para el detalle (un portátil de 1279×804) va el estandarte de siempre", async ({ page }) => {
+  await page.setViewportSize({ width: 1279, height: 804 });
+  await openApp(page, { "silvestre:done": upTo(40) });
+  await row(page, 41).locator(".row-num").click();
+  expect(await detailHeight(page)).toBeGreaterThanOrEqual(620);
+  await expect(page.locator("#journal .journal-top .journal-banner")).toBeVisible();
+  await expect(page.locator("#journal .journal-badge")).toBeHidden();
+  await expect(page.locator("#journal .journal-top .goal-ach")).toBeVisible();
 });
 
 test("a 1920×1080 el detalle lleva el estandarte de siempre", async ({ page }) => {

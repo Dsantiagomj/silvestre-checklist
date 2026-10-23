@@ -11,7 +11,7 @@ import App from "./App.jsx";
 import { applyTheme, getState } from "./state/store.js";
 import { mountIn } from "./lib/root.js";
 import { pageFonts } from "./lib/fonts.js";
-import { followPageHeader } from "./lib/pageHeader.js";
+import { fillViewportWidth, followPageHeader } from "./lib/pageHeader.js";
 
 const HOST_ID = "silvestre-root";
 
@@ -31,6 +31,8 @@ function mount() {
   app.className = "app-root is-embed";
   shadow.append(style, app);
   mountIn(shadow, app);
+  // De borde a borde aunque el bloque de la página sea una columna estrecha
+  fillViewportWidth(host);
   // --silvestre-top: la cabecera de la app se pega debajo de la fija de la página
   followPageHeader(host, "--silvestre-top");
   applyTheme(getState().theme);
