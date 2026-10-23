@@ -11,6 +11,29 @@ import MapCard from "./MapCard.jsx";
 import { activeElement, eventTarget } from "../lib/root.js";
 
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
+
+/**
+ * Las figuras del mapa (jefes y huevos de los sellos), pedidas cuando la página queda
+ * libre: así el primer cambio del diario al mapa ya las tiene y no espera a la red.
+ */
+function prefetchMapFigures() {
+  const urls = new Set();
+  for (const st of STEPS) {
+    const boss = resolvedBoss(st.n);
+    if (boss) urls.add(imgUrl(boss.img));
+    if (ROAD_AT[st.n]) urls.add(imgUrl(ROAD_AT[st.n].img));
+  }
+  for (const url of urls) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+  }
+}
+if (typeof window !== "undefined") {
+  const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1500));
+  idle(prefetchMapFigures, { timeout: 4000 });
+}
+
 const ROW_H = 132;
 // Arriba, lo justo para el «Estás aquí» del primer paso
 const topFor = w => (w >= 560 ? 84 : 72);
