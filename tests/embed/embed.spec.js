@@ -172,8 +172,8 @@ test("en una pantalla ancha la app sale de la columna del bloque y usa el ancho 
   // La ventana de pasos aprovecha ese ancho (antes se quedaba en 1320px), con un tope:
   // más ancha, la franja de los Dofus del camino se desparrama
   const win = (await app(page).locator("#diary").boundingBox()).width;
-  expect(win).toBeGreaterThan(1500);
-  expect(win).toBeLessThanOrEqual(1600);
+  expect(win).toBeGreaterThan(1620);
+  expect(win).toBeLessThanOrEqual(1720);
 });
 
 // popLayout (AnimatePresence) saca del flujo lo que se va con una regla CSS: si va al
