@@ -1,6 +1,6 @@
 """Audit the items each step asks for against what its quests really need.
 
-For every step it compares the checklist (src/data/resources.json, from the
+For every step it compares the checklist (src/dofus/<dofus>/resources.json, from the
 torrentearcano page) with two sources:
   - DofusDB: each objective of the step's quests that consumes items ("Entrégale",
     "Fabrica"), with the quantities DofusDB generates (need.generated). Crafted
@@ -11,10 +11,11 @@ torrentearcano page) with two sources:
 Usage:
   python3 -I .build/audit_resources.py            all steps
   python3 -I .build/audit_resources.py 1 5-8      some steps
+  (--dofus <id> or DOFUS picks the Dofus; silvestre by default)
 
-Reads  : src/data/{resources,quests,guides}.json, .build/data/quests.json
+Reads  : src/dofus/<dofus>/{resources,quests,guides}.json, .build/data/quests.json
 Caches : .build/data/ta_needs.json (guide pages), .build/data/recipes.json
-Writes : .build/lists/item_quests.json when it checks every step: {step: {row key:
+Writes : .build/lists/<dofus>/item_quests.json when it checks every step: {step: {row key:
          [quest names]}}, the quests that use each item up (build_resources.py
          shows it with the item: "para qué misión es")
 Prints, per step:
@@ -40,34 +41,19 @@ import urllib.parse
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
-SRC = ROOT.parent / "src" / "data"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+SRC = dofus.SRC
 DATA = ROOT / "data"
 TA_CACHE = DATA / "ta_needs.json"
-ITEM_QUESTS = ROOT / "lists" / "item_quests.json"
-# Items asked for by a quest the step does not list, only its guide names it.
-# Step -> {item key: quest}.
-# Also items reviewed by hand that stay where the page puts them though their quest is
-# listed in another step: the quest is split across steps.
-MANUAL = {
-    # "Ver a Dark Vlad y morir... o no" asks to do this one first (torrentearcano)
-    "1": {"2268": "Un péndulo para guiar sus pasos", "9318": "Un péndulo para guiar sus pasos",
-          "746": "Un péndulo para guiar sus pasos"},
-    # The beer of "De la mano" is brewed in the tavern, after step 64 stops at its door
-    # and before "Dos alientos" (step 66) lets it go on
-    "66": {"1977": "De la mano", "23972": "De la mano", "23179": "De la mano", "7055": "De la mano"},
-    # Order 4: "4 de ellas con cuerda de escalada (uno de ellos siendo tú)"
-    "78": {"9935": "Aprendizaje: Maestro de los Pergaminos"},
-    # "Muerte y renovación" needs "Santísimo poder" done, which step 80 finishes
-    "80": {"311": "Muerte y renovación"},
-}
+ITEM_QUESTS = dofus.LISTS / "item_quests.json"
+MANUAL = D.MANUAL  # per Dofus, in .build/dofus/<id>.py
 RECIPES = DATA / "recipes.json"
 API = "https://api.dofusdb.fr/"
 # Objectives that use up items: bring (3) and craft (17). "Show" (2) gives nothing away.
 CONSUMES = {3, 17}
-# Quests that hand over what they then ask for: nothing to gather.
-GIVES_ITS_ITEMS = {
-    2502: "Empezar bien",  # tutorial of "Con bases sólidas": it gives the ring's ingredients
-}
+GIVES_ITS_ITEMS = D.GIVES_ITS_ITEMS  # per Dofus, in .build/dofus/<id>.py
 NEED_LINE = re.compile(r"(\d[\d.\s]*)\s*x\s+([^.]+?)\.", re.I)
 
 
@@ -231,7 +217,7 @@ def steps_arg(args):
     for a in args:
         lo, _, hi = a.partition("-")
         wanted |= set(range(int(lo), int(hi or lo) + 1))
-    return sorted(wanted) or list(range(1, 101))
+    return sorted(wanted) or list(range(1, D.STEP_COUNT + 1))
 
 
 def main(args):
@@ -267,10 +253,10 @@ def main(args):
             return
     chosen = steps_arg(args)
     # Every step, to say where an item nobody in its own step asks for really belongs
-    every = {n: explain(n) for n in range(1, 101)}
+    every = {n: explain(n) for n in range(1, D.STEP_COUNT + 1)}
 
     def elsewhere(key, qty, n):
-        hits = [m for m in range(max(1, n - 3), min(100, n + 3) + 1)
+        hits = [m for m in range(max(1, n - 3), min(D.STEP_COUNT, n + 3) + 1)
                 if m != n and any(q == qty for q, _, _ in every[m].get(key, []))]
         return f" · lo piden las misiones del paso {', '.join(map(str, hits))}" if hits else ""
 
@@ -327,7 +313,7 @@ def main(args):
             print(f"\nPaso {n}")
             print("\n".join(lines))
     print(f"\n{totals}")
-    if chosen == list(range(1, 101)):
+    if chosen == list(range(1, D.STEP_COUNT + 1)):
         ITEM_QUESTS.write_text(json.dumps(purpose, ensure_ascii=False, indent=1) + "\n")
         rows = sum(len(v) for v in purpose.values())
         print(f"item_quests.json: {rows} objetos con su misión")

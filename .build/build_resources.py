@@ -4,10 +4,10 @@ torrentearcano lists, per step, only what you have to gather: base resources,
 equipment, consumables, souls and creatures. Crafted intermediates and quest
 drops are already left out. Step "0" holds what the prerequisites need.
 
-Reads  : .build/lists/torrentearcano.json (written by import_guide.py)
-Checks : .build/lists/compilado.txt, the page's own compiled list
-Writes : src/data/resources.json and the item images in public/img/items/
-Run    : python3 -I .build/build_resources.py
+Reads  : .build/lists/<dofus>/torrentearcano.json (written by import_guide.py)
+Checks : .build/lists/<dofus>/compilado.txt, the page's own compiled list
+Writes : src/dofus/<dofus>/resources.json and the item images in public/img/items/
+Run    : python3 -I .build/build_resources.py   (--dofus <id> or DOFUS; silvestre by default)
 
 resources.json:
   items: {key: {name, img, type, lvl}}   key = DofusDB id, or "x:<slug>" if unknown
@@ -17,7 +17,7 @@ resources.json:
     g  group label for rows only some players need, or null
     a  alternatives: [[item key, qty], ...]; usually just one
     p  in step 0 only: the prerequisite (steps.js id) the item is spent on
-    m  the quests that use it up (from .build/lists/item_quests.json), if known
+    m  the quests that use it up (from .build/lists/<dofus>/item_quests.json), if known
 """
 import json
 import pathlib
@@ -30,90 +30,29 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 from build_assets_js import mirror  # noqa: E402
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
 
-SOURCE = ROOT / "lists" / "torrentearcano.json"
-COMPILED = ROOT / "lists" / "compilado.txt"
+SOURCE = dofus.LISTS / "torrentearcano.json"
+COMPILED = dofus.LISTS / "compilado.txt"
 # The quests that use each item up, per step (written by audit_resources.py)
-ITEM_QUESTS = ROOT / "lists" / "item_quests.json"
+ITEM_QUESTS = dofus.LISTS / "item_quests.json"
 CACHE = ROOT / "data" / "item_lookup_cache.json"
-OUT = ROOT.parent / "src" / "data" / "resources.json"
+OUT = dofus.SRC / "resources.json"
 API = "https://api.dofusdb.fr/"
 
 CATEGORY = {"Recursos": "recursos", "Consumibles": "consumibles", "Equipables": "equipables",
             "Almas": "almas", "Criaturas": "criaturas", "Cosméticos": "cosmeticos"}
-# Mistakes in the page's lists, confirmed by players. Applied to the per-step data
-# and to the compiled list alike, so the check still compares like with like.
-CORRECTIONS = {
-    "Hoja de kalipto": "Flor de kalipto",   # no such leaf exists; the guide means the flower
-    "Filtro de dragonalgas": "Filtro de amor",  # what "En busca de un herrero" asks for (33380)
-}
-# Names that differ from DofusDB's Spanish name
-ALIASES = {
-    "jalabola dedicada a bonta": 26059,     # "Jalabola dedicada de Bonta"
-    "jalabola dedicada a brakmar": 26061,   # "Jalabola dedicada de Brakmar"
-    "pocima sesamobolizante": 10204,        # "Pócima de sesamobolizante"
-}
+CORRECTIONS = D.CORRECTIONS  # per Dofus, in .build/dofus/<id>.py
+ALIASES = D.ALIASES  # per Dofus, in .build/dofus/<id>.py
 LINE = re.compile(r"^(\d+) x (.+)$")
 NOTE = re.compile(r"\s*\(([^)]*)\)\s*")
-# Same rules as the page's compiled list (buildCompiledResourcesData): these are kept
-# after use, so two steps asking for one still need just one.
-REUSABLE = {"mazorrasombrero", "varita pitusa", "piedra de alma mediana",
-            "calzoncillo de repuesto de capitan chafer"}
-# The page lists what the prerequisites need without saying which one asks for it.
-# Item -> prerequisite id (PREREQS_LOGROS in steps.js), from the objectives of each
-# prerequisite's quests in DofusDB (need.generated.items). Casco and Alas de madera
-# are for the cannon to the island of Moon in "Ida sin vuelta" (Pan Koko Mío): it only
-# asks to carry them, so DofusDB has no objective for them; torrentearcano's guide to
-# that quest says so. Completing the prerequisite counts its items as spent.
-PREREQ_OF = {
-    "399": "l4", "429": "l4", "1002": "l4", "2551": "l4",      # El gran Guarrok
-    "2553": "l4", "2617": "l4", "2618": "l4", "8759": "l4",
-    "1019": "l8", "1021": "l8",                                 # Pan Koko Mío
-    "7904": "l6",                                               # El cementerio primitivo
-    "421": "l11", "885": "l11",                                 # El despertar de Pandala
-    "1455": "l7", "1456": "l7", "1457": "l7", "1458": "l7",     # Intrusión en el territorio wabbit
-}
-# Rows the page lists twice. Step -> {item: why}. Dropped after the check against the
-# compiled list, which counts them twice too. Checked against each quest's guide on
-# torrentearcano and DofusDB's objectives and recipes.
-DUPLICATES = {
-    # "El receptáculo de los dofus" asks to do the quest that opens Pandala: that is
-    # "El despertar de Pandala", already prerequisite l11. Its "Suero contra la
-    # pandrista" takes 50 Ortiga and 5 Lana de jalatín negro, listed in step 0 for l11.
-    "1": {"421": "prerrequisito l11", "885": "prerrequisito l11"},
-    # The page's split of the old step 75 copied its items into the new 75 as well as
-    # the 76, where "Empieza a hacer viento" (the boards, 4 × 4 per Tabla valepató in
-    # DofusDB) and "Aviso de tormenta" (the rope, per its guide) use them.
-    "75": {"16496": "paso 76", "16494": "paso 76", "16499": "paso 76", "16492": "paso 76",
-           "9935": "paso 76"},
-}
-# Rows the page puts one step early. Step -> (step they belong to, {item: why}).
-MOVED = {
-    # "Barnabé en el espacio" (step 4) only asks for a fight. Both items are the first
-    # objective of step 5's quests, in DofusDB and in their guides on torrentearcano:
-    # "Las primeras impresiones son engañosas" (5 Lana de jalató) and "¿Dónde se ha ido
-    # la 7.ª compañía?" (the key). The page lists step 5 with nothing.
-    "4": ("5", {"384": "Las primeras impresiones son engañosas",
-                "12073": "¿Dónde se ha ido la 7.ª compañía?"}),
-    # Step 19 stops at mission 4 of "Púrpura profundo"; missions 5 and 6, done in step
-    # 21, use these: "Remordimientos de eternala" (Tallo de bambuto, DofusDB objective)
-    # and "El anillo de Tot" (Calavera and the ring's key, per its guide).
-    "19": ("21", {"15444": "El anillo de Tot", "15477": "El anillo de Tot",
-                  "7290": "Remordimientos de eternala"}),
-    # Step 34 stops at "Arak-hais, ¿dónde vais?"; the glands are handed over in the
-    # next mission, "Munster descubre el misterio" (step 35), per its guide.
-    "34": ("35", {"16215": "Munster descubre el misterio"}),
-}
-# Rows the page leaves out: what an optional prerequisite asks for. Step -> [(category,
-# label shown with the item, prerequisite id, item name, qty)]. "Escaeroplano de alta
-# velocidad" (Altos vuelos, optional) takes the upgraded hat and wings (DofusDB's
-# objectives and torrentearcano's guide to that quest), not the plain ones.
-EXTRA = {
-    "0": [("Equipables", "Opcional · Altos vuelos", "l10", "Casco mejorado", 1),
-          ("Equipables", "Opcional · Altos vuelos", "l10", "Alas de madera mejoradas", 1)],
-}
-# Only needed if the alteration is gone: listed in its step, left out of totals.
-OPTIONAL = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
+REUSABLE = D.REUSABLE  # per Dofus, in .build/dofus/<id>.py
+PREREQ_OF = D.PREREQ_OF  # per Dofus, in .build/dofus/<id>.py
+DUPLICATES = D.DUPLICATES  # per Dofus, in .build/dofus/<id>.py
+MOVED = D.MOVED  # per Dofus, in .build/dofus/<id>.py
+EXTRA = D.EXTRA_ITEMS  # per Dofus, in .build/dofus/<id>.py
+OPTIONAL = D.OPTIONAL_ITEM  # per Dofus, in .build/dofus/<id>.py
 
 
 def slug(name):

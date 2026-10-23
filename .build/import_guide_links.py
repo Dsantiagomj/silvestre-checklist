@@ -8,7 +8,7 @@ URLs and keeps only the ones that answer, so the app never links a missing page.
 Prerequisite achievements (PREREQS_LOGROS in steps.js) get their page too when the
 sitemap has it: the card links the achievement, not the quests it asks for. A
 prerequisite that is a single quest ('misión "X"') links that quest's page.
-It also links every quest the diary lists (src/data/quests.json) whose page, by the
+It also links every quest the diary lists (src/dofus/<dofus>/quests.json) whose page, by the
 same slug, is in the site's sitemap: most have a guide the step text never names.
 
 Usage:
@@ -16,8 +16,9 @@ Usage:
   python3 -I .build/import_guide_links.py /tmp/ta/page.html
 
 Writes:
-  src/data/guides.json  { achievements: { name: url }, missions: { title: url },
-                          quests: { title: url } }
+  src/dofus/<dofus>/guides.json  { achievements: { name: url }, missions: { title: url },
+                                   quests: { title: url } }
+(--dofus <id> or DOFUS; silvestre by default)
 "missions" are named in the step texts and get linked there; "quests" only in the
 diary's quest list, so a short title ("Memo", "Enigma") never links ordinary words.
 """
@@ -30,11 +31,14 @@ import unicodedata
 import urllib.error
 import urllib.request
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "data" / "guides.json"
-QUESTS = ROOT / "src" / "data" / "quests.json"
-STEPS_JS = ROOT / "src" / "data" / "steps.js"
-SITE = "https://www.torrentearcano.com/"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+
+OUT = dofus.SRC / "guides.json"
+QUESTS = dofus.SRC / "quests.json"
+STEPS_JS = dofus.SRC / "steps.js"
+SITE = D.SITE
 
 # The page's own pattern (linkMissions), on the raw text instead of escaped HTML
 MISSION = re.compile(
@@ -47,18 +51,9 @@ MISSION = re.compile(
 # Missions the app lists that the guide text never names: the generic class quest row
 # (build_quests_js.py) links to the page that lists each class's quest.
 EXTRA_MISSIONS = ["Misión de clase"]
-# Missions the text names without the "misión: X" form, so MISSION misses them:
-# step 100 says "Se debe hacer la misión Flovoración en algún punto de esta", step 38
-# "se puede lanzar la misión La sombra del reino".
-TEXT_MISSIONS = ["Flovoración", "La sombra del reino"]
-# Our own missionUrlOverrides, for names the guide misspells: step 92 writes "Los tótems
-# de Maimame", and the page is the one of "Los tótems de Maimane".
-MISSION_URLS = {"Los tótems de Maimame": SITE + "los-totems-de-maimane"}
-# Achievements the text names that achievementLinks lacks: step 1 "incluye también el logro
-# "En marcha hacia la aventura" y el logro "Un ciudadano modelo"". Both pages answer;
-# "Respuestas para todo", a quest of the first one, has none.
-EXTRA_ACHIEVEMENTS = {"En marcha hacia la aventura": SITE + "en-marcha-hacia-la-aventura",
-                      "Un ciudadano modelo": SITE + "un-ciudadano-modelo"}
+TEXT_MISSIONS = D.TEXT_MISSIONS  # per Dofus, in .build/dofus/<id>.py
+MISSION_URLS = D.MISSION_URLS  # per Dofus, in .build/dofus/<id>.py
+EXTRA_ACHIEVEMENTS = D.EXTRA_ACHIEVEMENTS  # per Dofus, in .build/dofus/<id>.py
 
 
 def js_object(html, name):

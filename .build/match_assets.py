@@ -1,17 +1,23 @@
-"""Match the 100 Silvestre steps against DofusDB achievements, quests, dungeons and bosses.
+"""Match the Dofus's steps against DofusDB achievements, quests, dungeons and bosses.
 
-Reads  : src/data/steps.js (STEPS array), .build/data/*.json
-Writes : .build/data/step_assets.json  — one entry per step with its resolved assets
+Reads  : src/dofus/<dofus>/steps.js (STEPS array), .build/data/*.json
+Writes : .build/data/<dofus>/step_assets.json  — one entry per step with its resolved assets
+         (--dofus <id> or DOFUS; silvestre by default)
 Run    : python3 -I .build/match_assets.py
 """
 import json
 import pathlib
 import re
+import sys
 import unicodedata
 from difflib import SequenceMatcher
 
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+STEP_ASSETS = dofus.WORK / "step_assets.json"
 CDN = "https://api.dofusdb.fr"
 
 FUZZY_FLOOR = 0.85
@@ -31,7 +37,7 @@ def norm(s):
 
 
 def load_steps():
-    html = (ROOT / "src" / "data" / "steps.js").read_text()
+    html = (dofus.SRC / "steps.js").read_text()
     body = html.split("const STEPS = [", 1)[1].split("\n];", 1)[0]
     # The text is a JSON string; base, marks, closes… may follow it on the same line
     pattern = re.compile(
@@ -173,7 +179,8 @@ def assets_for(step):
 def main():
     steps = load_steps()
     report = [{**s, "assets": assets_for(s)} for s in steps]
-    (DATA / "step_assets.json").write_text(
+    STEP_ASSETS.parent.mkdir(parents=True, exist_ok=True)
+    STEP_ASSETS.write_text(
         json.dumps(report, ensure_ascii=False, indent=1)
     )
 

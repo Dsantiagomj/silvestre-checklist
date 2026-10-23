@@ -25,8 +25,8 @@ for: "La eterna cosecha" starts at level 40, but its stages go up to archmonster
 level 181. DofusDB's per-stage `optimalLevel` is not used: many quests have 200 there
 for every stage whatever their level.
 
-Reads  : src/data/{quests,guides}.json, .build/data/quests.json (DofusDB's objectives)
-Writes : src/data/weights.json ({step number: {"w": weight, "q": [share of each quest],
+Reads  : src/dofus/<dofus>/{quests,guides}.json, .build/data/quests.json (DofusDB's objectives)
+Writes : src/dofus/<dofus>/weights.json ({step number: {"w": weight, "q": [share of each quest],
                                  "ids": [quest ids], "os": [their objective counts]}})
 Caches : .build/data/ta_levels.json  ({url: {"level": n | null, "pre": text}})
          .build/data/monster_levels.json  ({monster id: level of its lowest grade})
@@ -44,16 +44,19 @@ import unicodedata
 
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
-QUESTS_JSON = ROOT / "src" / "data" / "quests.json"
-GUIDES_JSON = ROOT / "src" / "data" / "guides.json"
-OUT_JSON = ROOT / "src" / "data" / "weights.json"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+QUESTS_JSON = dofus.SRC / "quests.json"
+GUIDES_JSON = dofus.SRC / "guides.json"
+OUT_JSON = dofus.SRC / "weights.json"
 TA_CACHE = DATA / "ta_levels.json"
 RAW_QUESTS = DATA / "quests.json"
 MONSTER_CACHE = DATA / "monster_levels.json"
 # Brackets encoded: curl reads [] as a URL pattern
 MONSTER_API = "https://api.dofusdb.fr/monsters?%24limit=50&"
 SOUL_OBJECTIVE = 12  # "Lleva 1 alma(s) de {monster} a {npc}"
-LEVEL_FROM_MONSTERS = {"439"}  # La eterna cosecha
+LEVEL_FROM_MONSTERS = D.LEVEL_FROM_MONSTERS  # per Dofus, in .build/dofus/<id>.py
 MIN_WEIGHT = 1  # one level-1 quest
 
 

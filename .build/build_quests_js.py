@@ -25,23 +25,28 @@ How a step maps to quests:
     The step covers the run from the previous alignment step's mission, which
     was left paused, up to N.
 
-Reads  : .build/data/{step_assets,achievements,quests}.json
-Writes : src/data/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT,
+Reads  : .build/data/{achievements,quests}.json, .build/data/<dofus>/step_assets.json
+Writes : src/dofus/<dofus>/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT,
          QUESTS and PREREQS; the app loads it lazily)
 Caches : .build/data/lookup_<kind>.json  (names and map positions from the API)
-Run    : python3 -I .build/build_quests_js.py   (after match_assets.py)
+Run    : python3 -I .build/build_quests_js.py   (after match_assets.py; --dofus <id> or DOFUS,
+         silvestre by default)
 """
 import json
 import pathlib
 import re
+import sys
 import urllib.request
 
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
-OUT_JSON = ROOT / "src" / "data" / "quests.json"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+OUT_JSON = dofus.SRC / "quests.json"
 # What each step asks for, as the step card draws it (small, loaded with the page)
-OUT_PLANS = ROOT / "src" / "data" / "plans.json"
-ASSETS_JSON = ROOT / "src" / "data" / "assets.json"
+OUT_PLANS = dofus.SRC / "plans.json"
+ASSETS_JSON = dofus.SRC / "assets.json"
 API = "https://api.dofusdb.fr"
 
 KIND = {
@@ -100,68 +105,18 @@ def map_info(rec):
             "n": es_name(rec) or None}
 
 
-# ---------------------------------------------------------------------------
-# Step -> quests
-# ---------------------------------------------------------------------------
-# Achievements DofusDB has no objectives for: achievement id -> its quests in order.
-# "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna cosecha".
-MISSING_OBJECTIVES = {565: [439]}
+MISSING_OBJECTIVES = D.MISSING_OBJECTIVES  # per Dofus, in .build/dofus/<id>.py
 
-# Quests a step needs that its text doesn't name, put first. Step 78 is "hasta la misión
-# de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
-# previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
-# mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
-# order quest 5 of the same line, which requires the 4th (need.quests) and alignment
-# level 100 (Pa>99): before it goes Bonta mission 100, "El exorcista" (Pa=99&Qf=1901),
-# since step 85 stops at mission 99. Step 12's
-# "Espionaje industrial" requires "El maleficio del cofre" (after "Cofrología" and
-# "Tesorfanato") and "Las grandes galerías" (startCriterion Qf=). Step 83's "Birk, hija de Bork" requires
-# "Llama, amigo y entra", mission 1 of "Allá bajo la montaña" (Qf=2010).
-# "Abono de peaje" is in no step, but the Frigost lines ask for its quests (Qf=), each
-# one the run of a dungeon: each goes in the step of the first quest that asks for it.
-# 31: "Prefiere morir en el mar" asks for "Antimonárquico" and "Las joyas de la corona";
-# 40: "Calefacción a bajo coste", for "Duerme y tendrás un pastel"; 52: "Quién saca
-# beneficio del jalamut", for "Lavandería automática", and "Almacén de avituallamiento",
-# for "Hace fresco, pero no importa"; 83: "Llama, amigo y entra", for "Canozzirujana";
-# 86: "La guardia muere, pero no se rinde", for "Allá arriba, en el pico helado...".
-# They ask for nothing among themselves, so "Allá en la montaña..." stays out.
-# Step 87's two quests need "Toma de conciencia" taken (Qa=2138), and it needs "Las
-# cuatro voluntades" finished (Qf=2122), which step 73 leaves at its 2nd objective: 87
-# finishes it (it closes 73, CLOSES in import_guide.py) and takes the other (TAKE_ONLY),
-# done in step 91.
-# Step 33's "La razón del más fuerte" needs "La eterna cosecha" in progress or finished
-# ((Qa=439|Qf=439)): 33 takes it (TAKE_ONLY), right before (QUEST_BEFORE); step 79 finishes
-# it. Step 38's red says "La sombra del reino" can be started during mission 3 ((Qa=1656
-# &Qo>9997)) and done any time before step 80; step 81's "La sombra de lo que era" needs
-# it finished (Qf=1665). 38 does it, right after "Esto parece el Sur" (QUEST_AFTER).
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 31: [619, 620], 33: [439], 38: [1665], 40: [621], 52: [622, 623],
-              78: [434, 111, 121, 423], 80: [1782], 83: [624, 2010], 86: [626], 87: [2122, 2138], 89: [1903, 1917]}
+STEP_EXTRA = D.STEP_EXTRA  # per Dofus, in .build/dofus/<id>.py
 
-# Quests another quest gives on the way and that it waits for, right after it in every
-# step that lists it. "Birk, hija de Bork" (step 83) gives "Los enemigos de mis enemigos
-# son mis enemigos" (Qa=2011&Qo=14269, "Resuelve el problema de Birk") and "Los
-# nanoinsumisos" (Qo=14272, "Ayuda a liberar al general Dourak"), and goes on only when
-# each is finished (Torrente Arcano: "Debes completarla", "Una vez termines su misión,
-# habla con el General Dourak"): both before the red line, which is past Dazahk.
-SUBQUESTS = {2011: [2019, 2012]}
+SUBQUESTS = D.SUBQUESTS  # per Dofus, in .build/dofus/<id>.py
 
-# Quests a step names but cannot do. Step 53 is "hasta la misión 3" of "El guardián del
-# inmaculado", but its mission 2, "Hasta su último suspiro", starts past the fight with
-# Kumijo in mission 3 (Qa=2180&Qo>16870), where step 53 stops: step 56 does it.
-STEP_SKIP = {53: [2198]}
+STEP_SKIP = D.STEP_SKIP  # per Dofus, in .build/dofus/<id>.py
 
 
-# Quest -> the quest it starts from, where the achievement lists it before: it goes right
-# after it in every step that lists both. "Hasta su último suspiro" is mission 2 of "El
-# guardián del inmaculado" but starts in mission 3, "Réquiem por un yokai" (Qa=2180).
-# "La huida es la mejor salida" (step 16) needs "Nuestros amigos los animalitos"
-# finished (Qf=1848), which the achievement lists after it.
-QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656}
+QUEST_AFTER = D.QUEST_AFTER  # per Dofus, in .build/dofus/<id>.py
 
-# Quest -> the quest that needs it, where it would go elsewhere: it goes right before it
-# in every step that lists both. Step 33 takes "La eterna cosecha" for "La razón del más
-# fuerte" (STEP_EXTRA).
-QUEST_BEFORE = {439: 2442}
+QUEST_BEFORE = D.QUEST_BEFORE  # per Dofus, in .build/dofus/<id>.py
 
 
 def after_requirements(ids):
@@ -179,12 +134,7 @@ def after_requirements(ids):
     return out
 
 
-# Objectives of one stage can be done in any order; DofusDB lists them in one. Where the
-# guide does them in another, (quest, stage) -> the new order, so the red line falls in
-# its place. Step 39 passes Tynril and Morsagüino and leaves Funoroshi for step 48; step
-# 50 passes Roca negra (Ben el Ripata), Kimbo and Obsidiantre and leaves Sfinter Cell
-# for step 51.
-OBJECTIVE_ORDER = {(1660, 0): [1, 2, 0, 3], (1661, 0): [1, 2, 3, 0, 4]}
+OBJECTIVE_ORDER = D.OBJECTIVE_ORDER  # per Dofus, in .build/dofus/<id>.py
 
 # An objective any of several quests completes is no single quest: it becomes one
 # generic row instead of the first match. The one per class in "Un ciudadano modelo"
@@ -249,21 +199,9 @@ def optional_missions(text, matched_on):
     return [int(n) for n in OPTIONAL.findall(text[pos:nxt.start() if nxt else len(text)])]
 
 
-# Quests the guide only asks to have taken, not to do. Step 28: "En este punto se debe
-# tomar la misión de la Isla de Frigost: Logro "La cantera de hielo", misión 4: Luces y
-# sombras. No es necesario hacerla, solo tenerla tomada." Its wording is unique, so it
-# is listed by hand instead of parsed. Step 83 stops "justo después de pasar Dazahk
-# Martegel y obtener la misión: La biblia de los rencores": taken, done later. Step 87
-# takes "Toma de conciencia", which its two quests need in progress (STEP_EXTRA).
-# Step 33 takes "La eterna cosecha", which "La razón del más fuerte" needs in progress;
-# step 79 finishes it.
-TAKE_ONLY = {28: [1286], 33: [439], 83: [2013], 87: [2138]}
+TAKE_ONLY = D.TAKE_ONLY  # per Dofus, in .build/dofus/<id>.py
 
-# Quests a step adds (STEP_EXTRA) that do not hold it open. Step 38: "La sombra del reino"
-# is not part of "Azul turquesa"; its red says it "se puede lanzar" during mission 3 and
-# done "en cualquier punto hasta antes del inciso 80". So completing the achievement (step
-# 62) finishes step 38 too; step 81's quest still needs it finished (PREREQS).
-OPTIONAL_EXTRA = {38: [1665]}
+OPTIONAL_EXTRA = D.OPTIONAL_EXTRA  # per Dofus, in .build/dofus/<id>.py
 
 
 def step_kinds(step, plan, achievements, ids):
@@ -283,10 +221,7 @@ def step_kinds(step, plan, achievements, ids):
     return kinds
 
 
-# Steps whose missions go in the order the text names them, not the achievement's. Step
-# 87: "misión 4: La guerra de cania…, misión 3: El juicio de la muerte"; they can only be
-# done one at a time (startCriterion Qa!), and the 3rd is the one that waits for Ilyzaelle.
-IN_TEXT_ORDER = {87}
+IN_TEXT_ORDER = D.IN_TEXT_ORDER  # per Dofus, in .build/dofus/<id>.py
 
 
 def missions_for(text, start, names=(), in_text_order=False):
@@ -330,7 +265,7 @@ def bonta_missions(quests):
 
 def read_marks():
     """Each step's base text and marks (steps.js, written by import_guide.py)."""
-    src = (ROOT / "src" / "data" / "steps.js").read_text()
+    src = (dofus.SRC / "steps.js").read_text()
     out = {}
     for line in src.split("export const STEPS = [", 1)[1].split("\n];", 1)[0].splitlines():
         n = re.search(r"\{ n: (\d+),", line)
@@ -830,7 +765,7 @@ def main():
     located = [o for o in objs if o.get("m") or o.get("x") is not None]
     print(f"quests.json      : {OUT_JSON.stat().st_size // 1024} KB")
     print(f"plans.json       : {OUT_PLANS.stat().st_size // 1024} KB, {len(plans)} pasos con tarjeta")
-    print(f"pasos con misión : {len(step_quests)}/100")
+    print(f"pasos con misión : {len(step_quests)}/{D.STEP_COUNT}")
     print(f"pasos agrupados  : {len(step_groups)} (misiones de varios logros)")
     print(f"no obligatorias  : {step_kinds_out}")
     print(f"misiones madre   : {len(parent)} ({sum(len(k) for v in parent.values() for _, k in v)} hijas)")
