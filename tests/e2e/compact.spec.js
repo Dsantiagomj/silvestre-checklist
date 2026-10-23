@@ -111,12 +111,13 @@ test("las fichas se pliegan otra vez al cambiar de paso", async ({ page }) => {
   await expect(page.locator("#journal .call.tip .call-head")).toHaveAttribute("aria-expanded", "false");
 });
 
-test("las acciones del paso se quedan fijas al pie del detalle", async ({ page }) => {
+test("las acciones del paso se quedan fijas al pie de la pantalla al bajar por el detalle", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await row(page, 1).locator(".row-num").click();
   await waitQuests(page);
-  await page.locator(".diary-detail").evaluate(el => el.scrollTo(0, 300));
+  await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
+  await page.evaluate(() => scrollBy({ top: 300, behavior: "instant" }));
   await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
   await expect(page.locator("#toggleBtn")).toBeVisible();
 });

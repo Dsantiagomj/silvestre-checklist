@@ -68,7 +68,7 @@ test("en la ruta de la madre, una línea dice qué hijas se hacen ahí y lleva a
   expect(errors).toEqual([]);
 });
 
-test("en escritorio, llevar a una hija desplaza el detalle por dentro y no la página", async ({ page }) => {
+test("en escritorio, llevar a una hija baja la página hasta ella, bajo la barra de la ventana", async ({ page }) => {
   await openApp(page);
   await openStep(page, 81);
   await page.waitForLoadState("networkidle");
@@ -84,15 +84,15 @@ test("en escritorio, llevar a una hija desplaza el detalle por dentro y no la p�
   const vientos = quest(page, "El dragón de los vientos");
   await expect(vientos).toHaveAttribute("open", "");
   await expect(vientos.locator("summary")).toBeInViewport();
-  await page.waitForTimeout(200);
-  // La hija queda arriba del detalle, que es lo que se ha desplazado
+  await page.waitForTimeout(1200);
+  // La hija queda arriba, justo bajo la barra de la ventana: lo que se ha desplazado es la página
   const r = await page.evaluate(() => {
     const detail = document.querySelector(".diary-detail");
     const kid = [...document.querySelectorAll("#journal .q-item")].find(q => q.querySelector("summary .q-name")?.textContent === "El dragón de los vientos");
-    return { y: scrollY, scroll: detail.scrollTop, gap: kid.getBoundingClientRect().top - detail.getBoundingClientRect().top };
+    return { y: scrollY, scroll: detail.scrollTop, gap: kid.getBoundingClientRect().top - document.getElementById("winBar").getBoundingClientRect().bottom };
   });
-  expect(r.y).toBe(y);
-  expect(r.scroll).toBeGreaterThan(0);
+  expect(r.y).toBeGreaterThan(y);
+  expect(r.scroll).toBe(0);
   expect(r.gap).toBeGreaterThanOrEqual(0);
   expect(r.gap).toBeLessThanOrEqual(30);
 });

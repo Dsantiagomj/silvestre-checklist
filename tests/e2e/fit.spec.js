@@ -2,11 +2,12 @@ import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
 /**
- * En escritorio la ventana de los 100 pasos nunca es más alta que la pantalla: su
- * barra (el progreso, las pestañas y sus herramientas) queda fija y lo que no
- * cabe se desplaza por dentro: en el mapa, en las listas y, en el diario, la lista de
- * pasos y el detalle del paso, cada uno por su lado. Abrir una misión alarga el detalle
- * por dentro: ni la ventana ni la página cambian de altura.
+ * En escritorio la ventana de los 100 pasos llena la pantalla: su barra (el progreso, las
+ * pestañas y sus herramientas) queda fija y lo que no cabe se desplaza por dentro: en el
+ * mapa, en las listas y, en el diario, la lista de pasos. El detalle del paso es la
+ * excepción: no se desplaza por dentro, mide lo que su contenido y un paso largo alarga la
+ * ventana y se lee bajando la página, con la barra y la lista pegadas arriba (ver
+ * diary-scroll.spec.js).
  */
 
 const VIEWS = ["map", "diary", "prereqs", "items"];
@@ -36,22 +37,25 @@ const boxes = page => page.evaluate(() => {
 const fits = b => b.section >= b.header - 0.5 && b.win.top >= b.header - 0.5 && b.win.bottom <= b.vh + 0.5;
 
 /**
- * En el diario: la ventana entera a la vista y la cabecera del paso (estandarte y
- * objetivo) arriba del detalle, entera.
+ * En el diario: la ventana desde arriba, la lista entera a la vista y la cabecera del paso
+ * (estandarte y objetivo) arriba del detalle, entera.
  */
 const fitsDiary = page => page.evaluate(() => {
   const header = 0;
   const win = document.querySelector(".steps-win").getBoundingClientRect();
+  const side = document.querySelector(".diary-side").getBoundingClientRect();
   const top = document.querySelector("#journal .journal-top")?.getBoundingClientRect();
-  return win.top >= header - 0.5 && win.bottom <= innerHeight + 0.5
+  return win.top >= header - 0.5 && side.bottom <= innerHeight + 0.5
     && !!top && top.top >= header - 0.5 && top.bottom <= innerHeight + 0.5;
 });
 
 for (const [w, h] of SIZES) {
   for (const view of VIEWS) {
+    // En el diario, con un paso corto (el 4): uno largo alarga la ventana
+    const seed = view === "diary" ? { "silvestre:done": { 1: true, 2: true, 3: true } } : null;
     test(`a ${w}×${h}, la ventana de pasos cabe en la pantalla con la pestaña «${view}»`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
-      await openApp(page, null, { view });
+      await openApp(page, seed, { view });
       await align(page);
       await page.waitForTimeout(150);
       const b = await boxes(page);
@@ -64,26 +68,28 @@ for (const [w, h] of SIZES) {
 }
 
 for (const [w, h] of SIZES) {
-  test(`a ${w}×${h}, en el diario la lista y el detalle llenan la ventana y la cabecera del paso se ve`, async ({ page }) => {
+  test(`a ${w}×${h}, en el diario la lista cabe en la pantalla, el detalle llega al pie de la ventana y la cabecera del paso se ve`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await openApp(page);
     await align(page);
     await page.waitForTimeout(150);
     expect(await fitsDiary(page)).toBe(true);
-    // La lista y el detalle llegan los dos al pie de la ventana, ni más ni menos
+    // El detalle llega al pie de la ventana; la lista, al pie de la pantalla (con su aire)
     const r = await page.evaluate(() => ({
       win: document.querySelector(".steps-win").getBoundingClientRect().bottom,
       side: document.querySelector(".diary-side").getBoundingClientRect().bottom,
       detail: document.querySelector(".diary-detail").getBoundingClientRect().bottom,
     }));
-    expect(Math.abs(r.side - r.win)).toBeLessThanOrEqual(1.5);
     expect(Math.abs(r.detail - r.win)).toBeLessThanOrEqual(1.5);
+    expect(r.side).toBeLessThanOrEqual(r.win + 0.5);
+    expect(r.side).toBeGreaterThan(h - 20);
   });
 }
 
+// El diario, con un paso corto (el 4): uno largo la alarga
 test("la ventana tiene la misma altura en todas las pestañas", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
-  await openApp(page, null, { view: "map" });
+  await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } }, { view: "map" });
   await align(page);
   const heights = {};
   for (const id of ["#stepsViewMap", "#stepsViewDiary", "#tabPrereqs", "#tabItems"]) {
@@ -98,7 +104,7 @@ test("la ventana tiene la misma altura en todas las pestañas", async ({ page })
 // Lo que se desplaza en cada pestaña y lo que queda fijo encima
 const SCROLL = {
   map: { scrollers: [".step-map-scroll"], fixed: [] },
-  diary: { scrollers: [".diary-list", ".diary-detail"], fixed: [".diary-tabs"] },
+  diary: { scrollers: [".diary-list"], fixed: [".diary-tabs"] },
   prereqs: { scrollers: [".prereqs-panel"], fixed: [".needs-bar"] },
   items: { scrollers: [".items-body"], fixed: [".needs-toolbar"] },
 };
@@ -152,7 +158,7 @@ test("«Siguiente» de la barra deja a la vista la ventana desde arriba y la cab
   await expect.poll(() => fitsDiary(page), { timeout: 4000 }).toBe(true);
 });
 
-test("en el diario, la rueda sobre el detalle lo desplaza por dentro y no mueve la página", async ({ page }) => {
+test("en el diario, la rueda sobre el detalle baja la página y la lista se queda a la vista", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await page.click('.diary-row[data-n="1"] .row-num');
@@ -163,10 +169,10 @@ test("en el diario, la rueda sobre el detalle lo desplaza por dentro y no mueve 
   const box = await page.locator("#journal .journal-top").boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + 10);
   await page.mouse.wheel(0, 600);
-  await expect.poll(() => page.locator(".diary-detail").evaluate(el => el.scrollTop)).toBeGreaterThan(100);
-  expect(await page.evaluate(() => scrollY)).toBe(y);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y + 100);
+  expect(await page.locator(".diary-detail").evaluate(el => el.scrollTop)).toBe(0);
   expect(await page.locator("#journal .journal-body").evaluate(el => el.scrollTop)).toBe(0);
-  await expect(page.locator(".diary-list")).toBeInViewport();
+  await expect(page.locator(".diary-list")).toBeInViewport({ ratio: 1 });
   await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
 });
 
@@ -215,33 +221,32 @@ for (const [w, h] of SIZES.slice(0, 1)) {
   });
 }
 
-test("a 1440×900, al final del detalle, abrir la última misión no cambia la ventana ni mueve la lista ni la página", async ({ page }) => {
+test("a 1440×900, al final de la página, abrir la última misión alarga la ventana sin mover la lista, la misión ni la página", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.locator('.diary-row[data-n="12"] .row-num').evaluate(el => el.click());
   await expect(page.locator("#journal .journal-num")).toHaveText("12");
   await expect(page.locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
-  await align(page);
+  await page.waitForLoadState("networkidle");
   await page.waitForTimeout(300);
-  await page.locator(".diary-detail").evaluate(el => el.scrollTo(0, el.scrollHeight));
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await page.waitForTimeout(100);
-  const snap = () => page.evaluate(() => {
-    const win = document.querySelector(".diary-window").getBoundingClientRect();
-    return {
-      win: { top: win.top, h: win.height }, side: document.querySelector(".diary-side").getBoundingClientRect().top,
-      y: scrollY, content: document.querySelector(".diary-detail").scrollHeight,
-    };
-  });
+  const snap = () => page.evaluate(() => ({
+    win: document.querySelector(".diary-window").getBoundingClientRect().height,
+    side: document.querySelector(".diary-side").getBoundingClientRect().top,
+    sum: [...document.querySelectorAll("#journal .q-item summary")].at(-1).getBoundingClientRect().top,
+    y: scrollY,
+  }));
   const before = await snap();
   // Sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
   await page.locator("#journal .q-item summary").last().evaluate(el => el.click());
   await expect(page.locator("#journal .q-item").last()).toHaveAttribute("open", "");
   await page.waitForTimeout(600);
   const after = await snap();
-  expect(Math.abs(after.win.h - before.win.h), JSON.stringify({ before, after })).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.win.top - before.win.top)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.side - before.side)).toBeLessThanOrEqual(1);
-  expect(Math.abs(after.y - before.y)).toBeLessThanOrEqual(1);
-  // Lo que crece es el contenido del detalle, que se desplaza por dentro
-  expect(after.content).toBeGreaterThan(before.content);
+  const msg = JSON.stringify({ before, after });
+  expect(Math.abs(after.side - before.side), msg).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.sum - before.sum), msg).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.y - before.y), msg).toBeLessThanOrEqual(1);
+  // Lo que crece es el detalle y, con él, la ventana
+  expect(after.win).toBeGreaterThan(before.win);
 });

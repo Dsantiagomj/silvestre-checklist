@@ -553,7 +553,7 @@ footer small{ color:var(--line-warm); }
 *::-webkit-scrollbar-thumb:hover{ background:var(--amber-2); }
 /* Con scrollbar-width (las barras finas), Chromium ignora ::-webkit-scrollbar y dibuja
    la del sistema: estas llevan los mismos colores por la vía estándar */
-.step-map-scroll, .prereqs-panel, .items-body, .diary-detail{
+.step-map-scroll, .prereqs-panel, .items-body{
   scrollbar-color:var(--line-2) var(--inset);
 }
 
@@ -2054,8 +2054,9 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
    dentro: la lista y el detalle en el diario, el camino en el mapa y las listas en
    Prerrequisitos y Objetos. En pantallas muy bajas manda min-height: la ventana deja de
    caber y entonces sí se baja la página.
-   El diario mide lo mismo que las demás pestañas: abrir una misión alarga el detalle por
-   dentro y la ventana, la lista y la página no se mueven.
+   El diario es la excepción: mide como poco lo mismo que las demás pestañas, pero crece
+   con el paso, que no se desplaza por dentro: un paso largo se lee bajando la página, con
+   la barra y la lista pegadas arriba (ver «El diario», más abajo).
    En móvil todo sigue el flujo de la página (el detalle vive en la hoja inferior) y la
    barra se queda pegada arriba al bajar por los pasos */
 @media (min-width:901px){
@@ -2064,6 +2065,13 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
     height:calc(100vh - var(--silvestre-top, 0px) - 16px);
     height:calc(100dvh - var(--silvestre-top, 0px) - 16px);
     margin-bottom:8px;
+  }
+  /* Solo con el diario que llega o se queda, no con el que se va (inerte): el mapa que
+     llega mediría todo su camino. Con la altura de las demás como mínimo */
+  .diary:has(.steps-layer:not([inert]) > .diary-window){
+    height:auto;
+    min-height:max(520px, calc(100vh - var(--silvestre-top, 0px) - 16px));
+    min-height:max(520px, calc(100dvh - var(--silvestre-top, 0px) - 16px));
   }
   .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .win-bar{ flex:none; }
@@ -2433,8 +2441,8 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .seal.here .seal-name{ color:var(--accent-ink); }
 
 /* El diario: a la izquierda la lista de pasos y a la derecha el detalle. En escritorio
-   llenan lo que deja la cabecera de la ventana y cada uno se desplaza por dentro (ver «La
-   ventana cabe en la pantalla», más abajo) */
+   la lista se desplaza por dentro y el detalle mide lo que su contenido (ver «La barra
+   final», más abajo) */
 .diary-window{
   /* La lista crece con la pantalla (los títulos largos no se cortan) hasta un tope */
   display:grid; grid-template-columns:clamp(304px, 21vw, 420px) minmax(0, 1fr); overflow:clip;
@@ -2949,26 +2957,41 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
   padding:12px 26px 14px; border-top:1px solid var(--gw-line); background:var(--bg-2);
 }
-/* En escritorio el detalle llena el alto de la ventana y se desplaza entero por dentro
-   (estandarte incluido): abrir una misión lo alarga por dentro, sin cambiar la altura de
-   la ventana ni mover la lista ni la página. Con poco contenido la barra de pasos va al
-   pie del detalle y el hueco queda entre el contenido y ella. Con mucho, se queda pegada
-   al pie del detalle mientras se desplaza y, al final, va tras el contenido. Nunca sube
-   por encima de los primeros 240 px del cuerpo: su margen de arriba es el tope dentro de
-   .journal-main, y el cuerpo lo devuelve con el mismo margen negativo (sin cambiar dónde
-   va la barra). Arriba, el estandarte a media altura: número, zona y figura; quién da el
-   paso va en la línea bajo el título (.journal-meta) */
+/* En escritorio solo se desplazan la lista de pasos (por dentro) y la página: el detalle
+   no tiene scroll propio y mide lo que su contenido; abrir una misión lo alarga y alarga
+   la ventana. La columna de la lista se queda pegada bajo la barra de la ventana (que va
+   bajo la cabecera de la página, --silvestre-top) y mide lo que queda de pantalla, menos
+   los 8 px de aire de arriba y de abajo de la sección y el borde de la ventana: con la
+   sección alineada, lo mismo que la ventana más baja (--winbar-h lo mide DiaryWindow). Al
+   final de la ventana se acorta por abajo con ella (--diary-fit), sin meterse bajo la barra. Así la ventana nunca es más
+   baja que la lista y, con poco contenido, la barra de pasos va al pie del detalle con el
+   hueco entre el contenido y ella. Con mucho, se queda pegada al pie de la pantalla
+   mientras se baja y, al final, va tras el contenido. Nunca sube por encima de los
+   primeros 240 px del cuerpo: su margen de arriba es el tope dentro de .journal-main, y
+   el cuerpo lo devuelve con el mismo margen negativo (sin cambiar dónde va la barra).
+   Arriba, el estandarte a media altura: número, zona y figura; quién da el paso va en la
+   línea bajo el título (.journal-meta) */
 @media (min-width:901px){
-  .diary-window{ grid-template-rows:minmax(0, 1fr); }
-  .diary-detail{
-    display:flex; flex-direction:column; min-height:0;
-    overflow:auto; overscroll-behavior:contain; scrollbar-width:thin;
+  .diary-window{
+    --diary-side-h:max(240px, calc(100vh - var(--silvestre-top, 0px) - var(--winbar-h, 0px) - 18px));
+    --diary-side-h:max(240px, calc(100dvh - var(--silvestre-top, 0px) - var(--winbar-h, 0px) - 18px));
+    align-items:start;
   }
+  .diary-side{
+    position:sticky; top:calc(var(--silvestre-top, 0px) + var(--winbar-h, 0px));
+    height:min(var(--diary-side-h), var(--diary-fit, 100vh));
+    /* Sin este margen, la ventana que acaba empujaría la lista hacia arriba, bajo la barra,
+       en el fotograma en que --diary-fit aún no se ha puesto al día: así lo que sobre queda
+       recortado al pie de la ventana y la lista no se mueve. El alto de la fila lo pone el
+       detalle (min-height) */
+    margin-bottom:calc(-1 * var(--diary-side-h));
+  }
+  .diary-detail{ align-self:stretch; display:flex; flex-direction:column; min-height:var(--diary-side-h); }
   .diary-detail .journal, .diary-detail .journal-main{ flex:1 0 auto; display:flex; flex-direction:column; }
   .diary-detail .journal-body{ flex:1 0 auto; margin-bottom:-240px; }
   .diary-detail .journal-cta{ position:sticky; bottom:0; z-index:3; margin-top:240px; box-shadow:0 -8px 16px -10px rgba(0,0,0,.55); }
-  /* Ir a una misión la deja arriba del detalle, con un poco de aire */
-  .diary-detail .q-item{ scroll-margin-top:10px; }
+  /* Ir a una misión la deja arriba, bajo la barra de la ventana, con un poco de aire */
+  .diary-detail .q-item{ scroll-margin-top:calc(var(--silvestre-top, 0px) + var(--winbar-h, 0px) + 10px); }
   .diary-detail .journal-top{ grid-template-columns:156px minmax(0,1fr); gap:10px 22px; padding:12px 26px; }
   .diary-detail .journal-goal{ gap:10px; }
   /* Rótulos y grupos un poco más juntos: en el 12, las cinco misiones caben a 1440×900 */
