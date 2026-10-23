@@ -8,6 +8,7 @@ import {
   CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, redIsStop, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
+import { FOLLOW_UP } from "../lib/stops.js";
 import {
   alsoText, closeSteps, closingPlan, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
@@ -436,7 +437,7 @@ export function Quests({ step, quests, loaded, s }) {
   // línea verde con lo que se resuelve, en vez de la roja de parar
   // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
   const done = !redIsStop(step) && step.marks.find(m => m[0] === "done")[1]
-    .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
+    .replace(FOLLOW_UP, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
   const stops = stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
