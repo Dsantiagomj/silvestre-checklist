@@ -5,7 +5,7 @@ import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "../data/plans.json";
 import {
-  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, resolvesHere, stepCalls, stepTitle, stopPoints,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, redIsStop, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
@@ -434,7 +434,7 @@ export function Quests({ step, quests, loaded, s }) {
   // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
   // línea verde con lo que se resuelve, en vez de la roja de parar
   // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
-  const done = resolvesHere(step) && step.marks.find(m => m[0] === "done")[1]
+  const done = !redIsStop(step) && step.marks.find(m => m[0] === "done")[1]
     .replace(/\s+hasta tener que pasar .+?\.?$/i, ".");
   // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
   // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)

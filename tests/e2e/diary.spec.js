@@ -83,6 +83,26 @@ test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota",
   await expect(page.locator("#journal .call.note")).toContainText("Retomar sala 5");
 });
 
+test("un paso con verde que otro paso termina, sin parada propia en el verde, sí avisa de dónde parar (41 y 84)", async ({ page }) => {
+  // El verde no lo resuelve entero: sus misiones se terminan en el 91, así que el rojo
+  // es una parada de verdad y no dónde se retoma
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openApp(page);
+  await row(page, 41).locator(".row-num").click();
+  const j = page.locator("#journal");
+  await expect(j.locator(".call.stop")).toContainText("Hasta tener que completar una run de sueños");
+  await expect(j.locator(".call.done")).toContainText("Se hace la mazmorra de Fraktal");
+  await expect(j.locator(".call.closedin")).toContainText("91");
+  // Igual en el 84, que cierra el 94
+  await row(page, 84).locator(".row-num").click();
+  await expect(j.locator(".call.stop")).toContainText("Hasta después de haber pasado Nileza");
+  // En pantalla baja, también en las fichas
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await row(page, 41).locator(".row-num").click();
+  await expect(j.locator(".call.stop .call-head")).toBeVisible();
+  await expect(j.locator(".call.stop .call-peek")).toContainText("Hasta tener que completar una run de sueños");
+});
+
 test("«Completar paso N» marca el paso y salta al siguiente pendiente", async ({ page }) => {
   // Con el 33 hecho, el 34 ya no cierra nada pendiente: sin la línea «Además»
   await openApp(page, { "silvestre:done": range(1, 33) });

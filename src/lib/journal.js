@@ -117,10 +117,11 @@ export const QUEST_NOTES = {
  * Avisos que muestra el detalle. Un paso con verde se resuelve en sí mismo: su rojo
  * no es dónde parar sino dónde se retoma (la línea verde de la ruta), así que no va
  * como aviso; lo que añade tras su primera frase ("Retomar sala 5 como…") queda como nota.
+ * Salvo si otro paso lo termina (redIsStop): entonces el rojo sí es dónde parar.
  */
 export function stepCalls(step) {
   const marks = EXTRA_NOTES[step.n] ? [...namedOptional(step), ["note", EXTRA_NOTES[step.n]]] : namedOptional(step);
-  if (!resolvesHere(step)) return marks;
+  if (redIsStop(step)) return marks;
   const calls = marks.flatMap(([kind, text]) => {
     if (kind !== "stop") return [[kind, text]];
     const extra = text.match(/^.*?\.\s+(\S[\s\S]*)$/)?.[1];
@@ -141,6 +142,13 @@ export function followUpStop(step) {
   return m ? `Hasta tener que pasar ${m[1]}` : null;
 }
 export const resolvesHere = step => !!step.marks?.some(m => m[0] === "done");
+/**
+ * El rojo del paso es dónde parar: sin verde, o con verde pero sus misiones las termina
+ * otro paso y el verde no deja su propia parada (el 41 para en la run de sueños y lo
+ * cierra el 91; el 84, el 94). Si el verde la deja («…hasta tener que pasar Kodámade»,
+ * en el 43 y el 72), esa es la parada y el rojo es dónde se retoma (como openOf en store).
+ */
+export const redIsStop = step => !resolvesHere(step) || (!!CLOSED_BY[step.n] && !followUpStop(step));
 /**
  * El jefe que el paso resuelve: el que nombra su verde ("Se pasa Nelwynn…"), sin
  * contar el que deja pendiente ("…hasta tener que pasar Kodámade"). O null.
