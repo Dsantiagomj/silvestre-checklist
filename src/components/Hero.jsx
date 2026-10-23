@@ -140,12 +140,9 @@ const fade = still => ({
 /**
  * HERO: el siguiente paso, en grande, sobre el mapa del juego donde empieza; a la
  * derecha, el huevo como progreso. Con la guía terminada, el título y el huevo obtenido.
- * Solo en pantallas altas de escritorio (App.jsx lo monta según HERO_QUERY): en las
- * bajas la ventana de los pasos llena la pantalla y la barra ya lleva el progreso.
+ * Solo en pantallas altas (App.jsx, lib/screen.js): en las bajas la ventana de los
+ * pasos llena la pantalla y su barra ya lleva el progreso.
  */
-/** Dónde va el hero: escritorio con 900 px de alto o más. */
-export const HERO_QUERY = "(min-width: 901px) and (min-height: 900px)";
-
 export default function Hero() {
   const s = useAppState();
   const pct = progressPct(s);

@@ -59,13 +59,17 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
   const settles = (fg, bg) => expect.poll(async () => ratio(await fg(), await bg()), { timeout: 3_000 })
     .toBeGreaterThanOrEqual(4.5);
 
-  // Botón principal: texto sobre el relleno del acento
+  // Pantalla alta: botones principales (texto sobre el relleno del acento), el acento
+  // como texto sobre la página y el porcentaje de la franja sobre su panel
   await settles(() => style("#overlayBtn", "color"), () => style("#overlayBtn", "backgroundColor"));
+  await settles(() => style("#heroNextGo", "color"), () => style("#heroNextGo", "backgroundColor"));
+  await settles(() => style(".hero-eyebrow", "color"), () => page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+  await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
+  // Pantalla baja: la barra compacta y las fichas de notas del paso, sobre su pergamino
+  await page.setViewportSize({ width: 1280, height: 720 });
   await settles(() => style("#diaryNext", "color"), () => style("#diaryNext", "backgroundColor"));
-  // El porcentaje de la barra, en acento sobre su panel, y los pasos hechos
   await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
   await settles(() => style(".win-done", "color"), () => style(".steps-win", "backgroundColor"));
-  // Las fichas de notas del paso, sobre el pergamino de su cabecera
   await page.locator('.diary-row[data-n="1"] .row-num').click();
   await settles(() => style("#journal .call-peek", "color"), () => style("#journal .journal-top", "backgroundColor"));
 });
@@ -134,7 +138,7 @@ test("la cabecera del paso sigue el tema claro y se lee", async ({ page }) => {
   const bg = await page.locator("#journal .journal-top").evaluate(el => getComputedStyle(el).backgroundColor);
   // Fondo claro, como el resto del diario en este tema
   expect(lum(bg)).toBeGreaterThan(.6);
-  for (const sel of [".journal-title", ".journal-meta", ".journal-goal .journal-base", ".goal-calls .call-head", ".journal-to-map"]) {
+  for (const sel of [".journal-title", ".journal-goal .journal-base", ".goal-calls .call", ".journal-to-map"]) {
     await expect.poll(async () => {
       const fg = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).color);
       const own = await page.locator(`#journal ${sel}`).first().evaluate(el => getComputedStyle(el).backgroundColor);
@@ -149,7 +153,7 @@ test("los textos con contorno lo dibujan con sombras, sin -webkit-text-stroke (e
   await openApp(page);
   await page.click('.diary-row[data-n="83"] .row-num');
   await expect(page.locator("#journal .journal-title")).toBeVisible();
-  for (const sel of ["#journal .journal-num", "#journal .journal-title", "#journal .journal-show-name", "#journal .journal-badge-num"]) {
+  for (const sel of ["#journal .journal-num", "#journal .journal-title", "#journal .journal-show-name", ".egg-pct-row > b"]) {
     const [stroke, shadows] = await page.locator(sel).first().evaluate(el => {
       const s = getComputedStyle(el);
       return [s.webkitTextStrokeWidth, (s.textShadow.match(/rgb/g) || []).length];

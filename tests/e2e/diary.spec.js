@@ -52,8 +52,6 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   await expect(j.locator(".call.tip")).toContainText("primeras 4 salas");
   await expect(j.locator(".call.done")).toContainText("Se pasa Lasoberaña");
   // Los incisos del verde llevan a esos pasos
-  // Las notas van plegadas en fichas: se despliega la suya
-  await j.locator('.call.done .call-head').click();
   await j.locator('.call.done .step-ref[data-n="33"]').click();
   await expect(j.locator(".journal-num")).toHaveText("33");
 });
@@ -337,8 +335,6 @@ test("misiones y logros enlazan a su guía en Torrente Arcano", async ({ page })
 test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="77"] .row-num');
-  // Las notas van plegadas en fichas: se despliega la suya
-  await page.locator('#journal .call.stop .call-head').click();
   await page.locator('#journal .call.stop .step-ref[data-n="78"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("78");
 });
@@ -364,13 +360,10 @@ test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una
     .toHaveAttribute("href", "https://www.torrentearcano.com/dos-alientos-una-inspiracion");
   await expect(note.locator("a.guide-link", { hasText: "De la mano" })).toHaveAttribute("href", "https://www.torrentearcano.com/de-la-mano");
   await expect(note.locator(".step-ref")).toHaveCount(2);
-  await note.locator('.call-head').click();
   await note.locator('.step-ref[data-n="66"]').click();
   await expect(j.locator(".journal-num")).toHaveText("66");
   await row(page, 64).locator(".row-num").click();
   await expect(j.locator(".journal-num")).toHaveText("64");
-  // Las notas van plegadas en fichas: se despliega la suya
-  await j.locator('.call.note .call-head').click();
   await j.locator('.call.note .step-ref[data-n="67"]').click();
   await expect(j.locator(".journal-num")).toHaveText("67");
 });
@@ -389,16 +382,16 @@ test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el 
   await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("en el detalle, los objetos van después de las misiones y se marcan como en «Lo que necesitas»", async ({ page }) => {
+test("en el detalle, los objetos van antes que las misiones y se marcan como en «Lo que necesitas»", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="1"] .row-num');
   const j = page.locator("#journal");
   await expect(j.locator(".journal-quests")).toBeVisible({ timeout: 15_000 });
-  const after = await j.evaluate(el => {
+  const before = await j.evaluate(el => {
     const needs = el.querySelector(".journal-needs"), quests = el.querySelector(".journal-quests");
-    return !!(quests.compareDocumentPosition(needs) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return !!(needs.compareDocumentPosition(quests) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
-  expect(after).toBe(true);
+  expect(before).toBe(true);
   // La Ortiga y la Lana de «El despertar de Pandala» van en los prerrequisitos (l11), no aquí
   await expect(j.locator(".journal-needs .journal-h")).toContainText("(3)");
   await expect(j.locator('.journal-needs .slot[data-id="421"]')).toHaveCount(0);
@@ -468,9 +461,7 @@ test("cada tipo de aviso azul tiene su nombre y su icono", async ({ page }) => {
   await expect(call("includes").locator("i img")).toHaveAttribute("src", /items\/24041\.png$/);
   await expect(page.locator("#journal .call.tip")).toHaveCount(0);
   await page.click('.diary-row[data-n="54"] .row-num');
-  // En la ficha, el rótulo corto; el entero, en su título
-  await expect(call("must").locator("b")).toHaveText("También");
-  await expect(call("must").locator(".call-head")).toHaveAttribute("title", "También hay que");
+  await expect(call("must").locator("b")).toHaveText("También hay que");
   // Lo que también hay que hacer es una misión: lleva la «!» del juego
   await expect(call("must").locator("i .quest-mark")).toHaveCount(1);
   await page.click('.diary-row[data-n="50"] .row-num');
@@ -701,12 +692,8 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
   // En el detalle, sin botones repetidos: el 5 dice en una línea dónde se termina, y el
   // 22 lleva al 5 desde la ficha de su aviso verde
   await expect(page.locator("#journal .badge.closed-in, #journal .badge.closes")).toHaveCount(0);
-  // Las notas van plegadas en fichas: se despliega la suya
-  await page.locator('#journal .call.closedin .call-head').click();
   await page.locator('#journal .call.closedin .step-ref[data-n="22"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("22");
-  // Las notas van plegadas en fichas: se despliega la suya
-  await page.locator('#journal .call.done .call-head').click();
   await page.locator('#journal .call.done .step-ref[data-n="5"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
 });
@@ -720,7 +707,6 @@ test("«se retoma más adelante» lleva al paso que actualiza la misión, y va a
   await expect(resumed).toHaveCount(1);
   await expect(resumed).toContainText("Se retoma");
   await expect(resumed.locator("img")).toHaveAttribute("src", /\.png$/);
-  await resumed.locator('.call-head').click();
   await resumed.locator('.step-ref[data-n="54"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("54");
   // El 54 no se retoma en ningún otro
@@ -994,10 +980,9 @@ test("la cabecera es corta: sin esfuerzo, «Incluye» en una línea y «Necesita
   await stepData(page, 1);
   const goal = page.locator("#journal .journal-goal");
   // Sin etiquetas ni relojes de arena: bajo el título no se dice el esfuerzo
-  await expect(goal.locator(".badge, .goal-effort")).toHaveCount(0);
-  await expect(goal.locator(".journal-meta")).not.toContainText(/esfuerzo|dificultad/i);
-  // «Incluye», una ficha bajo el texto de la guía
-  await expect(page.locator("#journal .journal-top .goal-calls .call.includes b")).toHaveText("Incluye");
+  await expect(goal.locator(".journal-meta, .badge, .goal-effort")).toHaveCount(0);
+  // «Incluye», una línea bajo el texto de la guía
+  await expect(goal.locator(".goal-calls .call.includes b")).toHaveText("Incluye");
   // «Necesitas» vuelve al cuerpo, antes de las misiones
   await expect(goal.locator(".journal-needs")).toHaveCount(0);
   await expect(page.locator("#journal .journal-body .journal-needs .slot")).toHaveCount(3);
@@ -1154,16 +1139,17 @@ test("a 1440×900, en el paso 12 el estandarte es compacto y al final del detall
   for (const b of bottoms) expect(b).toBeLessThanOrEqual(ctaTop + 0.5);
 });
 
-test("en el estandarte compacto, quien da el paso va en la línea bajo el título", async ({ page }) => {
+test("en el estandarte compacto, quien da el paso va en una línea bajo el objetivo", async ({ page }) => {
   await openApp(page);
   await stepData(page, 12);
   await expect(page.locator("#journal .journal-banner figcaption")).toBeHidden();
-  const meta = page.locator("#journal .journal-goal .journal-meta");
-  await expect(meta).toBeVisible();
-  await expect(meta).toContainText("Profesor Max Ymillán");
+  const by = page.locator("#journal .journal-goal .goal-by");
+  await expect(by).toBeVisible();
+  await expect(by).toHaveText("Inicia el paso: Profesor Max Ymillán");
+  await expect(by.locator("b")).toHaveText("Profesor Max Ymillán");
   // Con otras figuras, su propia etiqueta
   await stepData(page, 1);
-  await expect(meta).toContainText("Se gana: Dofawa");
+  await expect(by).toHaveText("Se gana: Dofawa");
   // El estandarte guarda el número, la zona y la figura, sin recortar nada
   const fits = await page.locator("#journal .journal-banner").evaluate(b => {
     const r = b.getBoundingClientRect();
@@ -1179,7 +1165,7 @@ test("el texto de la guía va con su rótulo, sin cita en cursiva ni flechas", a
   await openApp(page);
   await stepData(page, 1);
   const guide = page.locator("#journal .goal-guide");
-  await expect(guide.locator(".goal-guide-label")).toHaveText("Qué hacer");
+  await expect(guide.locator(".goal-guide-label")).toHaveText("Texto de la guía");
   await expect(guide.locator("img")).toHaveAttribute("src", /items\/25007\.png$/);
   const base = guide.locator(".journal-base");
   await expect(base).toHaveText("Misiones de mundo: Logro \"Pero ¿Dónde están los dofus?\"");
@@ -1194,8 +1180,7 @@ test("«opcional pero útil» dice qué misión es y la marca en la lista", asyn
   for (const [n, name] of [[27, "Star ski y Dutch"], [7, "Arma letal"]]) {
     await stepData(page, n);
     // Sin el número del logro: en el 27 es la 2.ª del logro pero la 1.ª del paso
-    await expect(page.locator("#journal .goal-calls .call.note b")).toHaveText("Nota");
-    await expect(page.locator("#journal .goal-calls .call.note .call-body")).toHaveText(new RegExp(`^La misión «${name}» es opcional pero útil\\.$`, "i"));
+    await expect(page.locator("#journal .goal-calls .call.note")).toHaveText(new RegExp(`^Nota\\s*La misión «${name}» es opcional pero útil\\.$`, "i"));
     const optional = page.locator("#journal .q-item .q-optional");
     await expect(optional).toHaveCount(1);
     await expect(page.locator("#journal .q-item", { has: page.locator(".q-optional") }).locator(".q-name")).toHaveText(new RegExp(name, "i"));
@@ -1230,12 +1215,11 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
   // El número y la zona, en el estandarte
   await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
   await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");
-  // Los avisos van en la cabecera, en fichas; en el cuerpo solo las misiones y «Necesitas»
-  const calls = page.locator("#journal .journal-top .goal-calls .call");
-  await expect(page.locator("#journal .journal-top .goal-calls .call.done")).toHaveCount(1);
+  // Los avisos van en la cabecera, como líneas; en el cuerpo solo «Necesitas» y las misiones
+  await expect(goal.locator(".goal-calls .call.done")).toHaveCount(1);
   await expect(page.locator("#journal .journal-body .call")).toHaveCount(0);
   await stepData(page, 28);
-  await expect(calls).toHaveClass([/tip/, /done/, /must/]);
+  await expect(goal.locator(".goal-calls .call")).toHaveClass([/tip/, /done/, /must/]);
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
@@ -1243,12 +1227,9 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
 test("la ventana de pasos abre con los Dofus del camino, conseguidos o apagados", async ({ page }) => {
   // Esmeralda (paso 18) y Púrpura (21); el 17 solo lleva "Verde esmeralda" hasta la misión 7
   await openApp(page, { "silvestre:done": { 17: true, 18: true, 21: true } });
-  // En la barra, la cuenta; al pulsarla, los doce
-  await expect(page.locator("#roadBtn .road-count")).toHaveText("2/12");
-  await page.click("#roadBtn");
   const road = page.locator("#diary .steps-win #winRoad");
   await expect(road.locator(".road-title")).toHaveText("Dofus del camino");
-  await expect(road.locator(".road-total")).toHaveText("2/12");
+  await expect(road.locator(".road-count")).toHaveText("2/12");
   // Todos los de tipo Dofus, no solo los que se llaman así: Dofawa (misión del paso 1),
   // Domakuro y Dorigami (Pandala), en el orden en que se consiguen
   const dofus = road.locator(".road-dofus");
@@ -1279,14 +1260,13 @@ test("la ventana de pasos muestra el progreso global y lleva al siguiente pendie
   const pct = await page.locator("#winPct").innerText();
   await expect(page.locator("#winPct")).toHaveText(pct);
   await expect(page.locator("#winDone")).toHaveText("32");
-  // El anillo se llena con el porcentaje
-  const ring = await page.locator(".win-ring").evaluate(el => parseFloat(getComputedStyle(el).getPropertyValue("--p")));
-  expect(ring).toBeCloseTo(parseFloat(pct), 1);
+  const fill = await page.locator("#winFill").evaluate(el => el.style.width);
+  expect(parseFloat(fill)).toBeCloseTo(parseFloat(pct), 1);
   await expect(page.locator(".steps-win #diaryNext")).toContainText("33");
-  // Lleva al siguiente y deja la ventana a la vista, con su barra arriba
+  // Lleva al siguiente y deja la ventana a la vista, con su franja arriba
   await page.click("#diaryNext");
   await expect(page.locator("#journal .journal-num")).toHaveText("33");
-  await expect(page.locator("#winBar")).toBeInViewport();
+  await expect(page.locator("#winRoad")).toBeInViewport();
 });
 
 

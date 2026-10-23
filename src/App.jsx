@@ -5,8 +5,9 @@ import {
 } from "./state/store.js";
 import { useMediaQuery } from "./lib/useMediaQuery.js";
 import { eventTarget } from "./lib/root.js";
-import NotaDialog from "./components/Nota.jsx";
-import Hero, { HERO_QUERY } from "./components/Hero.jsx";
+import NotaDialog, { Nota } from "./components/Nota.jsx";
+import Hero from "./components/Hero.jsx";
+import { useTallScreen } from "./lib/screen.js";
 import ClassicNotice from "./components/ClassicNotice.jsx";
 import Diary from "./components/Diary.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
@@ -43,8 +44,9 @@ function onKeyDown(e) {
 
 export default function App() {
   const mobile = useMediaQuery("(max-width: 900px)");
-  // El hero solo en pantallas altas: en las bajas ni se monta (ni carga su mapa)
-  const hero = useMediaQuery(HERO_QUERY);
+  // Pantalla alta (lib/screen.js): el hero y la nota en la página. En las bajas ni se
+  // montan (el hero no carga su mapa) y la nota va en un diálogo
+  const tall = useTallScreen();
   const resetRef = useRef(null);
   const [overlayWin, openOverlay] = useOverlayWindow();
 
@@ -65,12 +67,13 @@ export default function App() {
 
   return (
     <>
-      {hero && <Hero />}
+      {tall && <Hero />}
       <div className="wrap">
         {/* Sin hero (que lleva el suyo), el título va solo para lectores de pantalla */}
-        {!hero && <h1 className="sr-only">Checklist del Dofus Silvestre</h1>}
+        {!tall && <h1 className="sr-only">Checklist del Dofus Silvestre</h1>}
         <ClassicNotice />
-        <Diary mobile={mobile} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
+        {tall && <Nota />}
+        <Diary mobile={mobile} tall={tall} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />
@@ -79,7 +82,7 @@ export default function App() {
       </div>
       <BottomSheet mobile={mobile} />
       <ResetDialog ref={resetRef} />
-      <NotaDialog />
+      {!tall && <NotaDialog />}
       <Toast />
       <OverlayWindow win={overlayWin} />
     </>

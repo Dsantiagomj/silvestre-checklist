@@ -195,8 +195,10 @@ test("en móvil la sección cabe en el ancho de la pantalla", async ({ browser }
 
 test("la aclaración va antes de la ventana de pasos, que ya no lleva número", async ({ page }) => {
   await openApp(page);
-  // La nota de las pausas no va en la página: se abre desde la barra
-  await expect(page.locator("#nota")).toBeHidden();
+  // En pantalla alta (la de la suite), la nota de las pausas va antes de la ventana
+  const order = await page.evaluate(() => ["#nota", "#diary"]
+    .map(sel => document.querySelector(sel).getBoundingClientRect().top + scrollY));
+  expect(order).toEqual([...order].sort((a, b) => a - b));
   // Sin la sección 01, la numeración sobra
   await expect(page.locator(".section-num")).toHaveCount(0);
   await expect(page.locator("#diaryTitle")).toHaveText("Los 100 pasos");

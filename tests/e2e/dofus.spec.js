@@ -3,21 +3,21 @@ import { openApp } from "./helpers.js";
 
 // El paso 1 da el Dofawa y el 18 el Dofus Esmeralda
 const SEED = { "silvestre:done": Object.fromEntries(Array.from({ length: 17 }, (_, i) => [i + 1, true])) };
-// El huevo del Esmeralda en el botón de los Dofus del camino de la barra
-const egg = page => page.locator('#roadBtn .road-mini[data-step="18"]');
+const egg = page => page.locator('.road-dofus[data-step="18"]');
 const wonAnims = page => egg(page).evaluate(el => [el, ...el.querySelectorAll("*")]
   .flatMap(n => n.getAnimations()).filter(a => /^egg-won|^egg-burst/.test(a.animationName)).length);
 
 test("al marcar el paso de un Dofus del camino, su huevo se enciende y se avisa", async ({ page }) => {
   await openApp(page, SEED);
-  await expect(page.locator("#roadBtn .road-count")).toHaveText("1/12");
+  await page.evaluate(() => document.getElementById("winRoad").scrollIntoView());
+  await expect(page.locator(".road-count")).toHaveText("1/12");
   await page.click('.diary-row[data-n="18"] .row-check');
   await expect(egg(page)).toHaveClass(/obtained/);
   await expect(egg(page)).toHaveClass(/won/);
   expect(await wonAnims(page)).toBeGreaterThan(0);
   // La cuenta sube con un pequeño salto
-  await expect(page.locator("#roadBtn .road-count")).toHaveText("2/12");
-  expect(await page.locator("#roadBtn .road-count").evaluate(el => el.getAnimations().some(a => a.animationName === "count-tick"))).toBe(true);
+  await expect(page.locator(".road-count")).toHaveText("2/12");
+  expect(await page.locator(".road-count").evaluate(el => el.getAnimations().some(a => a.animationName === "count-tick"))).toBe(true);
   await expect(page.locator("#toast")).toHaveClass(/show/);
   await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
 });
@@ -60,7 +60,7 @@ test("desmarcar el paso apaga el huevo sin celebrar", async ({ page }) => {
 test("marcar un paso que no da Dofus no celebra nada", async ({ page }) => {
   await openApp(page, SEED);
   await page.click('.diary-row[data-n="19"] .row-check');
-  await expect(page.locator(".road-mini.won, .road-dofus.won")).toHaveCount(0);
+  await expect(page.locator(".road-dofus.won")).toHaveCount(0);
   await expect(page.locator("#toast")).not.toHaveClass(/show/);
 });
 
@@ -70,6 +70,26 @@ test("con movimiento reducido el huevo cambia sin animación, pero se avisa igua
   await page.click('.diary-row[data-n="18"] .row-check');
   await expect(egg(page)).toHaveClass(/obtained/);
   expect(await wonAnims(page)).toBe(0);
-  expect(await page.locator("#roadBtn .road-count").evaluate(el => el.getAnimations().length)).toBe(0);
+  expect(await page.locator(".road-count").evaluate(el => el.getAnimations().length)).toBe(0);
+  await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
+});
+
+// En pantalla baja, el del botón de los Dofus del camino de la barra (WinBar.jsx)
+const miniEgg = page => page.locator('#roadBtn .road-mini[data-step="18"]');
+const wonAnimsOf = loc => loc.evaluate(el => [el, ...el.querySelectorAll("*")]
+  .flatMap(n => n.getAnimations()).filter(a => /^egg-won|^egg-burst/.test(a.animationName)).length);
+
+test("en pantalla baja, el huevo pequeño de la barra se enciende igual y la cuenta salta", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page, SEED);
+  await expect(page.locator("#roadBtn .road-count")).toHaveText("1/12");
+  await page.click('.diary-row[data-n="18"] .row-check');
+  await expect(miniEgg(page)).toHaveClass(/obtained/);
+  await expect(miniEgg(page)).toHaveClass(/won/);
+  expect(await wonAnimsOf(miniEgg(page))).toBeGreaterThan(0);
+  // La cuenta sube con un pequeño salto
+  await expect(page.locator("#roadBtn .road-count")).toHaveText("2/12");
+  expect(await page.locator("#roadBtn .road-count").evaluate(el => el.getAnimations().some(a => a.animationName === "count-tick"))).toBe(true);
+  await expect(page.locator("#toast")).toHaveClass(/show/);
   await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
 });
