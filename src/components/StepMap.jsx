@@ -38,7 +38,7 @@ if (typeof window !== "undefined") {
 const ROW_H = 132;
 // Arriba, lo justo para el «Estás aquí» del primer paso
 const topFor = w => (w >= 560 ? 84 : 72);
-// Abajo, el final del camino: el Dofus Silvestre. Y, en escritorio, sitio para abrir
+// Abajo, el final del camino: el Dofus del checklist. Y, en escritorio, sitio para abrir
 // debajo la ficha de los pasos de la última fila
 const bottomFor = w => (w >= 560 ? 300 : 170);
 // Lo que ondula cada fila: el camino no es una regla
@@ -411,7 +411,8 @@ export default function StepMap({ s, current, mobile }) {
             )}
           </>
         )}
-        <div className={"map-end" + (s.done[STEPS.length] ? " done" : "")}>
+        {/* El huevo se enciende en el paso que da el Dofus (egg.final): en el Hielos, el 69 */}
+        <div className={"map-end" + (s.done[DOFUS.egg.final ?? STEPS.length] ? " done" : "")}>
           {BRAND_ICON && <img src={imgUrl(BRAND_ICON)} alt="" loading="lazy" decoding="async" />}
           <span className="map-end-label">Fin del camino</span>
           <b className="map-end-name">{DOFUS.name}</b>
