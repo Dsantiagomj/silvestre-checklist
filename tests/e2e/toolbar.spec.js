@@ -4,7 +4,8 @@ import { openApp } from "./helpers.js";
 /**
  * La ventana de los pasos lleva arriba una sola fila de herramientas: el progreso, los
  * Dofus del camino, «Siguiente», las pestañas, el buscador, la zona, el overlay y el
- * menú «⋯» con el tema y el reinicio. Ya no hay cabecera de la app ni hero encima.
+ * menú «⋯» con el tema y el reinicio. Ya no hay cabecera de la app; el hero solo va
+ * encima en pantallas altas.
  */
 
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
@@ -13,7 +14,9 @@ const box = (page, sel) => page.locator(sel).first().evaluate(el => {
   return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height };
 });
 
-test("una sola fila de herramientas, sin cabecera de la app ni hero", async ({ page }) => {
+test("en pantallas bajas, una sola fila de herramientas, sin cabecera de la app ni hero", async ({ page }) => {
+  // Con 900 px de alto o más va el hero encima (hero.spec.js)
+  await page.setViewportSize({ width: 1440, height: 860 });
   await openApp(page);
   await expect(page.locator("header")).toHaveCount(0);
   await expect(page.locator(".hero, #heroNext, .title-bar")).toHaveCount(0);
