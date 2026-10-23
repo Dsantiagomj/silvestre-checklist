@@ -1,0 +1,17 @@
+{
+ "Frigost I": {
+  "map": 54167350,
+  "img": "zones/frigost-i.jpg",
+  "thumb": "zones/frigost-i-s.jpg"
+ },
+ "Frigost II": {
+  "map": 54172488,
+  "img": "zones/frigost-ii.jpg",
+  "thumb": "zones/frigost-ii-s.jpg"
+ },
+ "Frigost III": {
+  "map": 108922368,
+  "img": "zones/frigost-iii.jpg",
+  "thumb": "zones/frigost-iii-s.jpg"
+ }
+}
