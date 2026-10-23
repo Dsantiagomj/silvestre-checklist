@@ -518,10 +518,14 @@ def parents(step_quests, quests):
     starts at the next one), "Qa=1909&Qo=13095" (at that objective), "Qo=18502" (the
     objective's quest is the parent) or just "Qa=2406" (from the start). A start with an
     alternative ("|") is no child: "La sombra del reino" can also start once "Esto parece
-    el Sur" is finished. Only pairs that some step lists together."""
+    el Sur" is finished. Only pairs that some step lists together. A quest the step only
+    asks to have taken (TAKE_ONLY) is nobody's mother there: "Se busca: conde Kontatrás"
+    needs "Los caminantes blancos" in progress (Qa=1331), both in step 67 of the Hielos,
+    but it is done on its own and the other is never done on the route."""
     found = {}
-    for ids in step_quests.values():
+    for n, ids in step_quests.items():
         listed = [q for q in ids if isinstance(q, int)]
+        taken = set(TAKE_ONLY.get(int(n), []))
         for child in listed:
             crit = quests[child].get("startCriterion") or ""
             if "|" in crit:
@@ -530,7 +534,7 @@ def parents(step_quests, quests):
             qa = next((int(p[3:]) for p in parts if re.fullmatch(r"Qa=\d+", p)), None)
             qo = next((re.fullmatch(r"Qo([=>])(\d+)", p) for p in parts if re.fullmatch(r"Qo[=>]\d+", p)), None)
             for parent in listed:
-                if parent == child or (qa and parent != qa):
+                if parent == child or parent in taken or (qa and parent != qa):
                     continue
                 if qo:
                     objs = objective_ids(quests[parent])
