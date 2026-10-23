@@ -372,6 +372,12 @@ function NeedsView({ tab }) {
 // que se va se queda así hasta que la que llega, preparada invisible encima, avisa de
 // que está lista (lib/viewSwap.js); entonces se cruzan.
 const ZOOM = { duration: 0.3, ease: "easeInOut" };
+// El cruce, casi sin doble exposición (dos vistas cargadas a media opacidad se ven
+// sucias): la que se va se apaga rápido, acelerando; la que llega espera un poco y
+// aparece frenando, con su zoom hasta el sitio
+const ZOOM_OUT_FADE = { duration: 0.16, ease: [0.4, 0, 1, 1] };
+const ZOOM_IN_FADE = { duration: 0.26, delay: 0.1, ease: [0.2, 0.8, 0.2, 1] };
+const ZOOM_IN_MOVE = { duration: 0.36, ease: [0.2, 0.8, 0.2, 1] };
 const ZOOMED = { map: "scale(1.15)", diary: "scale(0.94)" };     // de dónde llega cada vista
 const LEAVING = { map: "scale(0.9)", diary: "scale(1.15)" };     // a dónde va la que se va
 // Cambio de pestaña con las listas: un fundido en dos tiempos. La vieja se aparta un
@@ -422,7 +428,10 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
     whenReady(el, view).then(() => {
       if (!alive) return;
       swap.channel.ready(id);
-      animate(el, { opacity: [0, 1], transform: [ZOOMED[view], "scale(1)"] }, ZOOM).then(() => {
+      Promise.all([
+        animate(el, { opacity: [0, 1] }, ZOOM_IN_FADE),
+        animate(el, { transform: [ZOOMED[view], "scale(1)"] }, ZOOM_IN_MOVE),
+      ]).then(() => {
         el.style.opacity = "";
         el.style.transform = "";
       });
@@ -440,11 +449,11 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
       animate(el, { opacity: 0, transform: `translateX(${-dir * SHIFT}px)` }, SLIDE_OUT).then(safeToRemove);
       return;
     }
-    // El zoom y el fundido van a la vez en cuanto la nueva está lista: la nueva entra
-    // encima mientras esta se aleja, sin esperar a que acabe su zoom
+    // El zoom y el fundido van a la vez en cuanto la nueva está lista: esta se apaga
+    // rápido mientras se aleja y la nueva llega justo detrás (ZOOM_IN_FADE)
     Promise.all([
       animate(el, { transform: LEAVING[to] }, ZOOM),
-      swap.channel.when(id).then(() => animate(el, { opacity: 0 }, ZOOM)),
+      swap.channel.when(id).then(() => animate(el, { opacity: 0 }, ZOOM_OUT_FADE)),
     ]).then(safeToRemove);
   }, [present]); // eslint-disable-line react-hooks/exhaustive-deps
 
