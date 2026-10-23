@@ -1,33 +1,38 @@
-name: Sync guide with Torrente Arcano
+name: Sync one Dofus guide
 
-# Cada 6 horas lee la página de datos de Torrente Arcano (el checklist clásico) y, si la
-# guía cambió, regenera los datos y abre un PR a main. Lo fusiona y despliega cuando pasan
-# las pruebas de CI, que main exige. Si algo falla, abre un issue (o comenta en el que ya
-# esté abierto).
+# La sincronización de un Dofus, la llama sync-guide.yml (una vez por Dofus): lee su página
+# de datos de Torrente Arcano (el checklist clásico) y, si la guía cambió, regenera sus datos
+# y abre un PR a main. Lo fusiona y despliega cuando pasan las pruebas de CI, que main exige.
+# Si algo falla, abre un issue (o comenta en el que ya esté abierto).
 on:
-  schedule:
-    - cron: "17 */6 * * *"
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  issues: write
-  actions: write
-  pull-requests: write
-
-concurrency:
-  group: sync-guide
-  cancel-in-progress: false
+  workflow_call:
+    inputs:
+      # El Dofus que se sincroniza (los scripts de .build/ lo leen de DOFUS): sus datos van en
+      # src/dofus/<dofus> y .build/lists/<dofus>
+      dofus:
+        required: true
+        type: string
+      # La página con los datos del checklist clásico
+      guide_url:
+        required: true
+        type: string
+      # La rama del PR de la sincronización
+      sync_branch:
+        required: true
+        type: string
+      # El título del commit y del PR, y el del issue si falla
+      pr_title:
+        required: true
+        type: string
+      issue_title:
+        required: true
+        type: string
 
 env:
-  # La página con los datos del checklist clásico. Se cambia con la variable del repo
-  # GUIDE_URL (Settings → Secrets and variables → Actions → Variables)
-  GUIDE_URL: ${{ vars.GUIDE_URL || 'https://www.torrentearcano.com/checklist-silvestre-datos' }}
-  # La rama del PR de la sincronización
-  SYNC_BRANCH: sync/guia
-  # El Dofus que se sincroniza (los scripts de .build/ lo leen de DOFUS): sus datos van en
-  # src/dofus/silvestre y .build/lists/silvestre
-  DOFUS: silvestre
+  GUIDE_URL: ${{ inputs.guide_url }}
+  SYNC_BRANCH: ${{ inputs.sync_branch }}
+  DOFUS: ${{ inputs.dofus }}
+  PR_TITLE: ${{ inputs.pr_title }}
 
 jobs:
   # Barato y en Linux: bajar la página, importarla y ver si cambia algo
@@ -74,7 +79,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: steps.diff.outputs.changed == 'true'
         with:
-          name: page
+          name: page-${{ inputs.dofus }}
           path: ${{ runner.temp }}/ta/page.html
           retention-days: 7
 
@@ -95,16 +100,17 @@ jobs:
         with:
           python-version: "3.12"
       # Los datos crudos de DofusDB (~190 MB) y las cachés de la API: así regenerar no
-      # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución para guardar lo nuevo;
-      # se guarda aunque el job falle (Save the caches), así un reintento no lo baja de nuevo
+      # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución (y Dofus) para guardar
+      # lo nuevo; se guarda aunque el job falle (Save the caches), así un reintento no lo baja
+      # de nuevo. Los datos crudos son de todos los Dofus: se restaura la última de cualquiera
       - uses: actions/cache/restore@v4
         with:
           path: .build/data
-          key: dofusdb-${{ github.run_id }}
+          key: dofusdb-${{ inputs.dofus }}-${{ github.run_id }}
           restore-keys: dofusdb-
       - uses: actions/download-artifact@v4
         with:
-          name: page
+          name: page-${{ inputs.dofus }}
           path: ${{ runner.temp }}/ta
       # La misma página que vio `check`; los scripts solo usan la biblioteca estándar.
       # DofusDB y Torrente fallan a veces (502, conexiones cortadas): cada script que va a la
@@ -153,7 +159,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .build/data
-          key: dofusdb-${{ github.run_id }}
+          key: dofusdb-${{ inputs.dofus }}-${{ github.run_id }}
       - name: Push the branch and open the PR
         id: pr
         env:
@@ -167,13 +173,13 @@ jobs:
             exit 0
           fi
           git switch -c "$SYNC_BRANCH"
-          git commit -m "chore(guia): sincroniza con Torrente Arcano"
+          git commit -m "$PR_TITLE"
           git push --force origin "$SYNC_BRANCH"
           # Si quedó abierto el de una ejecución anterior, el push lo actualiza
           pr="$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq 'first | .number // empty')"
           if [ -z "$pr" ]; then
             gh pr create --base main --head "$SYNC_BRANCH" \
-              --title "chore(guia): sincroniza con Torrente Arcano" \
+              --title "$PR_TITLE" \
               --body "Cambios de la página de datos ($GUIDE_URL), regenerados por $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             pr="$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq 'first | .number')"
           fi
@@ -215,8 +221,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REASON: ${{ needs.check.outputs.reason }}
           SYNC: ${{ needs.sync.result }}
+          TITLE: ${{ inputs.issue_title }}
         run: |
-          title="La sincronización con Torrente Arcano falló"
+          title="$TITLE"
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           if [ -z "$REASON" ]; then
             if [ "$SYNC" = "failure" ]; then

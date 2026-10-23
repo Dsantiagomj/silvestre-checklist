@@ -1,0 +1,47 @@
+name: Sync guide with Torrente Arcano
+
+# Cada 6 horas lee la página de datos de Torrente Arcano (el checklist clásico) de cada
+# Dofus y, si su guía cambió, regenera sus datos y abre un PR a main
+# (sync-guide-dofus.yml). Lo fusiona y despliega cuando pasan las pruebas de CI, que main
+# exige. Si algo falla, abre un issue (o comenta en el que ya esté abierto).
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+  pull-requests: write
+
+jobs:
+  silvestre:
+    # La página se cambia con la variable del repo GUIDE_URL (Settings → Secrets and
+    # variables → Actions → Variables)
+    concurrency:
+      group: sync-guide
+      cancel-in-progress: false
+    uses: ./.github/workflows/sync-guide-dofus.yml
+    with:
+      dofus: silvestre
+      guide_url: ${{ vars.GUIDE_URL || 'https://www.torrentearcano.com/checklist-silvestre-datos' }}
+      sync_branch: sync/guia
+      pr_title: "chore(guia): sincroniza con Torrente Arcano"
+      issue_title: La sincronización con Torrente Arcano falló
+
+  # Después del Silvestre, aunque falle: así su PR parte de main con lo del Silvestre ya
+  # fusionado (los dos pueden tocar public/img). Su página, con la variable GUIDE_URL_HIELOS
+  hielos:
+    needs: silvestre
+    if: ${{ !cancelled() }}
+    concurrency:
+      group: sync-guide-hielos
+      cancel-in-progress: false
+    uses: ./.github/workflows/sync-guide-dofus.yml
+    with:
+      dofus: hielos
+      guide_url: ${{ vars.GUIDE_URL_HIELOS || 'https://www.torrentearcano.com/checklist-hielos-datos' }}
+      sync_branch: sync/guia-hielos
+      pr_title: "chore(guia): sincroniza el Hielos con Torrente Arcano"
+      issue_title: La sincronización del Hielos con Torrente Arcano falló
