@@ -163,13 +163,10 @@ test("reiniciar los pasos borra también el avance de las misiones, y deshacer l
   await expect(page.locator("#toast")).toHaveClass(/show/, { timeout: 3_000 });
   expect(await readLS(page, "silvestre:questObjective")).toEqual({});
   expect(await readLS(page, "silvestre:questPos")).toEqual({});
-  // En el diario, los objetivos vuelven a empezar
+  // En el diario, las misiones vuelven a estar pendientes
   await page.click('.diary-row[data-n="1"] .row-num');
-  await page.locator("#journal .q-item").first().locator("summary").click();
-  const rows = page.locator("#journal .q-item").first().locator(".obj-list.route > .obj-row");
-  await expect(rows.first()).toBeVisible({ timeout: 15_000 });
-  await expect(rows.first()).toHaveClass(/\bnow\b/);
-  await expect(page.locator("#journal .obj-row.done")).toHaveCount(0);
+  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#journal .q-done-btn[aria-pressed=true]")).toHaveCount(0);
   await page.click("#toastAction");
   expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1905: 4 });
   expect(await readLS(page, "silvestre:questPos")).toEqual({ 1: 2 });

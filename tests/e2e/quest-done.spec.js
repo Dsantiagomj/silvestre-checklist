@@ -20,41 +20,40 @@ async function openStep12(page) {
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
 
-test("«Completar» termina la misión y la pliega sin abrir la siguiente, y se puede deshacer sin desplegarla", async ({ page }) => {
-  const errors = await openApp(page, { "silvestre:done": upTo(11) });
-  await openStep12(page);
-  const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
-  const tesor = page.locator("#journal .q-item", { hasText: "Tesorfanato" });
-  const btn = cofre.locator(".q-done-btn");
-  await cofre.locator("summary .q-name").click();
-  await expect(cofre).toHaveAttribute("open", "");
-  const rows = cofre.locator(".obj-list.route > .obj-row");
+test("«Completar» termina la misión que se despliega y la pliega, y se puede deshacer sin desplegarla", async ({ page }) => {
+  // Paso 5: «¿Dónde se ha ido la 7.ª compañía?» para en el paso (se despliega) y va en curso
+  const errors = await openApp(page, { "silvestre:done": upTo(4), "silvestre:questPos": { 5: 1 } });
+  await page.click('.diary-row[data-n="5"] .row-num');
+  await expect(page.locator("#journal .journal-num")).toHaveText("5");
+  const comp = page.locator("#journal .q-item", { hasText: "7.ª compañía" });
+  const first = page.locator("#journal .q-item", { hasText: "Las primeras impresiones" });
+  const btn = comp.locator(".q-done-btn");
+  await comp.locator("summary .q-lv").click();
+  await expect(comp).toHaveAttribute("open", "");
+  const rows = comp.locator(".obj-list.route > .obj-row");
   expect(await routeStates(rows)).toMatch(/^n-+$/);
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   await expect(btn).toHaveText("Completar");
 
-  // Pendiente: la termina entera, como pulsar su último medallón; se pliega y la
-  // siguiente no se abre sola
+  // Pendiente: la termina entera, como pulsar su último medallón, y se pliega
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await expect(btn).toHaveText("✓ Completada");
-  await expect(cofre).not.toHaveAttribute("open", "");
-  await expect(tesor).not.toHaveAttribute("open", "");
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(1);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questObjective"))["1504"])).toBe(16);
+  await expect(comp).not.toHaveAttribute("open", "");
+  await expect(first.locator("summary")).toHaveCount(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questObjective"))["703"])).toBe(8);
 
   // Hecha: vuelve a su inicio, sin desplegarla
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   expect(await routeStates(rows)).toMatch(/^n-+$/);
-  await expect(cofre).not.toHaveAttribute("open", "");
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(0);
+  await expect(comp).not.toHaveAttribute("open", "");
 
   // Plegada, el botón tampoco la despliega al completarla
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
-  await expect(cofre).not.toHaveAttribute("open", "");
+  await expect(comp).not.toHaveAttribute("open", "");
   expect(errors).toEqual([]);
 });
 
@@ -136,18 +135,17 @@ test("en un paso hecho, deshacer una misión deshace también las que la piden t
 });
 
 test("en un paso hecho, pulsar un medallón hecho vuelve a él y desmarca el paso", async ({ page }) => {
-  await openApp(page, { "silvestre:done": upTo(12) });
-  await openStep12(page);
-  // La última, que ninguna pide terminada
-  const espionaje = page.locator("#journal .q-item", { hasText: "Espionaje industrial" });
-  await espionaje.locator("summary .q-name").click();
-  const rows = espionaje.locator(".obj-list.route > .obj-row");
+  // El 27: «La marcha de la emperatriz», su obligatoria, para en el paso y se despliega
+  await openApp(page, { "silvestre:done": upTo(27) });
+  await page.click('.diary-row[data-n="27"] .row-num');
+  await expect(page.locator("#journal .journal-num")).toHaveText("27");
+  const marcha = page.locator("#journal .q-item", { hasText: "La marcha de la emperatriz" });
+  await marcha.locator("summary .q-lv").click();
+  const rows = marcha.locator(".obj-list.route > .obj-row");
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await rows.nth(2).locator(".obj-med").click();
-  await expect(page.locator('.diary-row[data-n="12"]')).not.toHaveClass(/\bdone\b/);
+  await expect(page.locator('.diary-row[data-n="27"]')).not.toHaveClass(/\bdone\b/);
   expect(await routeStates(rows)).toMatch(/^ddn-+$/);
-  // Las otras cuatro siguen completadas
-  await expect(page.locator("#journal .q-item .q-done-btn[aria-pressed=true]")).toHaveCount(4);
 });
 
 test("un paso de una sola misión también lleva «Completar», y completarla marca el paso", async ({ page }) => {
@@ -192,8 +190,8 @@ test("deshacer un paso que se marcó solo reabre el último objetivo de su últi
   const espionaje = page.locator("#journal .q-item", { hasText: "Espionaje industrial" });
   await expect(espionaje.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("#journal .q-item", { hasText: "Cofrología" }).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await espionaje.locator("summary .q-name").click();
-  expect(await routeStates(espionaje.locator(".obj-list.route > .obj-row"))).toMatch(/^d*n$/);
+  // En su último objetivo (12 de 12, el que sigue al 11.º)
+  expect((await readLS(page, "silvestre:questObjective"))["1510"]).toBe(11);
   // Y no se vuelve a marcar solo
   await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 12");
 });
@@ -203,9 +201,8 @@ test("la misión opcional no hace falta para que el paso se marque solo", async 
   await page.click('.diary-row[data-n="7"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("7");
   const colera = page.locator("#journal .q-item", { hasText: "La cólera de los dioses" });
-  await colera.locator("summary .q-name").click();
-  // Su último medallón termina la única obligatoria: Arma letal (opcional) sigue sin hacer
-  await colera.locator(".obj-med").last().click();
+  // Pulsar su fila termina la única obligatoria: Arma letal (opcional) sigue sin hacer
+  await colera.locator(".q-done-btn").click();
   await expect(page.locator('.diary-row[data-n="7"]')).toHaveClass(/\bdone\b/);
   await expect(page.locator("#journal .journal-num")).toHaveText("7");
   await expect(page.locator("#journal .q-item", { hasText: "Arma letal" }).locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
@@ -216,7 +213,7 @@ test("completar una misión que va por delante no da por hechas las de antes ni 
   await openApp(page, { "silvestre:done": upTo(20) });
   await page.click('.diary-row[data-n="21"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("21");
-  const item = name => page.locator("#journal .q-item").filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  const item = name => page.locator("#journal .q-item").filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
   const pluma = item("Cómo perder la pluma");
   await expect(pluma).toBeVisible({ timeout: 15_000 });
   await pluma.locator(".q-done-btn").click();
@@ -228,21 +225,6 @@ test("completar una misión que va por delante no da por hechas las de antes ni 
   await expect(page.locator('.diary-row[data-n="21"]')).not.toHaveClass(/done/);
   expect((await readLS(page, "silvestre:done"))["21"]).toBeUndefined();
   // La misión en curso sigue siendo la primera
-  expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
-});
-
-test("avanzar los objetivos de una misión que va por delante los guarda y no pasa de largo a las de antes", async ({ page }) => {
-  await openApp(page, { "silvestre:done": upTo(20) });
-  await page.click('.diary-row[data-n="21"] .row-num');
-  const item = name => page.locator("#journal .q-item").filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
-  const pluma = item("Cómo perder la pluma");
-  await expect(pluma).toBeVisible({ timeout: 15_000 });
-  await pluma.locator("summary .q-name").click();
-  const rows = pluma.locator(".obj-list.route > .obj-row");
-  await rows.nth(1).locator("button.obj-med").click();
-  // Se ve lo hecho en ella: los dos primeros, y el tercero en curso
-  expect(await routeStates(rows)).toMatch(/^ddn-*$/);
-  await expect(item("Remordimientos de eternala").locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
   expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
 });
 

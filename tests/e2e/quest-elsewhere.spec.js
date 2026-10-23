@@ -15,7 +15,7 @@ const doneOf = ns => Object.fromEntries(ns.map(n => [n, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 // Por el nombre exacto: otras misiones nombran a esta en sus objetivos
 const quest = (page, name) => page.locator("#journal .q-item")
-  .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
 const btn = (page, name) => quest(page, name).locator(".q-done-btn");
 
 async function openStep(page, n) {
@@ -45,11 +45,10 @@ test("las misiones que un paso hecho termina salen completadas en otro paso, y v
   for (const name of ["Extinción de los fuegos", "Esto parece el Sur"]) await doneIn(page, name, 38);
   // «La bruja mala del Este» se queda en la bendición de Viti, que da una misión del 39
   for (const name of ["La bruja mala del Este", ...LEFT_62]) await pending(page, name);
-  // Sus medallones tampoco se pulsan
+  // Su fila tampoco se pulsa: se deshace desmarcando el 38
   const fuegos = quest(page, "Extinción de los fuegos");
-  await fuegos.locator("summary .q-name").click();
-  await expect(fuegos.locator(".obj-row.done").first()).toBeVisible();
-  await expect(fuegos.locator(".obj-med:not([disabled])")).toHaveCount(0);
+  await expect(fuegos.locator(".q-done-btn")).toBeDisabled();
+  await expect(fuegos).toHaveClass(/\bis-done\b/);
   // El porcentaje las cuenta en el 62
   const q = WEIGHTS[62].q;
   await expect(page.locator("#winPct")).toHaveText(`${pctOf(WEIGHTS[38].w + q[1] + q[2])}%`);
@@ -130,7 +129,7 @@ test("las notas del 93 terminan el 92 y retoman el 84; la misión opcional del 7
   await expect(closed.locator(".step-ref")).toHaveAttribute("data-n", "93");
   // La parada roja del 92 cae en «Los tótems de Maimane»
   const totems = quest(page, "Los tótems de Maimane");
-  await totems.locator("summary .q-name").click();
+  await totems.locator("summary .q-lv").click();
   await expect(totems.locator(".obj-stop")).toHaveCount(1);
   // El 84 se retoma en el 93
   await openStep(page, 84);
@@ -177,7 +176,7 @@ test("el 87 termina «Las cuatro voluntades», que el 73 deja a medias, y deja t
   await expect(row(page, 87).locator(".row-closes")).toHaveText("cierra el 72, 73, 85, 86");
   await openStep(page, 87);
   // Se hacen de una en una: la 4 («La guerra de Cania…») y luego la 3, la de Ilyzaelle
-  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(["Las cuatro voluntades", "Toma de conciencia",
+  await expect(page.locator("#journal .q-item .q-name")).toHaveText(["Las cuatro voluntades", "Toma de conciencia",
     "La guerra de Cania no se llevará a cabo", "El juicio de la Muerte"]);
   await expect(quest(page, "Toma de conciencia").locator(".q-take")).toHaveText("Solo tomarla");
   // La guía no lo dice: una nota explica por qué el 87 termina la misión del 73
@@ -209,9 +208,9 @@ test("«Hasta su último suspiro» no va en el 53, que para antes de Kumijo, sin
   await openApp(page, { "silvestre:done": doneOf([53]) });
   // Empieza pasado el combate contra Kumijo (Qo>16870), y el 53 para justo antes
   await openStep(page, 53);
-  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(["Maldita desaparición", "Réquiem por un yokai"]);
+  await expect(page.locator("#journal .q-item .q-name")).toHaveText(["Maldita desaparición", "Réquiem por un yokai"]);
   await openStep(page, 56);
-  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+  await expect(page.locator("#journal .q-item .q-name")).toHaveText(
     ["Maldita desaparición", "Réquiem por un yokai", "Hasta su último suspiro"]);
   // Con el 53 hecho solo sale completada la misión de antes de su parada
   await doneIn(page, "Maldita desaparición", 53);
@@ -262,7 +261,7 @@ test("una madre que espera a una hija de otro paso para ahí en rojo: la termina
   // 38: «La bruja mala del Este» se retoma en verde tras los monstruos y para ante la bendición de Viti
   await openStep(page, 38);
   const bruja = quest(page, "La bruja mala del Este");
-  await bruja.locator("summary .q-name").click();
+  await bruja.locator("summary .q-lv").click();
   await expect(bruja.locator(".obj-resume + .obj-row")).toHaveText(/Vence 7 x Harpirata/);
   await expect(bruja.locator(".obj-stop")).toHaveText("Hasta obtener la bendición de Viti: la da «La bendición de Viti», en el paso 39");
   await expect(bruja.locator(".obj-stop + .obj-row")).toHaveText(/Obtén la bendición de Viti/);
@@ -273,7 +272,7 @@ test("una madre que espera a una hija de otro paso para ahí en rojo: la termina
   // 92: «Un legado atormentado» da «Los tótems de Maimane» y no fabrica la runa sin su tótem
   await openStep(page, 92);
   const legado = quest(page, "Un legado atormentado");
-  await legado.locator("summary .q-name").click();
+  await legado.locator("summary .q-lv").click();
   await expect(legado.locator(".obj-kids")).toHaveText("Aquí se hace «Los tótems de Maimane»");
   await expect(legado.locator(".obj-kids + .obj-stop")).toHaveText("Hasta tener que dropear los 6 tótems");
   await expect(legado.locator(".obj-stop + .obj-row")).toHaveText(/Fabrica 1 Runa de armonía/);

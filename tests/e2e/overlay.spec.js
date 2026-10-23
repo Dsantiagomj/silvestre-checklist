@@ -186,9 +186,9 @@ test("«Misiones» es la lista del diario y «Completar» comparte el estado", a
   await first.locator(".q-done-btn").click();
   await expect(first.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#journal .q-item").first().locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  // Abrir una misión enseña su ruta de medallones
-  await items.nth(1).locator("summary .q-name").click();
-  await expect(items.nth(1).locator(".obj-list.route .obj-med").first()).toBeVisible();
+  // Como en el diario, las que no paran en el paso no se despliegan: su título enlaza a la guía
+  await expect(items.nth(1).locator("summary, .obj-list")).toHaveCount(0);
+  await expect(items.nth(1).locator("a.q-name")).toHaveAttribute("href", /^https:\/\/www\.torrentearcano\.com\//);
   expect(await noEmoji(ov)).toBe(true);
 });
 

@@ -347,20 +347,22 @@ const listHeights = (page, clicks) => page.evaluate(async clicks => {
 test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-num');
-  await page.locator("#journal .q-item").nth(5).waitFor({ timeout: 15_000 });
+  // El 92: sus dos últimas misiones paran en el paso y se despliegan
+  await page.click('.diary-row[data-n="92"] .row-num');
+  await page.locator("#journal .q-item summary").nth(1).waitFor({ timeout: 15_000 });
   // Con la sección arriba, bajo la cabecera de la página, como al ir a ella
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
   await page.waitForTimeout(600);
-  const tops = await listTops(page, [0, 2, 0, 2]);
+  const tops = await listTops(page, [0, 1, 0, 1]);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
 
 test("con el final del detalle a la vista, desplegar y plegar misiones no cambia el alto de la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click('.diary-row[data-n="17"] .row-num');
-  await page.locator("#journal .q-item").nth(3).waitFor({ timeout: 15_000 });
+  // El 43: la primera y la última misión paran en el paso y se despliegan
+  await page.click('.diary-row[data-n="43"] .row-num');
+  await page.locator("#journal .q-item summary").nth(1).waitFor({ timeout: 15_000 });
   await page.locator("#journal .q-item summary").first().click();
   await page.waitForTimeout(600);
   // La página al final del detalle, como al bajar hasta las últimas misiones
@@ -371,7 +373,7 @@ test("con el final del detalle a la vista, desplegar y plegar misiones no cambia
   await page.waitForTimeout(600);
   // Plegar acorta el detalle y la ventana: la lista, al final de la ventana, puede irse con
   // ella hacia arriba, pero entera, sin encoger
-  const heights = await listHeights(page, [2, 2, 0, 0]);
+  const heights = await listHeights(page, [1, 1, 0, 0]);
   expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
 });
 
@@ -385,7 +387,8 @@ test("al final de la página, desplegar una misión no mueve la página ni la mi
   await page.waitForTimeout(600);
   const frames = await page.evaluate(async () => {
     const side = document.querySelector(".diary-side");
-    const sum = document.querySelectorAll("#journal .q-item summary")[1];
+    // La última del 11, «La risueña miaumiena», la única que se despliega
+    const sum = document.querySelectorAll("#journal .q-item summary")[0];
     const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top),
       top: Math.round(side.getBoundingClientRect().top), h: Math.round(side.offsetHeight) });
     const out = [snap()];

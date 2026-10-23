@@ -16,7 +16,7 @@ const barPct = page => page.locator("#winPct");
 const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
 // Por el nombre exacto: la ruta de una misión puede nombrar otras («Aquí se hace…»)
 const quest = (page, name) => page.locator("#journal .q-item")
-  .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
+  .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
 
 async function openStep(page, n) {
   await page.click(`.diary-row[data-n="${n}"] .row-num`);
@@ -54,10 +54,10 @@ test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Comp
   const luces = quest(page, "Luces y sombras");
   await expect(luces.locator(".q-take")).toHaveText("Solo tomarla");
   await expect(luces.locator(".q-take")).toHaveCSS("border-top-style", "solid");
-  await luces.locator("summary .q-name").click();
-  await expect(luces.locator(".q-start").first()).toContainText("Waldos FieldChester Potcobble");
-  await expect(luces.locator(".q-take-note")).toHaveText("No hace falta hacerla: basta con tenerla tomada.");
-  await expect(luces.locator(".obj-row")).toHaveCount(0);
+  await expect(luces.locator(".q-take")).toHaveAttribute("title", "No hace falta hacerla: basta con tenerla tomada");
+  // Ni se despliega ni lleva objetivos; su nombre enlaza a la guía
+  await expect(luces.locator("summary, .obj-row")).toHaveCount(0);
+  await expect(luces.locator("a.q-name")).toHaveAttribute("href", /^https:\/\/www\.torrentearcano\.com\//);
   // Solo tomarla no lleva «Completar»; la obligatoria sí
   await expect(luces.locator(".q-done-btn")).toHaveCount(0);
   await expect(quest(page, "Pesca en aguas congeladas").locator(".q-done-btn")).toHaveText("Completar");
@@ -74,7 +74,7 @@ test("paso 28: terminar «Pesca en aguas congeladas» lleva a «Las joyas de la 
   await openApp(page, { "silvestre:done": upTo(27) });
   await openStep(page, 28);
   const pesca = quest(page, "Pesca en aguas congeladas");
-  await pesca.locator("summary .q-name").click();
+  await pesca.locator("summary .q-lv").click();
   await pesca.locator(".obj-list.route > .obj-row").last().locator(".obj-med").click();
   expect(await routeStates(pesca.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
   expect((await readLS(page, "silvestre:questPos"))?.["28"]).toBe(1);
@@ -110,9 +110,8 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   // Con el paso hecho, la cólera sale hecha y «Arma letal» sigue pendiente
   await openStep(page, 7);
   await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
-  await colera.locator("summary .q-name").click();
-  expect(await routeStates(colera.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
-  await arma.locator("summary .q-name").click();
+  await expect(colera.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
+  await arma.locator("summary .q-lv").click();
   expect(await routeStates(arma.locator(".obj-list.route > .obj-row"))).not.toMatch(/^d+$/);
   await expect(btn).toBeEnabled();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
@@ -148,13 +147,13 @@ test("paso 27: «La marcha de la emperatriz» suma sus puntos; «Star ski y Dutc
   // La única obligatoria también lleva «Completar»; aquí se termina con su último
   // medallón. Suma lo que vale y la opcional sigue sin hacer
   await expect(marcha.locator(".q-done-btn")).toHaveText("Completar");
-  await marcha.locator("summary .q-name").click();
+  await marcha.locator("summary .q-lv").click();
   const rows = marcha.locator(".obj-list.route > .obj-row");
   await rows.last().locator(".obj-med").click();
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await expect(barPct(page)).toHaveText(`${pctOf(base(26) + WEIGHTS[27].q[1])}%`);
   await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
-  await star.locator("summary .q-name").click();
+  await star.locator("summary .q-lv").click();
   expect(await routeStates(star.locator(".obj-list.route > .obj-row"))).not.toMatch(/^d+$/);
 });
 
@@ -180,7 +179,7 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
   await openStep(page, 83);
   // No el logro entero: la misión que nombra, las que la abren, las dos que da Birk y hay
   // que terminar antes de la parada, y la que deja tomada
-  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+  await expect(page.locator("#journal .q-item .q-name")).toHaveText(
     ["Llama, amigo y entra", "Birk, hija de Bork", "Los enemigos de mis enemigos son mis enemigos",
       "Los nanoinsumisos", "La biblia de los rencores"]);
   const biblia = quest(page, "La biblia de los rencores");
@@ -191,7 +190,7 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
   }
   // La parada roja, justo tras vencer a Dazahk y recibir «La biblia de los rencores»
   const birk = quest(page, "Birk, hija de Bork");
-  await birk.locator("summary .q-name").click();
+  await birk.locator("summary .q-lv").click();
   await expect(birk.locator(".obj-stop")).toHaveCount(1);
   await expect(birk.locator(".obj-stop")).toContainText("Hasta justo después de pasar Dazahk Martegel");
   await expect(page.locator("#journal .obj-stop")).toHaveCount(1);
@@ -201,7 +200,7 @@ test("paso 83: «Birk, hija de Bork» con las misiones que pide antes, las dos q
 test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más fuerte», que la pide; se termina en el 79", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": upTo(33) });
   await openStep(page, 33);
-  await expect(page.locator("#journal .q-item summary .q-name")).toHaveText(
+  await expect(page.locator("#journal .q-item .q-name")).toHaveText(
     ["El dofus y el alquimista", "La eterna cosecha", "La razón del más fuerte", "Después de él, el diluvio", "Muchos cuerboks en la cabeza"]);
   await expect(quest(page, "La eterna cosecha").locator(".q-take")).toHaveText("Solo tomarla");
   await expect(page.locator("#journal .q-take")).toHaveCount(1);
@@ -213,9 +212,8 @@ test("paso 33: «La eterna cosecha» solo tomada, antes de «La razón del más 
   await openStep(page, 79);
   await expect(page.locator("#journal .q-item .q-take")).toHaveCount(0);
   const cosecha = quest(page, "La eterna cosecha");
-  await cosecha.locator("summary .q-name").click();
-  await expect(cosecha.locator(".obj-row.done")).toHaveCount(0);
-  await expect(cosecha.locator(".obj-med:not([disabled])").first()).toBeVisible();
+  await expect(cosecha.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
+  await expect(cosecha.locator(".q-done-btn")).toBeEnabled();
   await expect(page.locator(".diary-row[data-n=\"79\"]")).not.toHaveClass(/\bdone\b/);
   // Y «Paso hecho» en el 79 la termina
   await page.locator("#toggleBtn").click();

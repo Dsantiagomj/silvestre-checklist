@@ -5,10 +5,9 @@ import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "@dofus/plans.json";
 import {
-  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, redIsStop, stepCalls, stepTitle, stopPoints,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, expandableQuests, missionNotes, nextPendingAfter, questStops, stepCalls, stepTitle,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
-import { FOLLOW_UP } from "../lib/stops.js";
 import {
   alsoText, closeSteps, closingPlan, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, selectStep, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
@@ -335,25 +334,34 @@ export function progressOf(s, n, quests, i, q) {
 }
 
 /**
- * Una misión que basta con tener tomada (paso 28, «Luces y sombras»): dónde empieza y
- * la nota, sin objetivos ni «Completar», porque no se hace.
+ * El nombre de la misión, que enlaza a su guía en Torrente Arcano (en otra pestaña). Va
+ * junto al interruptor de la fila, nunca dentro: pulsarlo abre la guía y no la completa
+ * ni la despliega. Sin guía, solo el nombre.
  */
-function TakeOnly({ q, notes, open, setOpen }) {
+function QuestTitle({ q }) {
+  const href = missionGuide(q.n);
+  if (!href) return <span className="q-name">{q.n}</span>;
   return (
-    <details className="q-item" open={open} onToggle={e => setOpen(q.id, e.currentTarget.open)}>
-      <summary>
+    <a className="q-name" href={href} target="_blank" rel="noopener" title="Guía en Torrente Arcano"
+      onClick={e => e.stopPropagation()}>{q.n}</a>
+  );
+}
+
+/**
+ * Una misión que basta con tener tomada (paso 28, «Luces y sombras»): su nombre, la
+ * etiqueta y sus notas, sin objetivos ni «Completar», porque no se hace.
+ */
+function TakeOnly({ q, notes }) {
+  return (
+    <div className="q-item is-flat" data-qid={q.id}>
+      <div className="q-head">
         <QuestMark className="q-mark" />
-        <span className="q-name">{q.n}</span>
-        <span className="q-take" title="No hace falta hacerla">Solo tomarla</span>
+        <QuestTitle q={q} />
+        <span className="q-take" title="No hace falta hacerla: basta con tenerla tomada">Solo tomarla</span>
         <span className="q-lv">{`Niv. ${q.lv}`}</span>
-        {missionGuide(q.n) && (
-          <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
-        )}
-      </summary>
-      <QuestStart q={q} />
+      </div>
       <QuestNotes notes={notes} />
-      <p className="q-start q-take-note">No hace falta hacerla: basta con tenerla tomada.</p>
-    </details>
+    </div>
   );
 }
 
@@ -397,15 +405,18 @@ function QuestStart({ q }) {
 
 /**
  * «Completar» / «✓ Completada» de una misión; terminada en otro paso, o porque otra
- * terminada la pide (`by`, su nombre), no se pulsa: se deshace allí.
+ * terminada la pide (`by`, su nombre), no se pulsa: se deshace allí. Con `name`, es el
+ * interruptor de toda la fila (q-row-toggle: su ::after la cubre entera, salvo el título,
+ * que va encima) y su nombre accesible dice de qué misión.
  */
-function QuestDone({ finished, elsewhere, by, onClick }) {
+function QuestDone({ finished, elsewhere, by, onClick, name }) {
+  const label = finished ? "Misión completada" : "Completar misión";
   return (
-    <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
+    <button type="button" className={"q-done-btn" + (name ? " q-row-toggle" : "") + (finished ? " is-done" : "")} aria-pressed={finished}
       disabled={!!elsewhere || !!by}
       title={elsewhere ? `Completada en el paso ${elsewhere}` : by ? `Completada: la pide terminada «${by}»`
         : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada"}
-      aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
+      aria-label={name ? `${label}: ${name}` : label} onClick={onClick}>
       {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
   );
 }
@@ -424,23 +435,24 @@ export function CurrentQuestDone({ n, cur, s }) {
   return <QuestDone finished={finished} elsewhere={elsewhere} by={by} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
 }
 
-/** Misiones del paso; la que lleva la parada roja va abierta y la marca. */
+/**
+ * Misiones del paso. Cada una, una fila que se completa con un clic; las que se detienen
+ * o se retoman en el paso (expandableQuests) se despliegan con sus etapas y la línea.
+ */
 export function Quests({ step, quests, loaded, s }) {
-  // Al abrir el paso todas van plegadas; se abren al pulsarlas o, al terminar una
-  // desde sus medallones, la siguiente (Journal se monta de nuevo en cada paso). Solo
-  // una a la vez: abrir otra pliega la que estaba abierta
+  // Al abrir el paso todas van plegadas; las que se despliegan se abren al pulsarlas
+  // (Journal se monta de nuevo en cada paso). Solo una a la vez: abrir otra pliega la
+  // que estaba abierta
   const [openId, setOpenId] = useState(null);
   const setOpen = (id, on) => setOpenId(prev => (on ? id : prev === id ? null : prev));
   if (!loaded) return <p className="asset-note">Cargando misiones…</p>;
   if (!quests.length) return null;
-  // En un paso que se resuelve solo, el punto del rojo es donde se retoma y se termina:
-  // línea verde con lo que se resuelve, en vez de la roja de parar
-  // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
-  const done = !redIsStop(step) && step.marks.find(m => m[0] === "done")[1]
-    .replace(FOLLOW_UP, ".");
-  // La parada que deja el propio verde ("…hasta tener que pasar Kodámade") sigue en rojo
-  // También la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
-  const stops = stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
+  // Las líneas de aquí se detiene (rojo) y aquí se retoma (verde) dentro de las misiones
+  const stops = questStops(step, quests);
+  // Solo las misiones con una de esas líneas en este paso se despliegan con sus objetivos
+  // (expandableQuests): en ellas importa hasta qué objetivo llegar. Las demás se hacen
+  // enteras: su fila es el interruptor de completada
+  const expandable = expandableQuests(step, quests);
   const notes = missionNotes(step);
   // Las hijas de cada misión que van en el paso y se hacen (no las de solo tomarla)
   const kidsOf = q => (childrenOf(q.id) || [])
@@ -476,7 +488,7 @@ export function Quests({ step, quests, loaded, s }) {
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];
   const items = quests.map((q, i) => {
-    if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} open={openId === q.id} setOpen={setOpen} />;
+    if (q.kind === "take") return <TakeOnly key={q.id} q={q} notes={notesOf(q)} />;
     let offset = 0;
     const kids = kidsOf(q);
     const optional = q.kind === "optional";
@@ -503,18 +515,33 @@ export function Quests({ step, quests, loaded, s }) {
       if (!finished) setOpen(q.id, false);
       pick(finished ? 0 : total);
     };
+    if (!expandable.has(q.id)) {
+      // Plegada siempre: la fila entera la completa o la deshace (el botón de su estado
+      // la cubre), y el título, encima, abre su guía. Las notas de la guía van debajo
+      return (
+        <div className={"q-item is-flat" + (finished ? " is-done" : "")} key={q.id} data-qid={q.id}>
+          <div className="q-head">
+            <QuestMark className="q-mark" />
+            <QuestTitle q={q} />
+            {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
+            <QuestDone finished={finished} elsewhere={elsewhere} by={by} name={q.n} onClick={() => pick(finished ? 0 : total)} />
+            <span className="q-lv">{`Niv. ${q.lv}`}</span>
+          </div>
+          {/* De dónde sale solo si no es un PNJ fijo: el templo de tu clase o la misión de tu alineamiento */}
+          {(q.st?.cls || q.st?.ali) && <QuestStart q={q} />}
+          <QuestNotes notes={notesOf(q)} />
+        </div>
+      );
+    }
     return (
-      <details className="q-item" key={q.id} data-qid={q.id} open={openId === q.id}
+      <details className={"q-item" + (finished ? " is-done" : "")} key={q.id} data-qid={q.id} open={openId === q.id}
         onToggle={e => setOpen(q.id, e.currentTarget.open)}>
         <summary>
           <QuestMark className="q-mark" />
-          <span className="q-name">{q.n}</span>
+          <QuestTitle q={q} />
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           <QuestDone finished={finished} elsewhere={elsewhere} by={by} onClick={toggleDone} />
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
-          {missionGuide(q.n) && (
-            <a className="q-guide" href={missionGuide(q.n)} target="_blank" rel="noopener" title="Guía en Torrente Arcano">Guía</a>
-          )}
         </summary>
         <QuestStart q={q} />
         <QuestNotes notes={notesOf(q)} />
@@ -540,9 +567,9 @@ export function Quests({ step, quests, loaded, s }) {
   return (
     <section className="journal-quests">
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
-      {/* Las etapas dicen hasta dónde llegar; el camino lo da la guía de cada misión */}
+      {/* Pulsar la misión la completa; su nombre lleva a la guía, que da el camino */}
       <p className="q-howto">
-        Las etapas sirven para saber hasta dónde llegar en cada misión. Para saber adónde ir y qué hacer, abre su <b>Guía</b> de Torrente Arcano.
+        Pulsa una misión para darla por hecha. Su <b>nombre</b> abre su guía de Torrente Arcano, con adónde ir y qué hacer.
       </p>
       {grouped ? grouped.map(([name, img, count], g) => {
         const from = grouped.slice(0, g).reduce((a, x) => a + x[2], 0);
