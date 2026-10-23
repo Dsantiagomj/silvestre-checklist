@@ -125,6 +125,19 @@ test("a 1280×720, sin hero, la ventana de pasos y su lista se ven en la primera
   expect(Math.abs((await app(page).locator("#winBar").boundingBox()).y - win.y)).toBeLessThanOrEqual(1.5);
 });
 
+test("en una pantalla ancha la app sale de la columna del bloque y usa el ancho de la ventana", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await openHarness(page);
+  const width = await page.evaluate(() => document.documentElement.clientWidth);
+  const host = await app(page).boundingBox();
+  // De borde a borde, aunque el bloque de Squarespace mida 1100px, y sin scroll lateral
+  expect(Math.abs(host.x)).toBeLessThan(1);
+  expect(Math.abs(host.width - width)).toBeLessThan(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  // La ventana de pasos aprovecha ese ancho (antes se quedaba en 1320px)
+  expect((await app(page).locator("#diary").boundingBox()).width).toBeGreaterThan(1700);
+});
+
 test("las teclas y los clics dentro de la app llegan a su sitio", async ({ page }) => {
   await openHarness(page);
   // Un espacio en el buscador se escribe: no marca el paso abierto
