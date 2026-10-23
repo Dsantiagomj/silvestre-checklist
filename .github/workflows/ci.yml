@@ -32,9 +32,12 @@ jobs:
       - run: npm run test:unit
       - run: npx playwright install --with-deps chromium
       # La app sola, y embebida en una página como la de Squarespace junto al hub de los
-      # checklists (tests/embed construye los dos embebidos)
+      # checklists (tests/embed construye los embebidos del Silvestre, del Hielos y el hub)
       - run: npx playwright test --retries=2
       - run: npm run test:embed -- --retries=2
+      # La prueba de humo del Hielos (DOFUS=hielos), servido como en Pages: en hielos/ con
+      # las imágenes de la raíz
+      - run: npm run test:hielos -- --retries=2
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

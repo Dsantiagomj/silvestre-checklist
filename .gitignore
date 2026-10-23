@@ -30,3 +30,6 @@ playwright-report/
 
 # Build del embebido para sus pruebas (tests/embed/build.js)
 .embed-test/
+
+# Build del sitio del Hielos para sus pruebas (playwright.hielos.config.js)
+.hielos-test/
