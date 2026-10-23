@@ -259,6 +259,12 @@ def optional_missions(text, matched_on):
 # step 79 finishes it.
 TAKE_ONLY = {28: [1286], 33: [439], 83: [2013], 87: [2138]}
 
+# Quests a step adds (STEP_EXTRA) that do not hold it open. Step 38: "La sombra del reino"
+# is not part of "Azul turquesa"; its red says it "se puede lanzar" during mission 3 and
+# done "en cualquier punto hasta antes del inciso 80". So completing the achievement (step
+# 62) finishes step 38 too; step 81's quest still needs it finished (PREREQS).
+OPTIONAL_EXTRA = {38: [1665]}
+
 
 def step_kinds(step, plan, achievements, ids):
     """{quest id: kind} for the step's quests that are not mandatory."""
@@ -271,6 +277,9 @@ def step_kinds(step, plan, achievements, ids):
     for q in TAKE_ONLY.get(step["n"], []):
         if q in ids:
             kinds[str(q)] = "take"
+    for q in OPTIONAL_EXTRA.get(step["n"], []):
+        if q in ids:
+            kinds[str(q)] = "optional"
     return kinds
 
 
