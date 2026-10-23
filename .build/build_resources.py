@@ -3,9 +3,13 @@
 torrentearcano lists, per step, only what you have to gather: base resources,
 equipment, consumables, souls and creatures. Crafted intermediates and quest
 drops are already left out. Step "0" holds what the prerequisites need.
+Where it lists a crafted quest item instead (the prototypes of «La desglaciación»,
+Silvestre step 26), the step gets its ingredients: see expand_crafted.
 
 Reads  : .build/lists/<dofus>/torrentearcano.json (written by import_guide.py)
 Checks : .build/lists/<dofus>/compilado.txt, the page's own compiled list
+Caches : .build/data/item_lookup_cache.json (items by name), .build/data/crafts.json
+         (the recipes of crafted quest items and their ingredients, by id)
 Writes : src/dofus/<dofus>/resources.json and the item images in public/img/items/
 Run    : python3 -I .build/build_resources.py   (--dofus <id> or DOFUS; silvestre by default)
 
@@ -18,6 +22,8 @@ resources.json:
     a  alternatives: [[item key, qty], ...]; usually just one
     p  in step 0 only: the prerequisite (steps.js id) the item is spent on
     m  the quests that use it up (from .build/lists/<dofus>/item_quests.json), if known
+    n  a note: the page's own ("(amayiro)"), or what crafts it ("Para fabricar con
+       manitas nivel 100") when the row comes from a crafted quest item
     x  listed in its step but left out of the totals: the Elixir de los barquerontes
        (Silvestre) and the page's "Opcional" group (Hielos, step 65)
 """
@@ -40,6 +46,7 @@ COMPILED = dofus.LISTS / "compilado.txt"
 # The quests that use each item up, per step (written by audit_resources.py)
 ITEM_QUESTS = dofus.LISTS / "item_quests.json"
 CACHE = ROOT / "data" / "item_lookup_cache.json"
+CRAFTS = ROOT / "data" / "crafts.json"
 OUT = dofus.SRC / "resources.json"
 API = "https://api.dofusdb.fr/"
 
@@ -58,6 +65,9 @@ OPTIONAL = D.OPTIONAL_ITEM  # per Dofus, in .build/dofus/<id>.py
 # The page's group for what nothing on the route needs (Hielos, step 65: the key of the
 # Forjafría de Mizz Frizz). Its rows are listed apart and left out of the totals
 OPTIONAL_GROUP = "Opcional"
+# DofusDB's type for items only quests use. One with a recipe cannot be bought: you
+# craft it from what you gather, so the step lists that instead
+QUEST_ITEM = "Recurso de misión"
 
 
 def slug(name):
@@ -125,6 +135,93 @@ def lookup(name, cache):
     return found
 
 
+def item_info(hit):
+    return {"name": hit["name"], "img": f"items/{hit['iconId']}.png" if hit["iconId"] else None,
+            "type": hit["type"] or "", "lvl": hit["lvl"] or 0}
+
+
+def craft_recipe(key, crafts):
+    """{"i": [[id, qty]], "job", "lvl"} of an item, or None when it is not crafted."""
+    if key not in crafts["recipes"]:
+        data = get("recipes", {"resultId": key})["data"]
+        crafts["recipes"][key] = {
+            "i": [list(p) for p in zip(data[0]["ingredientIds"], data[0]["quantities"])],
+            "job": data[0]["job"]["name"]["es"], "lvl": data[0]["resultLevel"],
+        } if data else None
+    return crafts["recipes"][key]
+
+
+def item_by_id(key, crafts):
+    if key not in crafts["items"]:
+        i = get(f"items/{key}", {})
+        crafts["items"][key] = item_info({"name": i["name"]["es"], "iconId": i.get("iconId"),
+                                          "type": ((i.get("type") or {}).get("name") or {}).get("es"),
+                                          "lvl": i.get("level")})
+    return crafts["items"][key]
+
+
+def expand_crafted(rows, recipe, kind, name):
+    """A step's rows with each crafted quest item (kind QUEST_ITEM, with a recipe)
+    replaced by what it is made of, through the crafted quest items of its recipe too:
+    quantities multiplied, and added up per ingredient. An ingredient the step already
+    lists adds to that row; the others go where the first crafted item was, most first.
+    Each says what crafts it (the job and level of the item it is for). recipe(key) ->
+    {"i", "job", "lvl"} or None, kind(key) -> type name, name(key) -> item name."""
+    def crafted(key):
+        return kind(key) == QUEST_ITEM and recipe(key)
+
+    total, need, quests = {}, {}, {}
+
+    def add(key, qty, req, m):
+        if crafted(key):
+            for sub, q in recipe(key)["i"]:
+                add(str(sub), q * qty, req, m)
+            return
+        total[key] = total.get(key, 0) + qty
+        need.setdefault(key, [])
+        if req not in need[key]:
+            need[key].append(req)
+        quests.setdefault(key, [])
+        quests[key] += [q for q in m if q not in quests[key]]
+
+    out, at = [], None
+    for row in rows:
+        key, qty = row["a"][0]
+        if len(row["a"]) == 1 and not row.get("r") and crafted(key):
+            rec = recipe(key)
+            req = (rec["job"].lower(), rec["lvl"])
+            for sub, q in rec["i"]:
+                add(str(sub), q * qty, req, row.get("m") or [])
+            at = len(out) if at is None else at
+            continue
+        out.append(dict(row))
+    if at is None:
+        return rows
+
+    def why(key):
+        return "fabricar con " + " y ".join(f"{job} nivel {lvl}" for job, lvl in need[key])
+
+    def merge_m(row, key):
+        m = list(row.get("m") or [])
+        m += [q for q in quests[key] if q not in m]
+        if m:
+            row["m"] = m
+
+    new = []
+    for key in sorted(total, key=lambda k: (-total[k], slug(name(k)))):
+        same = next((r for r in out if r["k"] == key and len(r["a"]) == 1 and not r.get("g")), None)
+        if same:
+            same["a"] = [[key, same["a"][0][1] + total[key]]]
+            note = f"{total[key]} para {why(key)}"
+            same["n"] = f"{same['n']}; {note}" if same.get("n") else note
+            merge_m(same, key)
+            continue
+        row = {"k": key, "c": "recursos", "g": None, "a": [[key, total[key]]], "n": f"Para {why(key)}"}
+        merge_m(row, key)
+        new.append(row)
+    return out[:at] + new + out[at:]
+
+
 def check_against_compiled(steps, items):
     """The page's compiled list must equal the sum of every step (prerequisites included)."""
     want = {}
@@ -172,9 +269,7 @@ def main():
                     hit = lookup(name, cache)
                     if hit:
                         key = str(hit["id"])
-                        items[key] = {"name": hit["name"],
-                                      "img": f"items/{hit['iconId']}.png" if hit["iconId"] else None,
-                                      "type": hit["type"] or "", "lvl": hit["lvl"] or 0}
+                        items[key] = item_info(hit)
                     else:
                         key = "x:" + slug(name)
                         items[key] = {"name": name, "img": None, "type": "", "lvl": 0}
@@ -218,8 +313,7 @@ def main():
             if not hit:
                 raise SystemExit(f"no está en DofusDB: {name}")
             key = str(hit["id"])
-            items[key] = {"name": hit["name"], "img": f"items/{hit['iconId']}.png" if hit["iconId"] else None,
-                          "type": hit["type"] or "", "lvl": hit["lvl"] or 0}
+            items[key] = item_info(hit)
             steps[n].append({"k": f"{key}@{slug(label)}", "c": category(group)[0], "g": label,
                              "a": [[key, qty]], "p": prereq})
             print(f"paso {n}: con {hit['name']} ×{qty} ({label})")
@@ -230,6 +324,26 @@ def main():
         for row in rows:
             if purpose.get(n, {}).get(row["k"]):
                 row["m"] = purpose[n][row["k"]]
+    # The crafted quest items, by their ingredients (after the check: the page counts them)
+    crafts = json.loads(CRAFTS.read_text()) if CRAFTS.exists() else {"recipes": {}, "items": {}}
+
+    def info(key):
+        if key not in items:
+            items[key] = item_by_id(key, crafts)
+        return items[key]
+
+    for n, rows in steps.items():
+        expanded = expand_crafted(rows, lambda k: craft_recipe(k, crafts),
+                                  lambda k: info(k)["type"], lambda k: info(k)["name"])
+        if expanded is not rows:
+            kept = {r["k"] for r in expanded}
+            gone = [items[r["k"]]["name"] for r in rows if r["k"] not in kept]
+            print(f"paso {n}: {', '.join(gone)} → sus ingredientes")
+            steps[n] = expanded
+    CRAFTS.write_text(json.dumps(crafts, ensure_ascii=False, indent=1, sort_keys=True))
+    # Only what some row lists: the crafted quest items are gone, the bambú pieces never came
+    used = {k for rows in steps.values() for row in rows for k, _ in row["a"]}
+    items = {k: v for k, v in items.items() if k in used}
 
     results = mirror({it["img"] for it in items.values() if it["img"]})
     failed = {p for p, status in results if status not in ("ok", "cached")}
