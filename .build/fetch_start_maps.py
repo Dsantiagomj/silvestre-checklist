@@ -6,7 +6,8 @@ the zone landscapes (the "DofusDB" mark goes with the bottom band) and scaled to
 banner's size.
 
 Reads  : src/dofus/<dofus>/figures.json   ({step: {"m": map id, ...}})
-Writes : public/img/maps/start/<map id>.jpg   800 px wide
+Writes : public/img/maps/start/<map id>.jpg   800 px wide, shared by every Dofus: it deletes
+         only the maps no src/dofus/*/figures.json uses
 Needs  : macOS `sips` for the crop and resize
 Run    : python3 -I .build/fetch_start_maps.py   (after build_figures.py; --dofus <id> or DOFUS,
          silvestre by default)
@@ -34,13 +35,30 @@ def sips(*args):
     subprocess.run(["sips", *args], check=True, capture_output=True)
 
 
+def step_maps(figures):
+    """The start map of each step of one Dofus (its figures.json)."""
+    return {v["m"] for v in json.loads(figures.read_text()).values() if v.get("m")}
+
+
+def maps_in_use(dofus_root):
+    """The start maps of every Dofus (src/dofus/*/figures.json): they all share OUT_DIR."""
+    return set().union(*(step_maps(f) for f in dofus_root.glob("*/figures.json")))
+
+
+def prune(out_dir, keep):
+    """Delete the maps in out_dir that no Dofus uses; the names of the deleted ones."""
+    wanted = {f"{m}.jpg" for m in keep}
+    removed = sorted(old.name for old in out_dir.glob("*.jpg") if old.name not in wanted)
+    for name in removed:
+        (out_dir / name).unlink()
+    return removed
+
+
 def main():
-    maps = sorted({v["m"] for v in json.loads(FIGURES.read_text()).values() if v.get("m")})
+    maps = sorted(step_maps(FIGURES))
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    wanted = {f"{m}.jpg" for m in maps}
-    for old in OUT_DIR.glob("*.jpg"):
-        if old.name not in wanted:
-            old.unlink()
+    # Only what no Dofus uses: building one keeps the maps of the others
+    prune(OUT_DIR, maps_in_use(dofus.SRC.parent))
     todo = [m for m in maps if not (OUT_DIR / f"{m}.jpg").exists()]
     with tempfile.TemporaryDirectory() as tmp:
         for m in todo:

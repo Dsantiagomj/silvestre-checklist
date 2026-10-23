@@ -27,6 +27,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Las del pipeline de .build/ (solo la biblioteca estándar)
+      - run: python3 -I -m unittest discover -s .build/tests
       - run: npx playwright install --with-deps chromium
       # La app sola, y embebida en una página como la de Squarespace junto al hub de los
       # checklists (tests/embed construye los dos embebidos)
