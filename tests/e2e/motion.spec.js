@@ -314,7 +314,12 @@ test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page })
   expect(Math.abs(after.map - before.map)).toBeLessThan(4);
 });
 
-/** Posición de la lista en cada fotograma mientras se pulsan las cabeceras indicadas. */
+/**
+ * Posición de la lista en cada fotograma mientras se pulsan las cabeceras indicadas. Se
+ * mide tras pintar (requestAnimationFrame y luego setTimeout): dentro del propio
+ * requestAnimationFrame el alto de la lista al final de la ventana (--diary-fit, que se
+ * ajusta antes de pintar) aún no está al día.
+ */
 const listTops = (page, clicks) => page.evaluate(async clicks => {
   const box = document.querySelector(".diary-list");
   const sums = document.querySelectorAll("#journal .q-item summary");
@@ -322,7 +327,7 @@ const listTops = (page, clicks) => page.evaluate(async clicks => {
   for (const k of clicks) {
     sums[k].click();
     for (let i = 0; i < 25; i++) {
-      await new Promise(r => requestAnimationFrame(r));
+      await new Promise(r => requestAnimationFrame(() => setTimeout(r)));
       out.push(Math.round(box.getBoundingClientRect().top));
     }
   }
@@ -341,38 +346,32 @@ test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) 
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
 });
 
-test("con el final del detalle a la vista, desplegar y plegar misiones no mueve la lista ni la página", async ({ page }) => {
+test("con el final del detalle a la vista, desplegar y plegar misiones no mueve la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.click('.diary-row[data-n="17"] .row-num');
   await page.locator("#journal .q-item").nth(3).waitFor({ timeout: 15_000 });
   await page.locator("#journal .q-item summary").first().click();
   await page.waitForTimeout(600);
-  // La sección arriba y el detalle al final, como al bajar hasta las últimas misiones
+  // La página al final del detalle, como al bajar hasta las últimas misiones
   await page.evaluate(() => {
-    document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" });
-    const detail = document.querySelector(".diary-detail");
-    detail.scrollTo(0, detail.scrollHeight);
+    const detail = document.querySelector(".diary-detail").getBoundingClientRect();
+    scrollBy({ top: detail.bottom - innerHeight, behavior: "instant" });
   });
   await page.waitForTimeout(600);
-  const y = await page.evaluate(() => scrollY);
-  // Plegar acorta el detalle por dentro: la lista y la página se quedan donde estaban
+  // Plegar acorta el detalle (y la página, que puede tener que subir), pero la lista se
+  // queda pegada bajo la barra de la ventana
   const tops = await listTops(page, [2, 2, 0, 0]);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
-  expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
-test("al final de la página, desplegar una misión no mueve nada ni cambia el tamaño de la lista", async ({ page }) => {
+test("al final de la página, desplegar una misión no mueve nada ni encoge la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 820 });
   await openApp(page);
   await page.click('.diary-row[data-n="11"] .row-num');
   await page.locator("#journal .q-item").nth(2).waitFor({ timeout: 15_000 });
   await page.waitForTimeout(800);
-  await page.evaluate(() => {
-    scrollTo(0, document.documentElement.scrollHeight);
-    const detail = document.querySelector(".diary-detail");
-    detail.scrollTo(0, detail.scrollHeight);
-  });
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await page.waitForTimeout(600);
   const frames = await page.evaluate(async () => {
     const side = document.querySelector(".diary-side");
@@ -385,9 +384,11 @@ test("al final de la página, desplegar una misión no mueve nada ni cambia el t
     return out;
   });
   const spread = k => Math.max(...frames.map(f => f[k])) - Math.min(...frames.map(f => f[k]));
-  // Ni la página, ni la misión pulsada, ni la lista se mueven; la lista no cambia de altura:
-  // la misión crece dentro del detalle
-  expect([spread("y"), spread("sum"), spread("top"), spread("h")].every(d => d <= 1), JSON.stringify(frames.at(-1))).toBe(true);
+  // Ni la página, ni la misión pulsada, ni la lista se mueven: la misión crece hacia abajo
+  // y alarga el detalle y la ventana. La lista, acortada al final de la ventana, puede
+  // alargarse con ella por abajo, nunca encogerse
+  expect([spread("y"), spread("sum"), spread("top")].every(d => d <= 1), JSON.stringify(frames)).toBe(true);
+  expect(Math.min(...frames.map(f => f.h))).toBe(frames[0].h);
 });
 
 /**
