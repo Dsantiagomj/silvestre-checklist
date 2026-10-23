@@ -1,18 +1,28 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
-/** Lo que se ve de un buscador: su caja, la letra, el icono y el aro al enfocarlo. */
-const look = (page, id) => page.evaluate(id => {
+/**
+ * Lo que se ve de un buscador en uso (el de los pasos es una lupa que se despliega con
+ * el foco): su caja, la letra, el icono y la pista.
+ */
+const look = (page, id) => page.evaluate(async id => {
   const input = document.getElementById(id);
+  const settle = () => new Promise(r => setTimeout(r, 400));
+  input.focus();
+  // Con las transiciones del foco ya terminadas
+  await settle();
   const box = input.closest(".search-field");
   const cs = getComputedStyle(input);
-  return {
+  const out = {
     inField: !!box,
     icon: !!box?.querySelector(".search-field-ic"),
     font: cs.font, radius: cs.borderRadius, height: input.offsetHeight,
     paddingLeft: cs.paddingLeft, background: cs.backgroundColor, border: cs.borderColor,
     placeholder: getComputedStyle(input, "::placeholder").color,
   };
+  input.blur();
+  await settle();
+  return out;
 }, id);
 const ring = (page, id) => page.evaluate(id => {
   const input = document.getElementById(id);

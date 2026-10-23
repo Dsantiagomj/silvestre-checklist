@@ -9,7 +9,7 @@ import { openApp, readLS } from "./helpers.js";
 const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));
-// El mismo redondeo que el hero: un decimal
+// El mismo redondeo que el porcentaje de la barra: un decimal
 const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
 const doneOf = ns => Object.fromEntries(ns.map(n => [n, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
@@ -52,12 +52,12 @@ test("las misiones que un paso hecho termina salen completadas en otro paso, y v
   await expect(fuegos.locator(".obj-med:not([disabled])")).toHaveCount(0);
   // El porcentaje las cuenta en el 62
   const q = WEIGHTS[62].q;
-  await expect(page.locator("#heroPct")).toHaveText(`${pctOf(WEIGHTS[38].w + q[1] + q[2])}%`);
+  await expect(page.locator("#winPct")).toHaveText(`${pctOf(WEIGHTS[38].w + q[1] + q[2])}%`);
   // Desmarcar el 38 las deja pendientes otra vez
   await row(page, 38).locator(".row-check").click();
   await expect(row(page, 38)).not.toHaveClass(/\bdone\b/);
   for (const name of ["Extinción de los fuegos", "Esto parece el Sur"]) await pending(page, name);
-  await expect(page.locator("#heroPct")).toHaveText("0%");
+  await expect(page.locator("#winPct")).toHaveText("0%");
   expect(errors).toEqual([]);
 });
 
@@ -126,7 +126,7 @@ test("las notas del 93 terminan el 92 y retoman el 84; la misión opcional del 7
   const errors = await openApp(page);
   await openStep(page, 92);
   const closed = page.locator("#journal .call.closedin");
-  await expect(closed).toContainText("Se termina más adelante");
+  await expect(closed).toContainText("Se termina");
   await expect(closed.locator(".step-ref")).toHaveAttribute("data-n", "93");
   // La parada roja del 92 cae en «Los tótems de Maimane»
   const totems = quest(page, "Los tótems de Maimane");
@@ -135,7 +135,7 @@ test("las notas del 93 terminan el 92 y retoman el 84; la misión opcional del 7
   // El 84 se retoma en el 93
   await openStep(page, 84);
   const resumed = page.locator("#journal .call.resumedin");
-  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed).toContainText("Se retoma");
   await expect(resumed.locator('.step-ref[data-n="93"]')).toHaveCount(1);
   // «Se termina la misión opcional del inciso 7»: el 7 se hace sin ella
   await openStep(page, 7);
@@ -223,7 +223,7 @@ test("el 63 se retoma en el 81, donde Golosotrón da el recurso que le falta; es
   await openApp(page, { "silvestre:done": doneOf([81]) });
   await openStep(page, 63);
   const resumed = page.locator("#journal .call.resumedin");
-  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed).toContainText("Se retoma");
   await expect(resumed.locator(".step-ref")).toHaveText(["81"]);
   // No marca nada: el 63 sigue pendiente con el 81 hecho
   await expect(row(page, 63)).not.toHaveClass(/\bdone\b/);

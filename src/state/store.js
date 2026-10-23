@@ -166,7 +166,7 @@ function initialState() {
     questPos, // paso -> índice de la misión en curso (solo eso: no da por hechas las de antes)
     questObj, // misión -> índice de objetivo
     // El paso abierto en la ventana sobrevive a recargar: se puede ir por delante del
-    // siguiente pendiente. El hero sigue mostrando el siguiente pendiente
+    // siguiente pendiente. «Siguiente» de la barra sigue llevando al siguiente pendiente
     selectedStep: readSelectedStep(),
     // El paso del overlay, si se ha movido desde él; null: sigue al de la página
     overlayN: null,
@@ -305,7 +305,7 @@ function questIndexOf() {
  * donde se terminó (el que cierra, en el segundo caso) o null. Una que el paso deja para
  * uno posterior (`later`) no la terminan los que lo cierran: la termina ese paso, que
  * también la lleva. Sin las misiones cargadas no se sabe dónde paran los pasos: null, y
- * el porcentaje la suma cuando llegan (el hero se vuelve a pintar al cambiar
+ * el porcentaje la suma cuando llegan (la barra se vuelve a pintar al cambiar
  * `questsLoaded`).
  */
 export function questDoneElsewhere(s, qid, except) {
@@ -511,8 +511,9 @@ export function revealMapNode(n) {
       shift = top - box.scrollTop;
       box.scrollTo({ top, behavior });
     }
-    // Donde quedará el sello: si ni así se ve, la página baja hasta la ventana
-    const head = appRoot().querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+    // Donde quedará el sello: si ni así se ve (o queda bajo la barra de la ventana), la
+    // página baja hasta la ventana
+    const head = appRoot().getElementById("winBar")?.getBoundingClientRect().bottom ?? 0;
     if (r.top - shift < head || r.bottom - shift > innerHeight) showStepsWindow();
     return;
   }

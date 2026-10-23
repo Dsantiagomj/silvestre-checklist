@@ -30,3 +30,8 @@ export async function openApp(page, seed = null, { view = "diary" } = {}) {
 export const readLS = (page, key) =>
   page.evaluate(k => JSON.parse(localStorage.getItem(k) || "null"), key);
 
+/** El reinicio va en el menú «⋯» de la barra de la ventana: lo abre y pulsa «Reiniciar». */
+export async function openReset(page) {
+  await page.click("#moreBtn");
+  await page.click("#resetBtn");
+}

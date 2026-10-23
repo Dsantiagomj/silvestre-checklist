@@ -28,12 +28,12 @@ test("el CSS de la página no entra en la app ni el de la app sale a la página"
   const overlay = app(page).locator("#overlayBtn");
   expect(await style(overlay, "cursor")).toBe("pointer");
   expect(await style(overlay, "display")).not.toBe("inline");
-  // `img { max-width: 50% }`: el icono de la marca no se encoge ni lleva su borde
-  const icon = app(page).locator("#brandIcon");
+  // `img { max-width: 50% }`: el huevo del progreso no se encoge ni lleva su borde
+  const icon = app(page).locator(".win-ring img");
   expect(await style(icon, "borderTopWidth")).toBe("0px");
   expect(await style(icon, "maxWidth")).not.toBe("50%");
   // Las variables de la página (--bg, --header-h) no pisan las de la app
-  expect(await style(app(page).locator("header").first(), "height")).not.toBe("300px");
+  expect(await style(app(page).locator("#winBar"), "height")).not.toBe("300px");
   expect(await style(app(page).locator(".app-root"), "backgroundColor")).not.toBe("rgb(255, 0, 0)");
   // Y la página sigue como estaba: su fondo, su letra y sus botones
   expect(await style(page.locator("body"), "backgroundColor")).toBe("rgb(250, 250, 250)");
@@ -56,6 +56,8 @@ test("el tema cambia en la app y no en la página", async ({ page }) => {
   const root = app(page).locator(".app-root");
   await expect(root).toHaveAttribute("data-theme", "dark");
   const dark = await style(root, "backgroundColor");
+  // El tema va en el menú «⋯» de la barra
+  await app(page).locator("#moreBtn").click();
   await app(page).locator("#themeBtn").click();
   await expect(root).toHaveAttribute("data-theme", "light");
   await expect.poll(() => style(root, "backgroundColor")).not.toBe(dark);
@@ -68,7 +70,7 @@ test("el tema cambia en la app y no en la página", async ({ page }) => {
 
 test("el detalle del diario se desplaza por dentro y vuelve arriba al cambiar de paso", async ({ page }) => {
   await openHarness(page);
-  await app(page).locator('.diary-row[data-n="1"] .row-main').click();
+  await app(page).locator('.diary-row[data-n="1"] .row-num').click();
   await expect(app(page).locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
   const detail = app(page).locator(".diary-detail");
   await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start" }));
@@ -82,25 +84,51 @@ test("el detalle del diario se desplaza por dentro y vuelve arriba al cambiar de
   expect(await page.evaluate(() => scrollY)).toBe(y);
 });
 
-test("la cabecera de la app queda bajo la cabecera fija de la página y la ventana de pasos se ve entera", async ({ page }) => {
+test("la barra de la ventana queda bajo la cabecera fija de la página y la ventana de pasos se ve entera", async ({ page }) => {
   await openHarness(page);
-  // «Continuar con el paso N» lleva la página hasta la ventana de los pasos
-  await app(page).locator("#heroNextGo").click();
-  // Cuando termina de bajar, la cabecera de la app queda pegada justo bajo la de la página
+  // «Siguiente» lleva la página hasta la ventana de los pasos
+  await app(page).locator("#diaryNext").click();
+  // Cuando termina de bajar, la barra queda pegada justo bajo la cabecera de la página
   const top = sel => app(page).locator(sel).first().evaluate(el => Math.round(el.getBoundingClientRect().top));
   let last = null;
   await expect.poll(async () => { const t = await top("#diary"); const still = t === last; last = t; return still; }, { timeout: 5_000 }).toBe(true);
-  expect(await top("header")).toBe(80);
-  const header = await app(page).locator("header").first().evaluate(el => el.getBoundingClientRect());
+  expect(await top("#winBar")).toBeGreaterThanOrEqual(80);
+  expect(await top("#winBar")).toBeLessThanOrEqual(90);
   const diary = await app(page).locator("#diary").evaluate(el => el.getBoundingClientRect());
-  expect(diary.top).toBeGreaterThanOrEqual(header.bottom);
+  expect(diary.top).toBeGreaterThanOrEqual(80);
   expect(diary.bottom).toBeLessThanOrEqual(900);
+  // Sin cabecera propia: nada de la app ocupa una fila encima de la ventana
+  await expect(app(page).locator("header, .hero")).toHaveCount(0);
+});
+
+test("a 1280×720, sin hero, la ventana de pasos y su lista se ven en la primera pantalla bajo la cabecera", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openHarness(page);
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await expect(app(page).locator(".hero, #nota:visible")).toHaveCount(0);
+  const bar = await app(page).locator("#winBar").boundingBox();
+  expect(bar.y).toBeGreaterThanOrEqual(80);
+  // La barra en una sola fila y, debajo, las primeras filas de la lista, a la vista
+  expect(bar.height).toBeLessThanOrEqual(64);
+  const first = await app(page).locator(".diary-row").first().boundingBox();
+  expect(first.y).toBeGreaterThan(bar.y + bar.height - 1);
+  expect(first.y + first.height).toBeLessThanOrEqual(720);
+  // Al bajar, la ventana llena lo que deja la cabecera de la página: la barra arriba y
+  // el final de la ventana dentro de la pantalla
+  await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start" }));
+  const win = await app(page).locator(".steps-win").boundingBox();
+  expect(Math.round(win.y)).toBeGreaterThanOrEqual(80);
+  expect(win.y + win.height).toBeLessThanOrEqual(720 + 0.5);
+  expect(win.height).toBeGreaterThan(720 - 80 - 40);
+  // La barra arriba de la ventana (dentro de su borde de 1 px)
+  expect(Math.abs((await app(page).locator("#winBar").boundingBox()).y - win.y)).toBeLessThanOrEqual(1.5);
 });
 
 test("las teclas y los clics dentro de la app llegan a su sitio", async ({ page }) => {
   await openHarness(page);
   // Un espacio en el buscador se escribe: no marca el paso abierto
-  await app(page).locator('.diary-row[data-n="3"] .row-main').click();
+  await app(page).locator('.diary-row[data-n="3"] .row-num').click();
   await app(page).locator("#searchInput").fill("");
   await app(page).locator("#searchInput").press("Space");
   await expect(app(page).locator('.diary-row[data-n="3"]')).not.toHaveClass(/done/);
@@ -135,7 +163,7 @@ test("el overlay se abre con los estilos de la app y sin los de la página", asy
 test("en móvil el paso se abre en la hoja inferior sobre la página", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openHarness(page);
-  await app(page).locator('.diary-row[data-n="2"] .row-main').click();
+  await app(page).locator('.diary-row[data-n="2"] .row-num').click();
   const sheet = app(page).locator(".sheet");
   await expect(sheet).toHaveClass(/open/);
   await expect(sheet).toBeInViewport();

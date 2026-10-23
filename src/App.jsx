@@ -5,9 +5,7 @@ import {
 } from "./state/store.js";
 import { useMediaQuery } from "./lib/useMediaQuery.js";
 import { eventTarget } from "./lib/root.js";
-import Header from "./components/Header.jsx";
-import Hero from "./components/Hero.jsx";
-import Nota from "./components/Nota.jsx";
+import NotaDialog from "./components/Nota.jsx";
 import ClassicNotice from "./components/ClassicNotice.jsx";
 import Diary from "./components/Diary.jsx";
 import BottomSheet from "./components/BottomSheet.jsx";
@@ -22,9 +20,14 @@ function onKeyDown(e) {
   if (selectedStep == null) return;
   const target = eventTarget(e);
   if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+  // Dentro de un diálogo (reinicio, la nota de las pausas) las teclas son suyas
+  if (target.closest?.("dialog")) return;
   if (e.key === "ArrowLeft" && selectedStep > 1) selectStep(selectedStep - 1);
   if (e.key === "ArrowRight" && selectedStep < STEPS.length) selectStep(selectedStep + 1);
   if (e.key === " " || e.key === "Enter") {
+    // En la barra, sus desplegables y las fichas de notas, Intro y espacio pulsan lo que
+    // tiene el foco: no marcan el paso
+    if (target.closest?.(".win-bar, .goal-calls")) return;
     e.preventDefault();
     // Como «Hecho»: si el paso cierra otros pendientes, termina lo que les queda
     const closes = pendingCloses(s, selectedStep);
@@ -59,12 +62,11 @@ export default function App() {
 
   return (
     <>
-      <Header onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
-      <Hero />
       <div className="wrap">
+        {/* La página la presenta la de Torrente Arcano: aquí el título va solo para lectores de pantalla */}
+        <h1 className="sr-only">Checklist del Dofus Silvestre</h1>
         <ClassicNotice />
-        <Nota />
-        <Diary mobile={mobile} />
+        <Diary mobile={mobile} onOverlay={openOverlay} onReset={() => resetRef.current.open()} />
         <footer>
           Guía original de los 100 pasos por <b>Sandglass</b> · Rediseño del sistema de progreso · Contenido reproducido textualmente.<br />
           Dofus es una marca de <b>Ankama</b>. Datos e imágenes vía <a href="https://dofusdb.fr" target="_blank" rel="noopener">DofusDB</a>. Herramienta no oficial hecha por y para la comunidad.<br />
@@ -73,6 +75,7 @@ export default function App() {
       </div>
       <BottomSheet mobile={mobile} />
       <ResetDialog ref={resetRef} />
+      <NotaDialog />
       <Toast />
       <OverlayWindow win={overlayWin} />
     </>

@@ -12,7 +12,7 @@ async function openOverlay(page, context) {
 }
 
 async function openStep(page, n) {
-  await page.click(`.diary-row[data-n="${n}"] .row-main`);
+  await page.click(`.diary-row[data-n="${n}"] .row-num`);
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
@@ -222,7 +222,7 @@ test("«Guía» con el texto y sus avisos; un paso citado cambia el overlay, no 
   await expect(ov.locator(".ov-tab-body .journal-base")).not.toBeEmpty();
   // «Se retoma más adelante», con los pasos donde se retoman
   const resumed = ov.locator(".ov-tab-body .goal-calls .call.resumedin");
-  await expect(resumed).toContainText("Se retoma más adelante");
+  await expect(resumed).toContainText("Se retoma");
   await expect(resumed.locator("i img")).toHaveCount(1);
   expect(await noEmoji(ov)).toBe(true);
   await resumed.locator('.step-ref[data-n="59"]').click();
@@ -311,7 +311,7 @@ test("«Ahora» completa la misión en curso como el diario, y la cabecera enlaz
 
 test("en un paso de una sola misión obligatoria, el overlay también lleva «Completar» misión", async ({ page, context }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="4"] .row-main');
+  await page.click('.diary-row[data-n="4"] .row-num');
   await expect(page.locator("#journal .q-item")).toHaveCount(1, { timeout: 15_000 });
   const ov = await openOverlay(page, context);
   await expect(objCount(ov)).toHaveText("Objetivo 1 de 9", { timeout: 15_000 });
@@ -394,7 +394,7 @@ test("la ventana se abre una vez a 400×680 y no cambia de tamaño; en una venta
 
 test("a 400 px el título largo del paso cabe en dos líneas, sin cortarse", async ({ page, context }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="4"] .row-main');
+  await page.click('.diary-row[data-n="4"] .row-num');
   const ov = await openOverlay(page, context);
   await ov.setViewportSize({ width: 400, height: 680 });
   const title = ov.locator(".ov-head .ov-title");

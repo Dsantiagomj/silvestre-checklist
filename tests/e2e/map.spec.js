@@ -242,7 +242,7 @@ test("la ficha va junto a su paso, con la flecha hacia él, y nunca se sale del 
 
 test("desde el detalle del diario se vuelve al mapa con ese paso abierto", async ({ page }) => {
   await openApp(page);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   await page.click("#journal .journal-to-map");
   await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#mapCard .journal-num")).toHaveText("34");
@@ -253,7 +253,7 @@ test("al volver al mapa con un paso lejano, lo desplaza hasta dejarlo a la vista
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
   await page.evaluate(() => document.getElementById("diary").scrollIntoView());
-  await page.click('.diary-row[data-n="97"] .row-main');
+  await page.click('.diary-row[data-n="97"] .row-num');
   await page.click("#journal .journal-to-map");
   await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
   await expect(node(page, 97)).toBeInViewport({ timeout: 3000 });
@@ -297,7 +297,8 @@ test("la ficha del mapa se cierra al pulsar fuera o con Escape; otro paso la cam
   await node(page, 35).click();
   await expect(page.locator("#mapCard .journal-num")).toHaveText("35");
   // Fuera: se cierra
-  await page.locator("#diaryTitle").click();
+  // Fuera de la ventana, en el margen de la página
+  await page.mouse.click(5, 600);
   await expect(page.locator("#mapCard")).toHaveCount(0);
   await node(page, 34).click();
   await page.keyboard.press("Escape");
