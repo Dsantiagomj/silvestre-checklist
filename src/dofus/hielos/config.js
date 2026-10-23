@@ -17,6 +17,13 @@ export default {
     title: "Dofus de los Hielos · Checklist",
     description: "Checklist del Dofus de los Hielos — guía de Torrente Arcano con sistema de progreso ponderado por esfuerzo.",
     iconNote: "El huevo del Dofus de los Hielos (DofusDB, objeto 7043, icono 23005), el mismo de la marca",
+    // Sus favicons (vite.config.js), en vez de los del Silvestre de public/: el mismo huevo,
+    // y el de Apple sobre fondo oscuro con un halo helado
+    icons: {
+      "favicon-32.png": "icons/favicon-32.png",
+      "favicon.png": "icons/favicon.png",
+      "apple-touch-icon.png": "icons/apple-touch-icon.png",
+    },
   },
 
   texts: {
@@ -55,7 +62,9 @@ export default {
   // guía no da otro Dofus que los represente, así que dos cosas de Frigost
   themeNames: { light: "Copo de nieve", dark: "Kama de hielo" },
 
-  // El embebido (src/embed.jsx): todavía sin página que lo aloje
+  // El embebido (src/embed.jsx, npm run build:embed:hielos): el <div> de la página de
+  // Torrente Arcano que lo aloja (checklist-dofus-de-los-hielos), la variable CSS con lo que
+  // tapa su cabecera fija, el data-* de la hoja de fuentes y el nombre en los errores
   embed: { hostId: "hielos-root", topVar: "--hielos-top", fonts: "hielos-fonts", logName: "Checklist Hielos" },
 
   // Dónde se construye (vite.config.js), relativo a dist/: el sitio en dist/hielos/, para no
