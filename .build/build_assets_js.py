@@ -7,12 +7,12 @@ Icon priority per step, most distinctive first:
 
 The items each step needs are not built here: see build_resources.py.
 
-Reads  : .build/data/{step_assets,achievements,quests}.json
+Reads  : .build/data/{achievements,quests}.json, .build/data/<dofus>/step_assets.json
          (lookup_jobs.json and job_images_64.tar.gz are
           fetched and cached here)
-Writes : src/data/assets.json (imported statically by the app)
+Writes : src/dofus/<dofus>/assets.json (imported statically by the app)
          public/img/**        (every image the page uses, mirrored from the CDN)
-Run    : python3 -I .build/build_assets_js.py
+Run    : python3 -I .build/build_assets_js.py   (--dofus <id> or DOFUS; silvestre by default)
 """
 import json
 import pathlib
@@ -27,24 +27,21 @@ from concurrent.futures import ThreadPoolExecutor
 
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
-OUT_JSON = ROOT / "src" / "data" / "assets.json"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+OUT_JSON = dofus.SRC / "assets.json"
 # Vite serves public/ at the site root, so the React app requests /img/...
 IMG = ROOT / "public" / "img"
 # Image base the app requests, relative to the site root.
 APP_IMG_BASE = "img/"
 CDN = "https://api.dofusdb.fr/img/"
-# Hero background, one map per theme, picked by eye:
-#   dark  — Refugio Silvestre: snowy fir forest at dusk; it even shares the name.
-#   light — Mazmorra de los Escarahojas: a sunny forest that reads well without a veil.
-HERO_MAPS = {"dark": "maps/1/223350028.jpg", "light": "maps/1/88080387.jpg"}
+HERO_MAPS = D.HERO_MAPS  # per Dofus, in .build/dofus/<id>.py
 # Full-width hero art is shipped at the source width but recompressed: the raw
 # maps weigh 1-1.8 MB each.
 HERO_JPEG_QUALITY = 55
-# Header logo: the Dofus Silvestre item itself.
-BRAND_ICON = "items/23036.png"
-# Theme switch: Dofus Marfil (light) and Dofus Ébano (dark), the rewards of the
-# guide's "Blanco marfil" and "Negro ébano" achievements.
-THEME_ICONS = {"light": "items/23011.png", "dark": "items/23007.png"}
+BRAND_ICON = D.BRAND_ICON  # per Dofus, in .build/dofus/<id>.py
+THEME_ICONS = D.THEME_ICONS  # per Dofus, in .build/dofus/<id>.py
 # Backup card: you store your progress in the chest (Cofre de Jorbak) and the
 # treasure map (Mapa del tesoro de los miner) leads you back to it.
 BACKUP_ICONS = {"chest": "items/94023.png", "map": "items/24006.png"}
@@ -52,23 +49,13 @@ BACKUP_ICONS = {"chest": "items/94023.png", "map": "items/24006.png"}
 # starts again) and the Catalejo de gobletrotter for the overlay (watching from afar).
 HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
 
-# Prerequisites from the guide. Achievements and quests resolve by name; jobs and
-# spells use their DofusDB ids, checked by hand on 2026-10-13.
-PREREQ_JOBS = {
-    "o1": [60, 13], "o2": [79], "o3": [65], "o4": [24, 26], "o5": [28],
-    "o6": [28, 26, 2, 36],
-}
+PREREQ_JOBS = D.PREREQ_JOBS  # per Dofus, in .build/dofus/<id>.py
 JOB_NAMES = {2: "Leñador", 13: "Escultor", 24: "Minero", 26: "Alquimista",
              28: "Campesino", 36: "Pescador", 60: "Fabricante", 65: "Manitas",
              79: "Ganadero"}
-PREREQ_SPELLS = {
-    "h1": ("spells/sort_12461.png", "Captura de Almas"),
-    "h2": ("spells/sort_11763.png", "Llamilla"),
-    "h3": ("spells/sort_11775.png", "Zanahowia Sabwosa"),
-}
+PREREQ_SPELLS = D.PREREQ_SPELLS  # per Dofus, in .build/dofus/<id>.py
 # Job icon ids differ from job ids (DofusDB: img/jobs/<iconId>.jpg).
 JOB_ICON = {}
 
@@ -78,18 +65,8 @@ def short(url):
 
 
 DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
-# Dofus DofusDB lists as no reward at all: achievement id -> (item id, icon, name).
-# "El fin de la eternidad" (step 79) is the achievement for finishing "La eterna
-# cosecha", the long quest that gives the Dofus Ocre; DofusDB has neither its
-# objectives nor its reward.
-MISSING_DOFUS = {
-    565: (7754, "items/23012.png", "Dofus Ocre"),
-    # The Piñata de pino comes from a side quest (Grunob, then Goblepino) that opens
-    # once "El secreto de los dofus: Prólogo" is done; the guide counts it there.
-    5222: (27803, "items/23035.png", "Piñata de pino"),
-}
-# The prerequisites note recommends starting it early: it shows the egg.
-OCRE_ICON = "items/23012.png"
+MISSING_DOFUS = D.MISSING_DOFUS  # per Dofus, in .build/dofus/<id>.py
+OCRE_ICON = D.OCRE_ICON  # per Dofus, in .build/dofus/<id>.py
 # Icons of the guide's marks in the step detail: a dungeon key for where to stop,
 # the trophy book for what gets done, a list for what the step includes, a legend
 # book for tips and a handwritten note for the rest. "must" (a quest the guide also
@@ -163,7 +140,7 @@ def dofus_road(achievements, quests, steps, report):
     road = []
     for i, (step, ach) in found.items():
         type_id, name, icon = types.get(i, (None, "", None))
-        if type_id == DOFUS_TYPE and name != "Dofus Silvestre":
+        if type_id == DOFUS_TYPE and name != D.NAME:
             road.append({"name": name, "img": f"items/{icon}.png", "step": step, "achievement": ach})
     return sorted(road, key=lambda d: (d["step"], d["name"]))
 
@@ -260,7 +237,7 @@ def prereq_icons(prereq_texts):
 
 
 def read_prereqs():
-    html = (ROOT / "src" / "data" / "steps.js").read_text()
+    html = (dofus.SRC / "steps.js").read_text()
     pairs = re.findall(r'\{\s*id:\s*"([loh]\d+)",\s*text:\s*"((?:[^"\\]|\\.)*)"\s*\}', html)
     return {pid: text.replace('\\"', '"') for pid, text in pairs}
 
@@ -295,7 +272,7 @@ def mirror(paths):
 
 
 def main():
-    report = json.loads((DATA / "step_assets.json").read_text())
+    report = json.loads((dofus.WORK / "step_assets.json").read_text())
     achievements = json.loads((DATA / "achievements.json").read_text())
     by_quest = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
     rewards = reward_index(achievements)
@@ -344,7 +321,7 @@ def main():
         paths |= {a["img"] for a in v.get("achievements", [])}
     paths |= {i["img"] for icons in prereqs.values() for i in icons if i.get("img")}
     paths |= {*HERO_MAPS.values(), BRAND_ICON, *THEME_ICONS.values(), *BACKUP_ICONS.values(),
-              *HEADER_ICONS.values(), OCRE_ICON, *CALL_ICONS.values(), *OBJ_ICONS.values()}
+              *HEADER_ICONS.values(), OCRE_ICON, *CALL_ICONS.values(), *OBJ_ICONS.values()} - {None}
     paths |= {d["img"] for d in road}
     results = mirror({p for p in paths if not p.startswith("jobs/")})
     failed = [r for r in results if r[1] not in ("ok", "cached")]
@@ -381,7 +358,7 @@ def main():
 
     size = sum((IMG / p).stat().st_size for p in paths if (IMG / p).exists())
     print(f"assets.json     : {OUT_JSON.stat().st_size // 1024} KB")
-    print(f"pasos con icono : {sum(1 for v in steps.values() if 'icon' in v)}/100")
+    print(f"pasos con icono : {sum(1 for v in steps.values() if 'icon' in v)}/{D.STEP_COUNT}")
     print(f"prerrequisitos  : {len(prereqs)} con icono")
     print("dofus del camino: " + ", ".join(f"{d['name']} ({d['step']})" for d in road))
     print(f"imágenes        : {len(paths)} en public/img/ ({size // 1024} KB), fallidas {len(failed)}")
