@@ -624,10 +624,11 @@ test("los objetivos se marcan desde el diario pulsando su medallón, y se pueden
   // Pulsar uno hecho vuelve a él
   await rows.nth(1).locator("button.obj-med").click();
   expect(await routeStates(rows)).toMatch(/^dn-+$/);
-  // El último de la misión la termina y pasa a la siguiente del paso, que se abre
+  // El último de la misión la termina y la pliega; la siguiente no se abre sola
   await rows.last().locator("button.obj-med").click();
+  await expect(quest).not.toHaveAttribute("open", "");
   expect(await routeStates(rows)).toMatch(/^d+$/);
-  await expect(page.locator("#journal .q-item").nth(1)).toHaveAttribute("open", "");
+  await expect(page.locator("#journal .q-item").nth(1)).not.toHaveAttribute("open", "");
 });
 
 test("abrir una misión pliega la que estaba abierta: solo va una abierta", async ({ page }) => {
@@ -649,14 +650,14 @@ test("«Completar» en la misión abierta la pliega", async ({ page }) => {
   const quests = page.locator("#journal .q-item");
   await expect(quests.first()).toBeVisible({ timeout: 15_000 });
   const open = () => quests.evaluateAll(els => els.filter(e => e.open).map(e => e.dataset.qid));
-  // La primera: se pliega y se abre la siguiente, que es la que queda en curso
+  // La primera: se pliega y no se abre ninguna otra
   const first = quests.first();
   await first.locator("summary .q-name").click();
   await expect(first).toHaveAttribute("open", "");
   await first.locator(".q-done-btn").click();
   await expect(first.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
   await expect(first).not.toHaveAttribute("open", "");
-  await expect.poll(open).toEqual([await quests.nth(1).getAttribute("data-qid")]);
+  await expect.poll(open).toEqual([]);
   // La última, que se abre a mano: también se pliega
   const last = quests.last();
   await last.locator("summary .q-name").click();
@@ -1422,8 +1423,9 @@ test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una n
   expect((await stepData(page, 38)).quests).toEqual(
     ["Extinción de los fuegos", "Esto parece el Sur", "La sombra del reino", "La bruja mala del Este"]);
   const sombra = questItem(page, "La sombra del reino");
-  // Obligatoria: ni opcional ni solo tomarla, y con su «Completar»
-  await expect(sombra.locator(".q-optional, .q-take")).toHaveCount(0);
+  // Opcional: no es de «Azul turquesa» y no impide que el 38 quede hecho (el 62 lo
+  // arrastra), pero se puede completar desde aquí
+  await expect(sombra.locator(".q-optional")).toHaveText("Opcional");
   await expect(sombra.locator(".q-done-btn")).toHaveCount(1);
   await sombra.locator("summary .q-name").click();
   const note = sombra.locator(".q-note");

@@ -139,6 +139,7 @@ test("terminar una hija no da por terminada a la madre; al terminar la madre se 
   await btn(page, "Un remedio draconiano").click();
   await expect(btn(page, "Un remedio draconiano")).toHaveAttribute("aria-pressed", "true");
   expect((await readLS(page, "silvestre:questPos"))["81"]).toBe(5);
-  await expect(quest(page, "El dragón de los vientos")).toHaveAttribute("open", "");
+  // La que sigue no se abre sola: queda plegada hasta que se abra a mano
+  await expect(quest(page, "El dragón de los vientos")).not.toHaveAttribute("open", "");
   await expect(row(page, 81)).not.toHaveClass(/\bdone\b/);
 });
