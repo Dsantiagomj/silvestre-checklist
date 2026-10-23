@@ -212,3 +212,19 @@ test("el paso 69 enlaza «El dofus de los hielos» y el 67 deja «Los caminantes
   await expect(page.locator("#journal a", { hasText: /^El dofus de los hielos$/ }).first())
     .toHaveAttribute("href", "https://www.torrentearcano.com/el-dofus-de-los-hielos");
 });
+
+// La paleta del Hielos (palette en su config.js, lib/palette.js): el acento es azul hielo en
+// los botones, con texto oscuro encima, en los dos temas
+for (const [theme, accent] of [["dark", "rgb(159, 216, 240)"], ["light", "rgb(126, 198, 230)"]]) {
+  test(`el acento del Hielos es azul hielo en el tema ${theme === "dark" ? "oscuro" : "claro"}`, async ({ page }) => {
+    await page.setViewportSize(TALL);
+    await openHielos(page, { "hielos:theme": theme });
+    for (const sel of ["#diaryNext", "#heroNextGo", "#overlayBtn"]) {
+      expect(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor)).toBe(accent);
+    }
+    expect(await page.locator("#diaryNext").evaluate(el => getComputedStyle(el).color)).toBe("rgb(10, 30, 42)");
+    // El acento con alfa (fondos, halos) también es el del Hielos
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim()))
+      .toBe("159,216,240");
+  });
+}
