@@ -149,6 +149,32 @@ test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) 
   await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
 });
 
+/** Desde el clic, cuánto tarda en empezar a verse la vista que llega (deja de estar a opacidad 0). */
+const appearsAfter = (page, click) => page.evaluate(async click => {
+  const before = new Set(document.querySelectorAll(".steps-stage > .steps-layer"));
+  const t0 = performance.now();
+  document.querySelector(click).click();
+  let incoming = null;
+  while (performance.now() - t0 < 4000) {
+    await new Promise(r => requestAnimationFrame(r));
+    incoming ||= [...document.querySelectorAll(".steps-stage > .steps-layer")].find(l => !before.has(l));
+    const shown = incoming && [incoming, ...incoming.querySelectorAll("[style]")].every(el => el.style.opacity !== "0");
+    if (shown) return performance.now() - t0;
+  }
+  return Infinity;
+}, click);
+
+test("la primera vez, el mapa no espera a las figuras que el navegador deja para luego", async ({ page }) => {
+  // A media guía: el mapa se abre en el paso 41, con jefes a la vista
+  await openApp(page, { "silvestre:done": Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, true])) });
+  await page.waitForLoadState("networkidle");
+  // Con la ventana a la vista: lo que va a verse del mapa es lo que se espera
+  await page.locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
+  // Las figuras de los jefes llevan loading="lazy": con el mapa aún invisible el navegador
+  // no las pedía y el cambio se quedaba parado hasta el límite de espera (~1,9 s)
+  expect(await appearsAfter(page, "#stepsViewMap")).toBeLessThan(900);
+});
+
 test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
   await openApp(page);
   await page.click("#stepsViewMap");
