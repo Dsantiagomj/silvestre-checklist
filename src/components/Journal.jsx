@@ -449,32 +449,28 @@ export function Quests({ step, quests, loaded, s }) {
   // cortaba la altura de la misión al abrirse
   // El requestAnimationFrame de la ventana de la misión: en el overlay, la de la página
   // puede estar en segundo plano y no llegar
-  // En escritorio el detalle se desplaza por dentro: se mueve solo él, no la página (que
-  // scrollIntoView también desplazaría para llevar la misión arriba de la pantalla)
+  // Mientras la hija se abre y la que estaba abierta se pliega (solo va una), el detalle
+  // cambia de alto y la hija se mueve: se vuelve a llevar a la vista en cada fotograma hasta
+  // que se queda quieta un rato (la que se pliega empieza a encogerse algo después; como
+  // mucho, un segundo y medio). En escritorio baja o sube la página (el
+  // detalle no se desplaza por dentro) y su scroll-margin-top la deja bajo la barra de la
+  // ventana; en móvil, la hoja del paso
   const toKid = (id, el) => {
     setOpen(id, true);
     const win = el.ownerDocument.defaultView;
     win.requestAnimationFrame(() => {
       const item = el.closest(".journal-quests")?.querySelector(`.q-item[data-qid="${id}"]`);
       if (!item) return;
-      const box = item.closest(".diary-detail");
-      if (box && box.scrollHeight > box.clientHeight && win.getComputedStyle(box).overflowY !== "visible") {
-        const margin = parseFloat(win.getComputedStyle(item).scrollMarginTop) || 0;
-        // Mientras la hija se abre y la que estaba abierta se pliega (solo va una), el detalle
-        // cambia de alto y la hija se mueve: el destino se vuelve a medir en cada fotograma
-        // hasta que se queda quieta (como mucho, un segundo)
-        let still = 0;
-        let last = null;
-        const follow = left => {
-          const to = box.scrollTop + item.getBoundingClientRect().top - box.getBoundingClientRect().top - margin;
-          box.scrollTop = to;
-          // Quieta: el destino no cambia de un fotograma a otro y ya se ha llegado
-          still = last != null && Math.abs(to - last) <= 1 && Math.abs(box.scrollTop - to) <= 1 ? still + 1 : 0;
-          last = to;
-          if (still < 6 && left > 0) win.requestAnimationFrame(() => follow(left - 1));
-        };
-        follow(60);
-      } else item.scrollIntoView({ block: "start", behavior: "instant" });
+      let still = 0;
+      let last = null;
+      const follow = left => {
+        item.scrollIntoView({ block: "start", behavior: "instant" });
+        const at = item.getBoundingClientRect().top;
+        still = last != null && Math.abs(at - last) <= 1 ? still + 1 : 0;
+        last = at;
+        if (still < 24 && left > 0) win.requestAnimationFrame(() => follow(left - 1));
+      };
+      follow(90);
     });
   };
   const notesOf = q => [...notes.filter(x => x.name === q.n), ...(QUEST_NOTES[step.n]?.[q.id] ? [{ text: QUEST_NOTES[step.n][q.id] }] : [])];

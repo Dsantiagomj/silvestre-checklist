@@ -68,23 +68,53 @@ test("el tema cambia en la app y no en la página", async ({ page }) => {
   await expect(app(page).locator(".app-root")).toHaveAttribute("data-theme", "light");
 });
 
-test("el detalle del diario se desplaza por dentro y vuelve arriba al cambiar de paso", async ({ page }) => {
-  await openHarness(page);
-  await app(page).locator('.diary-row[data-n="1"] .row-num').click();
-  await expect(app(page).locator("#journal .q-item")).toHaveCount(16, { timeout: 15_000 });
-  const detail = app(page).locator(".diary-detail");
-  await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start" }));
-  expect(await detail.evaluate(el => el.scrollHeight > el.clientHeight + 50)).toBe(true);
-  const y = await page.evaluate(() => scrollY);
-  await detail.evaluate(el => el.scrollTo(0, el.scrollHeight));
-  expect(await detail.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
-  await app(page).locator("#nextBtn").evaluate(el => el.click());
-  await expect(app(page).locator("#journal .journal-num")).toHaveText("2");
-  expect(await detail.evaluate(el => el.scrollTop)).toBe(0);
-  expect(await page.evaluate(() => scrollY)).toBe(y);
-});
+// A 1920×1080 el 41 casi cabe: el 1, con sus 16 misiones, no
+for (const [w, h, n] of [[1280, 720, 41], [1920, 1080, 1]]) {
+  test(`a ${w}×${h}, con el ${n}, el detalle del diario no se desplaza por dentro: baja la página y la lista se queda bajo la barra`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await openHarness(page, { "silvestre:done": Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, true])) });
+    await app(page).locator(`.diary-row[data-n="${n}"] .row-num`).click();
+    await expect(app(page).locator("#journal .journal-num")).toHaveText(String(n));
+    await expect(app(page).locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
+    await page.waitForLoadState("networkidle");
+    const detail = app(page).locator(".diary-detail");
+    await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
+    await page.waitForTimeout(200);
+    const d = await detail.evaluate(el => ({ extra: el.scrollHeight - el.clientHeight, overflowY: getComputedStyle(el).overflowY }));
+    expect(d.extra, JSON.stringify(d)).toBeLessThanOrEqual(1);
+    expect(["auto", "scroll"]).not.toContain(d.overflowY);
+    await expect(app(page).locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
+    // Baja la página: la barra de la ventana, bajo la cabecera fija de Squarespace, y la
+    // lista, justo debajo, se quedan; la barra de acciones del paso sigue al pie
+    const y0 = await page.evaluate(() => scrollY);
+    await page.evaluate(() => scrollBy({ top: 150, behavior: "instant" }));
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(y0 + 100);
+    await page.waitForTimeout(150);
+    await expect(app(page).locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
+    const r = await app(page).evaluate(host => {
+      const R = host.shadowRoot;
+      return {
+        bar: R.getElementById("winBar").getBoundingClientRect(),
+        side: R.querySelector(".diary-side").getBoundingClientRect(),
+      };
+    });
+    expect(r.bar.top).toBeGreaterThanOrEqual(80);
+    expect(r.side.top).toBeGreaterThanOrEqual(r.bar.bottom - 1.5);
+    expect(r.side.bottom).toBeLessThanOrEqual(h + 0.5);
+    // La lista se desplaza por dentro sin mover la página
+    const y1 = await page.evaluate(() => scrollY);
+    const moved = await app(page).locator(".diary-list").evaluate(el => { el.scrollTo(0, el.scrollHeight); return el.scrollTop; });
+    expect(moved).toBeGreaterThan(0);
+    expect(await page.evaluate(() => scrollY)).toBe(y1);
+    // Pasar de paso desde abajo sube la página hasta el principio del detalle, bajo la barra
+    await app(page).locator("#nextBtn").evaluate(el => el.click());
+    await expect(app(page).locator("#journal .journal-num")).toHaveText(String(n + 1));
+    await page.waitForTimeout(150);
+    await expect(app(page).locator("#journal .journal-top")).toBeInViewport({ ratio: 1 });
+  });
+}
 
-test("la barra de la ventana queda bajo la cabecera fija de la página y la ventana de pasos se ve entera", async ({ page }) => {
+test("la barra de la ventana queda bajo la cabecera fija de la página y la lista de pasos se ve entera", async ({ page }) => {
   await openHarness(page);
   // «Siguiente» lleva la página hasta la ventana de los pasos
   await app(page).locator("#diaryNext").click();
@@ -96,7 +126,10 @@ test("la barra de la ventana queda bajo la cabecera fija de la página y la vent
   expect(await top("#winBar")).toBeLessThanOrEqual(90);
   const diary = await app(page).locator("#diary").evaluate(el => el.getBoundingClientRect());
   expect(diary.top).toBeGreaterThanOrEqual(80);
-  expect(diary.bottom).toBeLessThanOrEqual(900);
+  // El paso abierto (el 1) es largo y alarga la ventana: lo que cabe es la lista
+  const side = await app(page).locator(".diary-side").evaluate(el => el.getBoundingClientRect());
+  expect(side.bottom).toBeLessThanOrEqual(900);
+  expect(side.bottom).toBeGreaterThan(900 - 20);
   // Sin cabecera propia (a 1440×900 el hero va encima, pero la página ya bajó hasta la ventana)
   await expect(app(page).locator("header")).toHaveCount(0);
 });
@@ -115,11 +148,13 @@ test("a 1280×720, sin hero, la ventana de pasos y su lista se ven en la primera
   expect(first.y).toBeGreaterThan(bar.y + bar.height - 1);
   expect(first.y + first.height).toBeLessThanOrEqual(720);
   // Al bajar, la ventana llena lo que deja la cabecera de la página: la barra arriba y
-  // el final de la ventana dentro de la pantalla
+  // el final de la lista dentro de la pantalla (el 1, largo, alarga la ventana por debajo)
   await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start" }));
   const win = await app(page).locator(".steps-win").boundingBox();
+  const side = await app(page).locator(".diary-side").boundingBox();
   expect(Math.round(win.y)).toBeGreaterThanOrEqual(80);
-  expect(win.y + win.height).toBeLessThanOrEqual(720 + 0.5);
+  expect(side.y + side.height).toBeLessThanOrEqual(720 + 0.5);
+  expect(side.y + side.height).toBeGreaterThan(720 - 20);
   expect(win.height).toBeGreaterThan(720 - 80 - 40);
   // La barra arriba de la ventana (dentro de su borde de 1 px)
   expect(Math.abs((await app(page).locator("#winBar").boundingBox()).y - win.y)).toBeLessThanOrEqual(1.5);
