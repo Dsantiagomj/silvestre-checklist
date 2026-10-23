@@ -145,7 +145,8 @@ Los iconos de oficio salen del release `job_images_64.tar.gz` de
 [dofusdude/dofus3-main](https://github.com/dofusdude/dofus3-main), porque DofusDB
 devuelve 404 en los suyos. Los 61 mapas donde empiezan los pasos, el fondo del estandarte,
 también: `fetch_start_maps.py` los recorta como los paisajes de zona y los deja a 800 px de
-ancho (2,5 MB en `public/img/maps/start/`). Antes venían de DofusDB al abrir el paso, y
+ancho (2,5 MB en `public/img/maps/start/`). La carpeta es de todos los Dofus: el script
+solo borra los mapas que no usa ningún `src/dofus/*/figures.json`. Antes venían de DofusDB al abrir el paso, y
 durante un segundo se veía el paisaje de la zona antes de que el mapa lo tapara. Ahora el
 estandarte lleva un solo fondo, el mapa o, si el paso no tiene, el paisaje, y no lo pinta
 hasta que ha cargado. La excepción es el fondo del hero, el mapa del siguiente paso a todo
@@ -322,6 +323,12 @@ APP_URL=https://mi-despliegue.example/ npx playwright test
 
 Se escribieron contra la antigua versión de un solo archivo antes de migrar a React, y las
 dos versiones las pasaban sin cambios.
+
+Las del pipeline de `.build/` van en `.build/tests/` (solo la biblioteca estándar):
+
+```bash
+python3 -I -m unittest discover -s .build/tests
+```
 
 La app embebida tiene su propia suite en `tests/embed/`, con su propia configuración:
 
