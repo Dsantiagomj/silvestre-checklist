@@ -44,8 +44,11 @@ test("los botones de overlay y reinicio usan objetos del juego", async ({ page }
 test("en el tema claro el acento tiene contraste suficiente como relleno y como texto", async ({ page }) => {
   await openApp(page, { "silvestre:theme": "light", "silvestre:done": { 1: true } });
   const ratio = (fg, bg) => page.evaluate(([fg, bg]) => {
+    // Un color aún sin leer (el elemento llega tras el cambio de pantalla): NaN, y se reintenta
     const lum = c => {
-      const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+      const parts = c?.match(/[\d.]+/g);
+      if (!parts) return NaN;
+      const [r, g, b] = parts.slice(0, 3).map(Number).map(v => {
         v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
       });
       return .2126 * r + .7152 * g + .0722 * b;
