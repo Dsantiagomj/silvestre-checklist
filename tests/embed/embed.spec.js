@@ -134,8 +134,11 @@ test("en una pantalla ancha la app sale de la columna del bloque y usa el ancho 
   expect(Math.abs(host.x)).toBeLessThan(1);
   expect(Math.abs(host.width - width)).toBeLessThan(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  // La ventana de pasos aprovecha ese ancho (antes se quedaba en 1320px)
-  expect((await app(page).locator("#diary").boundingBox()).width).toBeGreaterThan(1700);
+  // La ventana de pasos aprovecha ese ancho (antes se quedaba en 1320px), con un tope:
+  // más ancha, la franja de los Dofus del camino se desparrama
+  const win = (await app(page).locator("#diary").boundingBox()).width;
+  expect(win).toBeGreaterThan(1500);
+  expect(win).toBeLessThanOrEqual(1600);
 });
 
 test("las teclas y los clics dentro de la app llegan a su sitio", async ({ page }) => {
