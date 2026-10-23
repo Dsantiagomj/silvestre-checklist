@@ -20,7 +20,7 @@ async function openStep12(page) {
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
 
-test("«Completar» termina la misión, la pliega y abre la siguiente, y se puede deshacer sin desplegarla", async ({ page }) => {
+test("«Completar» termina la misión y la pliega sin abrir la siguiente, y se puede deshacer sin desplegarla", async ({ page }) => {
   const errors = await openApp(page, { "silvestre:done": upTo(11) });
   await openStep12(page);
   const cofre = page.locator("#journal .q-item", { hasText: "Cofrología" });
@@ -33,14 +33,14 @@ test("«Completar» termina la misión, la pliega y abre la siguiente, y se pued
   await expect(btn).toHaveAttribute("aria-pressed", "false");
   await expect(btn).toHaveText("Completar");
 
-  // Pendiente: la termina entera, como pulsar su último medallón; se pliega y se abre la
-  // siguiente (solo va una abierta)
+  // Pendiente: la termina entera, como pulsar su último medallón; se pliega y la
+  // siguiente no se abre sola
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(rows)).toMatch(/^d+$/);
   await expect(btn).toHaveText("✓ Completada");
   await expect(cofre).not.toHaveAttribute("open", "");
-  await expect(tesor).toHaveAttribute("open", "");
+  await expect(tesor).not.toHaveAttribute("open", "");
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questPos"))["12"])).toBe(1);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("silvestre:questObjective"))["1504"])).toBe(16);
 
@@ -244,4 +244,21 @@ test("avanzar los objetivos de una misión que va por delante los guarda y no pa
   expect(await routeStates(rows)).toMatch(/^ddn-*$/);
   await expect(item("Remordimientos de eternala").locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
   expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
+});
+
+test("marcar el Dofus Turquesa (62) marca también el 38: «La sombra del reino» es opcional allí", async ({ page }) => {
+  // El 38 hace las misiones 2, 3 y 4 de «Azul turquesa», que el 62 completa entero. Su
+  // cuarta misión, «La sombra del reino», no es del logro: la guía dice que se puede lanzar
+  // y hacer en cualquier punto antes del 80, así que no le impide quedar hecho
+  await openApp(page, { "silvestre:done": upTo(37) });
+  // Con las misiones ya cargadas (llegan en diferido): sin ellas no se sabe qué deja hecho
+  await page.locator('.diary-row[data-n="62"] .row-num').click();
+  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+  await page.locator('.diary-row[data-n="62"] .row-check').click();
+  for (const n of [38, 39, 50, 62]) await expect(page.locator(`.diary-row[data-n="${n}"]`), `paso ${n}`).toHaveClass(/\bdone\b/, { timeout: 15_000 });
+  // En el 38 sigue apareciendo, como opcional, con su nota
+  await page.locator('.diary-row[data-n="38"] .row-num').click();
+  const sombra = page.locator("#journal .q-item", { hasText: "La sombra del reino" });
+  await expect(sombra).toBeVisible({ timeout: 15_000 });
+  await expect(sombra.locator(".q-optional")).toHaveText("Opcional");
 });

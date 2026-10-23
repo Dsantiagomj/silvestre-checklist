@@ -26,8 +26,9 @@ async function openStep(page, n) {
 
 test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", async () => {
   const { STEP_QUESTS, STEP_QUEST_KINDS } = read("quests.json");
+  // 38: «La sombra del reino» no es de «Azul turquesa» y se puede hacer hasta el 80
   expect(STEP_QUEST_KINDS).toEqual({ 7: { 1939: "optional" }, 27: { 646: "optional" }, 28: { 1286: "take" }, 33: { 439: "take" },
-    83: { 2013: "take" }, 87: { 2138: "take" } });
+    38: { 1665: "optional" }, 83: { 2013: "take" }, 87: { 2138: "take" } });
   for (const [n, kinds] of Object.entries(STEP_QUEST_KINDS)) {
     const { w, q } = WEIGHTS[n];
     STEP_QUESTS[n].forEach((id, i) => { if (kinds[id]) expect(q[i]).toBe(0); });
@@ -37,7 +38,7 @@ test("las misiones opcionales y las de solo tomarla no pesan en el porcentaje", 
   expect(WEIGHTS[27].w).toBeCloseTo(264.575, 3);
   expect(WEIGHTS[28].w).toBeCloseTo(364.829, 3);
   expect(WEIGHTS[83].w).toBeCloseTo(2497.186, 3);
-  expect(TOTAL).toBeCloseTo(160231, 0);
+  expect(TOTAL).toBeCloseTo(159605, 0);
   // El id y los objetivos de cada misión, en el orden del paso
   expect([WEIGHTS[7].ids, WEIGHTS[7].os]).toEqual([["1938", "1939"], [4, 18]]);
   expect([WEIGHTS[27].ids, WEIGHTS[27].os]).toEqual([["646", "543"], [17, 7]]);
