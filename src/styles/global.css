@@ -2624,8 +2624,9 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .call.resumedin{ --call:#c9a24a; }
 /* En el diario, las notas van en fichas en una línea: el rótulo y el principio del texto.
    Al pulsar una se despliega a lo ancho con el texto entero */
-/* Bajo el estandarte y el objetivo, a todo el ancho. Hasta tres, siempre en una línea: lo
-   que se encoge es el resumen. Con más, o con una desplegada, bajan a la siguiente */
+/* Bajo el estandarte y el objetivo, a todo el ancho. Hasta cuatro (el 41: hasta dónde,
+   resuelve, consejo, se termina), en una línea: lo que se encoge es el resumen. Con más,
+   o con una desplegada, bajan a la siguiente */
 .goal-calls.is-chips{ grid-column:1 / -1; flex-direction:row; flex-wrap:nowrap; align-items:flex-start; gap:6px; padding-top:8px; }
 .goal-calls.is-chips.is-many, .goal-calls.is-chips:has(.call.is-open){ flex-wrap:wrap; }
 .goal-calls.is-chips .call{
