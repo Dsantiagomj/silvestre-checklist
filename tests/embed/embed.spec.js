@@ -326,3 +326,31 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
     });
   }
 }
+
+test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible y la lista sigue cabiendo en la pantalla", async ({ page }) => {
+  await page.setViewportSize({ width: 2000, height: 980 });
+  await openHarness(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
+  await app(page).locator('.diary-row[data-n="4"] .row-num').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("4");
+  await expect(app(page).locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
+  await page.waitForLoadState("networkidle");
+  await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
+  await page.waitForTimeout(300);
+  const m = await app(page).evaluate(host => {
+    const R = host.shadowRoot;
+    const diary = R.getElementById("diary");
+    const top = parseFloat(getComputedStyle(diary).getPropertyValue("--silvestre-top")) || 0;
+    const winbar = parseFloat(getComputedStyle(R.querySelector(".diary-window")).getPropertyValue("--winbar-h")) || 0;
+    const d = diary.getBoundingClientRect();
+    return {
+      avail: innerHeight - top - 16, section: d.height, win: R.querySelector(".steps-win").getBoundingClientRect().bottom - d.top,
+      side: R.querySelector(".diary-side").getBoundingClientRect(), sideWant: innerHeight - top - winbar - 18, vh: innerHeight,
+    };
+  });
+  const msg = JSON.stringify(m);
+  expect(Math.abs(m.section - 1.3 * m.avail), msg).toBeLessThanOrEqual(2);
+  expect(Math.abs(m.win - m.section), msg).toBeLessThanOrEqual(2);
+  // La lista, como antes: lo que queda de pantalla bajo la barra, entera a la vista
+  expect(Math.abs(m.side.height - m.sideWant), msg).toBeLessThanOrEqual(1);
+  expect(m.side.bottom, msg).toBeLessThanOrEqual(m.vh + 0.5);
+});

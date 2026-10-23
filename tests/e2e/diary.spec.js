@@ -1135,7 +1135,7 @@ test("la barra de pasos pegada no sube sobre la cabecera del paso", async ({ pag
   expect(r.cta).toBeGreaterThanOrEqual(Math.min(r.topEnd + 240, r.bodyEnd) - 0.5);
 });
 
-test("con poco contenido la barra de pasos va al pie del detalle, al pie de la ventana", async ({ page }) => {
+test("con poco contenido la barra de pasos va al pie del detalle, al pie de la ventana; antes, pegada al pie de la pantalla", async ({ page }) => {
   await openApp(page);
   await stepData(page, 4);
   await expect(page.locator("#journal .q-item")).toHaveCount(1);
@@ -1146,11 +1146,22 @@ test("con poco contenido la barra de pasos va al pie del detalle, al pie de la v
     detail: document.querySelector(".diary-detail").getBoundingClientRect().bottom,
     cta: document.querySelector("#journal .journal-cta").getBoundingClientRect().bottom,
     overflow: document.querySelector(".diary-detail").scrollHeight - document.querySelector(".diary-detail").clientHeight,
+    vh: innerHeight,
   }));
-  // El detalle llena la ventana sin desplazarse y la barra va a su pie; el hueco, encima
+  // El detalle llena la ventana sin desplazarse; la ventana pasa un poco del pie de la
+  // pantalla y la barra, pegada, se ve a su pie
   expect(r.overflow).toBeLessThanOrEqual(1);
   expect(Math.abs(r.detail - r.win)).toBeLessThanOrEqual(1.5);
-  expect(Math.abs(r.cta - r.detail)).toBeLessThanOrEqual(2);
+  expect(r.detail).toBeGreaterThan(r.vh);
+  expect(Math.abs(r.cta - r.vh)).toBeLessThanOrEqual(2);
+  // Al final de la página, la barra va al pie del detalle; el hueco, encima
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await page.waitForTimeout(100);
+  const end = await page.evaluate(() => ({
+    detail: document.querySelector(".diary-detail").getBoundingClientRect().bottom,
+    cta: document.querySelector("#journal .journal-cta").getBoundingClientRect().bottom,
+  }));
+  expect(Math.abs(end.cta - end.detail)).toBeLessThanOrEqual(2);
 });
 
 test("a 1440×900, en el paso 12 el estandarte es compacto y al final del detalle se leen todas sus misiones", async ({ page }) => {
