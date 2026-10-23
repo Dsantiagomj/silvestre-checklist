@@ -1,8 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
+/** Abre la aclaración desde el menú «⋯» de la barra. */
+async function openNota(page) {
+  await page.click("#moreBtn");
+  await page.click("#notaOpen");
+  await expect(page.locator("#notaDialog")).toBeVisible();
+}
+
 test("la aclaración explica la pausa con un ejemplo real de la guía", async ({ page }) => {
   await openApp(page);
+  await openNota(page);
   const nota = page.locator("#nota");
   await expect(nota.locator(".nota-title")).toHaveText("Hasta tener que pasar X jefe de mazmorra");
   await expect(nota.locator(".nota-text")).toHaveText(
@@ -15,25 +23,43 @@ test("la aclaración explica la pausa con un ejemplo real de la guía", async ({
   await expect(nota.locator("figcaption")).toContainText("Kodámade");
   // El ejemplo es solo una ilustración: nada en él se puede pulsar
   await expect(nota.locator(".nota-example button")).toHaveCount(0);
-  // Sin líneas encima ni debajo: el hero y los prerrequisitos ya tienen las suyas
-  for (const side of ["borderTopStyle", "borderBottomStyle"]) {
-    expect(await nota.evaluate((el, p) => getComputedStyle(el)[p], side)).toBe("none");
-  }
+  await expect(page.locator("#notaDialog")).toHaveAttribute("aria-labelledby", "notaTitle");
+});
+
+test("la aclaración no ocupa sitio en la página: se abre y se cierra en un diálogo", async ({ page }) => {
+  // Aunque se cerrara en una versión anterior, sigue al alcance
+  await openApp(page, { "silvestre:notaDismissed": "1" });
+  await expect(page.locator("#nota")).toBeHidden();
+  await openNota(page);
+  await page.click("#notaClose");
+  await expect(page.locator("#notaDialog")).toBeHidden();
+  await openNota(page);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#notaDialog")).toBeHidden();
+  // Escape cierra el diálogo y no el paso abierto
+  await expect(page.locator("#journal")).toHaveCount(1);
+});
+
+test("la «i» junto a las notas de un paso con pausa abre la aclaración", async ({ page }) => {
+  await openApp(page);
+  // El 43 se para ante Kodámade; el 2 no se para ni lo termina otro
+  await page.locator('.diary-row[data-n="2"] .row-num').click();
+  await expect(page.locator("#journal .nota-open")).toHaveCount(0);
+  await page.locator('.diary-row[data-n="43"] .row-num').click();
+  const info = page.locator("#journal .nota-open");
+  await expect(info).toHaveAttribute("aria-label", "Qué significa «hasta tener que pasar»");
+  await info.click();
+  await expect(page.locator("#notaDialog")).toBeVisible();
 });
 
 test("la aclaración lleva a los pasos con pausa", async ({ page }) => {
   await openApp(page);
+  await openNota(page);
   await expect(page.locator("#notaSteps")).toHaveText("Ver los 33 pasos");
   await page.click("#notaSteps");
+  await expect(page.locator("#notaDialog")).toBeHidden();
   await expect(page.locator("#searchInput")).toHaveValue("hasta tener que pasar");
   await expect(page.locator("#diary")).toBeInViewport();
-});
-
-test("la aclaración siempre está visible y no se puede cerrar", async ({ page }) => {
-  // Aunque se cerrara en una versión anterior, ya no se oculta
-  await openApp(page, { "silvestre:notaDismissed": "1" });
-  await expect(page.locator("#nota")).toBeVisible();
-  await expect(page.locator("#notaClose")).toHaveCount(0);
 });
 
 /** Opacidad de la ✓ de cada casilla del ejemplo y filtro del retrato del jefe. */
@@ -44,7 +70,7 @@ const exampleState = page => page.locator(".nota-track").evaluate(track => ({
 
 test("el ejemplo se cuenta una vez al verlo: el jefe cae y la ✓ vuelve hacia atrás", async ({ page }) => {
   await openApp(page);
-  await page.locator("#nota").scrollIntoViewIfNeeded();
+  await openNota(page);
   await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
   await expect(page.locator(".nota-marker")).toHaveCount(1);
   // El punto va por el camino, por detrás de las casillas y del retrato
@@ -106,6 +132,7 @@ test("con movimiento reducido el ejemplo muestra directamente el final", async (
   const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   await openApp(page);
+  await openNota(page);
   expect(await exampleState(page)).toMatchObject({ checks: [1, 1, 1], boss: expect.stringContaining("grayscale(1)") });
   await expect(page.locator(".nota-marker")).toBeHidden();
   await ctx.close();
@@ -113,7 +140,7 @@ test("con movimiento reducido el ejemplo muestra directamente el final", async (
 
 test("el rebobinado parte del final, sin saltar al principio", async ({ page }) => {
   await openApp(page);
-  await page.locator("#nota").scrollIntoViewIfNeeded();
+  await openNota(page);
   await expect(page.locator(".nota-track")).toHaveClass(/\bplay\b/);
   await page.locator(".nota-track").evaluate(t => { for (const a of t.getAnimations({ subtree: true })) a.finish(); });
   // Congela las animaciones en el mismo instante en que empieza el rebobinado

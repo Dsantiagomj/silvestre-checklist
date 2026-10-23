@@ -17,7 +17,7 @@ import Journal from "./Journal.jsx";
 import Needs, { NeedsBar } from "./Needs.jsx";
 import { ItemsTools } from "./needs/ItemsPanel.jsx";
 import StepMap, { mapPoint, mapScrollTop } from "./StepMap.jsx";
-import WinStrip from "./WinStrip.jsx";
+import WinBar from "./WinBar.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import SearchField from "./SearchField.jsx";
 import { appRoot, eventTarget } from "../lib/root.js";
@@ -162,12 +162,16 @@ function DiaryList({ s, current }) {
   );
 }
 
-/** Buscador de pasos, en la barra de herramientas de la ventana. */
+/**
+ * Buscador de pasos, en la barra de la ventana: una lupa que se despliega en el campo
+ * al recibir el foco (con el teclado o al pulsarla) y se queda desplegada mientras
+ * tenga algo escrito.
+ */
 function DiaryBar({ s }) {
   return (
     <div className="diary-bar">
-      <SearchField className="diary-search" id="searchInput" matchesId="searchMatches" clearId="searchClear" value={s.filters.search} onChange={setSearch}
-        placeholder="Buscar paso por número o texto" label="Buscar paso"
+      <SearchField className={"diary-search" + (s.filters.search ? " is-filled" : "")} id="searchInput" matchesId="searchMatches" clearId="searchClear"
+        value={s.filters.search} onChange={setSearch} placeholder="Buscar paso por número o texto" label="Buscar paso"
         matches={STEPS.filter(st => stepMatchesFilters(s, st)).length} total={STEPS.length} />
     </div>
   );
@@ -299,10 +303,10 @@ function useSlashToItems() {
 }
 
 /**
- * Un juego de herramientas de la fila: el de los pasos (mapa y diario comparten el
- * suyo), el de los prerrequisitos o el de los objetos. Todos ocupan la misma celda de
- * la fila, así que cambiar de pestaña no mueve nada: el que se va se apaga mientras se
- * apaga la vista vieja y el nuevo se enciende con la vista nueva. Mientras se va, inerte y sin ids.
+ * Las herramientas de los pasos en la barra (mapa y diario comparten las suyas). Su
+ * celda de la barra se queda, así que cambiar de pestaña no mueve nada: se apagan
+ * mientras se apaga la vista vieja y se encienden con la vista nueva. Mientras se van,
+ * inertes y sin ids.
  */
 function ToolSet({ group, enter, reduce, children }) {
   const [present, safeToRemove] = usePresence();
@@ -324,24 +328,40 @@ function ToolSet({ group, enter, reduce, children }) {
 }
 
 /**
- * La fila de herramientas de la ventana, siempre con el mismo alto: el buscador de pasos
- * y la zona en el mapa y el diario, "Marcar todo" y "Limpiar" en los prerrequisitos, y
- * el buscador, el orden, la vista y el filtro en los objetos.
+ * Las herramientas de los pasos (el buscador y la zona, las mismas en el mapa y el
+ * diario), dentro de la barra. Al ir a una lista se apagan mientras se apaga la vista
+ * vieja, y vuelven con la vista nueva al volver a los pasos.
  */
-function WinTools({ s, current, enter, reduce }) {
-  const group = isStepsView(s.stepsView) ? "steps" : s.stepsView;
+function StepsTools({ s, current, enter, reduce }) {
+  const steps = isStepsView(s.stepsView);
   return (
-    <div className="win-tools">
+    <div className="win-bar-tools">
       <AnimatePresence initial={false}>
-        <ToolSet key={group} group={group} enter={enter} reduce={reduce}>
-          {group === "steps" ? (
-            <>
-              <DiaryBar s={s} />
-              <ZoneSeals s={s} current={current} />
-            </>
-          ) : group === "prereqs" ? <NeedsBar tab="prereqs" /> : <ItemsTools />}
-        </ToolSet>
+        {steps && (
+          <ToolSet key="steps" group="steps" enter={enter} reduce={reduce}>
+            <DiaryBar s={s} />
+            <ZoneSeals s={s} current={current} />
+          </ToolSet>
+        )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * Prerrequisitos y Objetos: sus herramientas ("Marcar todo" y "Limpiar"; el buscador,
+ * el orden, la vista y el filtro) no caben en la barra y van en una fila encima de la
+ * lista, dentro de la vista: llegan y se van con ella y la barra no cambia de alto.
+ */
+function NeedsView({ tab }) {
+  return (
+    <div className="needs-pane">
+      <div className="win-tools">
+        <div className="win-tool" data-tool={tab}>
+          {tab === "prereqs" ? <NeedsBar tab="prereqs" /> : <ItemsTools />}
+        </div>
+      </div>
+      <Needs tab={tab} />
     </div>
   );
 }
@@ -437,11 +457,11 @@ function ViewLayer({ ref, view, origin, reduce, children }) {
 }
 
 /**
- * Los 100 pasos: una ventana con los Dofus del camino y el progreso arriba y, en
- * pestañas, el mapa del camino, el diario (lista y detalle), los prerrequisitos y los
- * objetos.
+ * Los 100 pasos: una ventana con su barra arriba (el progreso, los Dofus del camino, las
+ * pestañas, el overlay y el menú) y, en pestañas, el mapa del camino, el diario (lista y
+ * detalle), los prerrequisitos y los objetos.
  */
-export default function Diary({ mobile }) {
+export default function Diary({ mobile, onOverlay, onReset }) {
   const s = useAppState();
   useSlashToItems();
   const next = nextPending(s) ?? STEPS.length;
@@ -512,15 +532,13 @@ export default function Diary({ mobile }) {
   const origin = `${at.x}px ${at.y - (flow ? 0 : mapScrollTop())}px`;
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
-      <div className="diary-head">
-        <h2 className="section-title" id="diaryTitle">Los 100 pasos</h2>
-      </div>
-      {/* Una sola ventana: los Dofus del camino y el progreso arriba, las pestañas y,
-          debajo, lo que se elija */}
+      <h2 className="sr-only" id="diaryTitle">Los 100 pasos</h2>
+      {/* Una sola ventana: arriba la barra (progreso, Dofus del camino, pestañas y sus
+          herramientas, overlay y menú) y, debajo, lo que se elija */}
       <div className="steps-win">
-        <WinStrip s={s} />
-        <WinTabs s={s} />
-        <WinTools s={s} current={current} enter={mounted.current} reduce={reduce} />
+        <WinBar s={s} onOverlay={onOverlay} onReset={onReset}
+          tabs={<WinTabs s={s} />}
+          tools={<StepsTools s={s} current={current} enter={mounted.current} reduce={reduce} />} />
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null && flow ? { minHeight: swap } : undefined}>
           <SwapContext.Provider value={swapInfo}>
@@ -534,7 +552,7 @@ export default function Diary({ mobile }) {
               }}>
               <ViewLayer key={s.stepsView} view={s.stepsView} origin={origin} reduce={reduce}>
                 {!steps ? (
-                  <Needs tab={s.stepsView} />
+                  <NeedsView tab={s.stepsView} />
                 ) : map ? (
                   <StepMap s={s} current={s.selectedStep ?? next} mobile={mobile} />
                 ) : (

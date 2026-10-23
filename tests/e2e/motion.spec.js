@@ -35,7 +35,7 @@ test("con movimiento reducido no hay animaciones al cambiar de pestaña", async 
 test("cambiar de paso anima el escenario y el contenido del detalle", async ({ page }) => {
   await openApp(page);
   await page.waitForTimeout(500);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   expect(await running(page, "#journal")).toBeGreaterThan(0);
 });
 
@@ -69,7 +69,7 @@ test("con movimiento reducido el diario y el mapa no se animan", async ({ page }
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openApp(page);
   await page.waitForTimeout(400);
-  await page.click('.diary-row[data-n="34"] .row-main');
+  await page.click('.diary-row[data-n="34"] .row-num');
   expect(await running(page, "#diary")).toBe(0);
   await page.click("#stepsViewMap");
   expect(await running(page, "#diary")).toBe(0);
@@ -78,10 +78,10 @@ test("con movimiento reducido el diario y el mapa no se animan", async ({ page }
 test("la lista fija no se mueve mientras se anima el cambio de paso", async ({ page }) => {
   await openApp(page);
   await page.evaluate(() => document.getElementById("diary").scrollIntoView());
-  await page.click('.diary-row[data-n="33"] .row-main');
+  await page.click('.diary-row[data-n="33"] .row-num');
   await page.waitForTimeout(600);
   const tops = await page.evaluate(async () => {
-    document.querySelector('.diary-row[data-n="34"] .row-main').click();
+    document.querySelector('.diary-row[data-n="34"] .row-num').click();
     const out = [];
     for (let i = 0; i < 20; i++) {
       out.push(Math.round(document.querySelector(".diary-tabs").getBoundingClientRect().top));
@@ -332,7 +332,7 @@ const listTops = (page, clicks) => page.evaluate(async clicks => {
 test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click('.diary-row[data-n="1"] .row-main');
+  await page.click('.diary-row[data-n="1"] .row-num');
   await page.locator("#journal .q-item").nth(5).waitFor({ timeout: 15_000 });
   // Con la sección arriba, bajo la cabecera de la página, como al ir a ella
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));
@@ -344,7 +344,7 @@ test("plegar y desplegar misiones no mueve la lista de pasos", async ({ page }) 
 test("con el final del detalle a la vista, desplegar y plegar misiones no mueve la lista ni la página", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page);
-  await page.click('.diary-row[data-n="17"] .row-main');
+  await page.click('.diary-row[data-n="17"] .row-num');
   await page.locator("#journal .q-item").nth(3).waitFor({ timeout: 15_000 });
   await page.locator("#journal .q-item summary").first().click();
   await page.waitForTimeout(600);
@@ -365,7 +365,7 @@ test("con el final del detalle a la vista, desplegar y plegar misiones no mueve 
 test("al final de la página, desplegar una misión no mueve nada ni cambia el tamaño de la lista", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 820 });
   await openApp(page);
-  await page.click('.diary-row[data-n="11"] .row-main');
+  await page.click('.diary-row[data-n="11"] .row-num');
   await page.locator("#journal .q-item").nth(2).waitFor({ timeout: 15_000 });
   await page.waitForTimeout(800);
   await page.evaluate(() => {
@@ -548,29 +548,30 @@ test("la insignia de una pestaña rebota cuando cambia lo que falta", async ({ p
     el.getAnimations().some(a => a.animationName === "badge-bump"))).toBe(true);
 });
 
-test("las herramientas de la ventana cambian con un fundido, sin cambiar de alto", async ({ page }) => {
+test("las herramientas de los pasos se apagan en la barra con un fundido, sin que la barra cambie de alto", async ({ page }) => {
   await openApp(page, null, { view: "diary" });
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(400);
   const seen = await page.evaluate(async () => {
-    const row = document.querySelector(".win-tools");
-    const h = row.offsetHeight;
+    const bar = document.getElementById("winBar");
+    const h = bar.offsetHeight;
+    const tabs = document.querySelector(".win-tabs").getBoundingClientRect().left;
     document.getElementById("tabPrereqs").click();
-    const out = { heights: [], both: 0, anims: 0 };
+    const out = { heights: [], shifts: [], anims: 0 };
     for (let i = 0; i < 30; i++) {
       await new Promise(r => requestAnimationFrame(r));
-      out.heights.push(document.querySelector(".win-tools").offsetHeight - h);
-      const sets = [...document.querySelectorAll(".win-tools > .win-tool")];
-      if (sets.length > 1) out.both++;
+      out.heights.push(bar.offsetHeight - h);
+      out.shifts.push(Math.round(document.querySelector(".win-tabs").getBoundingClientRect().left - tabs));
+      const sets = [...document.querySelectorAll(".win-bar-tools > .win-tool")];
       out.anims = Math.max(out.anims, sets.reduce((n, el) => n + el.getAnimations().length, 0));
     }
     return out;
   });
-  // La fila es siempre la misma: solo su contenido se apaga y se enciende
+  // La barra es siempre la misma y las pestañas no se mueven: solo se apagan la lupa y la zona
   expect(seen.heights.every(d => d === 0), seen.heights.join()).toBe(true);
-  expect(seen.both).toBeGreaterThan(0);
+  expect(seen.shifts.every(d => d === 0), seen.shifts.join()).toBe(true);
   expect(seen.anims).toBeGreaterThan(0);
-  await expect(page.locator(".win-tools > .win-tool")).toHaveCount(1, { timeout: 2000 });
+  await expect(page.locator(".win-bar-tools > .win-tool")).toHaveCount(0, { timeout: 2000 });
   await expect(page.locator('.win-tools > .win-tool[data-tool="prereqs"]')).toBeVisible();
 });
 
@@ -639,8 +640,9 @@ test("cambiar de filtro en la lista no espera a que se plieguen las filas", asyn
 /**
  * Cambiar a una lista (o volver) es un fundido en dos tiempos: la vista que se va se
  * apaga del todo antes de que se vea la que llega, y la que llega no salta de sitio
- * una vez visible. La fila de herramientas está siempre (solo cambia su contenido),
- * así que nada se mueve: ni el escenario, ni la vista que se va, ni la página.
+ * una vez visible. La barra está siempre (solo se apagan las herramientas de los pasos)
+ * y las de las listas van dentro de su vista, así que nada se mueve: ni el escenario, ni
+ * la vista que se va, ni la página.
  */
 const SWAPS = [
   ["#stepsViewDiary", "#tabPrereqs"], ["#tabPrereqs", "#tabItems"], ["#tabItems", "#stepsViewMap"],
@@ -689,31 +691,36 @@ for (const [from, to] of SWAPS) {
   });
 }
 
-/** La fila de herramientas de la ventana: la misma altura en las cuatro pestañas y, en cada una, lo suyo. */
+/**
+ * La barra de la ventana: la misma altura en las cuatro pestañas y, en cada una, sus
+ * herramientas: las de los pasos en la barra; las de las listas, en una fila encima de
+ * la lista.
+ */
 for (const [w, h] of [[1440, 900], [1280, 720], [1100, 800]]) {
-  test(`a ${w}×${h}, la fila de herramientas mide lo mismo en las cuatro pestañas y lleva lo de cada una`, async ({ page }) => {
+  test(`a ${w}×${h}, la barra mide lo mismo en las cuatro pestañas y cada una lleva sus herramientas`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await openApp(page, null, { view: "map" });
     const heights = [];
     const only = async (shown, hidden) => {
-      for (const sel of shown) await expect(page.locator(`.win-tools ${sel}`)).toBeVisible();
+      for (const sel of shown) await expect(page.locator(sel)).toBeVisible();
       for (const sel of hidden) await expect(page.locator(sel)).toHaveCount(0);
     };
-    const STEPS_TOOLS = ["#searchInput", "#zoneBtn"];
-    const ITEMS_TOOLS = ["#needsSearch", ".needs-sort", ".needs-view", "#shopPendingToggle + .sw"];
-    const PRE_TOOLS = ["#needsMarkAll", "#needsClear"];
-    for (const [tab, shown, hidden] of [
-      ["#stepsViewMap", STEPS_TOOLS, [...ITEMS_TOOLS, ...PRE_TOOLS]],
-      ["#stepsViewDiary", STEPS_TOOLS, [...ITEMS_TOOLS, ...PRE_TOOLS]],
-      ["#tabPrereqs", PRE_TOOLS, [...STEPS_TOOLS, ...ITEMS_TOOLS]],
-      ["#tabItems", ITEMS_TOOLS, STEPS_TOOLS],
+    const STEPS_TOOLS = ["#winBar #searchInput", "#winBar #zoneBtn"];
+    const ITEMS_TOOLS = [".win-tools #needsSearch", ".win-tools .needs-sort", ".win-tools .needs-view", ".win-tools #shopPendingToggle + .sw"];
+    const PRE_TOOLS = [".win-tools #needsMarkAll", ".win-tools #needsClear"];
+    for (const [tab, shown, hidden, row] of [
+      ["#stepsViewMap", STEPS_TOOLS, [...ITEMS_TOOLS, ...PRE_TOOLS], ".win-bar-tools"],
+      ["#stepsViewDiary", STEPS_TOOLS, [...ITEMS_TOOLS, ...PRE_TOOLS], ".win-bar-tools"],
+      ["#tabPrereqs", PRE_TOOLS, [...STEPS_TOOLS, ...ITEMS_TOOLS], ".win-tools"],
+      ["#tabItems", ITEMS_TOOLS, STEPS_TOOLS, ".win-tools"],
     ]) {
       await page.click(tab);
-      await expect(page.locator(".win-tools > .win-tool")).toHaveCount(1, { timeout: 2000 });
+      await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
+      await expect(page.locator(`${row} > .win-tool`)).toHaveCount(1, { timeout: 2000 });
       await only(shown, hidden);
-      heights.push(await page.locator(".win-tools").evaluate(el => el.offsetHeight));
+      heights.push(await page.locator("#winBar").evaluate(el => el.offsetHeight));
       // Todo en una fila: nada se sale por debajo
-      const spill = await page.locator(".win-tools > .win-tool").evaluate(el => el.scrollHeight - el.clientHeight);
+      const spill = await page.locator(`${row} > .win-tool`).evaluate(el => el.scrollHeight - el.clientHeight);
       expect(spill).toBeLessThanOrEqual(0);
     }
     expect(new Set(heights).size, heights.join()).toBe(1);

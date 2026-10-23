@@ -11,11 +11,11 @@ const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", i
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));
-// El mismo redondeo que el hero: un decimal
+// El mismo redondeo que el porcentaje de la barra: un decimal
 const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
 const BASE = sum(Array.from({ length: 11 }, (_, i) => WEIGHTS[i + 1].w)); // pasos 1 a 11 hechos
 const Q12 = WEIGHTS[12].q; // Cofrología, Tesorfanato, El maleficio del cofre, Las grandes galerías, Espionaje industrial
-const heroPct = page => page.locator("#heroPct");
+const barPct = page => page.locator("#winPct");
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 // Por el nombre exacto: otras misiones nombran a esta en sus objetivos
 const quest = (page, name) => page.locator("#journal .q-item")
@@ -83,7 +83,7 @@ test("en un paso en cadena, completar una misión completa las que necesita y el
   await done(page, "Cofrología");
   await done(page, "Tesorfanato");
   await pending(page, "Las grandes galerías");
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1] + Q12[2])}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1] + Q12[2])}%`);
   // No se guardan: son de la que las pide
   const objs = await readLS(page, "silvestre:questObjective");
   expect(objs["1504"]).toBeUndefined();
@@ -109,7 +109,7 @@ test("deshacer la misión que las pedía deja como estaban las que daba por hech
   await expect(btn(page, "Tesorfanato")).toBeEnabled();
   // La que estaba hecha de verdad sigue hecha
   await done(page, "Cofrología");
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
 });
 
 test("completar una misión da por hechas las que necesita aunque sean de otro paso", async ({ page }) => {
@@ -137,12 +137,12 @@ test("el progreso guardado con la misión en curso pasa a sus misiones: las de a
   await page.reload();
   await expect(page.locator(".map-node")).toHaveCount(100);
   // El mismo porcentaje que antes: las dos de antes de la actual
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(BASE + Q12[0] + Q12[1])}%`);
   expect(await readLS(page, "silvestre:questObjective")).toEqual({ 1504: 16, 1505: 11, 1507: 2 });
   expect(await readLS(page, "silvestre:questPos")).toEqual({ 12: 2 });
   expect(await readLS(page, "silvestre:questModel")).toBe(2);
   // Solo una vez: lo que se deshaga después no vuelve
   await page.evaluate(() => localStorage.setItem("silvestre:questObjective", JSON.stringify({ 1504: 16 })));
   await page.reload();
-  await expect(heroPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(BASE + Q12[0])}%`);
 });

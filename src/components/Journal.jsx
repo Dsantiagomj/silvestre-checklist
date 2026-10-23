@@ -1,5 +1,5 @@
 import { Fragment, createContext, useContext, useEffect, useState } from "react";
-import { STEPS } from "../data/steps.js";
+import { STEPS, ZONE_COLOR } from "../data/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
@@ -16,6 +16,7 @@ import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
+import { openNota } from "./Nota.jsx";
 
 // Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
 // que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
@@ -26,15 +27,16 @@ import Banner from "./Banner.jsx";
  */
 export const StepGo = createContext(selectStep);
 
+// short: el rótulo de la ficha plegada en el diario (el entero va en su título)
 const CALL = {
-  stop: { label: "Hasta dónde llegar" },
-  done: { label: "Lo que se resuelve" },
-  includes: { label: "Incluye" },
-  must: { label: "También hay que" },
-  tip: { label: "Consejo" },
-  note: { label: "Nota" },
-  resumedin: { label: "Se retoma más adelante" },
-  closedin: { label: "Se termina más adelante" },
+  stop: { label: "Hasta dónde llegar", short: "Hasta dónde" },
+  done: { label: "Lo que se resuelve", short: "Resuelve" },
+  includes: { label: "Incluye", short: "Incluye" },
+  must: { label: "También hay que", short: "También" },
+  tip: { label: "Consejo", short: "Consejo" },
+  note: { label: "Nota", short: "Nota" },
+  resumedin: { label: "Se retoma más adelante", short: "Se retoma" },
+  closedin: { label: "Se termina más adelante", short: "Se termina" },
 };
 
 /** Texto de la guía con sus misiones y logros enlazados y los incisos como pasos. */
@@ -51,79 +53,198 @@ function RichText({ text }) {
 }
 
 /**
- * El objetivo (derecha): el logro con su icono, una frase por lo que pide, la cita de
- * Sandglass y, al pie, los pasos que cierra o donde se cierra. Debajo, quién da el paso:
- * en escritorio el estandarte es pequeño y su figura va sin nombre.
+ * El paso en una línea, bajo su título: su zona, dónde empieza y quién lo da (si no es
+ * quien lo empieza) y, si ya cargaron las misiones, cuántas son; y los objetos que aún
+ * hay que reunir para él.
  */
-function Goal({ step, done }) {
+function stepFacts(s, step, fig) {
+  const quests = s.questsLoaded ? questsOf(step.n) : null;
+  const st = quests?.[0]?.st;
+  const facts = [step.zone];
+  if (st?.cls) facts.push("Empieza en el templo de tu clase");
+  else if (st?.ali) facts.push("Empieza según tu alineamiento");
+  else if (st?.npc) facts.push(`Empieza con ${st.npc}${st.a ? ` en ${st.a}` : ""}`);
+  else if (st?.a) facts.push(`Empieza en ${st.a}`);
+  if (fig && fig.name !== st?.npc) facts.push(`${fig.as}: ${fig.name}`);
+  if (quests?.length) facts.push(`${quests.length} ${quests.length === 1 ? "misión" : "misiones"}`);
+  const left = rowsOf(step.n).filter(row => !rowHave(s, row, [step.n])).length;
+  if (left) facts.push(`${left} ${left === 1 ? "objeto" : "objetos"} que reunir`);
+  return facts;
+}
+
+/**
+ * El estandarte en pequeño, junto al título: el número del paso sobre lo que lo
+ * representa (bannerFigure). Solo en pantallas bajas, donde el estandarte no cabe (CSS).
+ */
+function Badge({ step }) {
+  const fig = bannerFigure(step.n);
+  return (
+    <span className="journal-badge" style={{ "--zone-color": ZONE_COLOR[step.zone] }} aria-hidden="true">
+      {fig && <img src={imgUrl(fig.img)} alt="" decoding="async" />}
+      <span className="journal-badge-num">{step.n}</span>
+    </span>
+  );
+}
+
+/**
+ * El objetivo (derecha del estandarte): arriba, el logro con su icono, el título, una
+ * línea con lo que pide el paso y «Ver en el mapa»; debajo, qué hacer (el texto de la
+ * guía). Sus notas van en fichas debajo de los dos (NoteChips).
+ */
+function Goal({ step, done, s }) {
   const plan = PLANS[step.n] || [];
   const head = plan.find(e => e.t === "a");
   const fig = bannerFigure(step.n);
   return (
     <div className="journal-goal">
-      <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z" /><path d="M7 3v12M13 5v12" /></svg>
-        Ver en el mapa
-      </button>
-      <div className="goal-head">
+      <div className="journal-head">
+        <Badge step={step} />
         <span className="goal-ach">
           {head?.img ? <img src={imgUrl(head.img)} alt="" /> : <QuestMark />}
           {step.complete && <span className="is-complete" title="Logro completo">✓</span>}
         </span>
-        <div>
+        <div className="journal-head-txt">
           {/* Sin enlace: la guía del logro ya va enlazada en el texto de la guía */}
           <h2 className="journal-title">{stepTitle(step)}</h2>
+          <p className="journal-meta">
+            {stepFacts(s, step, fig).map((fact, i) => <Fragment key={i}>{i > 0 && " "}<span>{fact}</span></Fragment>)}
+          </p>
         </div>
+        <button type="button" className="journal-to-map" onClick={() => showOnMap(step.n)} title="Volver al mapa con este paso">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z" /><path d="M7 3v12M13 5v12" /></svg>
+          Ver en el mapa
+        </button>
       </div>
-      <GuideCalls step={step} done={done} />
-      {fig && <p className="goal-by">{fig.as}: <b>{fig.name}</b></p>}
+      <GuideText step={step} label="Qué hacer" />
+    </div>
+  );
+}
+
+/** El texto de la guía, con su rótulo y el libro del juego. */
+function GuideText({ step, label = "Texto de la guía" }) {
+  const plan = PLANS[step.n] || [];
+  return (
+    <div className="goal-guide">
+      {OBJ_ICONS.free && <img src={imgUrl(OBJ_ICONS.free)} alt="" />}
+      <div>
+        <small className="goal-guide-label">{label}</small>
+        <p className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></p>
+      </div>
+    </div>
+  );
+}
+
+/** Pasos en una frase: «59», «59 y 61», «59, 60 y 61». */
+const listSteps = ns => ns.map((m, i) => `${i > 0 ? (i === ns.length - 1 ? " y " : ", ") : ""}${m}`).join("");
+
+/** Los incisos como botones que llevan a su paso. */
+function StepRefs({ steps }) {
+  const go = useContext(StepGo);
+  return steps.map((m, i) => (
+    <Fragment key={m}>
+      {i > 0 && (i === steps.length - 1 ? " y " : ", ")}
+      <button type="button" className="step-ref" data-n={m} onClick={() => go(m)}>{m}</button>
+    </Fragment>
+  ));
+}
+
+/**
+ * Los avisos de la guía del paso y, con él pendiente, dónde se retoman y se terminan sus
+ * misiones (la guía retoma antes de cerrar: 58, en el 59 y el 61). Cada uno con su tipo,
+ * su texto (o lo que va dentro) y un resumen en texto plano para la ficha plegada.
+ */
+function notesOf(step, done) {
+  const closedIn = !done && CLOSED_BY[step.n];
+  const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
+  const notes = stepCalls(step).map(([kind, text]) => ({ kind, text, peek: linkify(text).map(p => p.t).join("") }));
+  if (resumedIn.length) {
+    notes.push({
+      kind: "resumedin", peek: `En el paso ${listSteps(resumedIn)}`,
+      body: <>Sus misiones se retoman en el paso <StepRefs steps={resumedIn} />.</>,
+    });
+  }
+  if (closedIn) {
+    notes.push({
+      kind: "closedin", peek: `En el paso ${closedIn}`,
+      body: <>Sus misiones se terminan en el paso <StepRefs steps={[closedIn]} />.</>,
+    });
+  }
+  return notes;
+}
+
+/**
+ * El texto de la guía y sus avisos, con dónde se retoman y se terminan sus misiones,
+ * cada uno en su panel. Lo usa la pestaña «Guía» del overlay.
+ */
+export function GuideCalls({ step, done }) {
+  const notes = notesOf(step, done);
+  return (
+    <>
+      <GuideText step={step} />
+      {notes.length > 0 && (
+        <div className="goal-calls">
+          {notes.map((x, i) => <Call key={i} step={step} kind={x.kind} text={x.text}>{x.body}</Call>)}
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * Una nota del paso en ficha: plegada, su rótulo y el principio del texto en una línea;
+ * al pulsarla (o con Intro o espacio) se despliega con el texto entero, enlaces e incisos
+ * incluidos.
+ */
+function CallChip({ step, kind, text, peek, children, id }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`call ${kind}` + (open ? " is-open" : "")}>
+      <button type="button" className="call-head" aria-expanded={open} aria-controls={id} title={CALL[kind].label}
+        onClick={() => setOpen(o => !o)}>
+        <CallIcon step={step} kind={kind} />
+        <b>{CALL[kind].short}</b>
+        <span className="call-peek">{peek}</span>
+        <span className="call-caret" aria-hidden="true">▾</span>
+      </button>
+      <div className="call-body" id={id} hidden={!open}>
+        {children ?? <RichText text={text} />}
+      </div>
     </div>
   );
 }
 
 /**
- * El texto de la guía y sus avisos, con dónde se retoman y se terminan sus misiones.
- * Lo usan el objetivo del diario y la pestaña «Guía» del overlay.
+ * Las notas del paso en el diario: fichas en una línea que se despliegan (CallChip). Si
+ * el paso se para ante un jefe o lo termina otro, una «i» abre la nota que explica las
+ * pausas.
  */
-export function GuideCalls({ step, done }) {
-  const go = useContext(StepGo);
-  const plan = PLANS[step.n] || [];
-  const closedIn = !done && CLOSED_BY[step.n];
-  // Donde se retoma va antes de donde se termina: la guía retoma antes de cerrar (58: 59 y 61)
-  const resumedIn = done ? [] : RESUMED_IN[step.n] || [];
-  const calls = stepCalls(step);
+function NoteChips({ step, done }) {
+  const notes = notesOf(step, done);
+  if (!notes.length) return null;
+  const paused = notes.some(x => x.kind === "stop" || x.kind === "closedin");
   return (
-    <>
-      <div className="goal-guide">
-        {OBJ_ICONS.free && <img src={imgUrl(OBJ_ICONS.free)} alt="" />}
-        <div>
-          <small className="goal-guide-label">Texto de la guía</small>
-          <p className={"journal-base" + (plan.length ? " is-source" : "")}><RichText text={step.base} /></p>
-        </div>
-      </div>
-      {(calls.length > 0 || closedIn || resumedIn.length > 0) && (
-        <div className="goal-calls">
-          {calls.map(([kind, text], i) => <Call key={i} step={step} kind={kind} text={text} />)}
-          {resumedIn.length > 0 && (
-            <Call step={step} kind="resumedin">
-              Sus misiones se retoman en el paso{" "}
-              {resumedIn.map((m, i) => (
-                <Fragment key={m}>
-                  {i > 0 && (i === resumedIn.length - 1 ? " y " : ", ")}
-                  <button type="button" className="step-ref" data-n={m} onClick={() => go(m)}>{m}</button>
-                </Fragment>
-              ))}.
-            </Call>
-          )}
-          {closedIn && (
-            <Call step={step} kind="closedin">
-              Sus misiones se terminan en el paso{" "}
-              <button type="button" className="step-ref" data-n={closedIn} onClick={() => go(closedIn)}>{closedIn}</button>.
-            </Call>
-          )}
-        </div>
+    <div className={"goal-calls" + (notes.length > 3 ? " is-many" : "")}>
+      {notes.map((x, i) => (
+        <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
+      ))}
+      {paused && (
+        <button type="button" className="nota-open" onClick={openNota}
+          aria-label="Qué significa «hasta tener que pasar»" title="Qué significa «hasta tener que pasar»">i</button>
       )}
-    </>
+    </div>
+  );
+}
+
+/** El medallón de un aviso: el icono de su tipo (el jefe que se pasa, en lo que se resuelve). */
+function CallIcon({ step, kind }) {
+  return (
+    <i aria-hidden="true">
+      {kind === "must" ? <QuestMark />
+        : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
+        : kind === "closedin" ? <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
+        : kind === "resumedin" ? <img src={imgUrl(OBJ_ICONS.map)} alt="" />
+        : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
+    </i>
   );
 }
 
@@ -131,13 +252,7 @@ export function GuideCalls({ step, done }) {
 export function Call({ step, kind, text, children }) {
   return (
     <div className={`call ${kind}`}>
-      <i aria-hidden="true">
-        {kind === "must" ? <QuestMark />
-          : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
-          : kind === "closedin" ? <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
-          : kind === "resumedin" ? <img src={imgUrl(OBJ_ICONS.map)} alt="" />
-          : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
-      </i>
+      <CallIcon step={step} kind={kind} />
       <div>
         <b>{CALL[kind].label}</b>
         {children ?? <RichText text={text} />}
@@ -522,13 +637,16 @@ export default function Journal({ n, id }) {
     <article className="journal" id={leaving ? undefined : id} aria-label={`Paso ${n}`}>
       <div className="journal-top">
         <Banner step={step} />
-        <Goal step={step} done={!!s.done[n]} />
+        <Goal step={step} done={!!s.done[n]} s={s} />
+        {/* Las notas, bajo el estandarte y el objetivo: a todo el ancho caben en una línea */}
+        <NoteChips step={step} done={!!s.done[n]} />
       </div>
       {/* El cuerpo y la barra juntos: en escritorio, el tope hasta donde sube la barra pegada */}
       <div className="journal-main">
         <div className="journal-body">
-          <Needs n={n} s={s} />
+          {/* Después de qué hacer y sus notas: las misiones y, al final, lo que hay que reunir */}
           <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
+          <Needs n={n} s={s} />
           <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
         </div>
         <Actions step={step} s={s} />

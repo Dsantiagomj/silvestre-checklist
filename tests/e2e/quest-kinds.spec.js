@@ -7,19 +7,19 @@ const WEIGHTS = read("weights.json");
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));
-// El mismo redondeo que el hero: un decimal
+// El mismo redondeo que el porcentaje de la barra: un decimal
 const pctOf = pts => Math.min(99.9, Math.max(0.1, Math.round((pts / TOTAL) * 1000) / 10));
 // Pasos 1 a n hechos. Con el 22 hecho, «Veneno de scorbuto para la prisión», que también
 // lleva el 36, cuenta allí como terminada
 const base = n => sum(Array.from({ length: n }, (_, i) => WEIGHTS[i + 1].w)) + (n >= 22 ? WEIGHTS[36].q[0] : 0);
-const heroPct = page => page.locator("#heroPct");
+const barPct = page => page.locator("#winPct");
 const routeStates = rows => rows.evaluateAll(els => els.map(el => (el.classList.contains("done") ? "d" : el.classList.contains("now") ? "n" : "-")).join(""));
 // Por el nombre exacto: la ruta de una misión puede nombrar otras («Aquí se hace…»)
 const quest = (page, name) => page.locator("#journal .q-item")
   .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });
 
 async function openStep(page, n) {
-  await page.click(`.diary-row[data-n="${n}"] .row-main`);
+  await page.click(`.diary-row[data-n="${n}"] .row-num`);
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
@@ -63,7 +63,7 @@ test("paso 28: «Luces y sombras» solo hay que tomarla, sin objetivos ni «Comp
 
   // El paso hecho suma su peso entero, sin «Luces y sombras»
   await page.locator("#toggleBtn").click();
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(28))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(28))}%`);
   expect(errors).toEqual([]);
 });
 
@@ -76,7 +76,7 @@ test("paso 28: terminar «Pesca en aguas congeladas» no lleva a «Luces y sombr
   expect(await routeStates(pesca.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
   expect((await readLS(page, "silvestre:questPos"))?.["28"] ?? 0).toBe(0);
   // Terminada la única obligatoria, cuenta el paso entero
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(28))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(28))}%`);
 });
 
 test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a mano sin mover el porcentaje", async ({ page }) => {
@@ -96,14 +96,14 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   await expect(colera.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator('.diary-row[data-n="7"]')).toHaveClass(/\bdone\b/);
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   expect((await readLS(page, "silvestre:questPos"))?.["7"] ?? 0).toBe(0);
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
 
   // Con el paso hecho, la cólera sale hecha y «Arma letal» sigue pendiente
   await openStep(page, 7);
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   await colera.locator("summary .q-name").click();
   expect(await routeStates(colera.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
   await arma.locator("summary .q-name").click();
@@ -117,10 +117,10 @@ test("paso 7: «Paso hecho» no marca «Arma letal», que se sigue completando a
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "true");
   expect(await routeStates(arma.locator(".obj-list.route > .obj-row"))).toMatch(/^d+$/);
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   await btn.click();
   await expect(btn).toHaveAttribute("aria-pressed", "false");
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(7))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(7))}%`);
   expect(errors).toEqual([]);
 });
 
@@ -129,12 +129,12 @@ test("paso 27: «La marcha de la emperatriz» suma sus puntos; «Star ski y Dutc
   await openStep(page, 27);
   const star = quest(page, "Star ski y Dutch");
   const marcha = quest(page, "La marcha de la emperatriz");
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(26))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(26))}%`);
 
   // La opcional: ni el porcentaje ni la misión en curso se mueven
   await star.locator(".q-done-btn").click();
   await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "true");
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(26))}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(26))}%`);
   expect((await readLS(page, "silvestre:questPos"))?.["27"] ?? 0).toBe(0);
   await star.locator(".q-done-btn").click();
   await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
@@ -146,7 +146,7 @@ test("paso 27: «La marcha de la emperatriz» suma sus puntos; «Star ski y Dutc
   const rows = marcha.locator(".obj-list.route > .obj-row");
   await rows.last().locator(".obj-med").click();
   expect(await routeStates(rows)).toMatch(/^d+$/);
-  await expect(heroPct(page)).toHaveText(`${pctOf(base(26) + WEIGHTS[27].q[1])}%`);
+  await expect(barPct(page)).toHaveText(`${pctOf(base(26) + WEIGHTS[27].q[1])}%`);
   await expect(star.locator(".q-done-btn")).toHaveAttribute("aria-pressed", "false");
   await star.locator("summary .q-name").click();
   expect(await routeStates(star.locator(".obj-list.route > .obj-row"))).not.toMatch(/^d+$/);
