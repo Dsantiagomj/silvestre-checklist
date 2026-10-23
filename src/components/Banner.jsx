@@ -80,7 +80,8 @@ export default function Banner({ step, className = "" }) {
   return (
     <aside className={"journal-banner" + (className ? ` ${className}` : "")} ref={ref} style={{ "--zone-color": ZONE_COLOR[step.zone] }}>
       {bg && ready && <div className="journal-bg" key={bg} style={{ backgroundImage: `url("${bg}")` }}></div>}
-      {size && <BannerFrame {...size} />}
+      {/* Oculto (el distintivo de pantalla baja lo cambia por el suyo) mide 0: sin marco */}
+      {size?.w > 0 && size.h > 0 && <BannerFrame {...size} />}
       <span className="journal-num">{step.n}</span>
       <span className="banner-zone">{step.zone}</span>
       {fig && (
