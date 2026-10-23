@@ -269,3 +269,55 @@ test("en móvil el paso se abre en la hoja inferior sobre la página", async ({ 
   expect(await page.evaluate(() => document.elementFromPoint(195, 40)?.id)).toBe("silvestre-root");
 });
 
+
+// El diario no tiene alto fijo: el detalle entero va en la página (alto = contenido) y se
+// recorre bajando la página; la ventana no cambia de alto al desplazarla
+for (const [w, h] of [[2000, 980], [1440, 900]]) {
+  for (const n of [47, 41]) {
+    test(`a ${w}×${h}, el ${n} se lee entero bajando la página, sin recortes y sin que la ventana cambie de alto`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await openHarness(page, { "silvestre:done": Object.fromEntries(Array.from({ length: n - 1 }, (_, i) => [i + 1, true])) });
+      await app(page).locator(`.diary-row[data-n="${n}"] .row-num`).click();
+      await expect(app(page).locator("#journal .journal-num")).toHaveText(String(n));
+      await expect(app(page).locator("#journal .q-item").first()).toBeAttached({ timeout: 15_000 });
+      await page.waitForLoadState("networkidle");
+      await app(page).locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
+      await page.waitForTimeout(300);
+      const measure = () => app(page).evaluate(host => {
+        const R = host.shadowRoot;
+        const win = R.querySelector(".diary-window"), detail = R.querySelector(".diary-detail");
+        return {
+          y: scrollY, win: win.getBoundingClientRect().height, detail: detail.getBoundingClientRect().height,
+          extra: detail.scrollHeight - detail.clientHeight, journal: R.getElementById("journal").getBoundingClientRect().height,
+        };
+      });
+      const first = await measure();
+      // El detalle mide lo que su contenido y la ventana, como poco, lo mismo
+      expect(first.extra).toBeLessThanOrEqual(1);
+      expect(first.detail).toBeGreaterThanOrEqual(first.journal - 1);
+      expect(first.win).toBeGreaterThanOrEqual(first.detail - 1);
+      // Bajando hasta el final de la página, la ventana no cambia de alto
+      const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      for (const to of [first.y + 200, first.y + 600, max]) {
+        await page.evaluate(t => scrollTo({ top: t, behavior: "instant" }), to);
+        await page.waitForTimeout(100);
+        const m = await measure();
+        expect(Math.abs(m.win - first.win), JSON.stringify({ first, m })).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.detail - first.detail)).toBeLessThanOrEqual(1);
+      }
+      // Cada parte del detalle, de arriba abajo, se ve entera y sin nada encima al bajar la página
+      for (const sel of ["#journal .journal-top", "#journal .q-item >> nth=0", "#journal .q-item >> nth=-1"]) {
+        const el = app(page).locator(sel);
+        await el.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" }));
+        await page.waitForTimeout(100);
+        await expect(el).toBeInViewport({ ratio: 1 });
+        const hit = await el.evaluate(e => {
+          const r = e.getBoundingClientRect();
+          const at = e.getRootNode().elementFromPoint(r.left + 40, r.top + Math.min(r.height / 2, 20));
+          return e.contains(at);
+        });
+        expect(hit, sel).toBe(true);
+      }
+    });
+  }
+}
