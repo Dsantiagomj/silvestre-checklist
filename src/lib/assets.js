@@ -1,8 +1,8 @@
 // ============================================================================
 // ASSETS DEL JUEGO (DofusDB) — generados por .build/build_assets_js.py
 // ============================================================================
-import DATA from "../data/assets.json";
-import ZONES from "../data/zones.json";
+import DATA from "@dofus/assets.json";
+import ZONES from "@dofus/zones.json";
 
 export const ASSETS = DATA.STEP_ASSETS || {};
 export const PREREQ_ICONS = DATA.PREREQ_ICONS || {};

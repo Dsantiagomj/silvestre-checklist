@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { imgUrl } from "../../lib/assets.js";
 import { copyText } from "../../lib/motion.js";
-import { ALL_PREREQS } from "../../data/steps.js";
+import { ALL_PREREQS } from "@dofus/steps.js";
 import { PREREQ_STEP, RES_ITEMS, rowLeft, rowName, rowPartial, rowQty } from "../../lib/resources.js";
 
 const LONG_PRESS_MS = 550;

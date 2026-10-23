@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ZONE_COLOR } from "../data/steps.js";
+import { ZONE_COLOR } from "@dofus/steps.js";
 import { ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { bannerFigure, startMap } from "../lib/journal.js";
 

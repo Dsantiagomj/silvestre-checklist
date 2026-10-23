@@ -3,11 +3,12 @@
 // ese mismo dominio, su progreso está en el mismo localStorage. Solo se lee: sus claves
 // nunca se tocan.
 // ============================================================================
-import { PREVIOUS_STEPS } from "../data/steps.js";
+import { PREVIOUS_STEPS } from "@dofus/steps.js";
+import DOFUS from "@dofus/config.js";
 
-const V4 = "dofus_silvestre_clean_v4";
-// La numeración anterior de la guía; el clásico la pasaba a la v4 con la misma tabla
-const V3 = "dofus_silvestre_clean_v3";
+// Las claves del clásico (config.js): "dofus_silvestre_clean_v4" y la numeración anterior
+// de la guía, la v3; el clásico la pasaba a la v4 con la misma tabla
+const { v4: V4, v3: V3 } = DOFUS.classicKeys;
 
 const readJSON = key => {
   try {

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { STEPS } from "../../src/data/steps.js";
+import { STEPS } from "../../src/dofus/silvestre/steps.js";
 
 // Los resaltados de la guía en torrentearcano: rojo = hasta dónde llegar,
 // verde = lo que se resuelve. El azul mezcla cosas y se separa por lo que dice:

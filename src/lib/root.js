@@ -3,6 +3,8 @@
 // (src/embed.jsx), una shadow root. Lo que busca elementos de la app los busca aquí,
 // no en `document`, que embebida es la página de otro.
 // ============================================================================
+import DOFUS from "@dofus/config.js";
+
 let root = document;
 let themeEl = null;
 
@@ -34,7 +36,7 @@ export const eventTarget = e => e.composedPath?.()[0] ?? e.target;
 export const activeElement = () => root.activeElement ?? document.activeElement;
 
 /** Lo que tapa arriba la cabecera fija de la página que aloja la app (--silvestre-top). */
-const pageTop = () => parseFloat(getComputedStyle(root.host).getPropertyValue("--silvestre-top")) || 0;
+const pageTop = () => parseFloat(getComputedStyle(root.host).getPropertyValue(DOFUS.embed.topVar)) || 0;
 
 /**
  * Lo que se ha bajado desde el principio de la app: en su página, el scroll de la

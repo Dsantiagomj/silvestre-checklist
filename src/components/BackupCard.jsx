@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { takeSnapshot } from "../state/store.js";
+import { LS, takeSnapshot } from "../state/store.js";
 import { BACKUP_ICONS, imgUrl } from "../lib/assets.js";
+import DOFUS from "@dofus/config.js";
 
-const LAST_BACKUP_KEY = "silvestre:lastBackup";
+const LAST_BACKUP_KEY = LS.lastBackup;
+// El id que marca la copia como de este checklist ("silvestre-checklist") y el nombre del archivo
+const { app: BACKUP_APP, file: BACKUP_FILE } = DOFUS.backup;
 // Pasado este tiempo sin copia, el aviso cambia de color para invitar a guardar una.
 const STALE_DAYS = 14;
 
@@ -28,7 +31,7 @@ async function parseBackup(file) {
   } catch {
     return { error: "Ese archivo no es una copia válida." };
   }
-  if (payload?.app !== "silvestre-checklist" || typeof payload.data !== "object" || !payload.data) {
+  if (payload?.app !== BACKUP_APP || typeof payload.data !== "object" || !payload.data) {
     return { error: "Ese archivo no es una copia de este checklist." };
   }
   return { data: payload.data };
@@ -36,7 +39,7 @@ async function parseBackup(file) {
 
 function downloadBackup() {
   const payload = {
-    app: "silvestre-checklist",
+    app: BACKUP_APP,
     version: 1,
     exportedAt: new Date().toISOString(),
     data: takeSnapshot(),
@@ -44,7 +47,7 @@ function downloadBackup() {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `silvestre-progreso-${payload.exportedAt.slice(0, 10)}.json`;
+  a.download = `${BACKUP_FILE}-${payload.exportedAt.slice(0, 10)}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   return payload.exportedAt;

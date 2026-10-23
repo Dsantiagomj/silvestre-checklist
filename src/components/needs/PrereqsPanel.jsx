@@ -1,4 +1,4 @@
-import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "../../data/steps.js";
+import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFICIOS } from "@dofus/steps.js";
 import { useLiveIds } from "../../lib/leaving.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
@@ -7,6 +7,7 @@ import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAp
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
 import { appRoot } from "../../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 const GROUPS = [
   { title: "Logros previos", items: PREREQS_LOGROS },
@@ -108,18 +109,21 @@ function showStep(n) {
 /**
  * La recomendación de Sandglass sobre el Dofus Ocre: lo da la misión "La eterna
  * cosecha", larga, que la guía termina en el paso 79 ("El fin de la eternidad").
+ * Sus nombres, en prereqNote de config.js; sin ella, no se muestra.
  */
 function OcreNote() {
+  const note = DOFUS.prereqNote;
+  if (!note) return null;
   return (
     <aside className="pr-ocre">
       {OCRE_ICON && <img src={imgUrl(OCRE_ICON)} alt="" />}
       <div>
-        <b>Empieza el Dofus Ocre cuanto antes</b>
+        <b>{note.title}</b>
         <p>{PREREQS_OCRE}</p>
         <p className="pr-ocre-step">
-          Lo da la misión «La eterna cosecha», que la guía termina en el{" "}
+          Lo da la misión «{note.quest}», que la guía termina en el{" "}
           <button type="button" className="step-ref" data-n={OCRE_STEP} onClick={() => showStep(OCRE_STEP)}>paso {OCRE_STEP}</button>{" "}
-          con el logro «El fin de la eternidad».
+          con el logro «{note.achievement}».
         </p>
       </div>
     </aside>

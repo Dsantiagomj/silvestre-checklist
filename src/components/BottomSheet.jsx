@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import { closeSheet, selectStep, useAppState } from "../state/store.js";
 import Journal from "./Journal.jsx";
 import MapCard from "./MapCard.jsx";

@@ -8,7 +8,7 @@ import { openApp } from "./helpers.js";
  */
 
 test("el peso de una misión es su nivel por la raíz de sus objetivos", async () => {
-  const read = f => JSON.parse(readFileSync(new URL(`../../src/data/${f}`, import.meta.url), "utf8"));
+  const read = f => JSON.parse(readFileSync(new URL(`../../src/dofus/silvestre/${f}`, import.meta.url), "utf8"));
   const weights = read("weights.json");
   // 29 y 30: misiones de nivel 110 (mínimo en Torrente Arcano); las tres de Mel del 29 con 2
   // objetivos cada una, la del 30 con 7
