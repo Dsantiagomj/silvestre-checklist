@@ -16,60 +16,37 @@ from DOFUS_ROAD, before any of these):
 Figures are rendered by Ankama's look renderer and mirrored into public/img/npcs/.
 The map is the start map of the step's first quest that has one (DofusDB map image).
 
-Reads  : src/data/{quests,plans}.json, .build/data/quests.json
-Writes : src/data/figures.json, public/img/npcs/*.png
+Reads  : src/dofus/<dofus>/{quests,plans}.json, .build/data/quests.json
+Writes : src/dofus/<dofus>/figures.json, public/img/npcs/*.png
 Caches : .build/data/lookup_npc_looks.json
-Run    : python3 -I .build/build_figures.py   (after build_quests_js.py)
+Run    : python3 -I .build/build_figures.py   (after build_quests_js.py; --dofus <id> or DOFUS,
+         silvestre by default)
 """
 import json
 import pathlib
+import sys
 import time
 import urllib.request
 
 ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
-OUT = ROOT / "src" / "data" / "figures.json"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+OUT = dofus.SRC / "figures.json"
 IMG_DIR = ROOT / "public" / "img" / "npcs"
 API = "https://api.dofusdb.fr"
 RENDER = "https://static.ankama.com/dofus/renderer/look/{}/full/1/300_300-10.png"
-MERIANA = 2205
+MERIANA = D.MERIANA  # per Dofus, in .build/dofus/<id>.py
 
-# Achievement -> (key, name, label, look). Looks are the ones the renderer draws: the
-# newest dragon looks (99xx) time out there, so the dragons use their earlier ones.
-DRAGON = "Dragón primordial"
-CURATED = {
-    "Verde esmeralda": ("aerafal", "Aerafal", DRAGON, "{3773}"),
-    "Púrpura profundo": ("ignemikhal", "Ignemikhal", DRAGON, "{3774}"),
-    "Azul turquesa": ("aguabrial", "Aguabrial", DRAGON, "{3233}"),
-    "Ocre de ámbar": ("terrakurial", "Terrakurial", DRAGON, "{6891|||250}"),
-    "Negro ébano": ("grugalorasalar", "Grugalorasalar", DRAGON, "{5136|||300}"),
-    "Blanco marfil": ("dardondakal", "Dardondakal", DRAGON, "{4210}"),
-    "La guerra interminable": ("guerra", "Guerra", "Jinete del Selocalipsis", "{5585|||150}"),
-    "Prisioneros del mar": ("servidumbre", "Servidumbre", "Jinete del Selocalipsis", "{5598|||120}"),
-    "Juicio final": ("miseria", "Miseria", "Jinete del Selocalipsis", "{5596|||150}"),
-    "Vivir así es morir de corrupción": ("corrupcion", "Corrupción", "Jinete del Selocalipsis", "{5542|||120}"),
-    "Selocalipsis: Resonancia": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
-    "Selocalipsis: Resiliencia": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
-    "Selocalipsis: Reminiscencia": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
-    "Futuro abierto": ("draconiros", "Draconiros", "Selocalipsis", "{5471|||300}"),
-    "El árbol que esconde el bosque": ("silvosse", "Silvosse", "Dofus Silvestre", "{6626|||130}"),
-}
+DRAGON = D.DRAGON  # per Dofus, in .build/dofus/<id>.py
+CURATED = D.CURATED  # per Dofus, in .build/dofus/<id>.py
 
 
-# Step -> figure for a step with nothing better: step 7's quest is given by the NPC of
-# your class, but in it you talk to the goddess Feca. Step 43's three quests start with
-# three different NPCs, none of them the step's: the Daimia Hikomi stands for Pandala.
-STEP_FIGURE = {
-    "7": ("diosa-feca", "Diosa Feca", "La cólera de los dioses", "{4841}"),
-    "43": ("daimia-hikomi", "Daimia Hikomi", "De qué madera estoy hecho", "{5784|||100}"),
-}
+STEP_FIGURE = D.STEP_FIGURE  # per Dofus, in .build/dofus/<id>.py
 
 
-# Step -> the quest whose start stands for the step, where the step opens with quests
-# it only needs (STEP_EXTRA in build_quests_js.py) and the banner is the step's own: the
-# Frigost lines after their "Abono de peaje" dungeon, the order quest 5 after Bonta
-# mission 100, and step 87's own quests after the ones of steps 73 and 91 it needs.
-FIGURE_QUEST = {"31": 592, "40": 593, "52": 595, "83": 2010, "86": 1910, "87": 2137, "89": 1917}
+FIGURE_QUEST = D.FIGURE_QUEST  # per Dofus, in .build/dofus/<id>.py
 
 
 def _get(url, raw=False, tries=4):
@@ -111,8 +88,8 @@ def render(key, look):
 
 
 def main():
-    app = json.loads((ROOT / "src" / "data" / "quests.json").read_text())
-    plans = json.loads((ROOT / "src" / "data" / "plans.json").read_text())
+    app = json.loads((dofus.SRC / "quests.json").read_text())
+    plans = json.loads((dofus.SRC / "plans.json").read_text())
     raw = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
     IMG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -141,7 +118,7 @@ def main():
     looks = npc_looks({sp["npcId"] for sp in starts.values() if sp.get("npcId")})
 
     out = {}
-    for n in map(str, range(1, 101)):
+    for n in map(str, range(1, D.STEP_COUNT + 1)):
         sp = starts.get(n)
         npc = sp and sp.get("npcId")
         figure = None

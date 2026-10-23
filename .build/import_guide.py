@@ -11,8 +11,11 @@ Usage:
   python3 -I .build/import_guide.py /tmp/ta/page.html
 
 Writes:
-  .build/lists/torrentearcano.json  snapshot of the three structures, versioned
-  src/data/steps.js                 STEPS and PREVIOUS_STEPS blocks only
+  .build/lists/<dofus>/torrentearcano.json  snapshot of the three structures, versioned
+  src/dofus/<dofus>/steps.js                STEPS and PREVIOUS_STEPS blocks only
+
+--dofus <id> (or DOFUS) picks the Dofus, silvestre by default: its source page, step
+count and hand-written tables come from .build/dofus/<id>.py.
 
 Each text keeps the page's colour markers as marks: [[RED]] is where to stop
 ("stop"), [[GREEN]] what gets resolved ("done"). [[BLUE]] mixes several things, so
@@ -40,13 +43,15 @@ import pathlib
 import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-STEPS_JS = ROOT / "src" / "data" / "steps.js"
-SNAPSHOT = ROOT / ".build" / "lists" / "torrentearcano.json"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
+
+STEPS_JS = dofus.SRC / "steps.js"
+SNAPSHOT = dofus.LISTS / "torrentearcano.json"
 
 TIER_ORDER = ["trivial", "corto", "medio", "largo", "epico"]
-# Old step 75 bundled four Selocalipsis achievements; v4 gives each its own step.
-SPLIT_TIERS = {74: "largo", 75: "largo", 76: "largo", 77: "medio"}
+SPLIT_TIERS = D.SPLIT_TIERS  # per Dofus, in .build/dofus/<id>.py
 
 
 def js_value(html, name):
@@ -148,10 +153,7 @@ def clauses(raw):
             yield from (c for c in CLAUSE.split(clean(body)) if STATED.match(c))
 
 
-# Earlier steps a step finishes that its text does not name. Step 87 finishes "Las
-# cuatro voluntades", which step 73 leaves at its 2nd objective: its quests need
-# "Toma de conciencia", which needs it finished.
-CLOSES = {87: [73]}
+CLOSES = D.CLOSES  # per Dofus, in .build/dofus/<id>.py
 
 
 def closes(n, raw):
@@ -166,10 +168,7 @@ def closes(n, raw):
     return sorted(set(found))
 
 
-# Earlier steps a step updates that its marks do not state outright. Step 81's note is
-# a reminder: "en la sala 3 de Golosotrón se obtiene un recurso necesario para terminar
-# la misión del inciso 63". Golosotrón is passed in 81, so step 63 is picked up there.
-UPDATES = {81: [63]}
+UPDATES = D.UPDATES  # per Dofus, in .build/dofus/<id>.py
 
 
 def updates(n, raw):
@@ -199,19 +198,24 @@ PAGE_MARKERS = {"steps": "const steps = [", "resourcesData": "resourcesData = ",
 def read_page(html):
     """The page's steps, resources and previous-version table, checked before anything is
     written: a page without the checklist's data stops the import with a clear message
-    and leaves src/data and the snapshot as they were."""
-    missing = [name for name, marker in PAGE_MARKERS.items() if marker not in html]
+    and leaves the Dofus's data and the snapshot as they were. A Dofus whose page has no
+    previous version (PREVIOUS_REQUIRED false) maps each step to itself."""
+    needed = {name: marker for name, marker in PAGE_MARKERS.items()
+              if D.PREVIOUS_REQUIRED or name != "previousStepsByNewStep"}
+    missing = [name for name, marker in needed.items() if marker not in html]
     if missing:
         raise SystemExit(f"la página no trae los datos del checklist clásico (falta {', '.join(missing)}): "
                          "no se importa nada")
     try:
         raws = js_template_array(html, "steps")
         resources = js_value(html, "resourcesData")
-        previous = js_value(html, "previousStepsByNewStep")
+        previous = (js_value(html, "previousStepsByNewStep") if PAGE_MARKERS["previousStepsByNewStep"] in html
+                    else [[n] for n in range(1, len(raws) + 1)])
     except ValueError as e:
         raise SystemExit(f"los datos del checklist clásico no se pueden leer ({e}): no se importa nada")
-    if len(raws) != 100 or len(previous) != 100 or not all(t.strip() for t in raws):
-        raise SystemExit(f"se esperaban 100 pasos con texto y llegaron {len(raws)} pasos "
+    count = D.STEP_COUNT
+    if len(raws) != count or len(previous) != count or not all(t.strip() for t in raws):
+        raise SystemExit(f"se esperaban {count} pasos con texto y llegaron {len(raws)} pasos "
                          f"y {len(previous)} filas de previousStepsByNewStep: no se importa nada")
     return raws, resources, previous
 
@@ -222,7 +226,7 @@ def main(page):
     texts = [clean(t) for t in raws]
 
     SNAPSHOT.write_text(json.dumps({
-        "source": "https://www.torrentearcano.com/checklist-silvestre",
+        "source": D.SOURCE_URL,
         "steps": raws,
         "resources": resources,
         "previousStepsByNewStep": previous,

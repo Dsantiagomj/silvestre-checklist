@@ -7,42 +7,28 @@ bottom before scaling down.
 
 Writes : public/img/zones/<slug>.jpg     960 px wide, for the step detail header
          public/img/zones/<slug>-s.jpg   200 px wide, for seals and list rows
-         src/data/zones.json             { zone: { map, img, thumb } }
+         src/dofus/<dofus>/zones.json    { zone: { map, img, thumb } }
 Needs  : macOS `sips` for the crop and resize
-Run    : python3 -I .build/fetch_zone_maps.py
+Run    : python3 -I .build/fetch_zone_maps.py   (--dofus <id> or DOFUS; silvestre by default)
 """
 import json
 import pathlib
 import re
 import subprocess
+import sys
 import tempfile
 import unicodedata
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+D = dofus.CONFIG
 OUT_DIR = ROOT / "public" / "img" / "zones"
-OUT_JSON = ROOT / "src" / "data" / "zones.json"
+OUT_JSON = dofus.SRC / "zones.json"
 MAP_URL = "https://api.dofusdb.fr/img/maps/1/{}.jpg"
 
-ZONE_MAPS = {
-    "Misiones de Mundo": 173015560,
-    "Astrub": 190843396,
-    "Krosmoz": 192677892,
-    "Justicieros": 88212247,
-    "Torres de la Hermandad": 188220416,
-    "Cania": 126092568,
-    "Sidimote": 216663046,
-    "Dimensiones Divinas": 129763328,
-    "Sufokia": 169082884,
-    "Animatopía": 179307011,
-    "Alineamiento": 188746241,
-    "Isla de Frigost": 54173998,
-    "Reino de Amakna": 88083730,
-    "Selocalipsis": 202899464,
-    "Isla de Pandala": 205522436,
-    "Archipiélago de Valonia": 224790533,
-    "Atolón de los Poseídos": 214962179,
-}
+ZONE_MAPS = D.ZONE_MAPS  # per Dofus, in .build/dofus/<id>.py
 CROP_H = 830  # of 970: drops the watermark band at the bottom, centred
 SIZES = {"": 960, "-s": 200}
 
