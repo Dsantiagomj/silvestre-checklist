@@ -27,9 +27,16 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      # El embebido para Torrente Arcano (dist/embed/silvestre.js), junto al sitio:
-      # carga sus trozos y las imágenes de este mismo despliegue
+      # El sitio del Hielos, en dist/hielos/ (/<repo>/hielos/): sin copia de public/, sus
+      # imágenes son las de la raíz que acaba de dejar el del Silvestre. Va después: el
+      # build del Silvestre vacía dist/
+      - run: npm run build:hielos
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+      # Los embebidos para Torrente Arcano (dist/embed/silvestre.js y dist/embed/hielos.js),
+      # junto al sitio: cargan sus trozos y las imágenes de este mismo despliegue
       - run: npm run build:embed
+      - run: npm run build:embed:hielos
       # El hub de los checklists (dist/embed/checklists.js), con las imágenes de public/img/hub/
       - run: npm run build:hub
       - uses: actions/upload-pages-artifact@v3
