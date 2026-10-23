@@ -775,7 +775,7 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .ov .ov-tab-body{ padding:10px 12px 14px; }
 .ov .journal-h{ margin:2px 0 10px; font-size:13px; }
 .ov .journal-needs{ margin:0; }
-.ov .q-item > summary{ gap:8px; padding:8px 10px; font-size:13.5px; flex-wrap:wrap; }
+.ov .q-item > summary, .ov .q-head{ gap:8px; padding:8px 10px; font-size:13.5px; flex-wrap:wrap; }
 .ov .q-start, .ov .q-note{ margin-left:10px; margin-right:10px; }
 /* En una fila aunque la ventana sea estrecha (no la disposición móvil del diario) */
 .ov .journal-cta{ flex:none; grid-template-columns:auto minmax(0, 1fr) auto; padding:8px 10px; gap:6px; }
@@ -818,14 +818,14 @@ button.ov-num:hover{ filter:brightness(1.15); }
 /* Misiones en el panel de detalle */
 .q-list{ display:flex; flex-direction:column; gap:6px; padding:0 12px 12px; }
 .q-item{ background:var(--panel); border:1px solid var(--line); border-radius:8px; }
-.q-item > summary{
+.q-item > summary, .q-head{
   list-style:none; cursor:pointer;
   display:flex; align-items:center; gap:8px;
   padding:8px 10px; font-size:13px;
 }
 .q-item > summary::-webkit-details-marker{ display:none; }
 .q-item[open] > summary{ border-bottom:1px solid var(--line); }
-.q-name{ flex:1; min-width:0; font-weight:600; color:var(--txt); }
+.q-name{ flex:0 1 auto; min-width:0; font-weight:600; color:var(--txt); }
 .q-lv{ font-size:11.5px; color:var(--txt-mute); }
 .q-start{ margin:8px 10px 4px; font-size:12px; color:var(--txt-soft); }
 .q-stage{ margin:10px 10px 6px; font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--txt-mute); }
@@ -2773,7 +2773,7 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .q-howto{ margin:-4px auto 6px; max-width:560px; text-align:center; text-wrap:balance; font-size:13px; line-height:1.45; color:var(--gw-soft); }
 .q-howto b{ color:var(--gw-ink); font-weight:700; }
 .journal .q-item{ border-radius:6px; border:1px solid var(--gw-line); background:var(--gw-panel-2); }
-.journal .q-item > summary{ gap:12px; padding:10px 14px; font-size:15px; }
+.journal .q-item > summary, .journal .q-head{ gap:12px; padding:10px 14px; font-size:15px; }
 .journal .q-item[open] > summary{ background:var(--gw-sel); border-bottom-color:var(--gw-line); border-radius:6px 6px 0 0; }
 .journal .q-name{ font-weight:600; color:var(--gw-ink); }
 .journal .q-item[open] .q-name{ color:var(--gw-sel-ink); }
@@ -2909,13 +2909,14 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 [data-theme="light"] .journal-to-map:hover{ background:#fff; border-color:#8a6510; }
 /* Misión que la guía da por opcional pero útil, o que basta con tener tomada */
 .q-optional, .q-take{
-  margin-right:auto; padding:1px 8px; border-radius:999px;
+  padding:1px 8px; border-radius:999px;
   border:1px solid color-mix(in srgb, var(--gw-gold) 55%, transparent);
   background:color-mix(in srgb, var(--gw-gold) 12%, transparent);
   font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-gold);
 }
-/* El nombre no ocupa todo el ancho, para que la etiqueta vaya pegada a él */
-.q-name:has(+ .q-optional, + .q-take){ flex:0 1 auto; }
+/* El nombre no ocupa todo el ancho (es el enlace a la guía y no debe tapar la fila): la
+   etiqueta va pegada a él, y el estado y el nivel, a la derecha */
+.q-head > .q-done-btn, .q-item > summary > .q-done-btn, .q-take + .q-lv{ margin-left:auto; }
 /* «Completar» / «✓ Completada»: un botón plano del juego, pequeño; hecha, con el verde de los medallones */
 .q-done-btn{
   flex:none; padding:3px 9px; border-radius:4px; cursor:pointer;
@@ -3077,6 +3078,29 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   font:inherit; font-weight:700; color:var(--txt); cursor:pointer;
 }
 .step-ref:hover{ border-color:var(--amber); }
+/* El nombre de la misión es el enlace a su guía: se lee como enlace al pasar o al
+   enfocarlo, subrayado y con una ↗ pequeña que no mueve nada (ancho 0) */
+a.q-name{ text-decoration:none; text-underline-offset:3px; text-decoration-thickness:1px; }
+a.q-name:hover, a.q-name:focus-visible{ text-decoration-line:underline; text-decoration-color:color-mix(in srgb, currentColor 55%, transparent); }
+a.q-name::after{ content:"↗"; display:inline-block; width:0; margin-left:.3em; font-size:.75em; font-weight:700; opacity:0; transition:opacity .15s ease; }
+a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
+/* La fila de una misión que no se despliega: el botón de su estado la cubre entera con
+   su ::after (sin filter al pasar: haría del botón el contenedor del ::after) y el
+   título, encima, sigue siendo su enlace */
+.q-head{ position:relative; }
+.q-head > a.q-name{ position:relative; z-index:1; }
+.q-row-toggle::after{ content:""; position:absolute; inset:0; border-radius:6px; cursor:pointer; }
+.q-row-toggle:disabled::after{ cursor:default; }
+.q-row-toggle:hover:not(:disabled){ filter:none; }
+.q-row-toggle:focus-visible{ outline:none; }
+.q-row-toggle:focus-visible::after{ outline:2px solid var(--gw-gold, var(--accent-2)); outline-offset:-2px; }
+.q-item.is-flat:has(.q-row-toggle:hover:not(:disabled)){ border-color:color-mix(in srgb, var(--gw-gold, var(--accent-2)) 55%, transparent); }
+/* Hecha: el filete verde de los medallones y el nombre más apagado */
+.journal .q-item.is-done{ border-color:color-mix(in srgb, #7ea83a 55%, var(--gw-line)); background:color-mix(in srgb, #8fd13a 6%, var(--gw-panel-2)); }
+.journal .q-item.is-done .q-name{ color:var(--gw-soft); }
+/* Lo que va bajo la fila (notas, de dónde sale), con aire hasta el borde */
+.journal .q-item.is-flat > :last-child:not(.q-head){ margin-bottom:10px; }
+[data-theme="light"] .journal .q-item.is-done{ border-color:color-mix(in srgb, #4e8f1b 45%, var(--gw-line)); background:color-mix(in srgb, #4e8f1b 6%, var(--gw-panel-2)); }
 .q-guide{ margin-left:8px; font-size:12px; font-weight:700; color:var(--accent-ink); text-decoration:none; white-space:nowrap; }
 .q-guide:hover{ text-decoration:underline; }
 .q-guide::after{ content:" ↗"; font-size:.85em; }
