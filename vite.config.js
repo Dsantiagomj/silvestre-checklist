@@ -22,13 +22,32 @@ const dofusHtml = {
     .replaceAll("%DOFUS_ICON_NOTE%", CONFIG.html.iconNote),
 };
 
+// Los favicons de index.html son los del Silvestre, en public/. Un Dofus con los suyos
+// (html.icons en su config.js, rutas relativas a su carpeta) los cambia antes de que Vite
+// procese el HTML: así salen con hash en su build, junto a su JS
+const dofusIcons = {
+  name: "dofus-icons",
+  transformIndexHtml: {
+    order: "pre",
+    handler: html => Object.entries(CONFIG.html.icons || {}).reduce(
+      (out, [file, own]) => out.replaceAll(`href="/${file}"`, `href="/src/dofus/${DOFUS}/${own}"`), html),
+  },
+};
+
+// La raíz del sitio de GitHub Pages, donde están public/ y sus imágenes (img/): en Pages
+// el workflow pasa BASE_PATH; en local y en las pruebas, la raíz. El Silvestre vive ahí
+// mismo; un Dofus con build.outDir (el Hielos, en hielos/) vive debajo y comparte las
+// imágenes de la raíz en vez de llevar otra copia de public/ (lib/assets.js, __SITE_ROOT__)
+const SITE_ROOT = process.env.BASE_PATH || "/";
+
 // El embebido (EMBED=1, npm run build:embed): la app como un solo módulo que se monta en
 // una página ajena (src/embed.jsx). Carga sus trozos y las imágenes de GitHub Pages, así
 // que la base es la dirección absoluta del sitio
 const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 
-// Los dos embebidos: la app del Dofus elegido (EMBED=1; el Silvestre, embed/silvestre.js,
-// según el build de su config.js) y el hub de los checklists (HUB=1, npm run build:hub,
+// Los embebidos: la app del Dofus elegido (EMBED=1, según el build de su config.js: el
+// Silvestre, embed/silvestre.js; con DOFUS=hielos, npm run build:embed:hielos,
+// embed/hielos.js) y el hub de los checklists (HUB=1, npm run build:hub,
 // src/hub/embed.js), una franja por Dofus que lleva a su checklist. El hub va aparte y
 // solo: no carga la app ni sus datos
 const EMBEDS = {
@@ -37,8 +56,8 @@ const EMBEDS = {
 };
 
 function embedConfig(name) {
-  // Junto al sitio normal: dist/embed/silvestre.js y sus trozos en dist/embed/chunks/; el
-  // hub, dist/embed/checklists.js. Las imágenes no se copian, son las de public/ que ya
+  // Junto al sitio normal: dist/embed/silvestre.js y sus trozos en dist/embed/chunks/ (el
+  // Hielos, dist/embed/hielos.js y dist/embed/hielos-chunks/); el hub, dist/embed/checklists.js. Las imágenes no se copian, son las de public/ que ya
   // publica el sitio. Las pruebas lo construyen en otra carpeta (EMBED_OUT) para no pisar
   // dist/. Cada uno borra solo lo suyo: construir uno no se lleva el otro
   const { input, entry, chunks, assets } = EMBEDS[name];
@@ -48,6 +67,7 @@ function embedConfig(name) {
     plugins: [react()],
     resolve,
     base: EMBED_BASE,
+    define: { __SITE_ROOT__: JSON.stringify(EMBED_BASE) },
     build: {
       outDir,
       emptyOutDir: false,
@@ -70,13 +90,18 @@ function embedConfig(name) {
 
 const embedName = () => (process.env.HUB ? "hub" : process.env.EMBED ? "app" : null);
 
+// El sitio de un Dofus que no vive en la raíz (build.outDir): en su carpeta y sin public/
+const nested = command => command === "build" && !!CONFIG.build.outDir;
+
 export default defineConfig(({ command }) => (command === "build" && embedName() ? embedConfig(embedName()) : {
-  plugins: [react(), dofusHtml],
+  plugins: [react(), dofusIcons, dofusHtml],
   resolve,
-  // En GitHub Pages la app vive en /silvestre-checklist/: el workflow pasa BASE_PATH.
-  // En local y en las pruebas, la raíz
-  base: process.env.BASE_PATH || "/",
+  // En GitHub Pages la app vive en /silvestre-checklist/ (SITE_ROOT) y el Hielos en
+  // /silvestre-checklist/hielos/. En desarrollo, siempre la raíz, con public/ servido
+  base: nested(command) ? `${SITE_ROOT}${CONFIG.build.outDir}/` : SITE_ROOT,
+  define: { __SITE_ROOT__: JSON.stringify(SITE_ROOT) },
   // quests.json (~520 KB) va en su propio chunk diferido a propósito. El sitio de cada
-  // Dofus va en dist/ + build.outDir de su config.js (el Silvestre, en dist/ mismo)
-  build: { chunkSizeWarningLimit: 600, outDir: path.join("dist", CONFIG.build.outDir) },
+  // Dofus va en dist/ + build.outDir de su config.js (el Silvestre, en dist/ mismo); el
+  // de debajo no copia public/: sus imágenes son las de la raíz
+  build: { chunkSizeWarningLimit: 600, outDir: path.join("dist", CONFIG.build.outDir), copyPublicDir: !nested(command) },
 }));

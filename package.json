@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:hielos": "DOFUS=hielos vite build",
     "build:embed": "EMBED=1 vite build",
+    "build:embed:hielos": "DOFUS=hielos EMBED=1 vite build",
     "build:hub": "HUB=1 vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
