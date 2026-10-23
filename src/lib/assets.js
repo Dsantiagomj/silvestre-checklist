@@ -29,7 +29,9 @@ export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
 export const SOLO_ROAD = !DOFUS_ROAD.length && !!BRAND_ICON && DOFUS.egg.final != null;
 export const STRIP_ROAD = SOLO_ROAD ? [{ name: DOFUS.name, img: BRAND_ICON, step: DOFUS.egg.final }] : DOFUS_ROAD;
 
-const IMG_BASE = import.meta.env.BASE_URL + (DATA.DOFUS_IMG || "");
+// Las imágenes están en public/ de la raíz del sitio (__SITE_ROOT__, vite.config.js): la
+// base de la app, salvo en un Dofus que vive debajo (el Hielos, en hielos/)
+const IMG_BASE = __SITE_ROOT__ + (DATA.DOFUS_IMG || "");
 
 /** Paisaje de cada zona (.build/fetch_zone_maps.py): { img, thumb } por nombre de zona. */
 export const ZONE_IMG = ZONES;
