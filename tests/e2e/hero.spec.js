@@ -10,7 +10,7 @@ import { openApp } from "./helpers.js";
 
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 
-const FIGURES = JSON.parse(readFileSync(new URL("../../src/data/figures.json", import.meta.url), "utf8"));
+const FIGURES = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/figures.json", import.meta.url), "utf8"));
 const heroBg = page => page.locator(".hero-bg-img").last().evaluate(el => el.style.backgroundImage);
 
 test("el fondo del hero es el mapa del juego donde empieza el siguiente paso", async ({ page }) => {

@@ -1,17 +1,17 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { STEPS, ZONE_COLOR } from "../data/steps.js";
+import { STEPS, ZONE_COLOR } from "@dofus/steps.js";
 import { flatObjectives, questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
 import { stepCalls, stepTitle } from "../lib/journal.js";
 import {
-  currentOf, goQuest, moveObjective, overlayGo, overlayStep, progressPct, rowHave, useAppState,
+  LS, currentOf, goQuest, moveObjective, overlayGo, overlayStep, progressPct, rowHave, useAppState,
 } from "../state/store.js";
 import { Objectives } from "../components/StepParts.jsx";
 import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri, progressOf } from "../components/Journal.jsx";
 import { stepGuide } from "../lib/guides.js";
 import { WinBadge } from "../components/Diary.jsx";
 
-const TAB_KEY = "silvestre:overlayTab";
+const TAB_KEY = LS.overlayTab;
 const TABS = [["now", "Ahora"], ["quests", "Misiones"], ["items", "Objetos"], ["guide", "Guía"]];
 const readTab = () => {
   const t = localStorage.getItem(TAB_KEY);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, usePresence } from "motion/react";
 import { prefersReducedMotion } from "../lib/motion.js";
-import { STEPS, ZONES, ZONE_COLOR } from "../data/steps.js";
+import { STEPS, ZONES, ZONE_COLOR } from "@dofus/steps.js";
 import { BRAND_ICON, ZONE_IMG, imgUrl } from "../lib/assets.js";
 import { setZone } from "../state/store.js";
 import { useDismiss } from "../lib/useDismiss.js";

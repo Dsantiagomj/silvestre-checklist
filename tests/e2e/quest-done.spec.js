@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import { openApp, readLS } from "./helpers.js";
 
-const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
+const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/weights.json", import.meta.url), "utf8"));
 const upTo = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, true]));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));

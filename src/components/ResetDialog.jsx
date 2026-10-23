@@ -3,11 +3,12 @@ import {
   applySnapshot, doneCount, getState, isPrereqDone, ownedCount, prereqsDone, progressPct, rowHave, showToast,
   takeSnapshot, useAppState,
 } from "../state/store.js";
-import { ALL_PREREQS } from "../data/steps.js";
+import { ALL_PREREQS } from "@dofus/steps.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import { BRAND_ICON, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import BackupCard from "./BackupCard.jsx";
+import DOFUS from "@dofus/config.js";
 
 /** REINICIAR · diálogo nativo (foco atrapado y Esc gratis) */
 export default function ResetDialog({ ref }) {
@@ -74,7 +75,7 @@ export default function ResetDialog({ ref }) {
             <h2 className="rd-title" id="rdTitle">¿Reiniciar tu progreso?</h2>
             <p className="rd-sub" id="rdSub">
               {pct
-                ? <>Llevas <b>{pct}%</b> del Dofus Silvestre. Elige qué borrar; lo demás se queda.</>
+                ? <>Llevas <b>{pct}%</b> del {DOFUS.name}. Elige qué borrar; lo demás se queda.</>
                 : "Todavía no hay pasos completados. Elige qué borrar; lo demás se queda."}
             </p>
           </div>

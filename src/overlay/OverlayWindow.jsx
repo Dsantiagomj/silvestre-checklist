@@ -9,17 +9,18 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  getState, loadQuests, moveObjective, overlayGo, overlayStep, toggleStep, useAppState,
+  LS, getState, loadQuests, moveObjective, overlayGo, overlayStep, toggleStep, useAppState,
 } from "../state/store.js";
 import { StepGo } from "../components/Journal.jsx";
 import OverlayView from "./OverlayView.jsx";
 import { appRoot, isEmbedded } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 // El tamaño con el que se abre la ventana. Después no se redimensiona: el contenido se
 // adapta a la ventana tal como la dejes
 const SIZE = { width: 400, height: 680 };
 // Lo guardaban las versiones con modo mini; ya no se usa
-const OLD_MODE_KEY = "silvestre:overlayMode";
+const OLD_MODE_KEY = LS.overlayMode;
 
 /**
  * Copia todas las hojas de estilo de la app (en dev son <style>, en build <link>).
@@ -27,7 +28,7 @@ const OLD_MODE_KEY = "silvestre:overlayMode";
  */
 function copyStyles(doc) {
   const sheets = isEmbedded()
-    ? [...document.querySelectorAll("link[data-silvestre-fonts]"), ...appRoot().querySelectorAll("style, link[rel=stylesheet]")]
+    ? [...document.querySelectorAll(`link[data-${DOFUS.embed.fonts}]`), ...appRoot().querySelectorAll("style, link[rel=stylesheet]")]
     : document.querySelectorAll("style, link[rel=stylesheet]");
   sheets.forEach(node => {
     const clone = node.cloneNode(true);
@@ -78,12 +79,12 @@ export function useOverlayWindow() {
       }
     }
     if (!w) {
-      w = window.open("", "silvestre-overlay", `popup,width=${size.width},height=${size.height}`);
+      w = window.open("", DOFUS.overlayWindow, `popup,width=${size.width},height=${size.height}`);
       if (!w) {
         alert("El navegador bloqueó la ventana del overlay. Permite popups para este sitio.");
         return;
       }
-      w.document.title = "Silvestre · Overlay";
+      w.document.title = DOFUS.texts.overlayTitle;
       w.document.head.replaceChildren();
       w.document.body.replaceChildren();
     }

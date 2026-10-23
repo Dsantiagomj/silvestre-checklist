@@ -1,9 +1,9 @@
 import { Fragment, createContext, useContext, useEffect, useState } from "react";
-import { STEPS, ZONE_COLOR } from "../data/steps.js";
+import { STEPS, ZONE_COLOR } from "@dofus/steps.js";
 import { CALL_ICONS, OBJ_ICONS, assetsFor, imgUrl } from "../lib/assets.js";
 import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
-import PLANS from "../data/plans.json";
+import PLANS from "@dofus/plans.json";
 import {
   CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, missionNotes, nextPendingAfter, redIsStop, stepCalls, stepTitle, stopPoints,
 } from "../lib/journal.js";
@@ -18,6 +18,7 @@ import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
 import { openNota } from "./Nota.jsx";
 import { useTallScreen } from "../lib/screen.js";
+import DOFUS from "@dofus/config.js";
 
 // Los resaltados de la guía: rojo y verde en torrentearcano, y el azul separado por lo
 // que dice (import_guide.py). El icono es un objeto del juego (CALL_ICONS); lo que
@@ -685,7 +686,7 @@ export default function Journal({ n, id }) {
           {tall && <Needs n={n} s={s} />}
           <Quests step={step} quests={quests} loaded={s.questsLoaded} s={s} />
           {!tall && <Needs n={n} s={s} />}
-          <p className="asset-note">Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB</p>
+          <p className="asset-note">{DOFUS.texts.assetNote}</p>
         </div>
         <Actions step={step} s={s} />
       </div>

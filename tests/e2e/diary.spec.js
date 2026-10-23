@@ -4,7 +4,7 @@ import { openApp, readLS } from "./helpers.js";
 
 const range = (a, b) => Object.fromEntries(Array.from({ length: b - a + 1 }, (_, i) => [a + i, true]));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
-const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
+const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/weights.json", import.meta.url), "utf8"));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Object.values(WEIGHTS).map(x => x.w));
 // El mismo redondeo que el porcentaje de la barra: un decimal
@@ -1374,7 +1374,7 @@ test("el estandarte no crece con el texto: el del 93 mide lo mismo que el del 12
 });
 
 test("los nombres de misión de la guía no arrastran el «)» que cierra el resaltado, y enlazan en su aviso", async ({ page }) => {
-  const GUIDES = JSON.parse(readFileSync(new URL("../../src/data/guides.json", import.meta.url), "utf8"));
+  const GUIDES = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/guides.json", import.meta.url), "utf8"));
   const unbalanced = Object.keys(GUIDES.missions).filter(k => (k.match(/\)/g) || []).length > (k.match(/\(/g) || []).length);
   expect(unbalanced).toEqual([]);
   await openApp(page);
@@ -1418,7 +1418,7 @@ test("las paradas del 54 y del 85 caen en el combate: la kitsu de nueve colas y 
 });
 
 test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una nota: se puede hacer hasta el paso 80", async ({ page }) => {
-  const FIGURES = JSON.parse(readFileSync(new URL("../../src/data/figures.json", import.meta.url), "utf8"));
+  const FIGURES = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/figures.json", import.meta.url), "utf8"));
   const errors = await openApp(page);
   expect((await stepData(page, 38)).quests).toEqual(
     ["Extinción de los fuegos", "Esto parece el Sur", "La sombra del reino", "La bruja mala del Este"]);

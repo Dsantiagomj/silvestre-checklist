@@ -4,7 +4,7 @@ import { useAnimate } from "motion/react-mini";
 import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { EASE, morphHeight, prefersReducedMotion, restartClass, useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
@@ -21,6 +21,7 @@ import WinBar from "./WinBar.jsx";
 import ZoneSeals from "./ZoneSeals.jsx";
 import SearchField from "./SearchField.jsx";
 import { appRoot, eventTarget, popRoot } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 const TABS = [
   ["pending", "Pendientes", "diaryTabPending"],
@@ -541,7 +542,7 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
   const origin = `${at.x}px ${at.y - (flow ? 0 : mapScrollTop())}px`;
   return (
     <section className="diary" id="diary" aria-labelledby="diaryTitle">
-      <h2 className="sr-only" id="diaryTitle">Los 100 pasos</h2>
+      <h2 className="sr-only" id="diaryTitle">{DOFUS.texts.stepsTitle}</h2>
       {/* Una sola ventana: arriba la barra (progreso, Dofus del camino, pestañas y sus
           herramientas, overlay y menú) y, debajo, lo que se elija */}
       <div className="steps-win">

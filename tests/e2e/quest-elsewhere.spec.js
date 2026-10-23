@@ -6,7 +6,7 @@ import { openApp, readLS } from "./helpers.js";
 // termina entera: el que la lleva sin parar dentro, o el que para dentro si también está
 // hecho el que lo cierra
 
-const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/data/weights.json", import.meta.url), "utf8"));
+const WEIGHTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/weights.json", import.meta.url), "utf8"));
 const sum = xs => xs.reduce((a, x) => a + x, 0);
 const TOTAL = sum(Array.from({ length: 100 }, (_, i) => WEIGHTS[i + 1].w));
 // El mismo redondeo que el porcentaje de la barra: un decimal

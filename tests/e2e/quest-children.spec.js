@@ -6,7 +6,7 @@ import { openApp, readLS } from "./helpers.js";
 // (Qa=madre&Qo=objetivo en DofusDB). Si las dos van en el mismo paso, la ruta de la madre
 // dice dónde se hacen las hijas, y la madre no se da por terminada antes de tiempo
 
-const QUESTS = JSON.parse(readFileSync(new URL("../../src/data/quests.json", import.meta.url), "utf8"));
+const QUESTS = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/quests.json", import.meta.url), "utf8"));
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 const quest = (page, name) => page.locator("#journal .q-item")
   .filter({ has: page.locator("summary .q-name").getByText(name, { exact: true }) });

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
-import { STEPS } from "../data/steps.js";
+import { STEPS } from "@dofus/steps.js";
 import {
   doneCount, isMobile, nextPending, progressPct, rowHave, selectStep, useAppState,
 } from "../state/store.js";
@@ -11,6 +11,7 @@ import { bannerFigure, doneIcon, startMap, stepCalls, stepTitle, stopBoss } from
 import { prefersReducedMotion } from "../lib/motion.js";
 import Banner from "./Banner.jsx";
 import { appRoot, appTopY, popRoot, scrolledInApp } from "../lib/root.js";
+import DOFUS from "@dofus/config.js";
 
 // Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
 // Posiciones y ritmos fijos (no aleatorios) para que el render sea estable.
@@ -29,8 +30,10 @@ function goToStep(n) {
   if (!isMobile()) appRoot().getElementById("diary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// La Piñata de pino: la da el paso 99 y es la que se convierte en el Dofus Silvestre
-const PINATA = DOFUS_ROAD.find(d => d.step === 99);
+// La Piñata de pino: la da el paso 99 (egg.pre en config.js) y es la que se convierte en
+// el Dofus Silvestre
+const EGG = DOFUS.egg;
+const PINATA = DOFUS_ROAD.find(d => d.step === EGG.pre);
 // Lo que dura la transformación (egg-morph-* en el CSS): subir al hero y convertirse
 const MORPH_MS = 3400;
 
@@ -38,7 +41,7 @@ const MORPH_MS = 3400;
  * El huevo del anillo: el Silvestre apagado hasta el final; con el paso 99 hecho, la
  * Piñata de pino; con el 100, el Silvestre encendido.
  */
-const eggStage = s => (s.done[100] ? "silvestre" : s.done[99] && PINATA ? "pinata" : "off");
+const eggStage = s => (s.done[EGG.final] ? "silvestre" : s.done[EGG.pre] && PINATA ? "pinata" : "off");
 
 // Las dos transformaciones: al marcar el 99, el Silvestre apagado se vuelve la Piñata de
 // pino; al marcar el 100, la Piñata se vuelve el Silvestre encendido
@@ -206,7 +209,7 @@ export default function Hero() {
           <div className="hero-main">
             {/* El título de la página, pequeño: la antesala del paso */}
             <div className="hero-eyebrow">
-              <h1>Checklist del Dofus Silvestre</h1>
+              <h1>{DOFUS.texts.title}</h1>
               <span aria-hidden="true">·</span>
               <span>siguiente paso</span>
             </div>
@@ -221,9 +224,9 @@ export default function Hero() {
         ) : (
           // Con la guía terminada ya no hay siguiente paso: el título y el huevo obtenido
           <div className="hero-copy">
-            <p className="hero-eyebrow">Guía de Sandglass</p>
-            <h1 className="hero-title">Checklist del Dofus <span className="hl">Silvestre</span></h1>
-            <p className="hero-sub">Los 100 pasos para obtener el Dofus Silvestre en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.</p>
+            <p className="hero-eyebrow">{DOFUS.texts.heroEyebrow}</p>
+            <h1 className="hero-title">{DOFUS.texts.titleLead} <span className="hl">{DOFUS.short}</span></h1>
+            <p className="hero-sub">{DOFUS.texts.heroSub}</p>
           </div>
         )}
 

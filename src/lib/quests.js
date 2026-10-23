@@ -18,7 +18,7 @@ export const questsData = () => data;
 export function loadQuests(onLoad) {
   if (data) return Promise.resolve(data);
   if (!pending) {
-    pending = import("../data/quests.json").then(mod => {
+    pending = import("@dofus/quests.json").then(mod => {
       data = mod.default;
       return data;
     });

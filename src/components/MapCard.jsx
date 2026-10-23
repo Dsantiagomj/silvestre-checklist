@@ -1,5 +1,5 @@
 import { useEffect, useId } from "react";
-import { ZONE_COLOR } from "../data/steps.js";
+import { ZONE_COLOR } from "@dofus/steps.js";
 import { CALL_ICONS, DOFUS_ROAD, OBJ_ICONS, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, RESUMED_IN, doneIcon, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
 import { questsOf } from "../lib/quests.js";

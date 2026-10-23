@@ -1,5 +1,5 @@
 import { useLiveIds } from "../lib/leaving.js";
-import { ALL_PREREQS, PREREQS_INTRO } from "../data/steps.js";
+import { ALL_PREREQS, PREREQS_INTRO } from "@dofus/steps.js";
 import {
   getState, prereqsDone, restoreMarks, rowHave, setAllPrereqs, setRowsOwned, showToast, useAppState,
 } from "../state/store.js";
