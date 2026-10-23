@@ -25,7 +25,8 @@ export default {
     titleLead: "Checklist del Dofus de los",
     // El hero con la guía terminada
     heroEyebrow: "Guía de Torrente Arcano",
-    heroSub: "Los 70 pasos para obtener el Dofus de los Hielos en el orden más eficiente, con las misiones, jefes de mazmorra y objetos que vas a necesitar.",
+    // El del hub de los checklists (src/hub/manifest.js)
+    heroSub: "Descubre los misterios de la isla de Frigost en 70 pasos y enfréntate al temible Conde Kontatrás.",
     // El título (para lectores de pantalla) de la ventana de pasos
     stepsTitle: "Los 70 pasos",
     // El pie: quién escribió la guía
@@ -62,6 +63,14 @@ export default {
   build: {
     outDir: "hielos",
     embed: { entry: "embed/hielos.js", chunks: "embed/hielos-chunks", assets: "embed/hielos-assets" },
+  },
+
+  // El hero (Hero.jsx): copos de nieve en vez de luciérnagas y hojas (fx) y, de pie junto
+  // al huevo, el Conde Kontatrás, el jefe final de la guía, como en el hub (npc, la ruta
+  // de su imagen en public/img/). El Silvestre no lleva hero: el suyo es el de siempre
+  hero: {
+    fx: "snow",
+    npc: { img: "hub/conde-kontatras.png", name: "Conde Kontatrás" },
   },
 
   // El huevo del hero y de la barra: apagado hasta el paso 69, donde Jiva da el Dofus. No

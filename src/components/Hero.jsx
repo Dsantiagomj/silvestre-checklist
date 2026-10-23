@@ -13,8 +13,9 @@ import Banner from "./Banner.jsx";
 import { appRoot, appTopY, popRoot, scrolledInApp } from "../lib/root.js";
 import DOFUS from "@dofus/config.js";
 
-// Partículas del ambiente: luciérnagas de noche, hojas que caen de día.
-// Posiciones y ritmos fijos (no aleatorios) para que el render sea estable.
+// Partículas del ambiente: luciérnagas de noche, hojas que caen de día (en el Hielos,
+// copos de nieve: hero.fx en config.js). Posiciones y ritmos fijos (no aleatorios) para
+// que el render sea estable.
 const FX = [
   [6, 0, 11, 6], [14, 3.2, 14, 4], [23, 7.1, 12, 7], [31, 1.4, 16, 5], [39, 5.6, 13, 4],
   [47, 9.3, 15, 6], [56, 2.5, 12, 5], [63, 6.4, 17, 7], [71, 0.8, 14, 4], [78, 4.7, 11, 6],
@@ -31,9 +32,12 @@ function goToStep(n) {
 }
 
 // La Piñata de pino: la da el paso 99 (egg.pre en config.js) y es la que se convierte en
-// el Dofus Silvestre
+// el Dofus Silvestre. Sin ella (el Hielos), el huevo pasa de apagado a encendido
 const EGG = DOFUS.egg;
 const PINATA = DOFUS_ROAD.find(d => d.step === EGG.pre);
+// Lo propio del hero de cada Dofus (config.js): el ambiente y quién espera al final de la
+// guía junto al huevo (en el Hielos, el Conde Kontatrás). Sin nada, el del Silvestre
+const LOOK = DOFUS.hero || {};
 // Lo que dura la transformación (egg-morph-* en el CSS): subir al hero y convertirse
 const MORPH_MS = 3400;
 
@@ -44,8 +48,9 @@ const MORPH_MS = 3400;
 const eggStage = s => (s.done[EGG.final] ? "silvestre" : s.done[EGG.pre] && PINATA ? "pinata" : "off");
 
 // Las dos transformaciones: al marcar el 99, el Silvestre apagado se vuelve la Piñata de
-// pino; al marcar el 100, la Piñata se vuelve el Silvestre encendido
-const MORPHS = { "off>pinata": "off", "pinata>silvestre": "pinata" };
+// pino; al marcar el 100, la Piñata se vuelve el Silvestre encendido. Sin Piñata, una: al
+// marcar el paso final, el huevo apagado se enciende
+const MORPHS = PINATA ? { "off>pinata": "off", "pinata>silvestre": "pinata" } : { "off>silvestre": "off" };
 
 /**
  * Al pasar de una etapa a la siguiente marcando el paso, sube al hero y transforma el
@@ -185,7 +190,8 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className={"hero" + (nextStep ? "" : " is-complete")} aria-label="Progreso global" ref={heroRef}>
+    <section className={"hero" + (nextStep ? "" : " is-complete") + (LOOK.fx ? ` fx-${LOOK.fx}` : "") + (LOOK.npc ? " has-npc" : "")}
+      aria-label="Progreso global" ref={heroRef}>
       {/* Lo casi negro de los mapas (el vacío alrededor de la sala), transparente */}
       <svg className="hero-defs" aria-hidden="true" focusable="false">
         <filter id="heroKnockout" colorInterpolationFilters="sRGB">
@@ -230,6 +236,8 @@ export default function Hero() {
           </div>
         )}
 
+        {/* Quien espera al final de la guía, de pie junto al huevo: solo adorna */}
+        {LOOK.npc && <img className="hero-npc" src={imgUrl(LOOK.npc.img)} alt="" aria-hidden="true" title={LOOK.npc.name} />}
         <div className="hero-visual">
           <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph ? " morphing" : "")} data-stage={stage}
             style={{ "--p": pct }} aria-hidden="true">
