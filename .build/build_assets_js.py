@@ -52,9 +52,9 @@ HEADER_ICONS = {"reset": "items/15913.png", "overlay": "items/24286.png"}
 from match_assets import ACH, QUEST, lookup  # noqa: E402  (loads the big tables once)
 
 PREREQ_JOBS = D.PREREQ_JOBS  # per Dofus, in .build/dofus/<id>.py
-JOB_NAMES = {2: "Leñador", 13: "Escultor", 24: "Minero", 26: "Alquimista",
-             28: "Campesino", 36: "Pescador", 60: "Fabricante", 65: "Manitas",
-             79: "Ganadero"}
+JOB_NAMES = {2: "Leñador", 11: "Herrero", 13: "Escultor", 16: "Joyero", 24: "Minero",
+             26: "Alquimista", 27: "Sastre", 28: "Campesino", 36: "Pescador", 60: "Fabricante",
+             65: "Manitas", 79: "Ganadero"}
 PREREQ_SPELLS = D.PREREQ_SPELLS  # per Dofus, in .build/dofus/<id>.py
 # Job icon ids differ from job ids (DofusDB: img/jobs/<iconId>.jpg).
 JOB_ICON = {}
@@ -140,7 +140,8 @@ def dofus_road(achievements, quests, steps, report):
     road = []
     for i, (step, ach) in found.items():
         type_id, name, icon = types.get(i, (None, "", None))
-        if type_id == DOFUS_TYPE and name != D.NAME:
+        # DofusDB writes "Dofus de los hielos": the name, whatever its capitals
+        if type_id == DOFUS_TYPE and name.casefold() != D.NAME.casefold():
             road.append({"name": name, "img": f"items/{icon}.png", "step": step, "achievement": ach})
     return sorted(road, key=lambda d: (d["step"], d["name"]))
 
