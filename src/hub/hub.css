@@ -1,6 +1,6 @@
 /* ============================================================================
    HUB DE LOS CHECKLISTS · UNA CARTA POR DOFUS
-   Cartas coleccionables en fila: la zona de fondo, el PNJ asomando por la derecha, el huevo
+   Un título y debajo cartas coleccionables en fila: la zona de fondo, el PNJ asomando por la derecha, el huevo
    arriba con su brillo y el nombre abajo, sobre oscuro. Con el ratón se inclinan y el brillo
    holográfico lo sigue (src/hub/hub.js). En estrecho (≤600px) van de dos en dos.
    A pantalla completa: src/hub/embed.js lo lleva de borde a borde y --checklists-h es el
@@ -31,16 +31,38 @@
   --gap: clamp(16px, 2vw, 28px);
   /* Lo que dejan la cabecera y el pie (src/hub/embed.js); sin script, la pantalla */
   height: var(--checklists-h, 100svh);
-  /* Las cartas siguen al alto y al ancho del hub (cqh, cqw): una pantalla baja no las corta */
-  container: cards / size;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap);
+  flex-direction: column;
+  gap: clamp(14px, 3vh, 28px);
   margin: 0;
   padding: var(--pad);
   overflow: hidden;
   background: radial-gradient(90% 80% at 50% 0%, #1a1f17, #0b0c0a 70%);
+}
+
+.title {
+  flex: none;
+  margin: clamp(0px, 3vh, 24px) 0 0;
+  font-family: var(--fd);
+  font-weight: 800;
+  font-size: clamp(28px, 4.2vw, 48px);
+  line-height: 1;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #f2f5ee;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
+}
+
+/* La fila de las cartas: siguen a su alto y su ancho (cqh, cqw), así una pantalla baja no las corta */
+.row {
+  flex: 1;
+  min-height: 0;
+  container: row / size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
 }
 
 /* Lo que cabe de alto o, con muchas, lo que toca a cada una del ancho (--n, src/hub/hub.js) */
@@ -202,7 +224,11 @@
     --gap: 12px;
     height: auto;
     min-height: var(--checklists-h, 100svh);
-    container: cards / inline-size;
+    justify-content: center;
+  }
+  .row {
+    flex: none;
+    container: row / inline-size;
     flex-wrap: wrap;
     align-content: center;
   }

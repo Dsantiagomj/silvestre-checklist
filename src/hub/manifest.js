@@ -5,6 +5,8 @@
 // npcFit (opcional) encuadra el PNJ: h alto, r derecha, t arriba, en % de la carta.
 // ============================================================================
 export const HUB = {
+  // El título de la sección, sobre las cartas
+  title: "Checklists de Dofus",
   dofus: [
     {
       id: "silvestre",
