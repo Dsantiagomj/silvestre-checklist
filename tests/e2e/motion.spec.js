@@ -450,8 +450,8 @@ for (const [name, view, click] of [
     // Y se ve aparecer antes de que la vieja se quite: no salta al final
     expect(both.some(f => f.onScreen && f.opacity > 0.5)).toBe(true);
     // Sin parones: el umbral deja margen para la máquina cargada, no para un atasco. En la CI
-    // (2 núcleos, sin GPU) un fotograma llega a ~153 ms; el atasco de verdad eran ~770 ms
-    expect(Math.max(...frames.slice(1).map(f => f.dt))).toBeLessThan(process.env.CI ? 250 : 150);
+    // (2 núcleos, sin GPU) un fotograma llega a ~300 ms; el atasco de verdad eran ~770 ms
+    expect(Math.max(...frames.slice(1).map(f => f.dt))).toBeLessThan(process.env.CI ? 400 : 150);
   });
 }
 
