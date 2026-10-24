@@ -12,6 +12,9 @@ test("el hub se monta en una shadow root con una carta por Dofus y la de Próxim
   // Nada del hub en el documento de la página
   expect(await page.evaluate(() => document.querySelectorAll(".card, .cards").length)).toBe(0);
   await expect(cards(page)).toHaveCount(HUB.dofus.length + 1);
+  // Un título encima de las cartas, que nombra la sección
+  await expect(hub(page).getByRole("heading", { level: 2, name: HUB.title })).toBeVisible();
+  await expect(hub(page).getByRole("region", { name: HUB.title })).toHaveCount(1);
   // Cada carta es un enlace con el nombre del Dofus
   await expect(hub(page).getByRole("link", { name: "Dofus Silvestre · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus de los Hielos · Ver checklist" })).toHaveCount(1);
@@ -35,7 +38,8 @@ test("las cartas siguen el orden del manifiesto y cada una lleva a su checklist"
     expect(await card.evaluate(el => el.tagName)).toBe("A");
     await expect(card).toHaveAttribute("href", d.url);
     await expect(card).toHaveAttribute("data-id", d.id);
-    await expect(card.locator(".kick")).toHaveText("Checklist");
+    // Sin rótulo: el título de la sección ya dice que son checklists
+    await expect(card.locator(".kick")).toHaveCount(0);
     await expect(card.locator(".name")).toHaveText(d.name);
     await expect(card.locator(".lead")).toHaveText(d.lead);
     await expect(card).toHaveAccessibleDescription(d.lead);
