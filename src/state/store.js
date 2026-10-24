@@ -13,6 +13,7 @@ import { STRIP_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
+import { NO_SHARED, SHARED_KEY, entryOf, othersOf, parseShared, withEntry, withPrereqs } from "../lib/shared.js";
 import DOFUS from "@dofus/config.js";
 
 // Las claves de localStorage, con el prefijo del Dofus ("silvestre:done"…)
@@ -39,6 +40,8 @@ export const LS = {
   // La pestaña abierta del overlay y el modo que guardaban las versiones con modo mini
   overlayTab: key("overlayTab"),
   overlayMode: key("overlayMode"),
+  // Las misiones de los otros checklists ya aplicadas a los pasos (completeFromShared)
+  sharedSeen: key("sharedSeen"),
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -99,6 +102,18 @@ const readObj = key => {
     return JSON.parse(localStorage.getItem(key) || "{}") || {};
   } catch {
     return {};
+  }
+};
+
+/** Lo que los demás checklists del mismo origen dan por hecho (lib/shared.js). */
+const readShared = () => othersOf(parseShared(localStorage.getItem(SHARED_KEY)), DOFUS.id);
+
+const readList = key => {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
   }
 };
 
@@ -201,6 +216,9 @@ function initialState() {
     dofusWon: { seq: 0, steps: [] },
     // Los pasos que el clásico tenía hechos y aquí no, al cargar (el aviso de traerlos)
     classicExtra: extra,
+    // Lo terminado y conseguido en los otros checklists: { quests, owned } (lib/shared.js).
+    // No se guarda con lo propio: cada uno publica lo suyo (publishShared)
+    shared: readShared(),
   };
 }
 
@@ -226,6 +244,8 @@ function setState(patch) {
     if (next[k] !== prev[k]) localStorage.setItem(LS[k], JSON.stringify(next[k]));
   }
   persistSelected(prev, next);
+  if (next.done !== prev.done || next.questObj !== prev.questObj || next.owned !== prev.owned
+    || next.questsLoaded !== prev.questsLoaded) publishShared(next);
   listeners.forEach(l => l());
 }
 
@@ -329,6 +349,29 @@ export function questDoneElsewhere(s, qid, except) {
   return null;
 }
 
+/**
+ * Las misiones terminadas en otro checklist ({ id: nombre de su Dofus }), con las que
+ * estas necesitaban terminadas para empezar (PREREQS, como impliedDone). Una vez por
+ * cada `shared` y por la llegada de las misiones.
+ */
+const sharedMemo = new WeakMap();
+function sharedDone(s) {
+  const data = questsData();
+  let memo = sharedMemo.get(s.shared);
+  if (!memo || memo.data !== data) sharedMemo.set(s.shared, (memo = { data, out: withPrereqs(s.shared.quests, data?.PREREQS) }));
+  return memo.out;
+}
+
+/** El estado sin lo de los otros checklists: lo que es solo de este. */
+export const ownState = s => (s.shared === NO_SHARED ? s : { ...s, shared: NO_SHARED });
+
+/**
+ * El nombre del Dofus de otro checklist si la misión `q` del paso `n` está hecha solo por
+ * él (aquí no lo estaría), o null: el diario lo dice y aquí no se deshace.
+ */
+export const sharedBy = (s, n, q) =>
+  (q.id in sharedDone(s) && !questDone(ownState(s), n, q) ? sharedDone(s)[q.id] : null);
+
 /** El paso hecho que termina la misión opcional `qid` (OPTIONAL_DONE_BY), o null. */
 export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIONAL_DONE_BY[qid] : null);
 
@@ -338,10 +381,11 @@ export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIO
  * (impliedDone), o porque la terminó otro paso hecho que la lleva (questDoneElsewhere).
  * Con el paso hecho, sus obligatorias también. Ir por una misión no da por hechas las de
  * antes: solo las que esta pide. Una opcional, ni con el paso hecho: la termina el paso
- * que la termina (optionalDoneBy).
+ * que la termina (optionalDoneBy). Terminada en otro checklist (sharedDone), también,
+ * aunque sea opcional: allí se hizo entera.
  */
 export function questDone(s, n, q, total = objCount(q)) {
-  if ((s.questObj[q.id] || 0) >= total || impliedDone(s.questObj).has(String(q.id))) return true;
+  if ((s.questObj[q.id] || 0) >= total || impliedDone(s.questObj).has(String(q.id)) || q.id in sharedDone(s)) return true;
   if (q.kind === "optional") return !!optionalDoneBy(s, q.id);
   return !!s.done[n] || !!questDoneElsewhere(s, q.id, n);
 }
@@ -363,12 +407,15 @@ export const currentOf = (s, n) => currentQuest(n, s.questPos, s.questObj, quest
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
  * el diario (questDone, con los pesos: sin esperar a las misiones). Las que dan por
  * hechas otras (impliedDone) o otro paso hecho (questDoneElsewhere) se suman cuando
- * llegan las misiones. Las opcionales y las de solo tomarla valen 0.
+ * llegan las misiones; las terminadas en otro checklist (sharedDone), como las propias.
+ * Las opcionales y las de solo tomarla valen 0.
  */
 function questPts(s, n) {
   const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
   const implied = impliedDone(s.questObj);
-  return q.reduce((a, p, i) => a + ((s.questObj[ids[i]] || 0) >= os[i] || implied.has(ids[i]) || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
+  const shared = sharedDone(s);
+  return q.reduce((a, p, i) => a + ((s.questObj[ids[i]] || 0) >= os[i] || implied.has(ids[i]) || ids[i] in shared
+    || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -407,8 +454,15 @@ const rowCovered = (s, k, n) =>
  * prerrequisito que la pide está completo (no hace falta que lo estén todos).
  */
 export const rowUsed = (s, k, n) => guideComplete(s) || rowCovered(s, k, n);
-/** Conseguido a mano para ese paso: el objeto entero (clave sola) o solo esa parte ("clave#paso"). */
-const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`];
+/**
+ * Conseguido a mano para ese paso: el objeto entero (clave sola) o solo esa parte
+ * ("clave#paso"). O conseguido en otro checklist: allí se comparte solo entero.
+ */
+const stepOwned = (s, k, n) => !!s.owned[k] || !!s.owned[`${k}#${n}`] || k in s.shared.owned;
+
+/** El nombre del Dofus de otro checklist si el objeto solo se tiene por él, o null. */
+export const rowSharedBy = (s, row, steps = row.steps) =>
+  (row.k in s.shared.owned && !rowHave(ownState(s), row, steps) ? s.shared.owned[row.k] : null);
 
 /**
  * Los próximos pasos pendientes (los prerrequisitos primero si faltan). Son la
@@ -573,7 +627,7 @@ export function toggleStep(n) {
 function reopenLast(n) {
   if (!questsAllDone(state, n)) return;
   const quests = questsOf(n);
-  const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n));
+  const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n) && !(q.id in sharedDone(state)));
   if (j < 0) return;
   const q = quests[j];
   const keep = quests.filter((x, i) => i !== j && x.kind === "mandatory" && (state.questObj[x.id] || 0) < objCount(x)
@@ -628,7 +682,7 @@ export function closingPlan(s, closes) {
       out.done.push(c);
       continue;
     }
-    const missing = quests.filter(q => q.kind === "mandatory" && !implied.has(String(q.id))
+    const missing = quests.filter(q => q.kind === "mandatory" && !implied.has(String(q.id)) && !(q.id in sharedDone(s))
       && (questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
     if (missing.length) out.pending.push({ n: c, missing });
     else out.done.push(c);
@@ -685,7 +739,7 @@ export function closeSteps(n, closes) {
     shopEpoch: s.shopEpoch + 1,
   }));
   celebrateDofus(before.done);
-  if (plan.pending.length) {
+  if (plan.pending.length && !quiet) {
     const ns = plan.pending.map(p => p.n);
     showToast(pendingText(plan.pending), `Las hice, marcar el ${list(ns)}`, () => markSteps(ns));
   }
@@ -753,6 +807,7 @@ export function dofusWonText(road) {
  * esté a la vista. Sin Dofus del camino (el Hielos), el del checklist (STRIP_ROAD).
  */
 function celebrateDofus(before) {
+  if (quiet) return;
   const won = STRIP_ROAD.filter(d => !before[d.step] && state.done[d.step]);
   if (!won.length) return;
   setState(s => ({ dofusWon: { seq: s.dofusWon.seq + 1, steps: won.map(d => d.step) } }));
@@ -839,7 +894,10 @@ export const restoreMarks = (owned, prereqs) => setState({ owned, prereqs });
 export function loadQuests() {
   if (state.questsLoaded) return;
   loadQuestsData(() => {
-    if (!state.questsLoaded) setState({ questsLoaded: true });
+    if (state.questsLoaded) return;
+    setState({ questsLoaded: true });
+    // Con las misiones ya se sabe qué pasos deja hechos lo de los otros checklists
+    completeFromShared();
   });
 }
 
@@ -927,6 +985,68 @@ export function moveObjective(delta) {
   }));
   completeIfDone(n);
 }
+
+// ---------------------------------------------------------------------------
+// Lo compartido con los otros checklists del mismo origen (lib/shared.js)
+// ---------------------------------------------------------------------------
+/**
+ * Las misiones que el diario da por terminadas con lo de este checklist solo (sin las de
+ * los otros: desmarcarlas allí tiene que poder quitarlas aquí). Las de solo tomarla, no.
+ */
+function ownFinished(s) {
+  const own = ownState(s);
+  const out = [];
+  for (const st of STEPS) {
+    for (const q of questsOf(st.n)) if (q.kind !== "take" && questDone(own, st.n, q)) out.push(q.id);
+  }
+  return out;
+}
+
+/**
+ * Escribe la entrada de este checklist (sus misiones terminadas y sus objetos) sin tocar
+ * las de los demás. Sin las misiones cargadas no se sabe cuáles están terminadas: se
+ * espera, o se publicaría una entrada vacía. Solo si cambia: cada escritura avisa a las
+ * otras pestañas.
+ */
+function publishShared(s) {
+  if (!questsData()) return;
+  const all = parseShared(localStorage.getItem(SHARED_KEY));
+  const entry = entryOf(DOFUS.name, ownFinished(s), s.owned);
+  if (JSON.stringify(all[DOFUS.id]) === JSON.stringify(entry)) return;
+  localStorage.setItem(SHARED_KEY, JSON.stringify(withEntry(all, DOFUS.id, entry)));
+}
+
+/**
+ * Los pasos que lo de los otros checklists deja con todas sus obligatorias hechas quedan
+ * hechos, como al marcar (completeOthers), pero solo por misiones que aún no se habían
+ * aplicado (LS.sharedSeen): uno desmarcado a mano con todo hecho sigue pendiente, también
+ * al recargar, hasta que llegue otra. Las que allí se deshacen salen de las vistas: si se
+ * vuelven a hacer, cuentan como nuevas. Es progreso de otro sitio: sin celebrar Dofus ni
+ * avisar de los que quedan pendientes (quiet).
+ */
+let quiet = false;
+function completeFromShared() {
+  if (!questsData()) return;
+  const seen = new Set(readList(LS.sharedSeen));
+  const quests = Object.fromEntries(Object.entries(state.shared.quests).filter(([id]) => seen.has(id)));
+  quiet = true;
+  try {
+    completeOthers({ ...state, shared: { ...state.shared, quests } });
+  } finally {
+    quiet = false;
+  }
+  localStorage.setItem(LS.sharedSeen, JSON.stringify(Object.keys(state.shared.quests).sort()));
+}
+
+// Lo que escribe otra pestaña (el otro checklist): llega sin recargar. Las escrituras de
+// esta misma pestaña no avisan, ni hace falta
+window.addEventListener("storage", e => {
+  if (e.key !== SHARED_KEY && e.key !== null) return;
+  const shared = readShared();
+  if (JSON.stringify(shared) === JSON.stringify(state.shared)) return;
+  setState({ shared });
+  completeFromShared();
+});
 
 // ---------------------------------------------------------------------------
 // Instantánea del progreso: la usan el reinicio, el deshacer y la copia de seguridad

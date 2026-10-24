@@ -2977,6 +2977,13 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   background:color-mix(in srgb, var(--gw-gold) 12%, transparent);
   font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-gold);
 }
+/* Misión terminada en el otro checklist (el Silvestre o el Hielos): una etiqueta discreta */
+.q-shared{
+  padding:1px 8px; border-radius:999px;
+  border:1px solid var(--done-line);
+  background:color-mix(in srgb, var(--done) 10%, transparent);
+  font:600 11px var(--font-body); color:var(--done); white-space:nowrap;
+}
 /* El nombre no ocupa todo el ancho (es el enlace a la guía y no debe tapar la fila): la
    etiqueta va pegada a él, y el estado y el nivel, a la derecha */
 .q-head > .q-lv{ margin-left:auto; }

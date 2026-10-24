@@ -1,6 +1,6 @@
 import { useImperativeHandle, useRef, useState } from "react";
 import {
-  applySnapshot, doneCount, getState, isPrereqDone, ownedCount, prereqsDone, progressPct, rowHave, showToast,
+  applySnapshot, doneCount, getState, isPrereqDone, ownState, ownedCount, prereqsDone, progressPct, rowHave, showToast,
   takeSnapshot, useAppState,
 } from "../state/store.js";
 import { ALL_PREREQS } from "@dofus/steps.js";
@@ -45,7 +45,8 @@ export default function ResetDialog({ ref }) {
     if (scope.prereqs) after.prereqs = {};
     else after.prereqs = Object.fromEntries(ALL_PREREQS.filter(p => isPrereqDone(s, p.id)).map(p => [p.id, true]));
     if (scope.owned) after.owned = {};
-    else after.owned = { ...s.owned, ...Object.fromEntries(ALL_ROWS.filter(r => rowHave(s, r)).map(r => [r.k, true])) };
+    // Lo conseguido en otro checklist no: sigue contando mientras allí lo esté
+    else after.owned = { ...s.owned, ...Object.fromEntries(ALL_ROWS.filter(r => rowHave(ownState(s), r)).map(r => [r.k, true])) };
 
     ringRef.current.style.setProperty("--rd-v", 0); // el anillo se vacía antes de cerrar
     setTimeout(() => {
