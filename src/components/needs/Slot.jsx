@@ -75,8 +75,9 @@ function placeTip(e) {
  * Casilla de inventario: un objeto (o sus alternativas) con su cantidad.
  * Pulsarla lo marca como conseguido; el icono de la esquina copia el nombre para
  * buscarlo en el mercadillo. En pantallas táctiles, mantenerla pulsada lo copia.
+ * Conseguido solo en otro checklist (`sharedBy`, el nombre de su Dofus), lo dice.
  */
-export default function Slot({ row, band, have, dim, match, later, list = false, onToggle }) {
+export default function Slot({ row, band, have, sharedBy = null, dim, match, later, list = false, onToggle }) {
   const [copied, setCopied] = useState(false);
   const pressTimer = useRef(0);
   const copiedTimer = useRef(0);
@@ -137,7 +138,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
 
   // Fila de la vista de lista: todo a la vista, sin tooltip
   if (list) {
-    const extra = [row.g, row.n || typeLine(row)].filter(Boolean).join(" · ");
+    const extra = [row.g, row.n || typeLine(row), sharedBy && `Conseguido en el ${sharedBy}`].filter(Boolean).join(" · ");
     return (
       <div className={cls} data-id={row.k} data-first={first}>
         <button type="button" className="slot-main" aria-pressed={String(have)} {...pressHandlers}>
@@ -178,6 +179,7 @@ export default function Slot({ row, band, have, dim, match, later, list = false,
         {later > 0 && <span>Y {later.toLocaleString("es")} más adelante</span>}
         {row.g && !optional && <span className="slot-tip-when">{row.g}</span>}
         {(row.n || typeLine(row)) && <span>{row.n || typeLine(row)}</span>}
+        {sharedBy && <span className="slot-tip-when">{`Conseguido en el ${sharedBy}`}</span>}
       </span>
     </div>
   );

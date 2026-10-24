@@ -1,7 +1,7 @@
 import { CATEGORIES, PREREQ_STEP, STEPS_WITH_ITEMS, aggregate, normText, rowMatches, rowName, rowsOf } from "../../lib/resources.js";
 import { useLiveIds } from "../../lib/leaving.js";
 import {
-  PAGE_SIZES, rowHave, rowUsed, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
+  PAGE_SIZES, rowHave, rowSharedBy, rowUsed, setShopPage, setShopPageSize, setShopPendingOnly, setShopQuery, setShopSort,
   setShopTab, setShopView, soonSteps,
   toggleRowOwned, useAppState,
 } from "../../state/store.js";
@@ -158,7 +158,7 @@ function Slots({ rows, band, s, q, later }) {
       {rows.map(r => {
         const hit = q && rowMatches(r, q);
         return (
-          <Slot key={r.k} row={r} band={band} have={rowHave(s, r)} dim={!!q && !hit} match={!!hit}
+          <Slot key={r.k} row={r} band={band} have={rowHave(s, r)} sharedBy={rowSharedBy(s, r)} dim={!!q && !hit} match={!!hit}
             later={later?.get(r.k) || 0} list={list} onToggle={toggleRowOwned} />
         );
       })}
