@@ -147,7 +147,11 @@ export default {
       27: [["Star ski y Dutch", "Entrégale a Ross Iñol: 1 x Cepillo para encerar"],
         ["La marcha de la emperatriz", "Entrégale a Ken Tucky: 1 x Mamagüina"]],
       // "Lo único que te faltaría, serían las 50 x Grasa de güino… luchando contra los pingüinos"
-      28: [["Pesca en aguas congeladas", "Entrégale a Damar: 50 x Grasa de güino"]],
+      // y después pasar el Morsagüino Real: un verde para las peleas y otro para la mazmorra
+      28: [["Pesca en aguas congeladas", "Entrégale a Damar: 50 x Grasa de güino",
+        { done: "Se hacen las peleas correspondientes." }],
+        ["Pesca en aguas congeladas", "Consigue la alianza de Damar",
+          { done: "Se pasa Morsagüino real terminando las misiones de los incisos 25, 26, 27 y 28. Se obtiene el acceso a Cuna del alma. Se obtienen los skies." }]],
       // "te pide vencer tanto al Dragocerdo como al Roble Blando": el Roble queda pendiente
       32: [["Dragones y chapuzonas", "Vence a 1 x Roble Blando en un solo combate"]],
       // "tendrás que realizar la mazmorra hasta el final"

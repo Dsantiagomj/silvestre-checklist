@@ -219,12 +219,14 @@ export function stopPoints(step, quests) {
  * (aquí se detiene) y, en un paso que se resuelve solo, la verde con lo que se resuelve
  * (aquí se retoma). La parada que deja el propio verde («…hasta tener que pasar
  * Kodámade») y la de una madre que espera a una hija de otro paso (STOP_AT con `later`)
- * siguen en rojo. [{ quest, index, text, resume? }], como stopPoints.
+ * siguen en rojo. Si el verde se reparte entre varias paradas (STOP_AT con `done`, el 28:
+ * las peleas y luego la mazmorra), cada línea lleva su parte. [{ quest, index, text, resume? }],
+ * como stopPoints.
  */
 export function questStops(step, quests) {
   // En la línea verde, sin la coletilla "hasta tener que pasar X": esa la dice la roja
   const done = !redIsStop(step) && step.marks.find(m => m[0] === "done")[1].replace(FOLLOW_UP, ".");
-  return stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: done, resume: true } : p));
+  return stopPoints(step, quests).map(p => (done && !p.followUp && !p.later ? { ...p, text: p.done || done, resume: true } : p));
 }
 
 /**
@@ -243,7 +245,7 @@ function ownStops(step, quests) {
       const q = quests.find(x => x.n === name);
       const index = q ? q.s.flatMap(stg => stg.o).findIndex(o => o.t.startsWith(start)) : -1;
       const text = opts?.text || stops[Math.min(i, stops.length - 1)];
-      return index >= 0 ? { quest: q.id, index, text, ...(opts?.later ? { later: true } : {}) } : null;
+      return index >= 0 ? { quest: q.id, index, text, ...(opts?.later ? { later: true } : {}), ...(opts?.done ? { done: opts.done } : {}) } : null;
     }).filter(Boolean);
     if (found.length) return found;
   }
