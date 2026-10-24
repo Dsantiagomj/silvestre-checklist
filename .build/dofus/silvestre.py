@@ -133,8 +133,9 @@ MISSION_TYPOS = {}
 # in 21 ("Antimonárquico"), Morsagüino Real in 28 ("Las joyas de la corona"), Obsidiantre
 # in 50 ("Lavandería automática"; 40 says not to pass it), Tengu Gélifux in 52 ("Hace
 # fresco, pero no importa"), Cil in 61 ("Canozzirujana") and Golosotrón Real in 81 ("Allá
-# arriba, en el pico helado..."). The guide never passes Ben el Ripata: "Duerme y tendrás
-# un pastel" goes in 40, where "Calefacción a bajo coste" asks for it.
+# arriba, en el pico helado...") and Ben el Ripata in 38 ("Duerme y tendrás un pastel"; its
+# green passes the whole Roca Negra dungeon, before 40's "Calefacción a bajo coste" asks
+# for it).
 # They ask for nothing among themselves, so "Allá en la montaña..." stays out.
 # Step 87's two quests need "Toma de conciencia" taken (Qa=2138), and it needs "Las
 # cuatro voluntades" finished (Qf=2122), which step 73 leaves at its 2nd objective: 87
@@ -145,7 +146,7 @@ MISSION_TYPOS = {}
 # it. Step 38's red says "La sombra del reino" can be started during mission 3 ((Qa=1656
 # &Qo>9997)) and done any time before step 80; step 81's "La sombra de lo que era" needs
 # it finished (Qf=1665). 38 does it, right after "Esto parece el Sur" (QUEST_AFTER).
-STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 21: [619], 28: [620], 33: [439], 38: [1665], 40: [621], 50: [622],
+STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 21: [619], 28: [620], 33: [439], 38: [1665, 621], 50: [622],
               52: [623], 61: [624], 78: [434, 111, 121, 423], 80: [1782], 81: [626], 83: [2010], 87: [2122, 2138],
               89: [1903, 1917]}
 
@@ -168,8 +169,8 @@ STEP_SKIP = {53: [2198]}
 # "La huida es la mejor salida" (step 16) needs "Nuestros amigos los animalitos"
 # finished (Qf=1848), which the achievement lists after it. The "Abono de peaje" quests
 # (STEP_EXTRA) go after the quest where their dungeon is passed: at the end of 21, 50, 61
-# and 81, and after "Pesca en aguas congeladas" in 28.
-QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656, 619: 1527, 620: 577, 622: 1661, 624: 1719, 626: 1793}
+# and 81, after "Pesca en aguas congeladas" in 28 and after "La bruja mala del Este" in 38.
+QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656, 619: 1527, 620: 577, 621: 1657, 622: 1661, 624: 1719, 626: 1793}
 
 # Quest -> the quest that needs it, where it would go elsewhere: it goes right before it
 # in every step that lists both. Step 33 takes "La eterna cosecha" for "La razón del más

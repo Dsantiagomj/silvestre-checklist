@@ -217,19 +217,25 @@ test("completar una misión que va por delante no da por hechas las de antes ni 
   expect((await readLS(page, "silvestre:questPos") || {})["21"] || 0).toBe(0);
 });
 
-test("marcar el Dofus Turquesa (62) marca también el 38: «La sombra del reino» es opcional allí", async ({ page }) => {
+test("marcar el Dofus Turquesa (62) termina lo de «Azul turquesa» del 38: «La sombra del reino» es opcional allí", async ({ page }) => {
   // El 38 hace las misiones 2, 3 y 4 de «Azul turquesa», que el 62 completa entero. Su
   // cuarta misión, «La sombra del reino», no es del logro: la guía dice que se puede lanzar
-  // y hacer en cualquier punto antes del 80, así que no le impide quedar hecho
+  // y hacer en cualquier punto antes del 80, así que no le impide quedar hecho. Lo que lo
+  // deja pendiente es Ben el Ripata, que el 62 no termina
   await openApp(page, { "silvestre:done": upTo(37) });
   // Con las misiones ya cargadas (llegan en diferido): sin ellas no se sabe qué deja hecho
   await page.locator('.diary-row[data-n="62"] .row-num').click();
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
   await page.locator('.diary-row[data-n="62"] .row-check').click();
-  for (const n of [38, 39, 50, 62]) await expect(page.locator(`.diary-row[data-n="${n}"]`), `paso ${n}`).toHaveClass(/\bdone\b/, { timeout: 15_000 });
+  for (const n of [39, 50, 62]) await expect(page.locator(`.diary-row[data-n="${n}"]`), `paso ${n}`).toHaveClass(/\bdone\b/, { timeout: 15_000 });
+  // El 38 también pasa a Ben el Ripata («Duerme y tendrás un pastel»), que el 62 no termina:
+  // queda pendiente por esa misión, no por «La sombra del reino»
+  await expect(page.locator('.diary-row[data-n="38"]')).not.toHaveClass(/\bdone\b/);
   // En el 38 sigue apareciendo, como opcional, con su nota
   await page.locator('.diary-row[data-n="38"] .row-num').click();
   const sombra = page.locator("#journal .q-item", { hasText: "La sombra del reino" });
   await expect(sombra).toBeVisible({ timeout: 15_000 });
   await expect(sombra.locator(".q-optional")).toHaveText("Opcional");
+  await expect(page.locator("#journal .q-item", { hasText: "La bruja mala del Este" }).locator(".q-check")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#journal .q-item", { hasText: "Duerme y tendrás un pastel" }).locator(".q-check")).toHaveAttribute("aria-pressed", "false");
 });
