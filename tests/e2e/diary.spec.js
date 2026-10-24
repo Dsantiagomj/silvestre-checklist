@@ -823,8 +823,10 @@ test("las misiones de «Abono de peaje» van en el paso donde se pasa su mazmorr
   expect((await stepData(page, 21)).quests.at(-1)).toBe("Antimonárquico");
   expect((await stepData(page, 28)).quests).toEqual(["Pesca en aguas congeladas", "Las joyas de la corona", "Luces y sombras"]);
   expect((await stepData(page, 31)).quests).toEqual(["Prefiere morir en el mar"]);
-  // Ben el Ripata no lo pasa la guía: «Duerme y tendrás un pastel» va donde se pide
-  expect((await stepData(page, 40)).quests).toEqual(["Duerme y tendrás un pastel", "Calefacción a bajo coste", "En busca de Javi Vito"]);
+  // Ben el Ripata, en el 38: su verde pasa Roca Negra entera, tras «La bruja mala del Este».
+  // El 40, que la pide, ya no la lleva
+  expect((await stepData(page, 38)).quests.slice(-2)).toEqual(["La bruja mala del Este", "Duerme y tendrás un pastel"]);
+  expect((await stepData(page, 40)).quests).toEqual(["Calefacción a bajo coste", "En busca de Javi Vito"]);
   // El Obsidiantre, en el 50 (el 40 avisa de no pasarlo); el Tengu Gélifux, en el 52
   expect((await stepData(page, 50)).quests).toEqual(["Altar del Norte", "La bendición de Thomahon", "Lavandería automática"]);
   expect((await stepData(page, 52)).quests).toEqual(["Hace fresco, pero no importa",
@@ -1447,7 +1449,7 @@ test("el 38 lleva «La sombra del reino» tras «Esto parece el Sur», con una n
   const FIGURES = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/figures.json", import.meta.url), "utf8"));
   const errors = await openApp(page);
   expect((await stepData(page, 38)).quests).toEqual(
-    ["Extinción de los fuegos", "Esto parece el Sur", "La sombra del reino", "La bruja mala del Este"]);
+    ["Extinción de los fuegos", "Esto parece el Sur", "La sombra del reino", "La bruja mala del Este", "Duerme y tendrás un pastel"]);
   const sombra = questItem(page, "La sombra del reino");
   // Opcional: no es de «Azul turquesa» y no impide que el 38 quede hecho (el 62 lo
   // arrastra), pero se puede completar desde aquí
