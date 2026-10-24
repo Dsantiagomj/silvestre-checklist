@@ -72,6 +72,19 @@ test("donde el paso se resuelve, la línea es verde y dice qué se termina, just
   await expect(quest.locator(".obj-resume + .obj-row")).toContainText("Vence a 1 x Lasoberaña");
 });
 
+test("el 28 lleva dos líneas verdes: las peleas antes de la grasa de güino y la mazmorra antes de la alianza del Morsagüino", async ({ page }) => {
+  await openApp(page);
+  await row(page, 28).locator(".row-num").click();
+  const quest = page.locator("#journal .q-item", { hasText: "Pesca en aguas congeladas" });
+  const lines = quest.locator(".obj-resume");
+  await expect(lines).toHaveCount(2, { timeout: 15_000 });
+  await expect(lines.nth(0)).toHaveText("Se hacen las peleas correspondientes.");
+  await expect(quest.locator(".obj-resume + .obj-row").nth(0)).toContainText("50 × Grasa de güino");
+  await expect(lines.nth(1)).toContainText("Se pasa Morsagüino real");
+  await expect(lines.nth(1)).not.toContainText("peleas");
+  await expect(quest.locator(".obj-resume + .obj-row").nth(1)).toContainText("Consigue la alianza de Damar");
+});
+
 test("en un paso que se resuelve solo, lo que el rojo añadía queda como nota", async ({ page }) => {
   await openApp(page);
   await row(page, 22).locator(".row-num").click();
