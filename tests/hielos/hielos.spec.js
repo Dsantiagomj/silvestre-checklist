@@ -228,3 +228,24 @@ for (const [theme, accent] of [["dark", "rgb(159, 216, 240)"], ["light", "rgb(12
       .toBe("159,216,240");
   });
 }
+
+test("una misión terminada en el Silvestre sale hecha aquí, y el paso con todo hecho se marca solo", async ({ page }) => {
+  // Mismo origen: el Silvestre publica sus misiones terminadas en la clave compartida
+  const errors = await openHielos(page, {
+    "dofus-checklists:shared": { silvestre: { name: "Dofus Silvestre", quests: ["581", "615"], owned: [] } },
+  });
+  // El 4 solo lleva «Los monólogos de la vacuna»
+  await expect(page.locator('.diary-row[data-n="4"]')).toHaveClass(/\bdone\b/);
+  await openStep(page, 9);
+  const check = quest(page, "Hotel de hielo").locator(".q-check");
+  await expect(check).toHaveAttribute("aria-pressed", "true");
+  await expect(check).toBeDisabled();
+  await expect(quest(page, "Hotel de hielo").locator(".q-shared")).toHaveText("Hecha en el Dofus Silvestre");
+  await expect(quest(page, "La desglaciación").locator(".q-check")).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator('.diary-row[data-n="9"]')).not.toHaveClass(/\bdone\b/);
+  // Y el Hielos publica lo suyo al lado, sin tocar lo del Silvestre
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("dofus-checklists:shared")).hielos?.quests || []))
+    .toContain("615");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dofus-checklists:shared")).silvestre.quests)).toEqual(["581", "615"]);
+  expect(errors).toEqual([]);
+});
