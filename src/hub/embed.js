@@ -1,5 +1,5 @@
 // ============================================================================
-// EMBEBIDO DEL HUB — las franjas de los checklists en la página de Torrente Arcano
+// EMBEBIDO DEL HUB — las cartas de los checklists en la página de Torrente Arcano
 // (Squarespace), en una shadow root sobre #checklists-root como el del Silvestre
 // (src/embed.jsx): su CSS no sale a la página ni el de la página entra. Se construye con
 // `npm run build:hub` (vite.config.js) y no carga la app ni sus datos.

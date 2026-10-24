@@ -10,7 +10,7 @@ const HARNESS = path.join(import.meta.dirname, "fixtures/checklists.html");
 export const PAGE_FIXTURE = path.join(import.meta.dirname, "fixtures/checklists-page.html");
 
 /**
- * Abre la página con el hub y espera a que pinte sus franjas. Devuelve los errores. Por
+ * Abre la página con el hub y espera a que pinte sus cartas. Devuelve los errores. Por
  * defecto la de CSS agresivo y texto alrededor; `fixture` cambia la página.
  */
 export async function openHub(page, fixture = HARNESS) {
@@ -27,7 +27,7 @@ export async function openHub(page, fixture = HARNESS) {
   page.on("requestfailed", r => errors.push(`requestfailed: ${r.url()}`));
   page.on("response", r => { if (r.status() >= 400) errors.push(`${r.status()}: ${r.url()}`); });
   await page.goto(HUB_URL);
-  await expect(hub(page).locator(".pane")).not.toHaveCount(0, { timeout: 20_000 });
+  await expect(hub(page).locator(".card")).not.toHaveCount(0, { timeout: 20_000 });
   return errors;
 }
 
@@ -42,6 +42,6 @@ export async function openHubPreview(page) {
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
   page.on("response", r => { if (r.status() >= 400) errors.push(`${r.status()}: ${r.url()}`); });
   await page.goto(`${SITE}checklists/`);
-  await expect(hub(page).locator(".pane")).not.toHaveCount(0, { timeout: 20_000 });
+  await expect(hub(page).locator(".card")).not.toHaveCount(0, { timeout: 20_000 });
   return errors;
 }
