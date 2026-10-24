@@ -39,26 +39,37 @@
   h2 small { font: 600 14px var(--fb); letter-spacing: 0; text-transform: none; }
   h2.boss { color: var(--boss); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
-  .m { display: flex; gap: 10px; align-items: center; width: 100%; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: inherit; text-align: left; font: inherit; cursor: pointer; transition: background .12s, opacity .12s; }
+  .m { position: relative; display: flex; gap: 10px; align-items: center; width: 100%; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: inherit; text-align: left; font: inherit; cursor: pointer; transition: background .12s, opacity .12s; }
   .m:hover { border-color: #46503a; }
-  .m:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .m:has(.tog:focus-visible) { outline: 2px solid #fff; outline-offset: 2px; }
+  /* El botón de marcar cubre la fila entera; el de copiar queda encima */
+  .tog { position: static; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
+  .tog::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+  .tog:focus { outline: none; }
+  .cp { position: relative; z-index: 1; flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: #1d2116; color: var(--muted); cursor: pointer; }
+  .cp:hover { color: var(--fg); border-color: #56604a; }
+  .cp:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+  .cp.ok { color: var(--archi); border-color: var(--archi); }
+  .cp svg { width: 15px; height: 15px; }
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); padding: 9px 14px; border-radius: 9px; background: #2c3420; border: 1px solid var(--archi); color: var(--fg); font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s; z-index: 10; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
   .m img { width: 44px; height: 44px; object-fit: contain; flex: none; }
   .m .t { min-width: 0; flex: 1; }
   .m .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m .z { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m .ck { flex: none; width: 22px; height: 22px; border-radius: 6px; border: 2px solid #56604a; display: grid; place-items: center; font-weight: 800; color: #0b0c0a; }
   .m.boss .n { color: var(--boss); }
-  .m[aria-pressed=true] { background: var(--done); opacity: .6; }
-  .m[aria-pressed=true] .ck { background: var(--archi); border-color: var(--archi); }
-  .m[aria-pressed=true] .ck::after { content: "✓"; }
-  .m[aria-pressed=true] .n { text-decoration: line-through; }
+  .m.on { background: var(--done); opacity: .6; }
+  .m.on .ck { background: var(--archi); border-color: var(--archi); }
+  .m.on .ck::after { content: "✓"; }
+  .m.on .n { text-decoration: line-through; }
   .empty { color: var(--muted); padding: 30px 0; text-align: center; }
 </style>
 </head>
 <body>
 <header><div class="wrap">
   <h1>La eterna cosecha</h1>
-  <p class="sub">Las almas que pide la misión. Pulsa una para marcarla; se guarda en este navegador.</p>
+  <p class="sub">Las almas que pide la misión. Pulsa una para marcarla (se guarda en este navegador) o su icono para copiar el nombre.</p>
   <div class="stats">
     <span>Total <b id="sAll">0</b></span>
     <span class="boss">Jefes <b id="sBoss">0</b></span>
@@ -77,6 +88,7 @@
   </div>
 </div></header>
 <main class="wrap" id="list"><p class="empty">Cargando…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 const KEY = "cosecha:done";
 const done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
@@ -91,15 +103,42 @@ function stats() {
   $("bar").style.width = `${data.length ? done.size / data.length * 100 : 0}%`;
 }
 
+const COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
+
+function mark(row, on) {
+  row.classList.toggle("on", on);
+  row.querySelector(".tog").setAttribute("aria-pressed", on);
+}
+
 function item(m) {
-  const b = document.createElement("button");
-  b.type = "button"; b.className = `m ${m.t}`; b.dataset.id = m.id;
-  b.setAttribute("aria-pressed", done.has(m.id));
+  const row = document.createElement("div");
+  row.className = `m ${m.t}`; row.dataset.id = m.id;
   const where = m.t === "boss" ? `${m.d || m.z} · nv. ${m.lv}` : m.z;
-  b.innerHTML = `<img loading="lazy" alt="" src="${m.img}"><span class="t"><div class="n"></div><div class="z"></div></span><span class="ck"></span>`;
-  b.querySelector(".n").textContent = m.n; b.querySelector(".z").textContent = where;
-  b.title = `${m.n} — ${where}`;
-  return b;
+  row.innerHTML = `<img loading="lazy" alt="" src="${m.img}"><span class="t"><div class="n"></div><div class="z"></div></span>`
+    + `<button type="button" class="cp">${COPY}</button><button type="button" class="tog"><span class="ck"></span></button>`;
+  row.querySelector(".n").textContent = m.n; row.querySelector(".z").textContent = where;
+  row.querySelector(".tog").setAttribute("aria-label", `${m.n} — ${where}`);
+  const cp = row.querySelector(".cp");
+  cp.title = `Copiar «${m.n}»`; cp.setAttribute("aria-label", cp.title);
+  mark(row, done.has(m.id));
+  return row;
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+async function copy(btn, name) {
+  try { await navigator.clipboard.writeText(name); }
+  catch {
+    // Sin permiso del portapapeles (http, iframe): el truco de siempre
+    const ta = Object.assign(document.createElement("textarea"), { value: name });
+    document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  btn.classList.add("ok"); setTimeout(() => btn.classList.remove("ok"), 900);
+  toast(`Copiado: ${name}`);
 }
 
 function section(title, cls, list) {
@@ -132,13 +171,15 @@ function render() {
 $("list").addEventListener("click", e => {
   const b = e.target.closest(".m"); if (!b) return;
   const id = +b.dataset.id;
+  const cp = e.target.closest(".cp");
+  if (cp) return copy(cp, data.find(m => m.id === id).n);
   done.has(id) ? done.delete(id) : done.add(id);
   save(); stats();
   if ($("hide").checked) render();
   else {
-    b.setAttribute("aria-pressed", done.has(id));
+    mark(b, done.has(id));
     const g = b.parentElement, small = g.previousElementSibling.querySelector("small");
-    small.textContent = `${g.querySelectorAll('.m[aria-pressed=true]').length}/${g.children.length}`;
+    small.textContent = `${g.querySelectorAll(".m.on").length}/${g.children.length}`;
   }
 });
 document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
