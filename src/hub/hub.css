@@ -1,9 +1,10 @@
 /* ============================================================================
-   HUB DE LOS CHECKLISTS · UNA FRANJA POR DOFUS
-   Acordeón horizontal: la franja abierta pinta la zona, el PNJ y el huevo del Dofus; las
-   cerradas, el huevo y el nombre en vertical. En estrecho (≤600px) va en vertical.
+   HUB DE LOS CHECKLISTS · UNA CARTA POR DOFUS
+   Cartas coleccionables en fila: la zona de fondo, el PNJ asomando por la derecha, el huevo
+   arriba con su brillo y el nombre abajo, sobre oscuro. Con el ratón se inclinan y el brillo
+   holográfico lo sigue (src/hub/hub.js). En estrecho (≤600px) van de dos en dos.
    A pantalla completa: src/hub/embed.js lo lleva de borde a borde y --checklists-h es el
-   alto que dejan la cabecera y el pie de la página; los tamaños crecen con la pantalla.
+   alto que dejan la cabecera y el pie de la página; las cartas crecen con ese alto.
    Vive en una shadow root (src/hub/embed.js): nada de la página entra ni sale.
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
@@ -15,7 +16,6 @@
 .hub {
   --fd: 'Barlow Condensed', sans-serif;
   --fb: 'Barlow', sans-serif;
-  --ease: cubic-bezier(.2, .8, .2, 1);
   container: hub / inline-size;
   font-family: var(--fb);
   font-size: 16px;
@@ -26,269 +26,189 @@
   text-align: left;
 }
 
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-@keyframes kb { from { transform: scale(1.04); } to { transform: scale(1.12) translateX(-2%); } }
-@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.01); } }
-@keyframes sheen { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
-
-.banners {
+.cards {
+  --pad: 28px;
+  --gap: clamp(16px, 2vw, 28px);
   /* Lo que dejan la cabecera y el pie (src/hub/embed.js); sin script, la pantalla */
   height: var(--checklists-h, 100svh);
-  /* Los tamaños de dentro siguen también al alto (cqh): una pantalla baja no los corta */
-  container: banners / size;
+  /* Las cartas siguen al alto y al ancho del hub (cqh, cqw): una pantalla baja no las corta */
+  container: cards / size;
   display: flex;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
   margin: 0;
-  padding: 6px;
-  list-style: none;
+  padding: var(--pad);
   overflow: hidden;
-  background: #050605;
+  background: radial-gradient(90% 80% at 50% 0%, #1a1f17, #0b0c0a 70%);
 }
 
-.pane {
+/* Lo que cabe de alto o, con muchas, lo que toca a cada una del ancho (--n, src/hub/hub.js) */
+.card {
   --c: #b7dc69;
   position: relative;
-  flex: 1;
-  min-width: 64px;
+  flex: none;
+  width: min(calc(min(460px, 100cqh) * 2 / 3), calc((100cqw - (var(--n, 3) - 1) * var(--gap)) / var(--n, 3)));
+  aspect-ratio: 2 / 3;
+  container: card / inline-size;
+  display: block;
   overflow: hidden;
-  border-radius: 9px;
+  border-radius: 14px;
   isolation: isolate;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
-  transition: flex .65s var(--ease), height .65s var(--ease);
-}
-.pane.open { flex: 5; box-shadow: inset 0 0 0 2px var(--c), 0 0 24px -6px var(--c); }
-
-/* Toda la franja es el botón que la abre; el contenido va por encima sin tapar los clics */
-.pane-toggle {
-  position: absolute;
-  inset: 0;
-  z-index: 7;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: inherit;
-  background: none;
   color: inherit;
-  font: inherit;
+  text-decoration: none;
   cursor: pointer;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, .6);
+  transition: transform .15s ease-out, box-shadow .3s;
   -webkit-tap-highlight-color: transparent;
 }
-.pane-toggle:focus { outline: none; }
-.pane-toggle:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
-.pane.open .pane-toggle { cursor: default; }
+.card:hover { box-shadow: 0 18px 30px rgba(0, 0, 0, .6), 0 0 32px -6px var(--c); }
+.card:focus { outline: none; }
+.card:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
-.pane .bg {
+/* El borde del color del Dofus, por encima de todo lo pintado dentro */
+.card::after {
+  content: "";
   position: absolute;
-  inset: -4%;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--c);
+}
+
+.card .art {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
-  filter: brightness(.42) saturate(.75);
+  filter: saturate(1.1);
 }
-.pane.open .bg { animation: kb 16s ease-in-out infinite alternate; }
 
-/* El PNJ pintado sobre el fondo: en luminancia, desaturado y fundido por los bordes */
-.pane .guard {
+/* El PNJ asoma por detrás, a la derecha, y se funde hacia abajo */
+.card .npc {
   position: absolute;
-  z-index: 2;
-  right: -2%;
-  top: -2%;
-  height: 112%;
+  z-index: 1;
+  /* Cada PNJ puede ajustar su encuadre en el manifiesto (npcFit) */
+  right: var(--npc-r, -14%);
+  top: var(--npc-t, 9%);
+  height: var(--npc-h, 52%);
   width: auto;
   max-width: none;
   border: 0;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity .9s ease;
-  filter: saturate(.45) contrast(1.05) brightness(.95);
-  mix-blend-mode: luminosity;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 78%, transparent 100%), linear-gradient(0deg, transparent 16%, #000 48%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 78%, transparent 100%), linear-gradient(0deg, transparent 16%, #000 48%);
-  mask-composite: intersect;
+  /* Contorno del color del Dofus y halo oscuro: que se separe de un fondo claro (la nieve) */
+  filter: drop-shadow(0 0 1.5px var(--c)) drop-shadow(0 0 14px rgba(0, 0, 0, .95));
+  -webkit-mask-image: linear-gradient(0deg, transparent 4%, #000 40%);
+  mask-image: linear-gradient(0deg, transparent 4%, #000 40%);
 }
-.pane.open .guard { opacity: .8; animation: breathe 7s ease-in-out infinite; }
 
-.pane .tint {
+/* Oscuro abajo: el texto claro siempre va sobre oscuro */
+.card .shade {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: color-mix(in srgb, var(--c) 24%, transparent);
-  mix-blend-mode: color;
+  background: linear-gradient(180deg, rgba(5, 6, 5, .15) 0%, rgba(5, 6, 5, .05) 28%, rgba(5, 6, 5, .8) 54%, rgba(5, 6, 5, .96) 74%);
 }
 
-/* Sombra abajo y a la izquierda: el texto claro siempre va sobre oscuro */
-.pane .shade {
+.card .egg {
   position: absolute;
-  inset: 0;
   z-index: 3;
+  left: 50%;
+  top: 8%;
+  height: 54cqw;
+  width: auto;
+  max-width: none;
+  border: 0;
+  transform: translateX(-50%);
   pointer-events: none;
-  background:
-    linear-gradient(0deg, rgba(5, 6, 5, .97) 0%, rgba(5, 6, 5, .88) 30%, rgba(5, 6, 5, 0) 62%),
-    linear-gradient(90deg, rgba(5, 6, 5, .6) 0%, rgba(5, 6, 5, 0) 55%);
+  filter: drop-shadow(0 0 16px var(--c)) drop-shadow(0 12px 12px rgba(0, 0, 0, .8));
 }
 
-.pane .foil {
+/* El brillo holográfico: sigue al ratón (--fx, --fy) */
+.card .foil {
   position: absolute;
   inset: 0;
   z-index: 4;
   pointer-events: none;
-  opacity: 0;
   mix-blend-mode: overlay;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .28) 48%, transparent 60%);
-  background-size: 220% 100%;
-}
-.pane.open .foil { opacity: 1; animation: sheen 6s ease-in-out infinite; }
-
-.pane .eggwrap { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-.pane.open .eggwrap { animation: float 5s ease-in-out infinite; }
-.pane .egg {
-  position: absolute;
-  left: 50%;
-  top: 44%;
-  height: clamp(56px, min(10vh, 18cqh), 120px);
-  width: auto;
-  max-width: none;
-  border: 0;
-  transform: translate(-50%, -50%);
-  transition: all .65s var(--ease);
-  filter: drop-shadow(0 0 12px var(--c)) drop-shadow(0 10px 10px rgba(0, 0, 0, .8));
-}
-.pane.open .egg { left: 22%; top: 33%; height: clamp(90px, min(28vh, 34cqh), 300px); }
-
-/* El nombre en vertical de las cerradas, con su marca del color del Dofus */
-.pane .vert {
-  position: absolute;
-  z-index: 6;
-  left: 50%;
-  bottom: clamp(16px, 4vh, 40px);
-  transform: translateX(-50%);
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-  white-space: nowrap;
-  pointer-events: none;
-  font-family: var(--fd);
-  font-weight: 700;
-  font-size: clamp(15px, 1.1vw, 19px);
-  line-height: 1;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  opacity: .7;
+  background:
+    linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .24) 45%, transparent 60%),
+    linear-gradient(115deg, transparent 38%, color-mix(in srgb, var(--c) 35%, transparent) 50%, transparent 62%);
+  background-size: 250% 250%;
+  background-position: var(--fx, 50%) var(--fy, 50%);
   transition: opacity .3s;
 }
-.pane.open .vert { opacity: 0; }
-.pane .vert::after {
-  content: "";
-  display: inline-block;
-  width: 3px;
-  height: 22px;
-  margin-top: 8px;
-  background: var(--c);
-  border-radius: 2px;
-}
+.card:hover .foil { opacity: 1; }
 
-/* Texto de la abierta: por encima del botón de la franja, que sigue recibiendo los clics */
-.pane .meta {
+/* Sobre una píldora oscura: el fondo de arriba puede ser nieve o hierba clara */
+.card .kick {
   position: absolute;
-  z-index: 8;
-  left: clamp(22px, 3.5vw, 64px);
-  bottom: clamp(16px, min(6vh, 7cqh), 72px);
-  right: clamp(22px, 3.5vw, 64px);
-  pointer-events: none;
-  visibility: hidden;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity .45s .15s, transform .45s .15s, visibility 0s .6s;
-}
-.pane.open .meta {
-  visibility: visible;
-  opacity: 1;
-  transform: none;
-  transition: opacity .45s .15s, transform .45s .15s, visibility 0s;
-}
-.pane .kick {
+  z-index: 5;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px 3px;
+  border-radius: 999px;
+  background: rgba(5, 6, 5, .72);
   font-family: var(--fd);
   font-weight: 700;
-  font-size: clamp(13px, 1vw, 16px);
-  letter-spacing: .2em;
+  font-size: clamp(11px, 4.6cqw, 14px);
+  line-height: 1;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--c);
 }
-.pane .name {
-  margin: 2px 0 0;
+
+.card .meta {
+  position: absolute;
+  z-index: 5;
+  left: 7cqw;
+  right: 7cqw;
+  bottom: 7cqw;
+}
+.card .name {
   font-family: var(--fd);
   font-weight: 800;
-  font-size: clamp(30px, min(4.6vw, 12cqh), 84px);
+  font-size: clamp(20px, 11.5cqw, 36px);
   line-height: .92;
-  text-transform: uppercase;
   letter-spacing: .02em;
-  color: #fff;
+  text-transform: uppercase;
+  color: var(--c);
   text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
 }
-.pane .lead {
-  margin: clamp(6px, 1.2vh, 14px) 0 clamp(10px, min(2.4vh, 4cqh), 26px);
-  max-width: clamp(460px, 38vw, 640px);
-  font-size: clamp(16px, 1.25vw, 21px);
+.card .lead {
+  margin: 6px 0 0;
+  font-size: clamp(12.5px, 5.4cqw, 15px);
   font-weight: 500;
-  line-height: 1.35;
-  color: #f2f5ee;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+  line-height: 1.3;
+  color: #e4eadc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
 }
-.pane.lock .lead { margin-bottom: 2px; }
 
-.cta {
-  display: inline-block;
-  pointer-events: auto;
-  font-family: var(--fd);
-  font-weight: 700;
-  font-size: clamp(15px, 1.05vw, 18px);
-  line-height: 1.2;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border: 0;
-  border-radius: 8px;
-  padding: clamp(10px, 1.2vh, 14px) clamp(16px, 1.4vw, 24px);
-  background: var(--c);
-  color: #0b0c0a;
-  cursor: pointer;
-  transition: filter .2s, transform .2s;
-}
-.cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.cta:focus { outline: none; }
-.cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+/* La de Próximamente: gris, el fondo más oscuro y el huevo en silueta; el texto sigue legible */
+.card.lock { cursor: default; filter: grayscale(1); }
+.card.lock .art { filter: brightness(.5); }
+.card.lock .egg { filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .5)); }
+.card.lock:hover { box-shadow: 0 18px 30px rgba(0, 0, 0, .6); }
 
-.pane.lock .egg { filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .35)); }
-.pane.lock .bg { filter: brightness(.25) grayscale(1); }
-
-/* Estrecho (el bloque de Squarespace en un móvil): las franjas van una debajo de otra y
-   la abierta es la alta. Por el ancho del hub, no de la ventana: la columna de la página
-   puede ser estrecha en una pantalla ancha */
+/* Estrecho (el bloque de Squarespace en un móvil): de dos en dos y la última, centrada
+   debajo. Por el ancho del hub, no de la ventana: la columna de la página puede ser
+   estrecha en una pantalla ancha */
 @container hub (max-width: 600px) {
-  /* La abierta llena lo que dejan las cerradas */
-  .banners { flex-direction: column; }
-  .pane { flex: 0 0 64px; min-width: 0; transition: flex-grow .65s var(--ease); }
-  .pane.open { flex: 1 0 64px; }
-  .pane .egg { left: 40px; top: 50%; height: 46px; }
-  .pane.open .egg { left: 28%; top: 26%; height: clamp(100px, 18vh, 170px); }
-  .pane .guard { right: -18%; top: 2%; height: 92%; }
-  .pane .vert {
-    left: 76px;
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
-    writing-mode: horizontal-tb;
-    rotate: none;
+  .cards {
+    --pad: 14px;
+    --gap: 12px;
+    height: auto;
+    min-height: var(--checklists-h, 100svh);
+    container: cards / inline-size;
+    flex-wrap: wrap;
+    align-content: center;
   }
-  .pane .vert::after { width: 22px; height: 3px; margin: 0 0 0 10px; vertical-align: middle; }
-  .pane .meta { left: 18px; right: 18px; bottom: 18px; }
-  .pane .name { font-size: 34px; }
-  .pane .lead { font-size: 16px; max-width: none; }
+  .card { width: min(240px, calc((100cqw - var(--gap)) / 2)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pane.open .bg, .pane.open .guard, .pane.open .eggwrap, .pane.open .foil { animation: none; }
-  .pane.open .foil { opacity: 0; }
-  .pane, .pane .egg, .pane .meta, .pane.open .meta, .pane .guard, .pane .vert { transition: none; }
+  .card, .card .foil { transition: none; }
 }

@@ -371,10 +371,10 @@ La misma suite prueba el embebido del Hielos (`tests/embed/hielos.spec.js`) en u
 como `https://www.torrentearcano.com/checklist-dofus-de-los-hielos`, y construye y prueba
 el hub de los checklists (`tests/embed/hub.spec.js`) en
 una página como `https://www.torrentearcano.com/checklists`
-(`tests/embed/fixtures/checklists.html`): una franja por Dofus del manifiesto más la de
-Próximamente, la primera abierta con su botón, abrir otra con el ratón, un clic o el
-teclado, el CSS aislado, las franjas apiladas en móvil y sin animaciones con movimiento
-reducido.
+(`tests/embed/fixtures/checklists.html`): una carta por Dofus del manifiesto, en su orden y
+enlazada a su checklist, más la de Próximamente sin enlace, el recorrido con el teclado, la
+inclinación con el ratón (y sin ella con movimiento reducido), el CSS aislado y las cartas
+de dos en dos en móvil.
 
 El Hielos tiene una prueba de humo aparte, en `tests/hielos/`:
 
@@ -493,7 +493,7 @@ Guarda su progreso con el prefijo `hielos:` y lee el de su checklist clásico de
 
 ### El hub de los checklists
 
-En https://www.torrentearcano.com/checklists va otro bloque de código, con las franjas que
+En https://www.torrentearcano.com/checklists va otro bloque de código, con las cartas que
 llevan a cada checklist:
 
 ```html
@@ -505,9 +505,13 @@ Es un widget aparte (`src/hub/`), sin React ni los datos de la app: pesa unos 9 
 monta en una shadow root sobre `#checklists-root` y añade sus fuentes al `<head>`, como la
 app. Los Dofus salen de `src/hub/manifest.js`. Para sumar uno se añade una entrada con su
 color, la dirección de su checklist, su frase y sus imágenes (el huevo y el PNJ en
-`public/img/hub/`, el fondo en `public/img/zones/`). `showSoon` pone al final la franja
-bloqueada de Próximamente. A diferencia de la app, el hub pasa a vertical por el ancho del
-bloque (una container query), no por el de la ventana.
+`public/img/hub/`, el fondo en `public/img/zones/`). Cada Dofus es una carta coleccionable
+que enlaza a su checklist: la zona de fondo, el PNJ asomando, el huevo con el brillo de su
+color y el nombre abajo. Con el ratón la carta se inclina y un brillo holográfico la sigue;
+con movimiento reducido o en una pantalla táctil se queda quieta. `showSoon` pone al final la
+carta bloqueada de Próximamente, en gris y sin enlace. A diferencia de la app, el hub pone
+las cartas de dos en dos por el ancho del bloque (una container query), no por el de la
+ventana.
 
 Antes de pegarlo se puede ver en https://dsantiagomj.github.io/silvestre-checklist/checklists/
 (`public/checklists/index.html`). Es una página oscura con el mismo snippet y el embebido
@@ -588,7 +592,7 @@ silvestre-checklist/
 ├── src/
 │   ├── main.jsx, App.jsx
 │   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
-│   ├── hub/                  ← el hub de los checklists: manifiesto, franjas y su entrada (npm run build:hub)
+│   ├── hub/                  ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
 │   ├── overlay/              ← ventana Picture-in-Picture (portal de React)
