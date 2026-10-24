@@ -57,7 +57,7 @@ function card(d) {
     root.append(npc);
   }
   root.append(el("div", "shade"), el("img", "egg", { src: img(d.egg), alt: "", draggable: "false" }), el("div", "foil"));
-  root.append(text("div", "kick", d.kicker || "Checklist"));
+  if (d.kicker) root.append(text("div", "kick", d.kicker));
   const meta = el("div", "meta");
   meta.append(text("div", "name", d.title || d.name), Object.assign(text("p", "lead", d.lead), { id: leadId }));
   root.append(meta);
@@ -65,11 +65,13 @@ function card(d) {
   return root;
 }
 
-/** Monta el hub en `container`: las cartas en el orden del manifiesto y la de Próximamente al final. */
+/** Monta el hub en `container`: el título y debajo las cartas en el orden del manifiesto, la de Próximamente al final. */
 export function renderHub(container, manifest = HUB) {
   const list = [...manifest.dofus, ...(manifest.showSoon ? [SOON] : [])];
-  const cards = el("div", "cards");
-  cards.style.setProperty("--n", list.length); // con muchas, el ancho se reparte entre todas
-  cards.append(...list.map(card));
+  const cards = el("section", "cards", { "aria-labelledby": "hub-title" });
+  const row = el("div", "row");
+  row.style.setProperty("--n", list.length); // con muchas, el ancho se reparte entre todas
+  row.append(...list.map(card));
+  cards.append(Object.assign(text("h2", "title", manifest.title), { id: "hub-title" }), row);
   container.append(cards);
 }
