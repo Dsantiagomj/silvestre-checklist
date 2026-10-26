@@ -311,10 +311,16 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
         expect(Math.abs(m.list - first.list), JSON.stringify({ first, m })).toBeLessThanOrEqual(1);
       }
       // Cada parte del detalle, de arriba abajo, se ve entera y sin nada encima al bajar la página
-      // La cabecera de cada misión: una abierta, con sus etapas, puede ser más alta que la pantalla
+      // La cabecera de cada misión: una abierta, con sus etapas, puede ser más alta que la pantalla.
+      // Se lee como al bajar: justo bajo la barra de la ventana, que se queda pegada arriba (la
+      // cabecera del paso, con su ruta, no cabe centrada entre la barra y el pie a 900 px)
       for (const sel of ["#journal .journal-top", "#journal .q-head >> nth=0", "#journal .q-head >> nth=-1"]) {
         const el = app(page).locator(sel);
-        await el.evaluate(e => e.scrollIntoView({ block: "center", behavior: "instant" }));
+        await el.evaluate(e => {
+          e.scrollIntoView({ block: "start", behavior: "instant" });
+          const bar = e.getRootNode().getElementById("winBar").getBoundingClientRect().bottom;
+          scrollBy({ top: e.getBoundingClientRect().top - bar - 8, behavior: "instant" });
+        });
         await page.waitForTimeout(100);
         await expect(el).toBeInViewport({ ratio: 1 });
         const hit = await el.evaluate(e => {
@@ -328,7 +334,7 @@ for (const [w, h] of [[2000, 980], [1440, 900]]) {
   }
 }
 
-test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible y la lista sigue cabiendo en la pantalla", async ({ page }) => {
+test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible (o lo que piden los prerrequisitos) y la lista sigue cabiendo en la pantalla", async ({ page }) => {
   await page.setViewportSize({ width: 2000, height: 980 });
   await openHarness(page, { "silvestre:done": { 1: true, 2: true, 3: true } });
   await app(page).locator('.diary-row[data-n="4"] .row-num').click();
@@ -346,10 +352,12 @@ test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible 
     return {
       avail: innerHeight - top - 16, section: d.height, win: R.querySelector(".steps-win").getBoundingClientRect().bottom - d.top,
       side: R.querySelector(".diary-side").getBoundingClientRect(), sideWant: innerHeight - top - winbar - 18, vh: innerHeight,
+      need: parseFloat(diary.style.getPropertyValue("--win-need")) || 0,
     };
   });
   const msg = JSON.stringify(m);
-  expect(Math.abs(m.section - 1.3 * m.avail), msg).toBeLessThanOrEqual(2);
+  // Como poco lo que piden los prerrequisitos enteros (--win-need, Diary.jsx)
+  expect(Math.abs(m.section - Math.max(1.3 * m.avail, m.need)), msg).toBeLessThanOrEqual(2);
   expect(Math.abs(m.win - m.section), msg).toBeLessThanOrEqual(2);
   // La lista, como antes: lo que queda de pantalla bajo la barra, entera a la vista
   expect(Math.abs(m.side.height - m.sideWant), msg).toBeLessThanOrEqual(1);
