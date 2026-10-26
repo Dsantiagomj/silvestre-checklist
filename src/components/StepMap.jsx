@@ -204,12 +204,14 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen, onSi
     placeNow(true);
   }, [n, width]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Si cambia de tamaño (las misiones llegan, se marca) se recoloca; y al terminar de
+  // Si cambia de tamaño (las misiones llegan, se marca) se recoloca; también si cambia el
+  // marco del mapa (la ventana se vuelve a medir cuando llega la letra); y al terminar de
   // desplazarse el mapa, si el paso se ve pero la ficha no entera
   useEffect(() => {
     const card = ref.current, box = scrollRef.current;
     const ro = new ResizeObserver(() => placeNow(false));
     ro.observe(card);
+    ro.observe(box);
     const onEnd = () => {
       const c = card.getBoundingClientRect(), b = mapShown(box);
       const node = nodeEl(box, n)?.getBoundingClientRect();
