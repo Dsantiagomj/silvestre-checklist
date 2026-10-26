@@ -406,8 +406,15 @@ test("el botón de copiar de un objeto de «Necesitas» copia su nombre para el 
   await page.click('.diary-row[data-n="35"] .row-num');
   const slot = page.locator('#journal .journal-needs .slot[data-id="16215"]');
   await slot.hover();
+  // «Copiado» se ve 1,2 s: con la máquina cargada ya se había ido cuando la prueba miraba.
+  // Se apunta desde antes de pulsar si aparece en la casilla
+  await slot.evaluate(el => {
+    window.__copied = null;
+    new MutationObserver(() => { window.__copied ??= el.querySelector(".slot-copied")?.textContent ?? null; })
+      .observe(el, { childList: true, subtree: true, characterData: true });
+  });
   await slot.locator(".slot-copy").click();
-  await expect(slot.locator(".slot-copied")).toHaveText("Copiado");
+  await expect.poll(() => page.evaluate(() => window.__copied)).toBe("Copiado");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Glándula de arak-hai");
   // Copiar no lo marca como cogido
   await expect(slot.locator(".slot-main")).toHaveAttribute("aria-pressed", "false");
