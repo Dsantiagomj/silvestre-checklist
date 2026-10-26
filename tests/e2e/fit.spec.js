@@ -132,7 +132,8 @@ test("la ventana tiene la misma altura en todas las pestañas salvo el diario, q
 const SCROLL = {
   map: { scrollers: [".step-map-scroll"], fixed: [] },
   diary: { scrollers: [".diary-list"], fixed: [".diary-tabs"] },
-  prereqs: { scrollers: [".prereqs-panel"], fixed: [".needs-bar"] },
+  // Los prerrequisitos ya no se desplazan: la ventana mide lo que piden (--win-need)
+  prereqs: { scrollers: [], still: [".prereqs-panel"], fixed: [".needs-bar"] },
   items: { scrollers: [".items-body"], fixed: [".needs-toolbar"] },
 };
 
@@ -146,7 +147,11 @@ for (const view of VIEWS) {
     }
     await align(page);
     await page.waitForTimeout(400);
-    const { scrollers, fixed } = SCROLL[view];
+    const { scrollers, still = [], fixed } = SCROLL[view];
+    for (const sel of still) {
+      const extra = await page.locator(sel).evaluate(el => el.scrollHeight - el.clientHeight);
+      expect(extra, `${sel} se desplaza por dentro`).toBeLessThanOrEqual(1);
+    }
     const watch = ["#winBar", ...(view === "prereqs" || view === "items" ? [".win-tools"] : []), ...fixed];
     const snap = () => page.evaluate(sels => ({
       y: scrollY,
