@@ -1,8 +1,12 @@
 name: CI
 
-# Las dos suites de pruebas en cada pull request a main. La protección de main exige que
-# el check "Pruebas" pase antes de fusionar. La sincronización de la guía lo lanza a mano
-# sobre su rama, porque un PR abierto con el token del workflow no dispara otros workflows.
+# Las suites de pruebas en cada pull request a main. La protección de main exige que el
+# check "Pruebas" pase antes de fusionar: es el último job y solo pasa si pasan todos los
+# demás. La sincronización de la guía lo lanza a mano sobre su rama, porque un PR abierto
+# con el token del workflow no dispara otros workflows.
+#
+# El runner de un repo privado tiene 2 vCPU: la suite de la app entera tardaba 15 minutos.
+# Va partida en 4 trozos que corren a la vez (--shard), cada uno con su build.
 on:
   pull_request:
     branches: [main]
@@ -16,10 +20,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Pruebas
+  # Un PR que solo toca documentación no necesita el navegador: las pruebas e2e se saltan
+  # y "Pruebas" pasa igual (con paths-ignore el check no llegaría y el PR se quedaría
+  # esperándolo). Lanzado a mano, se prueba todo.
+  changes:
+    name: Qué cambia
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    outputs:
+      app: ${{ steps.diff.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          if [ -z "$BASE" ]; then echo "app=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          files="$(git diff --name-only "origin/$BASE...HEAD")"
+          echo "$files"
+          if echo "$files" | grep -qvE '(\.md$|^docs/|^LICENSE$)'; then app=true; else app=false; fi
+          echo "app=$app" >> "$GITHUB_OUTPUT"
+
+  # Las del pipeline de .build/ (solo la biblioteca estándar) y las unitarias: siempre
+  unit:
+    name: Unitarias
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,20 +54,73 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Las del pipeline de .build/ (solo la biblioteca estándar)
       - run: python3 -I -m unittest discover -s .build/tests
       - run: npm run test:unit
-      - run: npx playwright install --with-deps chromium
-      # La app sola, y embebida en una página como la de Squarespace junto al hub de los
-      # checklists (tests/embed construye los embebidos del Silvestre, del Hielos y el hub)
-      - run: npx playwright test --retries=2
+
+  e2e:
+    name: App (${{ matrix.shard }}/4)
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      # Un trozo que falla no para los demás: se ven todos los fallos de una vez
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: ./.github/actions/playwright
+      - run: npx playwright test --shard=${{ matrix.shard }}/4 --retries=2
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces-${{ matrix.shard }}
+          path: test-results
+          retention-days: 7
+
+  # La app embebida en una página como la de Squarespace junto al hub de los checklists
+  # (tests/embed construye los embebidos del Silvestre, del Hielos y el hub) y la prueba de
+  # humo del Hielos (DOFUS=hielos), servido como en Pages: en hielos/ con las imágenes de la raíz
+  embed:
+    name: Embebido y Hielos
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: ./.github/actions/playwright
       - run: npm run test:embed -- --retries=2
-      # La prueba de humo del Hielos (DOFUS=hielos), servido como en Pages: en hielos/ con
-      # las imágenes de la raíz
       - run: npm run test:hielos -- --retries=2
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-traces
+          name: playwright-traces-embed
           path: test-results
           retention-days: 7
+
+  # El check que exige main: pasa si todo lo demás pasó o se saltó por no tocar la app
+  tests:
+    name: Pruebas
+    needs: [changes, unit, e2e, embed]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done
