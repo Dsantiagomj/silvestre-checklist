@@ -7,18 +7,45 @@ const egg = page => page.locator('.road-dofus[data-step="18"]');
 const wonAnims = page => egg(page).evaluate(el => [el, ...el.querySelectorAll("*")]
   .flatMap(n => n.getAnimations()).filter(a => /^egg-won|^egg-burst/.test(a.animationName)).length);
 
+// La celebración dura poco («won» se quita al acabar egg-won, count-tick dura .5 s y el
+// aviso se va a los 4,5 s): con la máquina cargada ya puede haber terminado cuando la
+// prueba mira la clase o getAnimations(). Por eso, desde antes de marcar el paso, se
+// apunta cada animación que arranca y si el aviso llegó a mostrarse, y luego se comprueba
+// que ocurrió, no que siga en marcha.
+const recordCelebration = page => page.evaluate(() => {
+  window.__anims = [];
+  window.__toastShown = false;
+  const toast = document.getElementById("toast");
+  new MutationObserver(() => { if (toast.classList.contains("show")) window.__toastShown = true; })
+    .observe(toast, { attributes: true, attributeFilter: ["class"] });
+  document.addEventListener("animationstart", e => {
+    const t = e.target;
+    window.__anims.push({
+      name: e.animationName,
+      step: t.closest("[data-step]")?.dataset.step ?? null,
+      count: t.classList.contains("road-count"),
+      bar: !!t.closest("#roadBtn"),
+    });
+  }, true);
+});
+const started = (page, match) => expect.poll(() => page.evaluate(m =>
+  window.__anims.some(a => Object.entries(m).every(([k, v]) => a[k] === v)), match)).toBe(true);
+const toastWasShown = page => expect.poll(() => page.evaluate(() => window.__toastShown)).toBe(true);
+
 test("al marcar el paso de un Dofus del camino, su huevo se enciende y se avisa", async ({ page }) => {
   await openApp(page, SEED);
   await page.evaluate(() => document.getElementById("winRoad").scrollIntoView());
   await expect(page.locator(".road-count")).toHaveText("1/12");
+  await recordCelebration(page);
   await page.click('.diary-row[data-n="18"] .row-check');
   await expect(egg(page)).toHaveClass(/obtained/);
-  await expect(egg(page)).toHaveClass(/won/);
-  expect(await wonAnims(page)).toBeGreaterThan(0);
+  // El huevo se enciende (egg-won solo corre con la clase «won») y estalla
+  await started(page, { name: "egg-won", step: "18", bar: false });
+  await started(page, { name: "egg-burst", step: "18", bar: false });
   // La cuenta sube con un pequeño salto
   await expect(page.locator(".road-count")).toHaveText("2/12");
-  expect(await page.locator(".road-count").evaluate(el => el.getAnimations().some(a => a.animationName === "count-tick"))).toBe(true);
-  await expect(page.locator("#toast")).toHaveClass(/show/);
+  await started(page, { name: "count-tick", count: true, bar: false });
+  await toastWasShown(page);
   await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
 });
 
@@ -76,20 +103,18 @@ test("con movimiento reducido el huevo cambia sin animación, pero se avisa igua
 
 // En pantalla baja, el del botón de los Dofus del camino de la barra (WinBar.jsx)
 const miniEgg = page => page.locator('#roadBtn .road-mini[data-step="18"]');
-const wonAnimsOf = loc => loc.evaluate(el => [el, ...el.querySelectorAll("*")]
-  .flatMap(n => n.getAnimations()).filter(a => /^egg-won|^egg-burst/.test(a.animationName)).length);
 
 test("en pantalla baja, el huevo pequeño de la barra se enciende igual y la cuenta salta", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page, SEED);
   await expect(page.locator("#roadBtn .road-count")).toHaveText("1/12");
+  await recordCelebration(page);
   await page.click('.diary-row[data-n="18"] .row-check');
   await expect(miniEgg(page)).toHaveClass(/obtained/);
-  await expect(miniEgg(page)).toHaveClass(/won/);
-  expect(await wonAnimsOf(miniEgg(page))).toBeGreaterThan(0);
+  await started(page, { name: "egg-won", step: "18", bar: true });
   // La cuenta sube con un pequeño salto
   await expect(page.locator("#roadBtn .road-count")).toHaveText("2/12");
-  expect(await page.locator("#roadBtn .road-count").evaluate(el => el.getAnimations().some(a => a.animationName === "count-tick"))).toBe(true);
-  await expect(page.locator("#toast")).toHaveClass(/show/);
+  await started(page, { name: "count-tick", count: true, bar: true });
+  await toastWasShown(page);
   await expect(page.locator("#toastTxt")).toHaveText("¡Dofus Esmeralda obtenido!");
 });

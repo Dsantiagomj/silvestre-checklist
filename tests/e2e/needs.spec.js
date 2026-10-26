@@ -734,15 +734,27 @@ test("el aviso del primer objeto del paso no se corta por el borde del detalle",
   await page.click('.diary-row[data-n="17"] .row-title');
   // El primero de la fila arriba a la izquierda: centrado en él, el aviso salía del detalle
   const slot = page.locator("#journal .journal-needs .slot").first();
-  await slot.locator(".slot-main").hover();
   const tip = slot.locator(".slot-tip");
-  await expect(tip).toBeVisible();
-  await page.waitForTimeout(500);
-  const seen = await tip.evaluate(el => {
-    el.style.pointerEvents = "auto";
-    const r = el.getBoundingClientRect();
-    const y = r.top + r.height / 2;
-    return [r.left + 6, r.right - 6].map(x => el.contains(document.elementFromPoint(x, y)));
-  });
-  expect(seen).toEqual([true, true]);
+  // Lo que se mira es el corte por los lados. Tras abrir el paso el detalle aún se recoloca
+  // (llegan las misiones, se desplaza la página): el aviso, que va debajo de la casilla,
+  // caía fuera de la pantalla (elementFromPoint da null fuera) o se perdía el hover. Así que
+  // cada intento centra la casilla en la pantalla, pasa por encima y mira lo que se ve,
+  // hasta que la página se queda quieta
+  await expect(async () => {
+    await slot.evaluate(el => {
+      el.scrollIntoView({ block: "center", behavior: "instant" });
+      // A veces la página no se movía con scrollIntoView (quedaba arriba, con la casilla al
+      // pie de la pantalla): se centra también la página a mano
+      scrollTo({ top: el.getBoundingClientRect().top + scrollY - innerHeight / 2, behavior: "instant" });
+    });
+    await slot.locator(".slot-main").hover();
+    await expect(tip).toBeVisible({ timeout: 1000 });
+    const seen = await tip.evaluate(el => {
+      el.style.pointerEvents = "auto";
+      const r = el.getBoundingClientRect();
+      const y = r.top + r.height / 2;
+      return [r.left + 6, r.right - 6].map(x => el.contains(document.elementFromPoint(x, y)));
+    });
+    expect(seen).toEqual([true, true]);
+  }).toPass({ timeout: 15_000 });
 });

@@ -149,19 +149,28 @@ test("del diario al mapa es un zoom out desde el paso actual", async ({ page }) 
   await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 2000 });
 });
 
-/** Desde el clic, cuánto tarda en empezar a verse la vista que llega (deja de estar a opacidad 0). */
+/**
+ * Desde el clic, cuánto tarda en empezar a verse la vista que llega (deja de estar a
+ * opacidad 0) y, en ese momento, cómo están las figuras de los jefes que quedan a la vista.
+ */
 const appearsAfter = (page, click) => page.evaluate(async click => {
   const before = new Set(document.querySelectorAll(".steps-stage > .steps-layer"));
   const t0 = performance.now();
   document.querySelector(click).click();
   let incoming = null;
-  while (performance.now() - t0 < 4000) {
+  while (performance.now() - t0 < 10_000) {
     await new Promise(r => requestAnimationFrame(r));
     incoming ||= [...document.querySelectorAll(".steps-stage > .steps-layer")].find(l => !before.has(l));
     const shown = incoming && [incoming, ...incoming.querySelectorAll("[style]")].every(el => el.style.opacity !== "0");
-    if (shown) return performance.now() - t0;
+    if (shown) {
+      const bosses = [...incoming.querySelectorAll("img.node-boss")].filter(img => {
+        const r = img.getBoundingClientRect();
+        return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+      }).map(img => ({ loading: img.loading }));
+      return { ms: performance.now() - t0, bosses };
+    }
   }
-  return Infinity;
+  return { ms: Infinity, bosses: [] };
 }, click);
 
 test("la primera vez, el mapa no espera a las figuras que el navegador deja para luego", async ({ page }) => {
@@ -171,8 +180,14 @@ test("la primera vez, el mapa no espera a las figuras que el navegador deja para
   // Con la ventana a la vista: lo que va a verse del mapa es lo que se espera
   await page.locator("#diary").evaluate(el => el.scrollIntoView({ block: "start", behavior: "instant" }));
   // Las figuras de los jefes llevan loading="lazy": con el mapa aún invisible el navegador
-  // no las pedía y el cambio se quedaba parado hasta el límite de espera (~1,9 s)
-  expect(await appearsAfter(page, "#stepsViewMap")).toBeLessThan(900);
+  // no las pedía y el cambio se quedaba parado hasta el límite de espera (~1,9 s). No se
+  // mide en milisegundos (con la máquina cargada el cambio sano pasaba de 900 ms y en la
+  // CI rondaba los 980 ms) ni si ya habían llegado (con la máquina cargada la espera puede
+  // agotarse igual): se mira la causa. Cuando el mapa empieza a verse, las figuras que
+  // quedan a la vista ya se habían pedido (pasan a "eager") en vez de seguir aplazadas
+  const { ms, bosses } = await appearsAfter(page, "#stepsViewMap");
+  expect(ms, "el mapa no llegó a verse").toBeLessThan(Infinity);
+  expect(bosses.filter(b => b.loading === "eager").length, JSON.stringify(bosses)).toBeGreaterThan(0);
 });
 
 test("del mapa al diario es un zoom in hacia el paso", async ({ page }) => {
@@ -407,17 +422,30 @@ test("al final de la página, deshacer una misión (se despliega) no mueve la p�
 
 /**
  * El zoom entre mapa y diario fotograma a fotograma: cuánto tarda cada fotograma, dónde
- * está la vista que llega (respecto a la que se va) y cuánto se ve.
+ * está la vista que llega (respecto a la que se va) y cuánto se ve. Muestrea hasta que la
+ * vieja se quita (o un límite holgado), no una ventana fija: con la máquina cargada el
+ * cambio tarda más y una ventana fija lo cortaba a medias. Además apunta cómo se ve la
+ * nueva justo cuando se quita la vieja (un MutationObserver, que corre antes del siguiente
+ * fotograma): eso no depende de que algún fotograma muestreado caiga en el cruce.
  */
 const sampleSwap = (page, click) => page.evaluate(async click => {
+  const stage = document.querySelector(".steps-stage");
+  const enterOf = () => [...stage.querySelectorAll(":scope > .steps-layer")].find(l => !l.hasAttribute("inert"));
+  let atRemoval = null;
+  const mo = new MutationObserver(records => {
+    if (atRemoval || !records.some(r => [...r.removedNodes].some(n => n.classList?.contains("steps-layer")))) return;
+    const enter = enterOf();
+    atRemoval = { opacity: parseFloat(getComputedStyle(enter).opacity), onScreen: enter.getBoundingClientRect().top < innerHeight };
+  });
+  mo.observe(stage, { childList: true });
   const t0 = performance.now();
   document.querySelector(click).click();
   const out = [];
   let last = t0;
-  while (performance.now() - t0 < 1300) {
+  while (performance.now() - t0 < 10_000) {
     await new Promise(r => requestAnimationFrame(r));
     const now = performance.now();
-    const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+    const layers = [...stage.querySelectorAll(":scope > .steps-layer")];
     const enter = layers.find(l => !l.hasAttribute("inert"));
     const leave = layers.find(l => l.hasAttribute("inert"));
     out.push({
@@ -425,12 +453,12 @@ const sampleSwap = (page, click) => page.evaluate(async click => {
       layers: layers.length,
       // Las dos vistas, una encima de la otra: la que se va sale del flujo
       offset: leave ? Math.abs(enter.offsetTop - leave.offsetTop) : 0,
-      opacity: parseFloat(getComputedStyle(enter).opacity),
-      onScreen: enter.getBoundingClientRect().top < innerHeight,
     });
     last = now;
+    if (atRemoval && layers.length === 1) break;
   }
-  return out;
+  mo.disconnect();
+  return { frames: out, atRemoval };
 }, click);
 
 for (const [name, view, click] of [
@@ -442,16 +470,23 @@ for (const [name, view, click] of [
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => document.querySelector(".steps-win").scrollIntoView());
     await page.waitForTimeout(400);
-    const frames = await sampleSwap(page, click);
+    const { frames, atRemoval } = await sampleSwap(page, click);
     const both = frames.filter(f => f.layers === 2);
     expect(both.length).toBeGreaterThan(0);
     // Mientras conviven, la que llega está en el mismo sitio que la que se va (no debajo)
     expect(Math.max(...both.map(f => f.offset))).toBeLessThanOrEqual(1);
-    // Y se ve aparecer antes de que la vieja se quite: no salta al final
-    expect(both.some(f => f.onScreen && f.opacity > 0.5)).toBe(true);
-    // Sin parones: el umbral deja margen para la máquina cargada, no para un atasco. En la CI
-    // (2 núcleos, sin GPU) un fotograma llega a ~300 ms; el atasco de verdad eran ~770 ms
-    expect(Math.max(...frames.slice(1).map(f => f.dt))).toBeLessThan(process.env.CI ? 400 : 150);
+    // El cambio termina: la vieja se quita y la nueva ya se ve en la pantalla al quitarla,
+    // no salta al final
+    expect(atRemoval, "la vista vieja no llegó a quitarse").not.toBeNull();
+    expect(atRemoval.onScreen).toBe(true);
+    expect(atRemoval.opacity).toBeGreaterThan(0.5);
+    // Sin parones: el fotograma típico (la mediana) no pasa de 200 ms, así que el zoom
+    // (~460 ms) se ve en movimiento y no a saltos. No se mira el peor fotograma suelto: el
+    // cambio tiene dos fotogramas caros fijos (montar la vista nueva) que con la máquina
+    // cargada pasan de 150 ms a más de 1 s, y ese máximo medía la carga, no la app. La
+    // mediana tampoco es 150: con la máquina muy cargada llegaba a ~170 ms con la app sana
+    const dts = frames.slice(1).map(f => f.dt).sort((a, b) => a - b);
+    expect(dts[dts.length >> 1], frames.map(f => Math.round(f.dt)).join()).toBeLessThan(200);
   });
 }
 
@@ -558,9 +593,14 @@ test("la marca de la pestaña activa se desliza hasta la pestaña nueva", async 
 test("la insignia de una pestaña rebota cuando cambia lo que falta", async ({ page }) => {
   await openApp(page, null, { view: "prereqs" });
   await page.waitForTimeout(400);
+  // El rebote dura .42 s: con la máquina cargada ya había acabado cuando la prueba miraba
+  // getAnimations(). Se apunta desde antes de pulsar si arranca en la insignia
+  await page.locator("#prereqsCount").evaluate(el => {
+    window.__bumped = false;
+    el.addEventListener("animationstart", e => { if (e.animationName === "badge-bump") window.__bumped = true; });
+  });
   await page.click('#prereqs .pr-card[data-id="o1"]');
-  expect(await page.locator("#prereqsCount").evaluate(el =>
-    el.getAnimations().some(a => a.animationName === "badge-bump"))).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__bumped)).toBe(true);
 });
 
 test("las herramientas de los pasos se apagan en la barra con un fundido, sin que la barra cambie de alto", async ({ page }) => {
