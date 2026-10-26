@@ -4,7 +4,7 @@ import { BRAND_ICON, DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, bannerFigure, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import {
-  clearSelection, nextPending, revealMapNode, selectStep, stepMatchesFilters,
+  clearSelection, mapShown, nextPending, revealMapNode, selectStep, stepMatchesFilters,
 } from "../state/store.js";
 import { useLeaving, useLiveId } from "../lib/leaving.js";
 import MapCard from "./MapCard.jsx";
@@ -177,7 +177,11 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen, onSi
     if (!card || !box) return;
     const at = pos[n - 1];
     const radius = m => (nodeEl(box, m)?.offsetWidth || 44) / 2;
-    const view = { top: box.scrollTop, bottom: box.scrollTop + box.clientHeight };
+    // Lo que se ve del mapa, no el marco entero: la ventana suele pasar de la pantalla.
+    // En px del mapa (k): mientras llega con el zoom, la pantalla lo ve escalado
+    const b = box.getBoundingClientRect(), k = b.height ? box.offsetHeight / b.height : 1;
+    const shown = mapShown(box), off = (shown.top - b.top) * k, seenH = shown.height * k;
+    const view = { top: box.scrollTop + off, bottom: box.scrollTop + off + seenH };
     const avoid = [n - 1, n, n + 1].filter(m => m >= 1 && m <= STEPS.length).map(m => ({ ...pos[m - 1], r: radius(m) + 4 }));
     const next = placeCard({ at, r: radius(n), w: card.offsetWidth, h: card.offsetHeight, width, height, view, avoid });
     setPlace(prev => (prev && prev.side === next.side && prev.left === next.left && prev.top === next.top && prev.arrow === next.arrow ? prev : next));
@@ -187,8 +191,8 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen, onSi
     if (!next.seen && allowScroll && nodeSeen) {
       const top = Math.min(next.top, at.y - radius(n)) - EDGE;
       const bottom = Math.max(next.top + card.offsetHeight, at.y + radius(n)) + EDGE;
-      if (bottom - top <= box.clientHeight) {
-        const to = top < view.top ? top : bottom > view.bottom ? bottom - box.clientHeight : null;
+      if (bottom - top <= seenH) {
+        const to = top < view.top ? top - off : bottom > view.bottom ? bottom - off - seenH : null;
         if (to != null) box.scrollTo({ top: to, behavior: prefersReducedMotion() ? "auto" : "smooth" });
       }
     }
@@ -207,14 +211,16 @@ function FloatingCard({ step, s, layoutInfo, width, scrollRef, focusOnOpen, onSi
     const ro = new ResizeObserver(() => placeNow(false));
     ro.observe(card);
     const onEnd = () => {
-      const c = card.getBoundingClientRect(), b = box.getBoundingClientRect();
+      const c = card.getBoundingClientRect(), b = mapShown(box);
       const node = nodeEl(box, n)?.getBoundingClientRect();
       const nodeSeen = node && node.top >= b.top && node.bottom <= b.bottom;
       const cardSeen = c.top >= b.top - 1 && c.bottom <= b.bottom + 1;
       if (nodeSeen && !cardSeen) placeNow(performance.now() - opened.current < 3000);
     };
+    // También la página: con la ventana más alta que la pantalla, a veces baja ella
     box.addEventListener("scrollend", onEnd);
-    return () => { ro.disconnect(); box.removeEventListener("scrollend", onEnd); };
+    window.addEventListener("scrollend", onEnd);
+    return () => { ro.disconnect(); box.removeEventListener("scrollend", onEnd); window.removeEventListener("scrollend", onEnd); };
   }, [n, width]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Con el teclado, el foco entra en la ficha (ya colocada: oculta no lo admite); al
@@ -345,8 +351,13 @@ export default function StepMap({ s, current, mobile }) {
     placed.current = true;
     if (lastScroll != null) box.scrollTop = lastScroll;
     else if (current != null) {
+      // Lo que se verá del mapa con la ventana arriba (8 px de aire): la ventana suele
+      // pasar de la pantalla y el marco entero no se ve
+      const section = box.closest(".diary");
+      const below = section ? box.getBoundingClientRect().top - section.getBoundingClientRect().top + 8 : 0;
+      const seen = Math.min(box.clientHeight, Math.max(240, innerHeight - below));
       const at = info.pos[current - 1];
-      if (at.y + 40 > box.clientHeight) box.scrollTop = at.y - box.clientHeight / 2;
+      if (at.y + 40 > seen) box.scrollTop = at.y - seen / 2;
     }
     lastScroll = box.scrollTop;
   }, [info]); // eslint-disable-line react-hooks/exhaustive-deps

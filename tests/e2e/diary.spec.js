@@ -50,9 +50,9 @@ test("el detalle del 34 muestra jefe, avisos de la guía y los pasos que cierra"
   // Se resuelve en el mismo paso: sin aviso rojo, la línea verde va en la ruta
   await expect(j.locator(".call.stop")).toHaveCount(0);
   await expect(j.locator(".call.tip")).toContainText("primeras 4 salas");
-  await expect(j.locator(".call.done")).toContainText("Se pasa Lasoberaña");
+  await expect(j.locator(".resolve")).toContainText("Se pasa Lasoberaña");
   // Los incisos del verde llevan a esos pasos
-  await j.locator('.call.done .step-ref[data-n="33"]').click();
+  await j.locator('.resolve .step-ref[data-n="33"]').click();
   await expect(j.locator(".journal-num")).toHaveText("33");
 });
 
@@ -104,16 +104,15 @@ test("un paso con verde que otro paso termina, sin parada propia en el verde, s�
   await row(page, 41).locator(".row-num").click();
   const j = page.locator("#journal");
   await expect(j.locator(".call.stop")).toContainText("Hasta tener que completar una run de sueños");
-  await expect(j.locator(".call.done")).toContainText("Se hace la mazmorra de Fraktal");
+  await expect(j.locator(".resolve")).toContainText("Se hace la mazmorra de Fraktal");
   await expect(j.locator(".call.closedin")).toContainText("91");
   // Igual en el 84, que cierra el 94
   await row(page, 84).locator(".row-num").click();
   await expect(j.locator(".call.stop")).toContainText("Hasta después de haber pasado Nileza");
-  // En pantalla baja, también en las fichas
+  // En pantalla baja, también en la ruta del paso, entero
   await page.setViewportSize({ width: 1280, height: 720 });
   await row(page, 41).locator(".row-num").click();
-  await expect(j.locator(".call.stop .call-head")).toBeVisible();
-  await expect(j.locator(".call.stop .call-peek")).toContainText("Hasta tener que completar una run de sueños");
+  await expect(j.locator(".goal-route .call.stop")).toContainText("Hasta tener que completar una run de sueños");
 });
 
 test("«Completar paso N» marca el paso y salta al siguiente pendiente", async ({ page }) => {
@@ -472,11 +471,11 @@ test("el paso 79 da el Dofus Ocre", async ({ page }) => {
 test("los avisos usan iconos del juego, no emojis", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="34"] .row-num');
-  const icon = kind => page.locator(`#journal .call.${kind} i img`);
+  const icon = kind => page.locator(kind === "done" ? "#journal .resolve-icon img" : `#journal .call.${kind} i img`);
   // Lo que se resuelve: el jefe que se pasa (Lasoberaña), no un logro
   await expect(icon("done")).toHaveAttribute("src", /monsters\/1267\.png$/);
   await expect(icon("tip")).toHaveAttribute("src", /items\/25019\.png$/);
-  expect(await page.locator("#journal .call i").allInnerTexts()).toEqual(["", ""]);
+  expect(await page.locator("#journal .call i, #journal .resolve-icon").allInnerTexts()).toEqual(["", ""]);
   // Sin jefe, la espada del juego
   await page.click('.diary-row[data-n="38"] .row-num');
   await expect(icon("done")).toHaveAttribute("src", /items\/6009\.png$/);
@@ -720,7 +719,7 @@ test("«se cierra en» se lee entero y lleva al paso que lo cierra, y al revés"
   await expect(page.locator("#journal .badge.closed-in, #journal .badge.closes")).toHaveCount(0);
   await page.locator('#journal .call.closedin .step-ref[data-n="22"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("22");
-  await page.locator('#journal .call.done .step-ref[data-n="5"]').click();
+  await page.locator('#journal .resolve .step-ref[data-n="5"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("5");
 });
 
@@ -1266,10 +1265,12 @@ test("el detalle del paso es el estandarte y su objetivo, con el texto de la gu�
   await expect(page.locator("#journal .journal-banner .journal-num")).toHaveText("17");
   await expect(page.locator("#journal .journal-banner .banner-zone")).toHaveText("Misiones de Mundo");
   // Los avisos van en la cabecera, como líneas; en el cuerpo solo «Necesitas» y las misiones
-  await expect(goal.locator(".goal-calls .call.done")).toHaveCount(1);
-  await expect(page.locator("#journal .journal-body .call")).toHaveCount(0);
+  await expect(goal.locator(".goal-route .resolve")).toHaveCount(1);
+  await expect(page.locator("#journal .journal-body .call, #journal .journal-body .resolve")).toHaveCount(0);
+  // En la ruta, lo que hay que hacer; el consejo, aparte
   await stepData(page, 28);
-  await expect(goal.locator(".goal-calls .call")).toHaveClass([/tip/, /done/, /must/]);
+  await expect(goal.locator(".goal-route .route-stop")).toHaveClass([/is-guide/, /is-done/, /is-must/]);
+  await expect(goal.locator(".route-asides .call")).toHaveClass([/tip/]);
   await stepData(page, 84);
   await expect(page.locator("#journal .boss-row")).toHaveCount(0);
 });
@@ -1375,7 +1376,7 @@ test("en el 93, la nota que empieza por «Misión N:» va dentro de esa misión,
 test("en el 94, la nota de «El dragón negro» va dentro de ella y el objetivo se queda sin avisos", async ({ page }) => {
   await openApp(page);
   await stepData(page, 94);
-  await expect(page.locator("#journal .goal-calls")).toHaveCount(0);
+  await expect(page.locator("#journal .goal-calls .call, #journal .resolve")).toHaveCount(0);
   const negro = questItem(page, "El dragón negro");
   await expect(negro.locator(".q-note")).toHaveText("Se pasa Klim y se termina la misión del inciso 84");
   await expect(page.locator("#journal .q-note")).toHaveCount(1);

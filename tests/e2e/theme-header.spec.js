@@ -68,13 +68,13 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
   await settles(() => style("#heroNextGo", "color"), () => style("#heroNextGo", "backgroundColor"));
   await settles(() => style(".hero-eyebrow", "color"), () => page.evaluate(() => getComputedStyle(document.body).backgroundColor));
   await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
-  // Pantalla baja: la barra compacta y las fichas de notas del paso, sobre su pergamino
+  // Pantalla baja: la barra compacta y los avisos de la ruta del paso, sobre su pergamino
   await page.setViewportSize({ width: 1280, height: 720 });
   await settles(() => style("#diaryNext", "color"), () => style("#diaryNext", "backgroundColor"));
   await settles(() => style("#winPct", "color"), () => style(".steps-win", "backgroundColor"));
   await settles(() => style(".win-done", "color"), () => style(".steps-win", "backgroundColor"));
   await page.locator('.diary-row[data-n="1"] .row-num').click();
-  await settles(() => style("#journal .call-peek", "color"), () => style("#journal .journal-top", "backgroundColor"));
+  await settles(() => style("#journal .goal-route .call", "color"), () => style("#journal .journal-top", "backgroundColor"));
 });
 
 test("el botón de copiar de los objetos se lee en los dos temas", async ({ page }) => {

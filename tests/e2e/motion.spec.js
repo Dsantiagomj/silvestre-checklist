@@ -406,7 +406,10 @@ test("al final de la página, deshacer una misión (se despliega) no mueve la p�
     const side = document.querySelector(".diary-side");
     // La última del 11, «La risueña miaumiena», la única que se despliega
     const sum = document.querySelectorAll("#journal .q-item.is-expandable .q-check")[0];
-    const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top),
+    // Deshacerla deja el paso sin hacer y su ruta suma «Se termina más adelante»: la misión
+    // baja lo que crece la cabecera, nada más
+    const head = document.querySelector("#journal .journal-top");
+    const snap = () => ({ y: Math.round(scrollY), sum: Math.round(sum.getBoundingClientRect().top - head.offsetHeight),
       top: Math.round(side.getBoundingClientRect().top), h: Math.round(side.offsetHeight) });
     const out = [snap()];
     sum.click();
@@ -414,7 +417,7 @@ test("al final de la página, deshacer una misión (se despliega) no mueve la p�
     return out;
   });
   const spread = k => Math.max(...frames.map(f => f[k])) - Math.min(...frames.map(f => f[k]));
-  // Ni la página ni la misión pulsada se mueven y la lista no cambia de alto: la misión
+  // Ni la página ni la misión pulsada se mueven (salvo lo que crece la cabecera) y la lista no cambia de alto: la misión
   // crece hacia abajo y alarga el detalle y la ventana (la lista, que al final de la
   // ventana se iba con ella, vuelve a quedarse pegada bajo la barra)
   expect([spread("y"), spread("sum"), spread("h")].every(d => d <= 1), JSON.stringify(frames)).toBe(true);

@@ -130,6 +130,18 @@ export function resolvedBoss(n) {
   const text = norm(done.replace(FOLLOW_UP, ""));
   return assetsFor(n)?.bosses?.find(b => text.includes(norm(b.name))) || null;
 }
+/**
+ * Los jefes que nombra un texto verde, en el orden en que salen (el 80: Roble blando y
+ * Ugah). Sin el «hasta tener que pasar X» del final, que es la parada siguiente.
+ */
+export function bossesIn(n, text) {
+  const t = norm(text.replace(FOLLOW_UP, ""));
+  return (assetsFor(n)?.bosses || [])
+    .map(b => ({ b, at: t.indexOf(norm(b.name)) }))
+    .filter(x => x.at >= 0)
+    .sort((x, y) => x.at - y.at)
+    .map(x => x.b);
+}
 const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 
 /**

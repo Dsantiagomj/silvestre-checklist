@@ -555,9 +555,22 @@ export function takeMapFocus() {
   return n;
 }
 /**
+ * Lo que se ve del marco del mapa (en escritorio), en coordenadas de la pantalla. La
+ * ventana mide como poco lo que piden los prerrequisitos y suele pasar del alto de la
+ * pantalla: el marco entero no se ve, y buscar el paso en él lo dejaba debajo del borde.
+ * Si apenas asoma (la página está lejos de la ventana), el marco entero.
+ */
+export function mapShown(box) {
+  const b = box.getBoundingClientRect();
+  const top = Math.max(b.top, 0), bottom = Math.min(b.bottom, innerHeight);
+  return bottom - top >= 120 ? { top, bottom, height: bottom - top } : { top: b.top, bottom: b.bottom, height: b.height };
+}
+
+/**
  * Deja a la vista el sello del paso n, solo si no lo está ya. En escritorio el mapa se
  * desplaza dentro de la ventana: se mueve el mapa, no la página (que solo baja hasta
- * la ventana si esta no se ve entera). En móvil el mapa va en la página.
+ * la ventana si esta no se ve entera), y el paso se centra en lo que se ve del mapa, no
+ * en el marco entero. En móvil el mapa va en la página.
  */
 export function revealMapNode(n) {
   const node = appRoot().querySelector(`.map-node[data-n="${n}"]`);
@@ -566,7 +579,7 @@ export function revealMapNode(n) {
   const r = node.getBoundingClientRect();
   const box = node.closest(".step-map-scroll");
   if (box && box.scrollHeight > box.clientHeight + 1) {
-    const b = box.getBoundingClientRect();
+    const b = mapShown(box);
     let shift = 0;
     if (r.top < b.top + 40 || r.bottom > b.bottom - 40) {
       const top = Math.min(Math.max(0, box.scrollTop + r.top - b.top - (b.height - r.height) / 2), box.scrollHeight - box.clientHeight);
@@ -574,9 +587,14 @@ export function revealMapNode(n) {
       box.scrollTo({ top, behavior });
     }
     // Donde quedará el sello: si ni así se ve (o queda bajo la barra de la ventana), la
-    // página baja hasta la ventana
+    // página baja hasta la ventana. La ventana suele pasar de la pantalla: si ni con ella
+    // arriba se ve (un paso del final, con el mapa ya al fondo), la página baja lo justo
+    // para dejarlo en el centro
     const head = appRoot().getElementById("winBar")?.getBoundingClientRect().bottom ?? 0;
-    if (r.top - shift < head || r.bottom - shift > innerHeight) showStepsWindow();
+    const top = r.top - shift, bottom = r.bottom - shift;
+    const lift = (appRoot().getElementById("diary")?.getBoundingClientRect().top ?? 8) - 8;
+    if (top < head || (bottom > innerHeight && lift > 0 && bottom - lift <= innerHeight)) showStepsWindow();
+    else if (bottom > innerHeight) window.scrollBy({ top: (top + bottom - innerHeight) / 2, behavior });
     return;
   }
   if (r.top < 80 || r.bottom > innerHeight) node.scrollIntoView({ behavior, block: "center" });

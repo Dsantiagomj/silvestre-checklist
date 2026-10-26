@@ -122,10 +122,12 @@ const diaryHeights = root => {
     // Hasta dónde llega el detalle, respecto al final de la ventana: la llena, sin hueco debajo
     detailGap: root.querySelector(".steps-win").getBoundingClientRect().bottom - root.querySelector(".diary-detail").getBoundingClientRect().bottom,
     page: document.documentElement.scrollHeight, vh: innerHeight,
+    // Lo que piden los prerrequisitos enteros (Diary.jsx): la ventana nunca mide menos
+    need: parseFloat(cs.getPropertyValue("--win-need")) || 0,
   };
 };
 
-test("a 1440×900, en un paso corto el diario mide 1,3 veces el alto disponible y la lista sigue cabiendo en la pantalla", async ({ page }) => {
+test("a 1440×900, en un paso corto el diario mide 1,3 veces el alto disponible (o lo que piden los prerrequisitos) y la lista sigue cabiendo en la pantalla", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openApp(page, { "silvestre:done": upTo(3) });
   // El 4: una sola misión
@@ -137,8 +139,10 @@ test("a 1440×900, en un paso corto el diario mide 1,3 veces el alto disponible 
   await page.waitForTimeout(200);
   const m = await page.evaluate(`(${diaryHeights})(document)`);
   const msg = JSON.stringify(m);
-  // La sección y la ventana, un poco más altas que la pantalla: la página baja un poco
-  expect(Math.abs(m.section - 1.3 * m.avail), msg).toBeLessThanOrEqual(2);
+  // La sección y la ventana, más altas que la pantalla: 1,3 veces, o lo que piden los
+  // prerrequisitos si es más. La página baja
+  expect(m.need, msg).toBeGreaterThan(0);
+  expect(Math.abs(m.section - Math.max(1.3 * m.avail, m.need)), msg).toBeLessThanOrEqual(2);
   expect(Math.abs(m.win - m.section), msg).toBeLessThanOrEqual(2);
   expect(m.page, msg).toBeGreaterThan(m.vh);
   expect(m.detailGap, msg).toBeLessThanOrEqual(3);
