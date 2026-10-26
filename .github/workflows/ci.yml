@@ -7,6 +7,11 @@ name: CI
 #
 # El runner de un repo privado tiene 2 vCPU: la suite de la app entera tardaba 15 minutos.
 # Va partida en 4 trozos que corren a la vez (--shard), cada uno con su build.
+#
+# Los jobs con navegador corren en la imagen de Playwright, que ya trae Chromium y lo que
+# necesita del sistema. Instalarlo con apt en cada job dependía del espejo de Ubuntu, que
+# a veces se quedaba 10 minutos parado. La versión de la imagen es la de @playwright/test
+# en package-lock.json: el primer paso lo comprueba.
 on:
   pull_request:
     branches: [main]
@@ -63,6 +68,9 @@ jobs:
     if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host
     strategy:
       # Un trozo que falla no para los demás: se ven todos los fallos de una vez
       fail-fast: false
@@ -75,7 +83,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: ./.github/actions/playwright
+      - name: La imagen es la de la versión de Playwright
+        run: test "$(node -p "require('@playwright/test/package.json').version")" = "1.64.0"
       - run: npx playwright test --shard=${{ matrix.shard }}/4 --retries=2
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -93,6 +102,9 @@ jobs:
     if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -100,7 +112,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: ./.github/actions/playwright
+      - name: La imagen es la de la versión de Playwright
+        run: test "$(node -p "require('@playwright/test/package.json').version")" = "1.64.0"
       - run: npm run test:embed -- --retries=2
       - run: npm run test:hielos -- --retries=2
       - uses: actions/upload-artifact@v4
