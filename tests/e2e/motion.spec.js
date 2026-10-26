@@ -235,16 +235,25 @@ test("tras el zoom al diario el contenido no vuelve a aparecer (sin parpadeo)", 
   await page.click("#stepsViewMap");
   await page.waitForTimeout(800);
   await page.click('.map-node[data-n="34"]');
-  // Opacidad efectiva del texto del detalle (la suya por la de sus ancestros) en cada fotograma
+  // Opacidad efectiva del texto del detalle (la suya por la de sus ancestros) en cada
+  // fotograma. Se muestrea hasta que el cambio termina (la vieja se quitó y nada se anima
+  // ya en el escenario) y unos fotogramas más, no una ventana fija: con la máquina cargada
+  // el zoom tarda más y una ventana de 1,1 s lo cortaba antes de que el diario se viera
   const seen = await page.evaluate(async () => {
+    const stage = document.querySelector(".steps-stage");
+    const busy = () => stage.querySelectorAll(":scope > .steps-layer").length > 1 ||
+      document.getAnimations().some(a => a.playState === "running" && a.effect?.getTiming().iterations !== Infinity &&
+        stage.contains(a.effect.target));
     document.querySelector("#mapCard .map-card-open").click();
     const out = [];
     const t0 = performance.now();
-    while (performance.now() - t0 < 1100) {
+    let after = 0;
+    while (performance.now() - t0 < 10_000 && after < 5) {
       await new Promise(r => requestAnimationFrame(r));
-      let el = document.querySelector("#journal .journal-body"), o = 1;
+      let el = document.querySelector("#journal .journal-body"), o = el ? 1 : 0;
       for (; el; el = el.parentElement) o *= parseFloat(getComputedStyle(el).opacity);
       out.push(Math.round(o * 100) / 100);
+      after = busy() ? 0 : after + 1;
     }
     return out;
   });
@@ -255,49 +264,110 @@ test("tras el zoom al diario el contenido no vuelve a aparecer (sin parpadeo)", 
 });
 
 test("el zoom espera a que el diario esté listo: no se muestra a medio cargar", async ({ page }) => {
-  // Las misiones (su chunk) tardan: el diario no debe aparecer sin ellas
-  let release;
-  const held = new Promise(r => { release = r; });
-  await page.route(/quests-[\w-]+\.js$/, async route => { await held; await route.continue(); });
+  // Las misiones (su chunk) tardan: el diario no debe aparecer sin ellas. Se retienen
+  // dentro de la página y las suelta la propia página: soltarlas desde la prueba (y que
+  // luego llegara el chunk) costaba idas y vueltas que, con la máquina cargada, se comían
+  // el límite de 1,5 s y el diario aparecía igual, sin misiones. En lugar del chunk va un
+  // módulo que lo importa tal cual (se descarga ya) y no termina hasta que se suelta
+  await page.addInitScript(() => { window.__questsGate = new Promise(r => { window.__releaseQuests = r; }); });
+  await page.route(/quests-[\w-]+\.js$/, route => route.fulfill({
+    contentType: "text/javascript",
+    body: `export { default } from ${JSON.stringify(`${route.request().url()}?tal-cual`)};\nawait window.__questsGate;\n`,
+  }));
   await openApp(page, null, { view: "map" });
+  // Y el chunk de verdad, ya descargado y listo: al soltarlo no queda nada por llegar
+  await page.evaluate(async () => {
+    const main = document.querySelector("script[type=module][src]").src;
+    const chunk = (await (await fetch(main)).text()).match(/quests-[\w-]+\.js/)[0];
+    await import(`${new URL(chunk, main)}?tal-cual`);
+  });
   await page.waitForTimeout(400);
   await page.click('.map-node[data-n="34"]');
-  await page.click("#mapCard .map-card-open");
-  await page.waitForTimeout(700);
-  const during = await page.evaluate(() => {
-    const layers = [...document.querySelectorAll(".steps-stage > .steps-layer")];
+  const { during, shown } = await page.evaluate(async () => {
+    const stage = document.querySelector(".steps-stage");
     const op = el => parseFloat(getComputedStyle(el).opacity);
-    return { layers: layers.length, entering: op(layers.find(l => !l.hasAttribute("inert"))),
-      leaving: op(layers.find(l => l.hasAttribute("inert"))) };
+    document.querySelector("#mapCard .map-card-open").click();
+    const t0 = performance.now();
+    let during = null;
+    while (performance.now() - t0 < 10_000) {
+      await new Promise(r => requestAnimationFrame(r));
+      const layers = [...stage.querySelectorAll(":scope > .steps-layer")];
+      const enter = layers.find(l => !l.hasAttribute("inert"));
+      const leave = layers.find(l => l.hasAttribute("inert"));
+      // Pasado el zoom (0,3 s), con las misiones aún retenidas: cómo están las dos vistas.
+      // Luego se sueltan, con margen hasta el límite de 1,5 s
+      if (!during && performance.now() - t0 >= 500) {
+        during = { layers: layers.length, entering: op(enter), leaving: leave ? op(leave) : null };
+        window.__releaseQuests();
+      }
+      // El primer fotograma en que el diario empieza a verse: qué trae
+      if (during && op(enter) > 0.05) {
+        return { during, shown: {
+          quests: enter.querySelectorAll(".q-item").length,
+          loading: [...enter.querySelectorAll(".asset-note")].some(n => n.textContent.includes("Cargando misiones")),
+        } };
+      }
+    }
+    return { during, shown: null };
   });
   // El mapa sigue ampliado y visible; el diario, oculto mientras carga
+  expect(during).not.toBeNull();
   expect(during.layers).toBe(2);
   expect(during.entering).toBeLessThan(0.05);
   expect(during.leaving).toBeGreaterThan(0.9);
-  release();
-  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
   // Al aparecer, las misiones ya están
-  await expect(page.locator("#journal .q-item").first()).toBeVisible();
-  expect(await page.locator("#journal .asset-note", { hasText: "Cargando misiones" }).count()).toBe(0);
+  expect(shown, "el diario no llegó a verse").not.toBeNull();
+  expect(shown.quests).toBeGreaterThan(0);
+  expect(shown.loading).toBe(false);
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1);
 });
 
 test("con todo a mano, la vista nueva aparece sin agotar la espera", async ({ page }) => {
   await openApp(page, null, { view: "map" });
   await page.waitForLoadState("networkidle");
   await page.click('.map-node[data-n="34"]');
+  // Cuando la vista nueva empieza a verse, qué de lo que espera (lib/viewSwap.js) seguía
+  // sin llegar: las imágenes propias a la vista y las misiones
   const shown = await page.evaluate(async () => {
+    // Como en viewSwap.js: a la vista de verdad, también dentro de la lista que la recorta
+    const inView = el => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) return false;
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        if (getComputedStyle(p).overflowY === "visible") continue;
+        const c = p.getBoundingClientRect();
+        if (r.bottom <= c.top || r.top >= c.bottom) return false;
+      }
+      return true;
+    };
     document.querySelector("#mapCard .map-card-open").click();
     const t0 = performance.now();
     await new Promise(r => requestAnimationFrame(r));
     const layer = document.querySelector(".steps-stage > .steps-layer:not([inert])");
-    while (performance.now() - t0 < 3000) {
+    while (performance.now() - t0 < 10_000) {
       await new Promise(r => requestAnimationFrame(r));
-      if (parseFloat(getComputedStyle(layer).opacity) > 0.05) return performance.now() - t0;
+      if (parseFloat(getComputedStyle(layer).opacity) > 0.05) {
+        return {
+          // Las que aún no llegan y el navegador no va a pedir (loading="lazy" en una vista
+          // invisible). Las que están llegando no cuentan: con la máquina cargada pueden
+          // agotar la espera de las imágenes, que para eso está
+          missing: [...layer.querySelectorAll("img")]
+            .filter(img => img.src && new URL(img.src).origin === location.origin && inView(img) &&
+              !img.complete && img.loading === "lazy")
+            .map(img => img.src),
+          quests: layer.querySelectorAll(".q-item").length,
+        };
+      }
     }
-    return Infinity;
+    return null;
   });
-  // El límite es 1,5 s: esperar lo que el navegador no va a cargar lo agotaría
-  expect(shown).toBeLessThan(1000);
+  // El límite es 1,5 s: esperar lo que el navegador no va a cargar lo agotaría. No se
+  // mide en milisegundos (sana tarda ~0,2 s, pero con la máquina cargada pasaba de 1 s en
+  // la CI): se mira la causa. Al empezar a verse, nada de lo que espera se ha quedado sin
+  // pedir y las misiones ya están
+  expect(shown, "la vista nueva no llegó a verse").not.toBeNull();
+  expect(shown.missing).toEqual([]);
+  expect(shown.quests).toBeGreaterThan(0);
 });
 
 test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page }) => {
@@ -646,15 +716,30 @@ test("con movimiento reducido las pestañas cambian al instante", async ({ page 
 test("el desplegable de zona se abre y se cierra con una animación", async ({ page }) => {
   await openApp(page);
   await page.waitForTimeout(300);
+  // La entrada dura .2 s: con la máquina cargada ya había acabado cuando la prueba miraba
+  // getAnimations(). Se apunta desde antes de pulsar si arranca en el panel
+  await page.evaluate(() => {
+    window.__popIn = false;
+    document.addEventListener("animationstart", e => {
+      if (e.animationName === "zone-pop-in" && e.target.matches(".zone-pop")) window.__popIn = true;
+    }, true);
+  });
   await page.click("#zoneBtn");
-  expect(await page.locator("#zoneSeals").evaluate(el => el.getAnimations().length)).toBeGreaterThan(0);
-  await page.waitForTimeout(400);
-  // Al cerrarse sigue un momento, apagándose, y luego se va
+  await expect.poll(() => page.evaluate(() => window.__popIn)).toBe(true);
+  await expect(page.locator("#zoneSeals")).toBeVisible();
+  // Al cerrarse sigue un momento, apagándose, y luego se va. Se mira cada fotograma hasta
+  // que se va, no solo el primero: con la máquina cargada el fundido puede caer en otro
   const closing = await page.evaluate(async () => {
     document.getElementById("zoneBtn").click();
-    await new Promise(r => requestAnimationFrame(r));
-    const pop = document.querySelector(".zone-pop");
-    return pop ? pop.getAnimations().length : -1;
+    let seen = 0;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 10_000) {
+      const pop = document.querySelector(".zone-pop");
+      if (!pop) break;
+      seen = Math.max(seen, pop.getAnimations().length);
+      await new Promise(r => requestAnimationFrame(r));
+    }
+    return seen;
   });
   expect(closing).toBeGreaterThan(0);
   await expect(page.locator(".zone-pop")).toHaveCount(0, { timeout: 1500 });
