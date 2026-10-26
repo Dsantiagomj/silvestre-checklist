@@ -185,7 +185,8 @@ jobs:
           fi
           echo "number=$pr" >> "$GITHUB_OUTPUT"
       # Un PR abierto con GITHUB_TOKEN no lanza CI: se lanza a mano sobre la rama y se espera
-      # al check "Pruebas" que exige la protección de main
+      # al check "Pruebas" que exige la protección de main. Es el último job de CI (llega
+      # cuando acaban los trozos de la suite): se mira su estado hasta que pasa o falla
       - name: Wait for the tests
         if: steps.pr.outputs.number
         env:
@@ -193,11 +194,17 @@ jobs:
           PR: ${{ steps.pr.outputs.number }}
         run: |
           gh workflow run ci.yml --ref "$SYNC_BRANCH"
-          for _ in $(seq 1 30); do
-            gh pr checks "$PR" --json name --jq '.[].name' | grep -qx "Pruebas" && break
-            sleep 10
+          # Hasta 40 minutos (el timeout de los jobs de CI con margen)
+          for _ in $(seq 1 80); do
+            state="$(gh pr checks "$PR" --json name,bucket --jq '.[] | select(.name == "Pruebas") | .bucket' || true)"
+            case "$state" in
+              pass) exit 0 ;;
+              fail|cancel) echo "Pruebas: $state"; exit 1 ;;
+            esac
+            sleep 30
           done
-          gh pr checks "$PR" --watch --fail-fast --interval 30
+          echo "Pruebas no terminó a tiempo"
+          exit 1
       - name: Merge
         if: steps.pr.outputs.number
         env:
