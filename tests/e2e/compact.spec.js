@@ -48,7 +48,7 @@ test("en pantalla baja el detalle va en orden: cabecera, qué hacer, notas, misi
   await openApp(page);
   await row(page, 1).locator(".row-num").click();
   await waitQuests(page);
-  const order = await page.locator("#journal").evaluate(j => [".journal-head", ".goal-guide", ".goal-calls", ".journal-quests", ".journal-needs"]
+  const order = await page.locator("#journal").evaluate(j => [".journal-head", ".goal-guide", ".route-stop + .route-stop", ".journal-quests", ".journal-needs"]
     .map(sel => j.querySelector(sel)).map(el => el && el.getBoundingClientRect().top));
   expect(order.every(Boolean), JSON.stringify(order)).toBe(true);
   for (let i = 1; i < order.length; i++) expect(order[i], `${i}`).toBeGreaterThan(order[i - 1]);
@@ -68,14 +68,12 @@ test("la cabecera del paso lleva su título y una línea con zona, inicio, misio
   await expect(page.locator("#journal .journal-head .journal-to-map")).toBeVisible();
 });
 
-test("las notas del paso son fichas en una línea que se despliegan al pulsarlas", async ({ page }) => {
+test("la ruta del paso va entera y los consejos son fichas que se despliegan al pulsarlas", async ({ page }) => {
   await openApp(page, { "silvestre:done": upTo(40) });
   await row(page, 41).locator(".row-num").click();
-  const calls = page.locator("#journal .goal-calls .call");
-  expect(await calls.count()).toBeGreaterThanOrEqual(3);
-  // Plegadas: una sola línea
-  const tops = await calls.evaluateAll(els => els.map(el => Math.round(el.getBoundingClientRect().top)));
-  expect(new Set(tops).size).toBe(1);
+  // Lo que hay que hacer, entero y en orden: qué hacer, hasta dónde, lo que se resuelve y dónde se termina
+  await expect(page.locator("#journal .goal-route .route-stop")).toHaveClass([/is-guide/, /is-stop/, /is-done/, /is-closedin/]);
+  await expect(page.locator("#journal .goal-route .call-head")).toHaveCount(0);
   const tip = page.locator("#journal .call.tip");
   const head = tip.locator(".call-head");
   await expect(head).toHaveAttribute("aria-expanded", "false");
@@ -96,7 +94,6 @@ test("las notas del paso son fichas en una línea que se despliegan al pulsarlas
   await expect(body).toBeHidden();
   // «Se termina más adelante» lleva al paso que lo cierra
   const closed = page.locator("#journal .call.closedin");
-  await closed.locator(".call-head").click();
   await closed.locator('.step-ref[data-n="91"]').click();
   await expect(page.locator("#journal .journal-num")).toHaveText("91");
 });

@@ -5,7 +5,7 @@ import { childrenOf, groupsOf, impliedBy, questsOf } from "../lib/quests.js";
 import { linkify, missionGuide } from "../lib/guides.js";
 import PLANS from "@dofus/plans.json";
 import {
-  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, doneIcon, expandableQuests, missionNotes, nextPendingAfter, questStops, stepCalls, stepTitle,
+  CLOSED_BY, QUEST_NOTES, RESUMED_IN, bannerFigure, bossesIn, doneIcon, expandableQuests, missionNotes, nextPendingAfter, questStops, stepCalls, stepTitle,
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
@@ -90,8 +90,8 @@ function Badge({ step }) {
 
 /**
  * El objetivo (derecha del estandarte): arriba, el logro con su icono, el título, una
- * línea con lo que pide el paso y «Ver en el mapa»; debajo, qué hacer (el texto de la
- * guía). Sus notas van en fichas debajo de los dos (NoteChips).
+ * línea con lo que pide el paso y «Ver en el mapa». Qué hacer y sus avisos van debajo,
+ * en la ruta del paso (GoalRoute).
  */
 function Goal({ step, done, s }) {
   const plan = PLANS[step.n] || [];
@@ -117,15 +117,14 @@ function Goal({ step, done, s }) {
           Ver en el mapa
         </button>
       </div>
-      <GuideText step={step} label="Qué hacer" />
     </div>
   );
 }
 
 /**
  * El objetivo en pantalla alta, como antes de la versión compacta: «Ver en el mapa»
- * arriba a la derecha, el logro y el título, el texto de la guía con sus avisos en
- * bloques (GuideCalls) y, debajo, quién da el paso.
+ * arriba a la derecha, el logro y el título, la ruta del paso (GoalRoute) y, debajo,
+ * quién da el paso.
  */
 function GoalTall({ step, done }) {
   const plan = PLANS[step.n] || [];
@@ -147,7 +146,7 @@ function GoalTall({ step, done }) {
           <h2 className="journal-title">{stepTitle(step)}</h2>
         </div>
       </div>
-      <GuideCalls step={step} done={done} />
+      <GoalRoute step={step} done={done} />
       {fig && <p className="goal-by">{fig.as}: <b>{fig.name}</b></p>}
     </div>
   );
@@ -205,18 +204,51 @@ function notesOf(step, done) {
   return notes;
 }
 
-/**
- * El texto de la guía y sus avisos, con dónde se retoman y se terminan sus misiones,
- * cada uno en su panel. Lo usa la pestaña «Guía» del overlay.
- */
+/** La ruta del paso en la pestaña «Guía» del overlay. */
 export function GuideCalls({ step, done }) {
+  return <GoalRoute step={step} done={done} />;
+}
+
+// Los consejos y las notas no son algo que hacer: van aparte, fuera de la ruta
+const ASIDE = new Set(["tip", "note"]);
+
+/**
+ * La ruta del paso: lo que pide, en el orden de la guía y unido por una línea como el
+ * diario del juego. Qué hacer (el texto de la guía), hasta dónde llegar, lo que se
+ * resuelve y dónde se retoman o se terminan sus misiones, cada uno con su medallón. Los
+ * consejos y notas van aparte, debajo: en bloques o, con chips (pantalla baja), en fichas
+ * plegadas junto a la «i» que explica las pausas.
+ */
+function GoalRoute({ step, done, label = "Texto de la guía", chips = false }) {
   const notes = notesOf(step, done);
+  const stops = notes.filter(x => !ASIDE.has(x.kind));
+  const asides = notes.filter(x => ASIDE.has(x.kind));
+  const paused = notes.some(x => x.kind === "stop" || x.kind === "closedin");
   return (
     <>
-      <GuideText step={step} />
-      {notes.length > 0 && (
-        <div className="goal-calls">
-          {notes.map((x, i) => <Call key={i} step={step} kind={x.kind} text={x.text}>{x.body}</Call>)}
+      <ol className="goal-calls goal-route">
+        <li className="route-stop is-guide"><GuideText step={step} label={label} /></li>
+        {stops.map((x, i) => (
+          <li key={i} className={`route-stop is-${x.kind}`}>
+            {x.kind === "done"
+              ? <Resolve step={step} text={x.text} />
+              : <Call step={step} kind={x.kind} text={x.text}>{x.body}</Call>}
+          </li>
+        ))}
+      </ol>
+      {chips ? (asides.length > 0 || paused) && (
+        <div className="goal-calls is-chips route-asides">
+          {asides.map((x, i) => (
+            <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
+          ))}
+          {paused && (
+            <button type="button" className="nota-open" onClick={openNota}
+              aria-label="Qué significa «hasta tener que pasar»" title="Qué significa «hasta tener que pasar»">i</button>
+          )}
+        </div>
+      ) : asides.length > 0 && (
+        <div className="goal-calls route-asides">
+          {asides.map((x, i) => <Call key={i} step={step} kind={x.kind} text={x.text}>{x.body}</Call>)}
         </div>
       )}
     </>
@@ -247,24 +279,35 @@ function CallChip({ step, kind, text, peek, children, id }) {
 }
 
 /**
- * Las notas del paso en el diario: fichas en una línea que se despliegan (CallChip). Si
- * el paso se para ante un jefe o lo termina otro, una «i» abre la nota que explica las
- * pausas.
+ * Lo que se resuelve, la parada fuerte de la ruta: el jefe que se pasa (o la espada del
+ * juego) en su medallón y, al lado, un panel con su nombre como titular, el texto de la
+ * guía tal cual y los pasos que nombra como sellos que llevan a ellos.
  */
-function NoteChips({ step, done }) {
-  const notes = notesOf(step, done);
-  if (!notes.length) return null;
-  const paused = notes.some(x => x.kind === "stop" || x.kind === "closedin");
+function Resolve({ step, text }) {
+  const go = useContext(StepGo);
+  const names = [...new Set(bossesIn(step.n, text).map(b => b.name))];
+  const steps = [...new Set(linkify(text).filter(p => p.step).map(p => p.step))];
   return (
-    <div className={"goal-calls is-chips" + (notes.length > 4 ? " is-many" : "")}>
-      {notes.map((x, i) => (
-        <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
-      ))}
-      {paused && (
-        <button type="button" className="nota-open" onClick={openNota}
-          aria-label="Qué significa «hasta tener que pasar»" title="Qué significa «hasta tener que pasar»">i</button>
-      )}
-    </div>
+    <section className={"resolve" + (names.length ? "" : " no-boss")} aria-label={CALL.done.label}>
+      <span className="resolve-icon" aria-hidden="true"><img src={imgUrl(doneIcon(step.n))} alt="" /></span>
+      <div className="resolve-card">
+        <div className="resolve-txt">
+          <b className="resolve-label">{CALL.done.label}</b>
+          {names.length > 0 && <strong className="resolve-who">{names.join(" y ")}</strong>}
+          <p className="resolve-how"><RichText text={text} /></p>
+        </div>
+        {steps.length > 0 && (
+          <div className="resolve-steps">
+            <small>{steps.length === 1 ? "Paso" : "Pasos"}</small>
+            <div>
+              {steps.map(m => m === step.n
+                ? <span key={m} className="resolve-seal is-here" title="Este paso">{m}</span>
+                : <button key={m} type="button" className="resolve-seal" data-n={m} onClick={() => go(m)} title={`Ir al paso ${m}`}>{m}</button>)}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -686,8 +729,8 @@ export default function Journal({ n, id }) {
         {tall ? <GoalTall step={step} done={!!s.done[n]} /> : (
           <>
             <Goal step={step} done={!!s.done[n]} s={s} />
-            {/* Las notas, bajo el distintivo y el objetivo: a todo el ancho caben en una línea */}
-            <NoteChips step={step} done={!!s.done[n]} />
+            {/* La ruta, bajo el distintivo y el título; los consejos, en fichas */}
+            <GoalRoute step={step} done={!!s.done[n]} label="Qué hacer" chips />
           </>
         )}
       </div>

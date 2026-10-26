@@ -2,9 +2,11 @@ import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
 /**
- * En escritorio la ventana de los 100 pasos llena la pantalla: su barra (el progreso, las
+ * En escritorio la ventana de los 100 pasos mide como poco lo que queda bajo la cabecera
+ * de la página y, si piden más, lo que piden los prerrequisitos enteros: su lista no se
+ * desplaza nunca por dentro y la página baja para leerla. Su barra (el progreso, las
  * pestañas y sus herramientas) queda fija y lo que no cabe se desplaza por dentro: en el
- * mapa, en las listas y, en el diario, la lista de pasos. El detalle del paso es la
+ * mapa, en los objetos y, en el diario, la lista de pasos. El detalle del paso es la
  * excepción: no se desplaza por dentro, mide lo que su contenido y un paso largo alarga la
  * ventana y se lee bajando la página, con la barra y la lista pegadas arriba (ver
  * diary-scroll.spec.js).
@@ -25,16 +27,20 @@ async function align(page) {
 /** Dónde quedan la cabecera de la página (en su página no hay: 0), la sección y la ventana. */
 const boxes = page => page.evaluate(() => {
   const r = el => el.getBoundingClientRect();
+  const diary = document.getElementById("diary");
   return {
     header: 0,
-    section: r(document.getElementById("diary")).top,
+    section: r(diary).top,
     win: r(document.querySelector(".steps-win")),
+    bar: r(document.getElementById("winBar")),
+    // Lo que piden los prerrequisitos enteros (Diary.jsx, useNeedsHeight)
+    need: parseFloat(getComputedStyle(diary).getPropertyValue("--win-need")) || 0,
     vh: innerHeight,
   };
 });
 
-/** La ventana entera a la vista, bajo la cabecera de la página. */
-const fits = b => b.section >= b.header - 0.5 && b.win.top >= b.header - 0.5 && b.win.bottom <= b.vh + 0.5;
+/** La ventana desde arriba, bajo la cabecera de la página, con su barra entera a la vista. */
+const fromTop = b => b.section >= b.header - 0.5 && b.win.top >= b.header - 0.5 && b.bar.bottom <= b.vh + 0.5;
 
 /**
  * En el diario: la ventana desde arriba, la lista entera a la vista y la cabecera del paso
@@ -53,23 +59,28 @@ for (const [w, h] of SIZES) {
   for (const view of VIEWS) {
     // En el diario, con un paso corto (el 4): uno largo alarga la ventana
     const seed = view === "diary" ? { "silvestre:done": { 1: true, 2: true, 3: true } } : null;
-    test(`a ${w}×${h}, la ventana de pasos cabe en la pantalla con la pestaña «${view}»`, async ({ page }) => {
+    test(`a ${w}×${h}, la ventana de pasos mide lo que piden los prerrequisitos con la pestaña «${view}»`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await openApp(page, seed, { view });
       await align(page);
       await page.waitForTimeout(150);
       const b = await boxes(page);
+      const height = b.win.bottom - b.section;
+      // Lo que queda bajo la cabecera, con los 8 px de aire arriba y abajo
+      const screen = h - b.header - 16;
+      expect(b.need, JSON.stringify(b)).toBeGreaterThan(0);
+      expect(fromTop(b), JSON.stringify(b)).toBe(true);
       if (view === "diary") {
-        // El diario es un poco más alto: 1,3 veces lo que queda bajo la cabecera (con los
-        // 8 px de aire arriba y abajo), y la página baja un poco. La lista sí cabe
-        expect(Math.abs(b.win.bottom - b.section - 1.3 * (h - b.header - 16)), JSON.stringify(b)).toBeLessThanOrEqual(2);
+        // El diario, como poco 1,3 veces la pantalla; la lista sí cabe
+        expect(Math.abs(height - Math.max(1.3 * screen, b.need)), JSON.stringify(b)).toBeLessThanOrEqual(2);
         expect(await fitsDiary(page), JSON.stringify(b)).toBe(true);
         return;
       }
-      expect(b.win.height).toBeLessThanOrEqual(h - b.header);
-      expect(fits(b), JSON.stringify(b)).toBe(true);
-      // Ya alineada, no hace falta bajar la página para ver el final de la ventana
-      expect(b.win.bottom).toBeLessThanOrEqual(h);
+      expect(Math.abs(height - Math.max(screen, b.need)), JSON.stringify(b)).toBeLessThanOrEqual(2);
+      // Los prerrequisitos, enteros: su lista no se desplaza por dentro
+      if (view === "prereqs") {
+        expect(await page.locator(".prereqs-panel").evaluate(el => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+      }
     });
   }
 }
@@ -93,24 +104,28 @@ for (const [w, h] of SIZES) {
   });
 }
 
-// El diario, con un paso corto (el 4), es la excepción: 1,3 veces el alto de las demás
-// (uno largo la alarga más)
-test("la ventana tiene la misma altura en todas las pestañas salvo el diario, un poco más alto", async ({ page }) => {
+// Todas miden lo mismo, lo que piden los prerrequisitos (o la pantalla, si es más). El
+// diario, con un paso corto (el 4), es la excepción: como poco 1,3 veces la pantalla (uno
+// largo la alarga más)
+test("la ventana tiene la misma altura en todas las pestañas salvo el diario, que puede ser más alto", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page, { "silvestre:done": { 1: true, 2: true, 3: true } }, { view: "map" });
   await align(page);
   const heights = {};
+  let need = 0;
   for (const id of ["#stepsViewMap", "#stepsViewDiary", "#tabPrereqs", "#tabItems"]) {
     await page.click(id);
     await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
     await page.waitForTimeout(350);
     const b = await boxes(page);
     heights[id] = Math.round(b.win.bottom - b.section);
+    need = b.need;
   }
   const { "#stepsViewDiary": diary, ...others } = heights;
   expect(new Set(Object.values(others)).size, JSON.stringify(heights)).toBe(1);
-  // Las demás, lo que queda bajo la cabecera con su aire; el diario, 1,3 veces eso
-  expect(Math.abs(diary - 1.3 * others["#stepsViewMap"]), JSON.stringify(heights)).toBeLessThanOrEqual(2);
+  const screen = 720 - 16;
+  expect(Math.abs(others["#stepsViewMap"] - Math.max(screen, need)), JSON.stringify({ heights, need })).toBeLessThanOrEqual(2);
+  expect(Math.abs(diary - Math.max(1.3 * screen, need)), JSON.stringify({ heights, need })).toBeLessThanOrEqual(2);
 });
 
 // Lo que se desplaza en cada pestaña y lo que queda fijo encima
@@ -188,19 +203,36 @@ test("en el diario, la rueda sobre el detalle baja la página y la lista se qued
   await expect(page.locator("#journal .journal-cta")).toBeInViewport({ ratio: 1 });
 });
 
-test("al volver al mapa, el paso se busca dentro del mapa y la página no se mueve", async ({ page }) => {
+test("al volver al mapa, el paso se busca dentro del mapa y la página no se mueve si ahí se ve", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openApp(page);
   await align(page);
   // Clics sin Playwright, que desplazaría la página para dejar a la vista lo que pulsa
+  await page.locator('.diary-row[data-n="60"] .row-num').evaluate(el => el.click());
+  await page.waitForTimeout(300);
+  const y = await page.evaluate(() => scrollY);
+  await page.locator("#journal .journal-to-map").evaluate(el => el.click());
+  await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
+  await expect(page.locator('.map-node[data-n="60"]')).toBeInViewport({ timeout: 3000 });
+  expect(await page.locator(".step-map-scroll").evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => scrollY)).toBe(y);
+});
+
+// La ventana pasa de la pantalla: un paso del final no se ve ni con el mapa al fondo, y la
+// página baja lo que falta
+test("al volver al mapa con un paso del final, el mapa llega al fondo y la página baja hasta el paso", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openApp(page);
+  await align(page);
   await page.locator('.diary-row[data-n="97"] .row-num').evaluate(el => el.click());
   await page.waitForTimeout(300);
   const y = await page.evaluate(() => scrollY);
   await page.locator("#journal .journal-to-map").evaluate(el => el.click());
   await expect(page.locator(".steps-stage > .steps-layer")).toHaveCount(1, { timeout: 4000 });
   await expect(page.locator('.map-node[data-n="97"]')).toBeInViewport({ timeout: 3000 });
-  expect(await page.locator(".step-map-scroll").evaluate(el => el.scrollTop)).toBeGreaterThan(0);
-  expect(await page.evaluate(() => scrollY)).toBe(y);
+  await expect(page.locator("#mapCard")).toBeInViewport({ ratio: 0.95, timeout: 3000 });
+  expect(await page.locator(".step-map-scroll").evaluate(el => el.scrollHeight - el.clientHeight - el.scrollTop)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(y);
 });
 
 test("en móvil la ventana sigue el flujo de la página, sin alto fijo", async ({ browser }) => {

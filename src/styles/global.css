@@ -2102,21 +2102,26 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .win-tools .needs-bar .needs-hint{ flex:1 1 0; min-width:0; }
 .steps-win .step-map{ margin:0; border-width:0; border-radius:0 0 16px 16px; }
 .steps-win .diary-window{ border-width:0; border-radius:0 0 16px 16px; }
-/* La ventana llena la pantalla. En escritorio la sección mide lo que queda bajo la
-   cabecera fija de la página, con 8px arriba (scroll-margin-top) y 8px abajo: al ir a
-   ella (o al abrir la página, si no hay nada encima) se ve entera. La barra no se
-   desplaza nunca; la vista de debajo se lleva el resto y lo que no cabe se desplaza por
-   dentro: la lista y el detalle en el diario, el camino en el mapa y las listas en
-   Prerrequisitos y Objetos. En pantallas muy bajas manda min-height: la ventana deja de
-   caber y entonces sí se baja la página.
-   El diario es la excepción: mide como poco 1,3 veces lo que las demás pestañas
-   (--diary-min-h) y crece con el paso, que no se desplaza por dentro: un paso largo se lee bajando la página, con
-   la barra y la lista pegadas arriba (ver «El diario», más abajo).
+/* La ventana mide lo que piden los prerrequisitos. En escritorio la sección mide como
+   poco lo que queda bajo la cabecera fija de la página, con 8px arriba
+   (scroll-margin-top) y 8px abajo, y como poco lo que pide la lista de Prerrequisitos
+   entera (--win-need, que mide Diary.jsx al cambiar el ancho): esa lista no se desplaza
+   nunca por dentro. Casi siempre es más alta que la pantalla y la página baja para
+   leerla. Mapa, Prerrequisitos y Objetos miden lo mismo, para que cambiar de pestaña no
+   mueva la página; la barra no se desplaza nunca, la vista de debajo se lleva el resto y
+   lo que no cabe se desplaza por dentro: el camino en el mapa (que busca el paso en lo
+   que se ve de él, store.js) y la lista de Objetos, mucho más larga.
+   El diario es la excepción: mide como poco 1,3 veces lo que queda bajo la cabecera
+   (--diary-min-h) o lo que piden los prerrequisitos, si es más, y crece con el paso, que
+   no se desplaza por dentro: un paso largo se lee bajando la página, con la barra y la
+   lista pegadas arriba (ver «El diario», más abajo).
    En móvil todo sigue el flujo de la página (el detalle vive en la hoja inferior) y la
    barra se queda pegada arriba al bajar por los pasos */
 @media (min-width:901px){
   .diary{
     display:flex; flex-direction:column; min-height:520px;
+    /* Como poco, lo que piden los prerrequisitos enteros (--win-need, Diary.jsx) */
+    min-height:max(520px, var(--win-need, 0px));
     height:calc(100vh - var(--silvestre-top, 0px) - 16px);
     height:calc(100dvh - var(--silvestre-top, 0px) - 16px);
     margin-bottom:8px;
@@ -2130,7 +2135,7 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
     --diary-min-h:max(520px, calc(1.3 * (100dvh - var(--silvestre-top, 0px) - 16px)));
     height:auto;
     min-height:max(520px, calc(1.3 * (100vh - var(--silvestre-top, 0px) - 16px)));
-    min-height:var(--diary-min-h);
+    min-height:max(var(--diary-min-h), var(--win-need, 0px));
   }
   .steps-win{ flex:1; min-height:0; display:flex; flex-direction:column; }
   .win-bar{ flex:none; }
@@ -2160,6 +2165,12 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
   .items-panel{ display:flex; flex-direction:column; }
   .items-body{ flex:1; min-height:0; }
   .needs-cats{ top:0; }
+  /* La medida de los prerrequisitos (Diary.jsx): invisible, encima de la vista y con la
+     lista a su alto, sin desplazarse */
+  .steps-stage{ position:relative; }
+  .needs-sizer{ position:absolute; top:0; left:0; right:0; visibility:hidden; pointer-events:none; }
+  .needs-sizer .needs{ display:block; overflow:visible; }
+  .needs-sizer .prereqs-panel{ overflow:visible; }
 }
 /* Un Dofus recién conseguido (WinBar.jsx, clase "won"): el huevo se enciende desde el
    gris con un rebote, un destello dorado se abre detrás y un brillo lo cruza; la cuenta
@@ -2677,6 +2688,8 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
    de su color y el rótulo pequeño delante; sin panel (el overlay). En el diario, fichas
    (más abajo) */
 .goal-calls{ display:flex; flex-direction:column; gap:7px; padding-top:10px; border-top:1px dashed #3d3322; }
+/* Bajo el panel del texto de la guía, sin filete: el panel ya separa */
+.journal-goal > .goal-calls{ padding-top:0; border-top:0; }
 .goal-calls .call{
   padding:0; background:none; border:0; box-shadow:none; align-items:start;
   grid-template-columns:28px minmax(0, 1fr); gap:9px; font-size:13.5px; line-height:1.45; color:#ece3cc;
@@ -2943,6 +2956,165 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
 .q-ref:hover{ border-color:currentColor; }
 /* El jefe que se pasa, en el medallón de lo que se resuelve */
 .call.done i img{ border-radius:50%; }
+
+/* La ruta del paso (GoalRoute en Journal.jsx): lo que pide, en orden y unido por una
+   línea discontinua como el diario del juego. Cada parada lleva su medallón (--med) en
+   la columna de la línea: qué hacer, en grande; hasta dónde llegar, dónde se retoma o se
+   termina; y lo que se resuelve, con el jefe y su propio panel. Los consejos y notas van
+   aparte, debajo y alineados con el texto */
+.journal-top{ --med:52px; --med-gap:14px; }
+.journal.is-compact .journal-top{ --med:34px; --med-gap:10px; }
+.ov{ --med:36px; --med-gap:10px; }
+.goal-calls.goal-route{
+  list-style:none; margin:0; padding:0; border:0;
+  display:flex; flex-direction:column; gap:14px;
+}
+.route-stop{ position:relative; min-width:0; }
+/* El tramo de línea hasta la parada siguiente, del pie del medallón al de la otra */
+.route-stop:not(:last-child)::after{
+  content:""; position:absolute; z-index:0; left:calc(var(--med) / 2 - 1px); top:var(--med); bottom:-14px; width:2px;
+  background:repeating-linear-gradient(180deg, #5a4d2e 0 6px, transparent 6px 11px);
+}
+/* Qué hacer: el libro del juego en el medallón dorado y el texto de la guía, grande */
+.route-stop .goal-guide{ gap:var(--med-gap); }
+.route-stop .goal-guide > img{
+  position:relative; z-index:1; box-sizing:border-box; width:var(--med); height:var(--med); margin:0;
+  padding:calc(var(--med) * .2); border-radius:50%; border:2px solid #e3c565;
+  background:radial-gradient(circle at 35% 30%, #4a4436, #1c1b17);
+}
+.route-stop .goal-guide > div{ min-width:0; padding-top:calc(var(--med) * .1); }
+.route-stop .goal-guide-label{ margin-bottom:3px; font-size:12px; }
+.goal-route .journal-base{ margin:0; font-size:18px; line-height:1.5; color:#f3ead2; }
+/* Los enlaces, como en el objetivo, también fuera de él (pantalla baja y overlay) */
+.goal-route .guide-link, .goal-route .step-ref{
+  color:#ece3cc; font-weight:600; text-decoration:none; border-bottom:1px dotted rgba(227,197,101,.6);
+}
+.goal-route .guide-link::after{ content:none; }
+.goal-route .guide-link:hover, .goal-route .step-ref:hover{ border-bottom-style:solid; }
+[data-theme="light"] .goal-route .guide-link, [data-theme="light"] .goal-route .step-ref{ color:#3b2a10; border-bottom-color:#8a6510; }
+/* Los avisos de la ruta: el medallón en la columna de la línea y el rótulo encima */
+.goal-route .call{
+  grid-template-columns:var(--med) minmax(0, 1fr); gap:var(--med-gap); align-items:start;
+  font-size:15.5px; line-height:1.5;
+}
+.goal-route .call i{
+  position:relative; z-index:1; width:var(--med); height:var(--med); border-width:2px;
+  background:radial-gradient(circle at 35% 30%, #4a4436, #1c1b17);
+}
+.goal-route .call i img{ width:calc(var(--med) * .58); height:calc(var(--med) * .58); }
+.goal-route .call i .quest-mark{ width:calc(var(--med) * .26); height:calc(var(--med) * .36); }
+.goal-route .call > div{ padding-top:calc(var(--med) * .1); }
+.goal-route .call b{ display:block; margin:0 0 2px; font-size:12px; }
+/* Consejos y notas: aparte, en un recuadro discontinuo de su color, a la altura del texto */
+.goal-calls.route-asides{ padding:0; border:0; gap:8px; margin-left:calc(var(--med) + var(--med-gap)); }
+.goal-calls.route-asides.is-chips{ margin-left:0; padding-top:0; }
+.route-asides:not(.is-chips) .call{
+  grid-template-columns:28px minmax(0, 1fr); gap:10px; padding:10px 14px; border-radius:8px;
+  border:1px dashed color-mix(in srgb, var(--call) 45%, transparent);
+  background:color-mix(in srgb, var(--call) 7%, transparent);
+  font-size:14.5px;
+}
+.route-asides:not(.is-chips) .call b{ display:block; margin:2px 0 2px; font-size:11px; }
+
+/* Lo que se resuelve (Resolve): el jefe en el medallón de la línea, con el borde verde y
+   su brillo, y al lado su panel: el nombre como titular, el texto de la guía y los pasos
+   que nombra en sellos */
+.resolve{ --r-ink:#ece3cc; --r-soft:#bdb39a; --r-head:#f3ead2; display:flex; align-items:flex-start; gap:var(--med-gap); color:var(--r-ink); }
+.resolve-icon{
+  position:relative; z-index:1; flex:none; display:grid; place-items:center; width:var(--med); height:var(--med); border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #4a4436, #1c1b17);
+  border:3px solid var(--done);
+  box-shadow:0 0 0 3px #141712, 0 0 0 4px color-mix(in srgb, var(--done) 45%, transparent), 0 0 16px color-mix(in srgb, var(--done) 30%, transparent);
+}
+.resolve-icon img{ width:82%; height:82%; object-fit:contain; border-radius:50%; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.resolve.no-boss .resolve-icon img{ width:60%; height:60%; border-radius:0; }
+.resolve-card{
+  flex:1; min-width:0; display:flex; align-items:center; gap:16px; padding:12px 18px; border-radius:10px;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--done) 10%, #181c14), #171a13);
+  border:1px solid color-mix(in srgb, var(--done) 30%, #2c2f26);
+}
+.resolve-txt{ flex:1; min-width:0; }
+.resolve-label{
+  display:block; font:800 12px var(--font-display); letter-spacing:.16em; text-transform:uppercase; color:var(--done);
+}
+.resolve-who{
+  display:block; margin:1px 0 2px; font:400 24px/1.1 'Lilita One', var(--font-display); color:var(--r-head);
+  text-shadow:0 2px 0 #121410;
+}
+.resolve-how{ margin:0; font-size:15px; line-height:1.5; color:var(--r-soft); }
+.resolve-how .guide-link, .resolve-how .step-ref{
+  color:var(--r-ink); font-weight:600; text-decoration:none; border-bottom:1px dotted color-mix(in srgb, var(--done) 70%, transparent);
+}
+.resolve-how .guide-link::after{ content:none; }
+.resolve-steps{
+  flex:none; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding-left:16px; border-left:1px dashed color-mix(in srgb, var(--done) 30%, #2c2f26);
+}
+.resolve-steps small{ font:800 11px var(--font-display); letter-spacing:.14em; text-transform:uppercase; color:var(--r-soft); }
+.resolve-steps > div{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; max-width:150px; }
+.resolve-seal{
+  display:grid; place-items:center; width:44px; height:44px; padding:0; border-radius:50%; border:0; cursor:pointer;
+  font:400 20px/1 'Lilita One', var(--font-display); color:#10140c;
+  background:radial-gradient(circle at 35% 30%, #c4f07a, var(--done));
+  box-shadow:0 2px 6px rgba(0,0,0,.4), inset 0 -2px 0 rgba(0,0,0,.18);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.resolve-seal:hover{ transform:translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.45), 0 0 0 2px color-mix(in srgb, var(--done) 50%, transparent); }
+.resolve-seal:focus-visible{ outline:2px solid var(--r-head); outline-offset:2px; }
+/* El paso en el que estás: el mismo sello, hueco, sin llevar a ninguna parte */
+.resolve-seal.is-here{ cursor:default; color:var(--done); background:transparent; box-shadow:inset 0 0 0 2px var(--done); }
+.resolve-seal.is-here:hover{ transform:none; }
+
+/* Pantalla baja: la misma ruta, más compacta, para que las misiones lleguen arriba */
+.journal.is-compact .goal-route{ gap:8px; }
+.journal.is-compact .route-stop:not(:last-child)::after{ bottom:-8px; }
+.journal.is-compact .goal-route .journal-base{ font-size:15.5px; }
+.journal.is-compact .goal-route .call{ font-size:14px; line-height:1.45; }
+.journal.is-compact .goal-route .call > div, .journal.is-compact .route-stop .goal-guide > div{ padding-top:0; }
+.journal.is-compact .goal-route .call b, .journal.is-compact .route-stop .goal-guide-label{ font-size:11px; }
+.journal.is-compact .resolve-card{ padding:8px 14px; }
+.journal.is-compact .resolve-who{ font-size:19px; }
+.journal.is-compact .resolve-how{ font-size:13.5px; line-height:1.4; }
+.journal.is-compact .resolve-seal{ width:32px; height:32px; font-size:15px; }
+.journal.is-compact .resolve-steps{ gap:4px; }
+/* Overlay y móvil: estrechos; los sellos bajan bajo el texto del panel */
+.ov .goal-route{ gap:10px; }
+.ov .route-stop:not(:last-child)::after{ bottom:-10px; }
+.ov .goal-route .journal-base{ font-size:15px; }
+.ov .goal-route .call{ font-size:13.5px; }
+.ov .goal-route .call b, .ov .route-stop .goal-guide-label{ font-size:10.5px; }
+.ov .resolve-card{ flex-wrap:wrap; gap:8px; padding:10px 12px; }
+.ov .resolve-who{ font-size:18px; }
+.ov .resolve-how{ font-size:13px; }
+.ov .resolve-steps{ flex-basis:100%; flex-direction:row; justify-content:flex-start; padding:8px 0 0; border-left:0; border-top:1px dashed color-mix(in srgb, var(--done) 30%, #2c2f26); }
+.ov .resolve-steps > div{ max-width:none; }
+.ov .resolve-seal{ width:30px; height:30px; font-size:14px; }
+@media (max-width:600px){
+  .journal-top, .journal.is-compact .journal-top{ --med:36px; --med-gap:10px; }
+  .journal.is-compact .goal-route .journal-base, .goal-route .journal-base{ font-size:15.5px; }
+  .resolve-card, .journal.is-compact .resolve-card{ flex-wrap:wrap; gap:8px; padding:10px 12px; }
+  .resolve-who, .journal.is-compact .resolve-who{ font-size:19px; }
+  .resolve-steps{
+    flex-basis:100%; flex-direction:row; justify-content:flex-start; padding:8px 0 0;
+    border-left:0; border-top:1px dashed color-mix(in srgb, var(--done) 30%, #2c2f26);
+  }
+  .resolve-steps > div{ max-width:none; }
+  .resolve-seal, .journal.is-compact .resolve-seal{ width:34px; height:34px; font-size:16px; }
+}
+/* Tema claro: la línea y los medallones en el pergamino, el panel verde claro */
+[data-theme="light"] .route-stop:not(:last-child)::after{ background:repeating-linear-gradient(180deg, #c9b98f 0 6px, transparent 6px 11px); }
+[data-theme="light"] .route-stop .goal-guide > img,
+[data-theme="light"] .goal-route .call i,
+[data-theme="light"] .resolve-icon{ background:radial-gradient(circle at 35% 30%, #fffaf0, #efe2c2); }
+[data-theme="light"] .route-stop .goal-guide > img{ border-color:#b8963f; }
+[data-theme="light"] .goal-route .journal-base{ color:#2a2216; }
+[data-theme="light"] .resolve{ --r-ink:#3b3324; --r-soft:#5e5240; --r-head:#2f4a12; }
+[data-theme="light"] .resolve-card{ background:linear-gradient(90deg, #eaf2d6, #f6f0dd); border-color:#b9cc8a; }
+[data-theme="light"] .resolve-label{ color:var(--resume-ink-light); }
+[data-theme="light"] .resolve-who{ text-shadow:0 1px 0 rgba(255,255,255,.7); }
+[data-theme="light"] .resolve-icon{ border-color:var(--done-light); box-shadow:0 0 0 3px #f4ebd3, 0 0 0 4px color-mix(in srgb, var(--done-light) 45%, transparent); }
+[data-theme="light"] .resolve-steps{ border-color:#b9cc8a; }
+[data-theme="light"] .resolve-seal.is-here{ color:var(--done-light); box-shadow:inset 0 0 0 2px var(--done-light); }
 
 /* Necesitas: las casillas de «Objetos necesarios», centradas y con el marco del diario */
 .journal-needs{ margin:6px 0 4px; }

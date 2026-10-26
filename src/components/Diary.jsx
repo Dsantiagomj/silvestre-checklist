@@ -386,6 +386,40 @@ function NeedsView({ tab }) {
   );
 }
 
+/**
+ * El alto de la ventana en escritorio: lo que piden los prerrequisitos enteros, para que
+ * su lista no se desplace por dentro. Las demás pestañas miden lo mismo (Objetos, mucho
+ * más larga, sí se desplaza; el diario puede crecer más). Se mide montando la vista
+ * invisible y sin ids un momento, cada vez que cambia el ancho, y se quita en cuanto da
+ * su alto: no se queda duplicada.
+ */
+function useNeedsHeight(sectionRef, stageRef, on) {
+  const [width, setWidth] = useState(0);
+  const [measure, setMeasure] = useState(false);
+  const sizerRef = useRef(null);
+  useLayoutEffect(() => {
+    if (!on) return;
+    const ro = new ResizeObserver(([e]) => setWidth(Math.round(e.contentRect.width)));
+    ro.observe(stageRef.current);
+    // Con la letra de verdad las tarjetas cambian de alto
+    document.fonts?.ready.then(() => setMeasure(true));
+    return () => ro.disconnect();
+  }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => { if (on && width) setMeasure(true); }, [on, width]);
+  useLayoutEffect(() => {
+    if (!measure) return;
+    const section = sectionRef.current;
+    const chrome = section.offsetHeight - stageRef.current.offsetHeight;
+    section.style.setProperty("--win-need", `${Math.ceil(chrome + sizerRef.current.offsetHeight)}px`);
+    setMeasure(false);
+  }, [measure]); // eslint-disable-line react-hooks/exhaustive-deps
+  return measure && on ? (
+    <div className="needs-sizer" ref={sizerRef} inert aria-hidden="true">
+      <LeavingContext.Provider value={true}><NeedsView tab="prereqs" /></LeavingContext.Provider>
+    </div>
+  ) : null;
+}
+
 // Cambio entre diario y mapa: un zoom sutil sobre el sello del paso actual (0,3 s,
 // easeInOut, en la línea de duffus.fr) que hace de pantalla de carga. Del mapa al diario
 // se entra (el mapa crece); del diario al mapa se sale (el diario se encoge). La vista
@@ -559,8 +593,10 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
   // desplazado dentro del mapa
   const at = mapPoint(stageRef.current?.clientWidth || 1200, s.selectedStep ?? next);
   const origin = `${at.x}px ${at.y - (flow ? 0 : mapScrollTop())}px`;
+  const sectionRef = useRef(null);
+  const sizer = useNeedsHeight(sectionRef, stageRef, !mobile);
   return (
-    <section className="diary" id="diary" aria-labelledby="diaryTitle">
+    <section className="diary" id="diary" aria-labelledby="diaryTitle" ref={sectionRef}>
       <h2 className="sr-only" id="diaryTitle">{DOFUS.texts.stepsTitle}</h2>
       {/* Una sola ventana: arriba la barra (progreso, Dofus del camino, pestañas y sus
           herramientas, overlay y menú) y, debajo, lo que se elija */}
@@ -598,6 +634,7 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
               </ViewLayer>
             </AnimatePresence>
           </SwapContext.Provider>
+          {sizer}
         </div>
       </div>
     </section>
