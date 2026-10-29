@@ -1,6 +1,6 @@
 // Las fronteras entre carpetas de src/: los embebidos (src/embeds/) y las herramientas
 // (src/tools/) van solos a páginas ajenas, así que nunca cargan nada del sitio (src/site/), y
-// una herramienta tampoco carga un embebido. Mientras esas carpetas no existan pasa sin más;
+// una herramienta tampoco carga un embebido. El sitio usa las herramientas, nunca un embebido. Mientras esas carpetas no existan pasa sin más;
 // la prueba con archivos de mentira demuestra que la regla sí muerde.
 // Run: npm run test:unit
 import { test } from "node:test";
@@ -21,6 +21,7 @@ const RULES = [
   { from: "src/embeds/", banned: "src/site/" },
   { from: "src/tools/", banned: "src/site/" },
   { from: "src/tools/", banned: "src/embeds/" },
+  { from: "src/site/", banned: "src/embeds/" },
 ];
 
 /**
@@ -53,9 +54,11 @@ test("la regla muerde: un embebido o una herramienta que carga lo que no debe", 
     // Mal: del sitio a un embebido, en sus tres formas
     { file: "src/embeds/hub/embed.js", source: 'import { shell } from "../../site/shell.js";' },
     { file: "src/tools/cosecha/embed.js", source: 'export * from "../../site";\nconst m = import("../../embeds/hub/hub.js");' },
-    // Bien: lo compartido, un paquete, su propio CSS y del sitio hacia un embebido
+    // Mal: el sitio cargando un embebido en vez de la herramienta
+    { file: "src/site/cosecha/main.js", source: 'import "../../embeds/cosecha/embed.js";' },
+    // Bien: lo compartido, un paquete, su propio CSS y del sitio hacia una herramienta
     { file: "src/embeds/hub/hub.js", source: 'import css from "./hub.css?inline";\nimport { pageFonts } from "../../lib/fonts.js";\nimport { motion } from "motion";' },
-    { file: "src/site/main.js", source: 'import "../embeds/hub/embed.js";' },
+    { file: "src/site/cosecha/main.js", source: 'import { renderCosecha } from "../../tools/cosecha/cosecha.js";' },
     // Un nombre que solo empieza igual no es la carpeta
     { file: "src/embeds/inicio/inicio.js", source: 'import x from "../../site-data/x.js";' },
   ];
@@ -63,6 +66,7 @@ test("la regla muerde: un embebido o una herramienta que carga lo que no debe", 
     "src/embeds/hub/embed.js → ../../site/shell.js",
     "src/tools/cosecha/embed.js → ../../site",
     "src/tools/cosecha/embed.js → ../../embeds/hub/hub.js",
+    "src/site/cosecha/main.js → ../../embeds/cosecha/embed.js",
   ]);
 });
 
