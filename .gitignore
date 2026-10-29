@@ -33,3 +33,6 @@ playwright-report/
 
 # Build del sitio del Hielos para sus pruebas (playwright.hielos.config.js)
 .hielos-test/
+
+# Capturas y maquetas para revisar (tmp/shots/)
+tmp/
