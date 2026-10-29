@@ -30,6 +30,20 @@ export const HUB = {
       npcFit: { h: "70%", r: "-30%", t: "4%" },
       lead: "Descubre los misterios de la isla de Frigost en 70 pasos y enfréntate al temible Conde Kontatrás.",
     },
+    {
+      id: "ocre",
+      name: "Dofus Ocre",
+      color: "#f0a336",
+      url: "https://www.torrentearcano.com/lista-ocre",
+      egg: "hub/dofus-ocre.png",
+      // El mapa 20973059 de DofusDB, recortado como en .build/fetch_zone_maps.py
+      bg: "zones/pueblo-de-la-canopea.jpg",
+      // Otomai, el sabio de su isla: su asistente recibe las almas de «La eterna cosecha»
+      npc: "hub/otomai.png",
+      // Imagen cuadrada y figura estrecha: más grande y a la derecha, que el huevo no la tape
+      npcFit: { h: "74%", r: "-40%", t: "6%" },
+      lead: "Las 337 almas de «La eterna cosecha», etapa por etapa, hasta el Dofus Ocre.",
+    },
   ],
   // La última carta, bloqueada: el siguiente checklist que prepara Torre
   showSoon: true,
