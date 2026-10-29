@@ -1,6 +1,6 @@
 # Agent contract for silvestre-checklist
 
-Rules for any agent that changes this repo. It serves two audiences from one codebase: the embeds Torre pastes into torrentearcano.com (Squarespace) and our own site on GitHub Pages. The embeds are a frozen contract; the site is ours to change. Visual rules live in `DESIGN.md`; product and data details live in the README (Spanish).
+Rules for any agent that changes this repo. It serves two audiences from one codebase: the embeds Torre pastes into torrentearcano.com (Squarespace) and our own site on GitHub Pages. The embeds are a frozen contract; the site is ours to change. Visual rules live in `DESIGN.md`; product and data details live in `README.md` and `docs/`.
 
 ## When this applies
 
@@ -43,8 +43,8 @@ Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `stor
 
 | Artifact | Language |
 |---|---|
-| `AGENTS.md`, `DESIGN.md`, new docs under `docs/` | English |
-| UI copy, code comments, commit messages, PR titles and bodies, issues | Spanish, matching the README and the history |
+| Technical docs: `AGENTS.md`, `DESIGN.md`, `README.md`, everything under `docs/` | English. Spanish only for quoted UI copy, game names and quoted titles |
+| UI copy, code comments, commit messages, PR titles and bodies, issues | Spanish, matching the UI and the history |
 | Identifiers | follow the surrounding code |
 | Commits | conventional commits (`feat(cosecha): …`, `fix(inicio): …`); no AI attribution lines |
 
@@ -113,8 +113,8 @@ API: `https://api.dofusdb.fr`, 50 records per page (`$limit=50`), `lang=es`, sen
 | Companions | They do not render; use their item icons (item type 157) | brief, not yet in a script |
 | Searching NPCs by name | `npcs?name.es[$regex]=…` | brief |
 | Item icon ids are not item ids | The Hielos egg is item 7043 with icon 23005, served as `img/items/23005.png` | `src/dofus/hielos/config.js`, `tests/embed/hielos.spec.js` |
-| Job icons | DofusDB returns 404; they come from the `job_images_64.tar.gz` release of dofusdude/dofus3-main | README |
-| `optimalLevel` of quest stages | Often 200 on every stage; use monster levels or the guide's "Nivel mínimo" | README |
+| Job icons | DofusDB returns 404; they come from the `job_images_64.tar.gz` release of dofusdude/dofus3-main | `docs/data.md` |
+| `optimalLevel` of quest stages | Often 200 on every stage; use monster levels or the guide's "Nivel mínimo" | `docs/checklist.md` |
 | Image resizing scripts | Go through `.build/imaging.py`: `sips` on a Mac, ImageMagick elsewhere (the sync runs on Ubuntu). They only process new downloads, so the tool never re-encodes an image already in the repo | `.build/imaging.py` |
 
 ## Testing
@@ -161,7 +161,7 @@ The path map (`.github/ci-paths.mjs`); the first matching rule wins and a path t
 | `src/dofus/hielos/**` | hielos, embed |
 | anything else (`src/lib/**`, other `public/**`, `vite.config.js`, `package*.json`, `playwright*.config.js`, `tests/serve.js`, `.github/**`) | all four |
 
-A new folder needs a rule and a test in `ci-paths.test.js`; without one it runs everything. `deploy.yml` builds every surface into one Pages artifact on push to `main` (order in the repo map). The repo is private: every CI minute is billed.
+A new folder needs a rule and a test in `ci-paths.test.js`; without one it runs everything. `deploy.yml` builds every surface into one Pages artifact on push to `main` (order in the repo map). The repo is public, so Actions minutes are free.
 
 ## Repo map
 
