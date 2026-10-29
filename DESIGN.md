@@ -1,6 +1,6 @@
 # Design language
 
-The visual rules behind the Torrente Arcano embeds and, from phase 4, the "Dofus Tools" site shell. Every value here comes from shipped CSS: `src/hub/hub.css`, `src/inicio/inicio.css`, `src/cosecha/cosecha.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
+The visual rules behind the Torrente Arcano embeds and the "Dofus Tools" site. Every value here comes from shipped CSS: `src/embeds/hub/hub.css`, `src/embeds/inicio/inicio.css`, `src/tools/cosecha/cosecha.css`, `src/site/shell/shell.css`, `src/site/home/home.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
 
 ## Quick path for a new surface
 
@@ -55,7 +55,7 @@ Header art (inicio hero, cosecha header) sits behind the title at opacity .45 or
 
 Gold appears as a frame (1px to 2px inset rings), as text, or as a 40 to 60 percent `color-mix` border. It is never a button fill.
 
-### Per-section colors (`src/inicio/manifest.js`)
+### Per-section colors (`src/embeds/inicio/manifest.js`)
 
 Each card sets `--c`; the CSS uses it for the border ring, the name, the hover glow, the foil tint and the NPC outline.
 
@@ -68,11 +68,11 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 | Alineamiento | `#9fb7f0` | | | |
 | Team builder | `#f08fb7` | | | |
 
-### Per-Dofus colors (`src/hub/manifest.js`, `src/dofus/*/config.js`)
+### Per-Dofus colors (`src/embeds/hub/manifest.js`, `src/dofus/*/config.js`)
 
 | Dofus | Card `--c` | Checklist app accent (`--amber`) | App dark background | Light-theme ink |
 |---|---|---|---|---|
-| Silvestre | `#b7dc69` | `#b7dc69`, titles `#cbee8f` (`src/styles/global.css`) | `#0d0e0c` | `#3b6512` |
+| Silvestre | `#b7dc69` | `#b7dc69`, titles `#cbee8f` (`src/tools/checklist/styles/global.css`) | `#0d0e0c` | `#3b6512` |
 | Hielos | `#9fd8f0` | `#9fd8f0`, titles `#c8ecfa` (`palette` in `hielos/config.js`) | `#0b0e12` | `#1b5c7d` |
 | Próximamente | `#e3c565` | | | |
 
@@ -95,7 +95,8 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 |---|---|---|---|
 | Inicio | 1240px | 48px each side (`calc(100% - 96px)`) | 16px under 600px |
 | Cosecha | 1176px (five cromos per row) | 32px each side | 14px under 700px |
-| Hub | full width; height from `--checklists-h` (min 300px, `MIN_FIT` in `src/hub/embed.js`) | 28px | 14px |
+| Hub | full width; height from `--checklists-h` (min 300px, `MIN_FIT` in `src/embeds/hub/embed.js`) | 28px | 14px |
+| Site shell and home | 1240px | 48px each side | 16px under 600px (shell), 700px (home) |
 
 Backgrounds always reach the edges; only the content column is capped.
 
@@ -110,6 +111,8 @@ Always container queries on the widget root, never media queries: the Squarespac
 | Inicio | `(max-width: 900px)` | smaller tiles, eggs and ring on wide cards |
 | Inicio | `(max-width: 600px)` | one column; wide cards go 5/4; hero 44px |
 | Cosecha | `@container cosecha (max-width: 700px)` | rail becomes a sticky top row; cromos three per row |
+| Site shell | `@container dt-shell (max-width: 600px)` | nav shows only the end of each name (`.dt-pre` hidden); scrolls sideways if it still does not fit |
+| Site home | `@container home (max-width: 700px)` | cards stack, landscape |
 
 The React checklist app still uses media queries; that is a known exception, not the model.
 
@@ -151,7 +154,7 @@ Use only on the card that leads to the checklists: the eggs of the published che
 
 ### Primordial-Dofus ring (`.ring`)
 
-Use only for "all the Dofus" (Guías Dofus). 96px circle (80px under 900px) with the tile recipe; six 30px icons placed on a circle of radius 29 percent starting at the top (`icon()` in `src/inicio/inicio.js`).
+Use only for "all the Dofus" (Guías Dofus). 96px circle (80px under 900px) with the tile recipe; six 30px icons placed on a circle of radius 29 percent starting at the top (`icon()` in `src/embeds/inicio/inicio.js`).
 
 ### «En camino» chips (`.soonB`, `.chip`)
 
@@ -164,6 +167,21 @@ Use for a list of groups the user switches between (stages, regions). Grid of a 
 ### Soul cromo (`.cromo`)
 
 Use for a collectible the user marks one by one. A `button` in a `.slot`, radius 12px, `linear-gradient(180deg, #1a1c14, #101209)`, 84px circular picture well, image at `grayscale(1) brightness(.5)` until marked. Marked (`.done`): warm gradient `#2c200c` to `#16110a`, 1.5px ocre ring, image with an ocre `drop-shadow`, name `#f6d48a`, the top-right stamp fills ocre. The copy button (`.cpy`) sits top-left as a sibling of the cromo, never inside it. Grid `repeat(auto-fill, minmax(150px, 1fr))`, three per row under 700px.
+
+### Site shell (`.dt-shell`)
+
+The "Dofus Tools" header on every site page, from `mountShell(current)` in `src/site/shell/`. Plain DOM, prepended to `<body>`, outside any app root; never in an embed.
+
+| Rule | Recipe |
+|---|---|
+| Slim | 54px high, `linear-gradient(180deg, #14160f, #0b0c0a)` with a 1px hairline at the bottom; content 1240px wide like the home |
+| Not sticky | `position: relative`. The app's own sticky bar and the cosecha rail stay at the top of the window; `--cosecha-top` stays 0 |
+| Brand | "Dofus Tools", display 800 23px (20px narrow), links to the home |
+| Nav | one link per tool in `TOOLS` order, display 700 16px, tracking .08em, `#c9c2b0` |
+| Current page | `aria-current="page"`: text `#f6d48a` and a 3px gold bar flush with the header's bottom edge. No side border, no pill, no fill |
+| Self-contained | every value set under `.dt-shell`, so the page below (the checklist's light theme, `a:hover` underlines) cannot change it |
+
+A tool under the shell keeps its own header: the cosecha page shows the shell and then the cosecha `.hd`, whose title is the page's only `h1`. Do not add a page title between the shell and the tool.
 
 ### Smaller pieces
 
@@ -179,7 +197,7 @@ Use for a collectible the user marks one by one. A `button` in a `.slot`, radius
 
 - Real Dofus art only: zone landscapes, NPC renders, monster images, class symbols, achievement, job and item icons. No emoji, no hand-drawn generic icons, no stock illustration.
 - Everything lives under `public/img/` and is committed: `zones/` (with `-s.jpg` small variants for mid cards and chips), `npcs/`, `monsters/`, `achievements/`, `items/`, `jobs/`, `spells/`, `maps/`, plus `hub/`, `inicio/` and `cosecha/` for images picked for one widget. Manifests reference paths relative to `public/img/`.
-- Widgets build URLs with `import.meta.env.BASE_URL + "img/" + rel`, so an embed loads them from GitHub Pages. Nothing is hotlinked from DofusDB or Ankama at runtime (the build scripts copy the files). The one shipped exception is the checklist hero's full-width HD map (`MAP_IMG_HD` in `src/lib/quests.js`); do not add another.
+- Widgets build URLs with `import.meta.env.BASE_URL + "img/" + rel`, so an embed loads them from GitHub Pages. Nothing is hotlinked from DofusDB or Ankama at runtime (the build scripts copy the files). The one shipped exception is the checklist hero's full-width HD map (`MAP_IMG_HD` in `src/tools/checklist/lib/quests.js`); do not add another.
 - Decorative images carry `alt=""` and `draggable="false"`; the card's `aria-label` and `aria-describedby` carry the meaning.
 
 ### Picking a zone background for a character
