@@ -47,17 +47,20 @@ const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 
 // Los embebidos: la app del Dofus elegido (EMBED=1, según el build de su config.js: el
 // Silvestre, embed/silvestre.js; con DOFUS=hielos, npm run build:embed:hielos,
-// embed/hielos.js) y el hub de los checklists (HUB=1, npm run build:hub,
-// src/hub/embed.js), una franja por Dofus que lleva a su checklist. El hub va aparte y
-// solo: no carga la app ni sus datos
+// embed/hielos.js), el hub de los checklists (HUB=1, npm run build:hub,
+// src/hub/embed.js), una franja por Dofus que lleva a su checklist, y el inicio de
+// torrentearcano.com (INICIO=1, npm run build:inicio, src/inicio/embed.js). El hub y el
+// inicio van aparte y solos: no cargan la app ni sus datos
 const EMBEDS = {
   app: { input: "src/embed.jsx", ...CONFIG.build.embed },
   hub: { input: "src/hub/embed.js", entry: "embed/checklists.js", chunks: "embed/hub", assets: "embed/hub" },
+  inicio: { input: "src/inicio/embed.js", entry: "embed/inicio.js", chunks: "embed/inicio", assets: "embed/inicio" },
 };
 
 function embedConfig(name) {
   // Junto al sitio normal: dist/embed/silvestre.js y sus trozos en dist/embed/chunks/ (el
-  // Hielos, dist/embed/hielos.js y dist/embed/hielos-chunks/); el hub, dist/embed/checklists.js. Las imágenes no se copian, son las de public/ que ya
+  // Hielos, dist/embed/hielos.js y dist/embed/hielos-chunks/); el hub, dist/embed/checklists.js;
+  // el inicio, dist/embed/inicio.js. Las imágenes no se copian, son las de public/ que ya
   // publica el sitio. Las pruebas lo construyen en otra carpeta (EMBED_OUT) para no pisar
   // dist/. Cada uno borra solo lo suyo: construir uno no se lleva el otro
   const { input, entry, chunks, assets } = EMBEDS[name];
@@ -88,7 +91,7 @@ function embedConfig(name) {
   };
 }
 
-const embedName = () => (process.env.HUB ? "hub" : process.env.EMBED ? "app" : null);
+const embedName = () => (process.env.INICIO ? "inicio" : process.env.HUB ? "hub" : process.env.EMBED ? "app" : null);
 
 // El sitio de un Dofus que no vive en la raíz (build.outDir): en su carpeta y sin public/
 const nested = command => command === "build" && !!CONFIG.build.outDir;
