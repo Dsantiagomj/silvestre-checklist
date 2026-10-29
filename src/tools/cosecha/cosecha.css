@@ -93,6 +93,9 @@ button { margin: 0; font: inherit; color: inherit; cursor: pointer; text-transfo
   --nav-ring: rgba(240, 163, 54, .4);
   --nav-hover: rgba(240, 163, 54, .08);
   --toast: #2c2410;
+  --dlg: #14150f;
+  --dlg-glow: #2a2010;
+  --dlg-shadow: 0 24px 70px rgba(0, 0, 0, .6);
   /* El interruptor de huevos: borde al pasar el ratón y foco */
   --ts-accent: var(--gold);
   --ts-focus: var(--focus);
@@ -181,6 +184,9 @@ button { margin: 0; font: inherit; color: inherit; cursor: pointer; text-transfo
   --nav-ring: rgba(184, 110, 20, .5);
   --nav-hover: rgba(240, 163, 54, .12);
   --toast: #fffaf0;
+  --dlg: #fffaf0;
+  --dlg-glow: #fbeac6;
+  --dlg-shadow: 0 24px 60px rgba(74, 52, 16, .35);
 }
 
 /* El contenido no pasa del ancho del diseño; el fondo sí llega a los bordes */
@@ -532,17 +538,95 @@ button:focus-visible, .chk input:focus-visible { outline: 2px solid var(--focus)
   z-index: 10;
   left: 50%;
   bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
   padding: 9px 14px;
   border-radius: 9px;
   background: var(--toast);
   box-shadow: inset 0 0 0 1px var(--frame);
   font-weight: 600;
+  white-space: nowrap;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 20px);
   transition: opacity .15s, transform .15s;
 }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
+/* Con «Deshacer»: su botón y una barra que se acaba mientras se puede */
+.toast .ta {
+  display: none;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--frame);
+  font: 700 13px var(--fd);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--hi);
+}
+.toast .ta:hover { background: var(--nav-hover); }
+.toast.act { padding: 7px 8px 9px 14px; }
+.toast.act .ta { display: block; }
+.toast.act.on { pointer-events: auto; }
+.toast .tb { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: var(--ocre); transform: scaleX(0); transform-origin: left; }
+.toast.act.on .tb { animation: toast-left var(--toast-ms, 8s) linear forwards; }
+@keyframes toast-left { from { transform: scaleX(1); } }
+
+/* Reiniciar: el diálogo (showModal) con el anillo de lo marcado, que se llena al abrir y se
+   vacía al confirmar; sobre la página, oscurecida. Botones como la botonera: un marco, sin
+   relleno dorado */
+.rd {
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: radial-gradient(120% 70% at 50% 0%, var(--dlg-glow), transparent 70%), var(--dlg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--frame) 55%, transparent), var(--dlg-shadow);
+  color: var(--ink);
+}
+/* ::backdrop no hereda las variables en todos los navegadores: sus dos colores van aquí */
+.rd::backdrop { background: rgba(5, 6, 5, .7); backdrop-filter: blur(3px); }
+.cosecha[data-theme="light"] .rd::backdrop { background: rgba(42, 33, 20, .45); }
+.rd[open] { animation: rd-in .28s cubic-bezier(.2, .9, .25, 1); }
+.rd[open]::backdrop { animation: rd-fade .25s ease; }
+@keyframes rd-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+@keyframes rd-fade { from { opacity: 0; } }
+.rd-in { padding: 22px; }
+.rd-head { display: flex; align-items: center; gap: 18px; }
+.rd-ring { --rd-v: 0; position: relative; display: grid; place-items: center; flex: none; width: 76px; height: 76px; }
+.rd-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.rd-ring circle { fill: none; stroke-width: 3; }
+.rd-track { stroke: var(--track); }
+.rd-fill {
+  stroke: var(--ocre);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - var(--rd-v));
+  transition: stroke-dashoffset .7s cubic-bezier(.65, 0, .35, 1);
+}
+.rd-ring img { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(240, 163, 54, .7)); }
+.rd-title { margin: 0 0 6px; font: 800 26px/1.05 var(--fd); letter-spacing: .03em; text-transform: uppercase; color: var(--ink); }
+.rd-sub { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--ink-2); }
+.rd-sub b { color: var(--accent-ink); }
+.rd-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.rd-actions button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  font: 700 15px var(--fd);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.rd-cancel { background: none; box-shadow: inset 0 0 0 1px var(--line); color: var(--soft); }
+.rd-cancel:hover { color: var(--ink); box-shadow: inset 0 0 0 1px var(--card-hover); }
+.rd-confirm { background: var(--pressed); box-shadow: inset 0 0 0 1px var(--pressed-ring); color: var(--hi-on); }
+.rd-confirm:hover:not(:disabled) { filter: brightness(1.08); }
+.rd-confirm:disabled { opacity: .4; cursor: default; }
 
 /* Estrecho (el bloque de Squarespace en un móvil): la cabecera apilada, el carril como una
    fila de etapas pegada arriba y los cromos de tres en tres. Por el ancho del checklist */
@@ -598,6 +682,7 @@ button:focus-visible, .chk input:focus-visible { outline: 2px solid var(--focus)
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .slot, .cromo, .cromo img, .stop, .bar i, .toast { transition: none; }
+  .slot, .cromo, .cromo img, .stop, .bar i, .toast, .rd-fill { transition: none; }
+  .rd[open], .rd[open]::backdrop, .toast.act.on .tb { animation: none; }
   .slot:hover { transform: none; }
 }

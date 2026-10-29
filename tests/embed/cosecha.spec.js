@@ -253,15 +253,109 @@ test("el botón de copiar copia el nombre sin marcar el alma, y no va dentro del
   expect(await readLS(page, KEY)).toBeNull();
 });
 
-test("«Reiniciar» pide confirmación y desmarca todo", async ({ page }) => {
+// «Reiniciar» abre un diálogo propio (<dialog> con showModal, como el del checklist), nunca el
+// confirm() del navegador: el anillo con lo marcado, qué se borra, Cancelar y Desmarcar
+// todas; después, un aviso con «Deshacer» que devuelve lo que había
+const noNativeDialogs = page => {
+  const native = [];
+  page.on("dialog", d => { native.push(d.type()); d.dismiss(); });
+  return native;
+};
+const resetDialog = page => cosecha(page).getByRole("dialog", { name: "¿Desmarcar todas las almas?" });
+
+test("«Reiniciar» abre su diálogo: Esc y Cancelar no tocan nada", async ({ page }) => {
+  const native = noNativeDialogs(page);
   await openCosecha(page, { seed: { [KEY]: [928, 147] } });
-  page.once("dialog", d => d.dismiss());
-  await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+  const reset = cosecha(page).getByRole("button", { name: "Reiniciar" });
+  await expect(resetDialog(page)).toBeHidden();
+  await reset.click();
+  const dlg = resetDialog(page);
+  await expect(dlg).toBeVisible();
+  // Lo que se va a borrar, contado
+  await expect(dlg).toContainText("2 de las 337 almas");
+  await expect(dlg).toContainText("2 jefes y 0 archis");
+  // El anillo se llena con lo marcado al abrir (1 %), con el Dofus Ocre en medio
+  await expect(dlg.locator(".rd-ring img")).toHaveAttribute("src", `${SITE}img/inicio/dofus-ocre.png`);
+  await expect.poll(() => dlg.locator(".rd-ring").evaluate(el => el.style.getPropertyValue("--rd-v"))).toBe("1");
+  // El foco va dentro y Esc lo cierra sin borrar
+  await expect(dlg.getByRole("button", { name: "Cancelar" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dlg).toBeHidden();
   await expect(cosecha(page).locator(".bar.t em")).toHaveText("2/337");
-  page.once("dialog", d => d.accept());
+  // Cancelar, igual
+  await reset.click();
+  await resetDialog(page).getByRole("button", { name: "Cancelar" }).click();
+  await expect(resetDialog(page)).toBeHidden();
+  await expect(cosecha(page).locator(".bar.t em")).toHaveText("2/337");
+  expect(await readLS(page, KEY)).toEqual([928, 147]);
+  expect(native).toEqual([]);
+});
+
+test("«Desmarcar todas» lo borra y lo guarda, y «Deshacer» lo devuelve", async ({ page }) => {
+  const native = noNativeDialogs(page);
+  const errors = await openCosecha(page, { seed: { [KEY]: [928, 147] } });
   await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+  await resetDialog(page).getByRole("button", { name: "Desmarcar todas" }).click();
+  // El anillo se vacía y el diálogo se cierra
+  await expect(resetDialog(page)).toBeHidden({ timeout: 3_000 });
   await expect(cosecha(page).locator(".bar.t em")).toHaveText("0/337");
   expect(await readLS(page, KEY)).toEqual([]);
+  const toast = cosecha(page).locator(".toast");
+  await expect(toast).toHaveClass(/\bon\b/);
+  await expect(toast).toContainText("Almas desmarcadas");
+  await toast.getByRole("button", { name: "Deshacer" }).click();
+  await expect(cosecha(page).locator(".bar.t em")).toHaveText("2/337");
+  await expect(cromo(page, "Mob Lasponja")).toHaveAttribute("aria-pressed", "true");
+  expect(await readLS(page, KEY)).toEqual([928, 147]);
+  await expect(toast).not.toHaveClass(/\bon\b/);
+  // Y otra vez, sin deshacer: se queda borrado tras recargar
+  await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+  await resetDialog(page).getByRole("button", { name: "Desmarcar todas" }).click();
+  await expect(cosecha(page).locator(".bar.t em")).toHaveText("0/337");
+  await page.reload();
+  await expect(cosecha(page).locator(".bar.t em")).toHaveText("0/337");
+  expect(native).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("sin almas marcadas el diálogo lo dice y no deja confirmar", async ({ page }) => {
+  await openCosecha(page);
+  await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+  await expect(resetDialog(page)).toContainText("Todavía no has marcado ninguna alma");
+  await expect(resetDialog(page).getByRole("button", { name: "Desmarcar todas" })).toBeDisabled();
+});
+
+test("el diálogo de reiniciar va con el tema: pergamino en claro, oscuro en oscuro", async ({ page }) => {
+  const lum = c => {
+    const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+      v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    });
+    return .2126 * r + .7152 * g + .0722 * b;
+  };
+  for (const theme of ["dark", "light"]) {
+    await openCosecha(page, { seed: { [KEY]: [928], [THEME]: theme } });
+    await page.evaluate(([k, t]) => localStorage.setItem(k, t), [THEME, theme]);
+    await page.reload();
+    await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+    const dlg = resetDialog(page);
+    await expect(dlg).toBeVisible();
+    const bg = lum(await dlg.evaluate(el => getComputedStyle(el).backgroundColor));
+    const fg = lum(await dlg.locator(".rd-title").evaluate(el => getComputedStyle(el).color));
+    if (theme === "light") expect(bg).toBeGreaterThan(.8);
+    else expect(bg).toBeLessThan(.05);
+    const [a, b] = [bg, fg].sort((x, y) => y - x);
+    expect((a + .05) / (b + .05), theme).toBeGreaterThanOrEqual(7);
+    await page.keyboard.press("Escape");
+  }
+});
+
+test("con movimiento reducido el diálogo se cierra sin esperar al anillo", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openCosecha(page, { seed: { [KEY]: [928] } });
+  await cosecha(page).getByRole("button", { name: "Reiniciar" }).click();
+  expect(await style(resetDialog(page).locator(".rd-ring .rd-fill"), "transitionDuration")).toMatch(/^0s/);
+  await resetDialog(page).getByRole("button", { name: "Desmarcar todas" }).click();
+  await expect(resetDialog(page)).toBeHidden({ timeout: 300 });
 });
 
 test("todas las imágenes salen de GitHub Pages y cargan, ninguna de DofusDB ni de Ankama", async ({ page }) => {

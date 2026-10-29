@@ -25,12 +25,15 @@ const asTheme = t => (t === "light" ? "light" : "dark");
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;
 const pic = (src, cls, lazy) => el("img", cls, { src: img(src), alt: "", draggable: "false", ...(lazy ? { loading: "lazy" } : {}) });
 
+// El anillo del diálogo de reiniciar: la pista y lo marcado (pathLength 100: el trazo es el %)
+const RING = '<svg viewBox="0 0 36 36" aria-hidden="true"><circle class="rd-track" cx="18" cy="18" r="16" pathLength="100"/><circle class="rd-fill" cx="18" cy="18" r="16" pathLength="100"/></svg>';
 const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
 
 const still = matchMedia("(prefers-reduced-motion: reduce)");
 const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
 const where = s => (s.d || s.z) + (s.t === "boss" ? ` · nv. ${s.lv}` : "");
 const almas = n => `${n} ${n === 1 ? "alma" : "almas"}`;
+const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 function read(key) {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -140,9 +143,35 @@ export function renderCosecha(container, host, { heading = "h2", themeSwitch = t
   rail.append(railT, stops);
   const main = el("div", "main");
   body.append(rail, main);
+  // El aviso de abajo: un texto y, si se puede deshacer, su botón y una barra que se acaba
   const toast = el("div", "toast", { role: "status" });
+  const toastText = el("span", "tt");
+  const toastAction = el("button", "ta", { type: "button" });
+  const toastBar = el("span", "tb", { "aria-hidden": "true" });
+  toast.append(toastText, toastAction, toastBar);
 
-  container.append(hd, tools, body, toast);
+  // Reiniciar: un <dialog> propio con showModal (el foco queda dentro y Esc lo cierra), como el
+  // del checklist: el anillo con lo marcado, lo que se borra contado y Cancelar o Desmarcar
+  const dialog = el("dialog", "rd", { "aria-labelledby": "rd-title", "aria-describedby": "rd-sub" });
+  const form = el("form", "rd-in", { method: "dialog" });
+  const ring = el("div", "rd-ring");
+  ring.innerHTML = RING;
+  ring.append(pic("inicio/dofus-ocre.png"));
+  const dlgText = el("div");
+  const dlgSub = el("p", "rd-sub", { id: "rd-sub" });
+  dlgText.append(Object.assign(text("h3", "rd-title", "¿Desmarcar todas las almas?"), { id: "rd-title" }), dlgSub);
+  const dlgHead = el("div", "rd-head");
+  dlgHead.append(ring, dlgText);
+  const cancel = text("button", "rd-cancel", "Cancelar");
+  Object.assign(cancel, { type: "submit", value: "cancel", autofocus: true });
+  const confirmBtn = text("button", "rd-confirm", "Desmarcar todas");
+  confirmBtn.type = "button";
+  const actions = el("div", "rd-actions");
+  actions.append(cancel, confirmBtn);
+  form.append(dlgHead, actions);
+  dialog.append(form);
+
+  container.append(hd, tools, body, toast, dialog);
 
   const isEtapa = () => ui.by === "etapa";
   const groupTitle = g => (isEtapa() ? `Etapa ${g.key} · ${g.label}` : g.label);
@@ -298,6 +327,74 @@ export function renderCosecha(container, host, { heading = "h2", themeSwitch = t
   }
 
   let toastTimer = 0;
+  let toastUndo = null;
+  /** El aviso de abajo durante `ms`; con `action`, su botón llama a `onAction`. */
+  function showToast(msg, { action = "", onAction = null, ms = 1400 } = {}) {
+    toastText.textContent = msg;
+    toastAction.textContent = action;
+    toastUndo = onAction;
+    toast.classList.toggle("act", !!action);
+    toast.style.setProperty("--toast-ms", `${ms}ms`);
+    // Otra vez desde el principio: la barra vuelve a empezar
+    toast.classList.remove("on");
+    void toast.offsetWidth;
+    toast.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, ms);
+  }
+  function hideToast() {
+    clearTimeout(toastTimer);
+    toastUndo = null;
+    toast.classList.remove("on");
+  }
+  toastAction.addEventListener("click", () => {
+    const fn = toastUndo;
+    hideToast();
+    fn?.();
+  });
+
+  /** Abre el diálogo de reiniciar: lo marcado en el anillo, que se llena al abrir. */
+  function openReset() {
+    const n = done.size;
+    const bosses = SOULS.filter(s => s.t === "boss" && done.has(s.id)).length;
+    dlgSub.replaceChildren();
+    if (n) {
+      dlgSub.append("Tienes ", text("b", null, `${n} de las ${SOULS.length} almas`),
+        ` marcadas: ${count(bosses, "jefe", "jefes")} y ${count(n - bosses, "archi", "archis")}. Se desmarcan todas, de todas las etapas; justo después podrás deshacerlo.`);
+    } else dlgSub.textContent = "Todavía no has marcado ninguna alma: no hay nada que desmarcar.";
+    confirmBtn.disabled = !n;
+    ring.style.setProperty("--rd-v", 0);
+    dialog.showModal();
+    requestAnimationFrame(() => ring.style.setProperty("--rd-v", pct(n, SOULS.length)));
+  }
+
+  /** Desmarca todo: el anillo se vacía, se cierra y el aviso deja deshacerlo. */
+  function confirmReset() {
+    const before = [...done];
+    confirmBtn.disabled = true;
+    ring.style.setProperty("--rd-v", 0);
+    setTimeout(() => {
+      dialog.close();
+      done.clear();
+      save();
+      render();
+      showToast("Almas desmarcadas.", {
+        action: "Deshacer",
+        ms: 8000,
+        onAction: () => {
+          for (const id of before) done.add(id);
+          save();
+          render();
+        },
+      });
+    }, still.matches ? 0 : 650);
+  }
+  confirmBtn.addEventListener("click", confirmReset);
+  // Un clic en el fondo (fuera del cuadro) también cierra sin borrar
+  dialog.addEventListener("click", e => {
+    if (e.target === dialog) dialog.close();
+  });
+
   async function copy(name) {
     try {
       await navigator.clipboard.writeText(name);
@@ -309,16 +406,15 @@ export function renderCosecha(container, host, { heading = "h2", themeSwitch = t
       document.execCommand("copy");
       ta.remove();
     }
-    toast.textContent = `Copiado: ${name}`;
-    toast.classList.add("on");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("on"), 1400);
+    showToast(`Copiado: ${name}`);
   }
 
   const keyOf = v => (isEtapa() ? Number(v) : v);
 
   container.addEventListener("click", e => {
     const t = e.target;
+    // Lo del diálogo y del aviso tiene sus propios oyentes
+    if (t.closest(".rd, .toast")) return;
     const cp = t.closest(".cpy");
     if (cp) {
       copy(SOULS.find(s => s.id === Number(cp.dataset.copy)).n);
@@ -375,11 +471,7 @@ export function renderCosecha(container, host, { heading = "h2", themeSwitch = t
       input.focus();
       return;
     }
-    if (t.closest(".reset") && confirm("¿Desmarcar todas las almas?")) {
-      done.clear();
-      save();
-      render();
-    }
+    if (t.closest(".reset")) openReset();
   });
 
   input.addEventListener("input", () => {
