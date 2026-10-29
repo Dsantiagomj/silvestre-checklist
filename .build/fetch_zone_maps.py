@@ -8,13 +8,12 @@ bottom before scaling down.
 Writes : public/img/zones/<slug>.jpg     960 px wide, for the step detail header
          public/img/zones/<slug>-s.jpg   200 px wide, for seals and list rows
          src/dofus/<dofus>/zones.json    { zone: { map, img, thumb } }
-Needs  : macOS `sips` for the crop and resize
+Needs  : macOS `sips` or ImageMagick for the crop and resize (imaging.py)
 Run    : python3 -I .build/fetch_zone_maps.py   (--dofus <id> or DOFUS; silvestre by default)
 """
 import json
 import pathlib
 import re
-import subprocess
 import sys
 import tempfile
 import unicodedata
@@ -23,6 +22,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+import imaging  # noqa: E402
 D = dofus.CONFIG
 OUT_DIR = ROOT / "public" / "img" / "zones"
 OUT_JSON = dofus.SRC / "zones.json"
@@ -38,10 +38,6 @@ def slug(name):
     return re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")
 
 
-def sips(*args):
-    subprocess.run(["sips", *args], check=True, capture_output=True)
-
-
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
@@ -50,11 +46,11 @@ def main():
             raw = pathlib.Path(tmp) / f"{map_id}.jpg"
             req = urllib.request.Request(MAP_URL.format(map_id), headers={"User-Agent": "Mozilla/5.0"})
             raw.write_bytes(urllib.request.urlopen(req, timeout=60).read())
-            sips("-c", str(CROP_H), "1910", str(raw))
+            imaging.crop(raw, CROP_H, 1910)
             name = slug(zone)
             for suffix, width in SIZES.items():
                 dest = OUT_DIR / f"{name}{suffix}.jpg"
-                sips("--resampleWidth", str(width), "-s", "formatOptions", "72", str(raw), "--out", str(dest))
+                imaging.resize(raw, dest, width, 72)
             out[zone] = {"map": map_id, "img": f"zones/{name}.jpg", "thumb": f"zones/{name}-s.jpg"}
             print(f"{zone}: {map_id}")
     OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n")

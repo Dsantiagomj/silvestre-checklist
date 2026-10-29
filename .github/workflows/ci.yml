@@ -4,10 +4,9 @@ name: CI
 # "Pruebas". La sincronización de la guía lo lanza a mano sobre su rama, porque un PR
 # abierto con el token del workflow no dispara otros workflows.
 #
-# El repo es privado y cada minuto se paga, redondeado hacia arriba por job: todo va en
-# UN job. Cuatro trozos en paralelo terminaban antes (unos 7 min) pero costaban unos 30
-# minutos por PR entre arranques del contenedor, builds repetidos y redondeos; en un job
-# la suite entera tarda más (unos 15 min) y se paga una vez.
+# Todo va en UN job: se recortó así cuando el repo era privado y cada minuto se pagaba
+# (cuatro trozos en paralelo terminaban en unos 7 min pero costaban unos 30 minutos por PR;
+# en un job tarda unos 15 y se paga una vez). Un PR en borrador solo pasa las unitarias.
 #
 # Cada suite con navegador corre solo si el PR toca algo que pueda romperla: el mapa de
 # carpetas a suites está en .github/ci-paths.mjs (con sus pruebas en las unitarias). Un PR
@@ -20,6 +19,8 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    # ready_for_review: al sacar un PR del borrador corre lo que se saltó mientras lo era
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -38,15 +39,21 @@ jobs:
       image: mcr.microsoft.com/playwright:v1.64.0-noble
       options: --ipc=host
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Qué cambia
         id: diff
         env:
           BASE: ${{ github.base_ref }}
+          DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # Un PR en borrador solo pasa las unitarias: las suites con navegador, al sacarlo
+          if [ "$DRAFT" = true ]; then
+            printf 'e2e=false\nembed=false\nhielos=false\nsite=false\nbuild=false\n' | tee -a "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # A mano sobre main se prueba todo; sobre otra rama (la de la sincronización de la
           # guía), lo que cambia respecto a main
           if [ -z "$BASE" ] && [ "$GITHUB_REF_NAME" = main ]; then
@@ -57,7 +64,7 @@ jobs:
           echo "$files"
           echo "$files" | node .github/ci-paths.mjs | tee -a "$GITHUB_OUTPUT"
           if echo "$files" | grep -q '^\.build/'; then echo "build=true"; else echo "build=false"; fi | tee -a "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -80,7 +87,7 @@ jobs:
         run: npm run test:site -- --retries=1
       - if: steps.diff.outputs.e2e == 'true'
         run: npx playwright test --retries=1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-traces

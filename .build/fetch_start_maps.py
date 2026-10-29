@@ -8,13 +8,12 @@ banner's size.
 Reads  : src/dofus/<dofus>/figures.json   ({step: {"m": map id, ...}})
 Writes : public/img/maps/start/<map id>.jpg   800 px wide, shared by every Dofus: it deletes
          only the maps no src/dofus/*/figures.json uses
-Needs  : macOS `sips` for the crop and resize
+Needs  : macOS `sips` or ImageMagick for the crop and resize (imaging.py)
 Run    : python3 -I .build/fetch_start_maps.py   (after build_figures.py; --dofus <id> or DOFUS,
          silvestre by default)
 """
 import json
 import pathlib
-import subprocess
 import sys
 import tempfile
 import urllib.request
@@ -22,6 +21,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+import imaging  # noqa: E402
 D = dofus.CONFIG
 FIGURES = dofus.SRC / "figures.json"
 OUT_DIR = ROOT / "public" / "img" / "maps" / "start"
@@ -29,10 +29,6 @@ MAP_URL = "https://api.dofusdb.fr/img/maps/1/{}.jpg"
 CROP_H = 830  # of 970, as in fetch_zone_maps.py
 WIDTH = 800   # twice the widest banner, the hero's
 QUALITY = "60"
-
-
-def sips(*args):
-    subprocess.run(["sips", *args], check=True, capture_output=True)
 
 
 def step_maps(figures):
@@ -65,9 +61,8 @@ def main():
             raw = pathlib.Path(tmp) / f"{m}.jpg"
             req = urllib.request.Request(MAP_URL.format(m), headers={"User-Agent": "Mozilla/5.0"})
             raw.write_bytes(urllib.request.urlopen(req, timeout=60).read())
-            sips("-c", str(CROP_H), "1910", str(raw))
-            sips("--resampleWidth", str(WIDTH), "-s", "formatOptions", QUALITY, str(raw),
-                 "--out", str(OUT_DIR / f"{m}.jpg"))
+            imaging.crop(raw, CROP_H, 1910)
+            imaging.resize(raw, OUT_DIR / f"{m}.jpg", WIDTH, QUALITY)
             print(m)
     size = sum(f.stat().st_size for f in OUT_DIR.glob("*.jpg"))
     print(f"mapas de inicio: {len(maps)} ({len(todo)} nuevos) · {size / 1e6:.1f} MB")

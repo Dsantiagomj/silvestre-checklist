@@ -17,8 +17,6 @@ Run    : python3 -I .build/build_assets_js.py   (--dofus <id> or DOFUS; silvestr
 import json
 import pathlib
 import re
-import shutil
-import subprocess
 import sys
 import tarfile
 import urllib.error
@@ -29,6 +27,7 @@ ROOT = pathlib.Path(__file__).parent.parent
 DATA = ROOT / ".build" / "data"
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+import imaging  # noqa: E402
 D = dofus.CONFIG
 OUT_JSON = dofus.SRC / "assets.json"
 # Vite serves public/ at the site root, so the React app requests /img/...
@@ -244,13 +243,12 @@ def read_prereqs():
 
 
 def optimize_jpeg(path, quality):
-    """Recompress a JPEG in place with macOS sips. Call it only on a fresh download:
-    recompressing an already-compressed file loses quality on every run.
-    Without sips (not macOS) the original stays and the build says so."""
-    if not shutil.which("sips"):
-        return "sin sips: se deja el original"
-    subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", str(quality),
-                    str(path), "--out", str(path)], check=True, capture_output=True)
+    """Recompress a JPEG in place with sips or ImageMagick (imaging.py). Call it only on a
+    fresh download: recompressing an already-compressed file loses quality on every run.
+    Without either tool the original stays and the build says so."""
+    if not imaging.pick_tool():
+        return "sin sips ni ImageMagick: se deja el original"
+    imaging.recompress(path, quality)
     return f"{path.stat().st_size // 1024} KB"
 
 
