@@ -1,11 +1,11 @@
 // ============================================================================
-// EL INICIO — pinta la portada y las secciones del manifiesto (src/inicio/manifest.js): tres
+// EL INICIO — pinta la portada y las secciones del manifiesto (src/embeds/inicio/manifest.js): tres
 // cartas grandes, tres medianas y la franja de lo que viene. Las cartas se inclinan hacia
 // el ratón como las del hub (src/lib/tilt.js). DOM a mano y sin React, como el hub.
 // ============================================================================
 import { INICIO } from "./manifest.js";
-import { el, text } from "../lib/dom.js";
-import { tilt } from "../lib/tilt.js";
+import { el, text } from "../../lib/dom.js";
+import { tilt } from "../../lib/tilt.js";
 
 // Las imágenes salen de GitHub Pages: en el embebido la base es la dirección del sitio
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;

@@ -1,6 +1,6 @@
 // ============================================================================
 // EMBEBIDO DE «LA ETERNA COSECHA» — el checklist de las almas del Dofus Ocre, en una shadow
-// root sobre #cosecha-root como el inicio (src/inicio/embed.js): su CSS no sale a la página
+// root sobre #cosecha-root como el inicio (src/embeds/inicio/embed.js): su CSS no sale a la página
 // ni el de la página entra. Se construye con `npm run build:cosecha` (vite.config.js), lleva
 // dentro sus 337 almas y no carga la app ni sus datos. Su vista previa en GitHub Pages es
 // public/cosecha/index.html.

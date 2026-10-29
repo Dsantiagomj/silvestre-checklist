@@ -1,13 +1,13 @@
 // ============================================================================
 // EMBEBIDO DEL INICIO — la portada de torrentearcano.com, en una shadow root sobre
-// #inicio-root como el hub (src/hub/embed.js): su CSS no sale a la página ni el de la página
+// #inicio-root como el hub (src/embeds/hub/embed.js): su CSS no sale a la página ni el de la página
 // entra. Se construye con `npm run build:inicio` (vite.config.js) y no carga la app ni sus
 // datos. Solo vive en Squarespace: no tiene página propia en GitHub Pages.
 // ============================================================================
 import css from "./inicio.css?inline";
-import { pageFonts } from "../lib/fonts.js";
+import { pageFonts } from "../../lib/fonts.js";
 import { renderInicio } from "./inicio.js";
-import { fillViewportWidth } from "../lib/pageHeader.js";
+import { fillViewportWidth } from "../../lib/pageHeader.js";
 
 const HOST_ID = "inicio-root";
 

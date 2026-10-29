@@ -2,9 +2,9 @@
    EL INICIO DE TORRENTE ARCANO · LA PORTADA Y SUS SECCIONES
    Arriba el título sobre el Krosmoz fundido; debajo tres cartas grandes con su PNJ asomando,
    tres medianas con arte del juego y la franja de lo que viene. Las cartas son las del hub
-   (src/hub/hub.css) con un filete dorado por dentro; se inclinan y el brillo holográfico
+   (src/embeds/hub/hub.css) con un filete dorado por dentro; se inclinan y el brillo holográfico
    sigue al ratón (src/lib/tilt.js). En estrecho (≤600px) todo va en una columna.
-   De borde a borde (src/inicio/embed.js) pero con su alto natural: es contenido de la página.
+   De borde a borde (src/embeds/inicio/embed.js) pero con su alto natural: es contenido de la página.
    Vive en una shadow root: nada de la página entra ni sale.
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
@@ -231,7 +231,7 @@ img { border: 0; max-width: none; }
 .eggs img:nth-child(2) { height: 48px; filter: drop-shadow(0 0 8px rgba(159, 216, 240, .7)); }
 .eggs .sil { height: 40px; filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .6)); }
 
-/* El aro de los seis primordiales; cada uno lleva su sitio en el estilo (src/inicio/inicio.js) */
+/* El aro de los seis primordiales; cada uno lleva su sitio en el estilo (src/embeds/inicio/inicio.js) */
 .ring {
   width: 96px;
   height: 96px;

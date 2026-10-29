@@ -1,10 +1,10 @@
 // ============================================================================
-// EL HUB — pinta una carta por Dofus del manifiesto (src/hub/manifest.js) y la inclina
+// EL HUB — pinta una carta por Dofus del manifiesto (src/embeds/hub/manifest.js) y la inclina
 // hacia el ratón. DOM a mano y sin React: es un widget pequeño y así el embebido pesa poco.
 // ============================================================================
 import { HUB, SOON } from "./manifest.js";
-import { el, text } from "../lib/dom.js";
-import { tilt } from "../lib/tilt.js";
+import { el, text } from "../../lib/dom.js";
+import { tilt } from "../../lib/tilt.js";
 
 // Las imágenes salen de GitHub Pages: en el embebido la base es la dirección del sitio
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;

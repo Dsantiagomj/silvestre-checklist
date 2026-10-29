@@ -32,7 +32,7 @@ export default {
     titleLead: "Checklist del Dofus de los",
     // El hero con la guía terminada
     heroEyebrow: "Guía de Torrente Arcano",
-    // El del hub de los checklists (src/hub/manifest.js)
+    // El del hub de los checklists (src/embeds/hub/manifest.js)
     heroSub: "Descubre los misterios de la isla de Frigost en 70 pasos y enfréntate al temible Conde Kontatrás.",
     // El título (para lectores de pantalla) de la ventana de pasos
     stepsTitle: "Los 70 pasos",
