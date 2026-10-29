@@ -24,12 +24,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # La home del sitio, en la raíz de dist/ (/<repo>/), con public/ (img/ y las vistas
+      # previas): va primero porque es el único build que vacía dist/
+      - run: npm run build:site
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+      # El Silvestre en dist/silvestre/ y el Hielos en dist/hielos/: cada uno vacía solo su
+      # carpeta y no copia public/, sus imágenes son las de la raíz
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      # El sitio del Hielos, en dist/hielos/ (/<repo>/hielos/): sin copia de public/, sus
-      # imágenes son las de la raíz que acaba de dejar el del Silvestre. Va después: el
-      # build del Silvestre vacía dist/
       - run: npm run build:hielos
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
