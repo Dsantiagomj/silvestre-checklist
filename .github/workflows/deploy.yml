@@ -1,8 +1,20 @@
 name: Deploy to GitHub Pages
 
+# Cada minuto se paga: un solo job (build y publicación) y nada si el cambio no toca lo
+# que se publica (documentación, pruebas, la CI). A mano se publica siempre.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "tests/**"
+      - ".build/**"
+      - "playwright*.config.js"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/sync-guide*.yml"
+      - ".github/ci-paths.mjs"
   workflow_dispatch:
 
 permissions:
@@ -15,8 +27,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,13 +67,5 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
