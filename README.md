@@ -517,6 +517,27 @@ Antes de pegarlo se puede ver en https://dsantiagomj.github.io/silvestre-checkli
 (`public/checklists/index.html`). Es una página oscura con el mismo snippet y el embebido
 publicado, marcada `noindex`.
 
+### El inicio de Torrente Arcano
+
+La portada de https://www.torrentearcano.com/ lleva otro bloque de código con las secciones
+de la web:
+
+```html
+<div id="inicio-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/inicio.js"></script>
+```
+
+Solo existe como embebido: el sitio de GitHub Pages no tiene una página propia para el
+inicio. Es un widget aparte (`src/inicio/`), sin React, que usa la misma carta del hub (la
+inclinación y el brillo de `src/lib/tilt.js`). Arriba van tres cartas grandes (Misiones,
+Guías Dofus y Checklists), debajo tres medianas (Clases y sets, Alineamiento y Team builder)
+y al final la franja «En camino» con las secciones que aún no tienen página, sin enlace.
+Los textos, los enlaces y las imágenes salen de `src/inicio/manifest.js`. Las imágenes
+están en `public/img/` (las de DofusDB, copiadas en `public/img/inicio/`), así que no se
+piden a DofusDB ni a Ankama al cargar la página. Ocupa todo el ancho y tiene el alto de su
+contenido. Por debajo de 600 px de ancho del bloque va en una sola columna. Se construye
+con `npm run build:inicio`.
+
 ### La página de datos
 
 El checklist clásico, con sus datos, pasa a https://www.torrentearcano.com/checklist-silvestre-datos.

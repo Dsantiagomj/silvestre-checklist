@@ -1,6 +1,6 @@
 // ============================================================================
 // LA PÁGINA QUE ALOJA UN EMBEBIDO — su cabecera fija y su columna. Lo usan el del
-// Silvestre (src/embed.jsx) y el hub (src/hub/embed.js).
+// Silvestre (src/embed.jsx), el hub (src/hub/embed.js) y el inicio (src/inicio/embed.js).
 // ============================================================================
 
 /** Hace `fn` como mucho una vez por frame, al cambiar el tamaño, el scroll o `observed`. */

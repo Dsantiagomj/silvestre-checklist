@@ -39,6 +39,8 @@ jobs:
       - run: npm run build:embed:hielos
       # El hub de los checklists (dist/embed/checklists.js), con las imágenes de public/img/hub/
       - run: npm run build:hub
+      # El inicio de torrentearcano.com (dist/embed/inicio.js), con las imágenes de public/img/
+      - run: npm run build:inicio
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
