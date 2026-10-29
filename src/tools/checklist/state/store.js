@@ -507,9 +507,13 @@ export const hasActiveFilters = s => {
 // ============================================================================
 // ACCIONES
 // ============================================================================
-export function applyTheme(t) {
+/**
+ * Pone el tema `t`. Embebida lo guarda en su clave (silvestre:theme…); en el sitio el tema es
+ * de todo el sitio y lo guarda él (src/site/shell/theme.js): `persist: false`.
+ */
+export function applyTheme(t, { persist = true } = {}) {
   themeTarget().setAttribute("data-theme", t);
-  localStorage.setItem(LS.theme, t);
+  if (persist) localStorage.setItem(LS.theme, t);
   setState({ theme: t });
 }
 

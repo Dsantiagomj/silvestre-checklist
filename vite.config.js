@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { THEME_BOOT } from "./src/site/shell/themeBoot.js";
 
 // El sitio «Dofus Tools» (SITE=1, npm run build:site): la home y las páginas que no son
 // de un Dofus (siteConfig, abajo). No lee ningún Dofus
@@ -36,6 +37,14 @@ const dofusIcons = {
     handler: html => Object.entries(CONFIG.html.icons || {}).reduce(
       (out, [file, own]) => out.replaceAll(`href="/${file}"`, `href="/src/dofus/${DOFUS}/${own}"`), html),
   },
+};
+
+// El tema del sitio (src/site/shell/themeBoot.js) en un script en línea al principio del
+// <head> de cada página del sitio: data-theme llega a <html> antes de pintar, sin destello.
+// Las páginas de los checklists (index.html) y las del sitio (SITE=1); los embebidos no tienen HTML
+const siteThemeBoot = {
+  name: "site-theme-boot",
+  transformIndexHtml: () => [{ tag: "script", children: THEME_BOOT, injectTo: "head-prepend" }],
 };
 
 // La raíz del sitio de GitHub Pages, donde están public/ y sus imágenes (img/): en Pages
@@ -109,6 +118,7 @@ const nested = command => command === "build" && !!CONFIG.build.outDir;
 // (SITE_OUT) para no pisar dist/
 const SITE_DIR = path.resolve("src/site");
 const siteConfig = () => ({
+  plugins: [siteThemeBoot],
   root: SITE_DIR,
   publicDir: path.resolve("public"),
   base: SITE_ROOT,
@@ -122,7 +132,7 @@ const siteConfig = () => ({
 });
 
 export default defineConfig(({ command }) => SITE ? siteConfig() : (command === "build" && embedName() ? embedConfig(embedName()) : {
-  plugins: [react(), dofusIcons, dofusHtml],
+  plugins: [react(), dofusIcons, dofusHtml, siteThemeBoot],
   resolve,
   // En GitHub Pages el Silvestre vive en /silvestre-checklist/silvestre/ y el Hielos en
   // /silvestre-checklist/hielos/, bajo la raíz (SITE_ROOT). En desarrollo, siempre la raíz,

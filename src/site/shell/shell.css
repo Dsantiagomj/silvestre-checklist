@@ -13,6 +13,9 @@
 .dt-shell {
   --dt-fd: 'Barlow Condensed', sans-serif;
   --dt-gold: #d8b25a;
+  /* El interruptor de tema (src/lib/themeSwitch.css): sus colores, no los de la página */
+  --ts-accent: var(--dt-gold);
+  --ts-focus: #fff;
   container: dt-shell / inline-size;
   box-sizing: border-box;
   position: relative;
@@ -111,6 +114,9 @@
   outline-offset: 4px;
   border-radius: 2px;
 }
+
+/* El interruptor del tema, a la derecha del menú */
+.dt-shell .theme-switch { flex: none; align-self: center; }
 
 @container dt-shell (max-width: 600px) {
   .dt-in { width: calc(100% - 32px); gap: 18px; }

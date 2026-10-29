@@ -4,25 +4,60 @@ import { openApp, readLS } from "./helpers.js";
 /** El tema y el reinicio van en el menú «⋯» de la barra de la ventana. */
 const openMore = page => page.click("#moreBtn");
 
-test("el interruptor alterna el tema y lo recuerda", async ({ page }) => {
+// En el sitio el tema es de todo el sitio: el interruptor va en su cabecera y guarda en
+// dofus-tools:theme. El menú «⋯» solo lo lleva en el embebido (tests/embed)
+const siteSwitch = page => page.locator(".dt-shell").getByRole("switch");
+
+test("el interruptor de la cabecera alterna el tema de la app y lo recuerda", async ({ page }) => {
   await openApp(page);
-  await openMore(page);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("#themeBtn")).toHaveAttribute("aria-checked", "true");
-  await page.click("#themeBtn");
+  await expect(siteSwitch(page)).toHaveAttribute("aria-checked", "true");
+  await siteSwitch(page).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
-  await expect(page.locator("#themeBtn")).toHaveAttribute("aria-checked", "false");
-  expect(await page.evaluate(() => localStorage.getItem("silvestre:theme"))).toBe("light");
+  await expect(siteSwitch(page)).toHaveAttribute("aria-checked", "false");
+  // La app lo sigue: el fondo de la página es el de su tema claro
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).not.toBe("rgb(13, 14, 12)");
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(siteSwitch(page)).toHaveAttribute("aria-checked", "false");
+});
+
+test("en el sitio el menú «⋯» no lleva el interruptor del checklist", async ({ page }) => {
+  await openApp(page);
+  await openMore(page);
+  await expect(page.locator("#moreMenu")).toBeVisible();
+  await expect(page.locator("#moreMenu")).not.toContainText("Tema");
+  await expect(page.locator("#themeBtn")).toHaveCount(0);
+  await expect(page.getByRole("switch")).toHaveCount(1);
 });
 
 test("los huevos del interruptor cargan", async ({ page }) => {
   await openApp(page);
-  await openMore(page);
-  for (const id of ["#tsLight", "#tsDark"]) {
-    await expect.poll(() => page.locator(id).evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(siteSwitch(page).locator("img")).toHaveCount(2);
+  for (const egg of await siteSwitch(page).locator("img").all()) {
+    await expect.poll(() => egg.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
   }
+});
+
+test("el tema que se eligió en el checklist antes de la cabecera (silvestre:theme) pasa a ser el del sitio", async ({ page }) => {
+  await page.addInitScript(() => { if (localStorage.getItem("silvestre:theme") == null) localStorage.setItem("silvestre:theme", "light"); });
+  await openApp(page);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
+  // Se trae una vez: después manda el del sitio
+  await siteSwitch(page).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", { timeout: 3_000 });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+
+test("el tema llega antes de pintar: lo pone un script en línea del <head>, sin esperar al JS de la app", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("dofus-tools:theme", "light"));
+  // Sin módulos: solo queda el script en línea
+  await page.route(/\.js(\?|$)/, route => route.abort());
+  await page.goto("");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
 test("los botones de overlay y reinicio usan objetos del juego", async ({ page }) => {
@@ -79,7 +114,7 @@ test("en el tema claro el acento tiene contraste suficiente como relleno y como 
 
 test("el botón de copiar de los objetos se lee en los dos temas", async ({ page }) => {
   for (const theme of ["light", "dark"]) {
-    await openApp(page, { "silvestre:theme": theme }, { view: "items" });
+    await openApp(page, { "dofus-tools:theme": theme }, { view: "items" });
     const btn = page.locator("#items .slot-copy").first();
     await btn.focus();
     // El icono (trazo) contra el fondo del botón: al menos 4.5
@@ -99,7 +134,7 @@ test("el botón de copiar de los objetos se lee en los dos temas", async ({ page
 
 test("las cantidades de «Necesitas» se leen en los dos temas", async ({ page }) => {
   for (const theme of ["light", "dark"]) {
-    await openApp(page, { "silvestre:theme": theme });
+    await openApp(page, { "dofus-tools:theme": theme });
     await page.click('.diary-row[data-n="35"] .row-num');
     const q = page.locator("#journal .journal-needs .slot .q").first();
     await expect.poll(() => q.evaluate(el => {

@@ -123,3 +123,17 @@ test("en su página el checklist no lleva interruptor de tema propio ni lee cose
   await expect(tool(page).getByRole("switch")).toHaveCount(0);
   await expect(tool(page).locator(".cosecha")).toHaveAttribute("data-theme", "dark");
 });
+
+test("el checklist sigue el tema del sitio, también al cambiarlo en la cabecera", async ({ page }) => {
+  await page.addInitScript(() => { if (localStorage.getItem("dofus-tools:theme") == null) localStorage.setItem("dofus-tools:theme", "light"); });
+  await open(page);
+  const widget = tool(page).locator(".cosecha");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(widget).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(244, 236, 220)");
+  await page.locator(".dt-shell").getByRole("switch").click();
+  await expect(widget).toHaveAttribute("data-theme", "dark", { timeout: 3_000 });
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("dark");
+  // Su clave del embebido no se toca
+  expect(await page.evaluate(() => localStorage.getItem("cosecha:theme"))).toBeNull();
+});

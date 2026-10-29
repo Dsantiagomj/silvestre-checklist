@@ -1,8 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Sin APP_URL se construye el Silvestre en .e2e-test/silvestre (para no pisar dist/) y se
-// sirve como en GitHub Pages (tests/serve.js): la app en /silvestre/ y, en la raíz, public/
-// con las imágenes. Con APP_URL la misma suite corre contra cualquier despliegue, con la
+// Sin APP_URL se construye el sitio en .e2e-test (la home y la cosecha, con public/) y el
+// Silvestre en .e2e-test/silvestre (para no pisar dist/), y se sirve como en GitHub Pages
+// (tests/serve.js): la app en /silvestre/ y, en la raíz, la home y las imágenes. El tema es
+// de todo el sitio y una prueba va de la home al Silvestre y a la cosecha (shell.spec.js). Con APP_URL la misma suite corre contra cualquier despliegue, con la
 // dirección del Silvestre:
 //   APP_URL=https://mi-despliegue.example/silvestre/ npx playwright test
 // Puerto propio para las pruebas: así nunca chocan con un `vite preview` abierto a mano.
@@ -26,7 +27,7 @@ export default defineConfig({
   webServer: process.env.APP_URL
     ? undefined
     : {
-        command: `npm run build -- --outDir .e2e-test/silvestre && node tests/serve.js .e2e-test ${TEST_PORT}`,
+        command: `SITE_OUT=.e2e-test npm run build:site && npm run build -- --outDir .e2e-test/silvestre && node tests/serve.js .e2e-test ${TEST_PORT}`,
         url: APP_URL,
         // Nunca reutilizar: un servidor ya abierto serviría un build anterior y las
         // pruebas pasarían o fallarían contra código viejo sin avisar.

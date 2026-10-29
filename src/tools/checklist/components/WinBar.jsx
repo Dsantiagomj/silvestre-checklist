@@ -5,6 +5,7 @@ import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { useDismiss } from "../lib/useDismiss.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
+import { isEmbedded } from "../lib/root.js";
 import { openNota } from "./Nota.jsx";
 import WinStrip from "./WinStrip.jsx";
 import DOFUS from "@dofus/config.js";
@@ -158,7 +159,7 @@ function NextButton({ s }) {
 }
 
 /**
- * El menú «⋯» del final de la barra: el tema, qué significan las pausas y el reinicio
+ * El menú «⋯» del final de la barra: el tema (solo embebida), qué significan las pausas y el reinicio
  * (con la copia de seguridad dentro de su diálogo). Cambiar el tema deja el menú abierto
  * para poder volver; lo demás lo cierra.
  */
@@ -181,10 +182,13 @@ function MoreMenu({ onReset }) {
       </button>
       {open && (
         <div className="bar-pop more-pop" id="moreMenu" role="group" aria-label="Más opciones">
-          <div className="more-item more-theme">
-            <span className="more-label">Tema</span>
-            <ThemeSwitch />
-          </div>
+          {/* En el sitio el tema es de todo el sitio y su interruptor va en la cabecera */}
+          {isEmbedded() && (
+            <div className="more-item more-theme">
+              <span className="more-label">Tema</span>
+              <ThemeSwitch />
+            </div>
+          )}
           <button type="button" className="more-item" id="notaOpen" onClick={then(openNota)}>
             <span className="more-ic" aria-hidden="true">i</span>
             <span className="more-label">Qué es «hasta tener que pasar»</span>

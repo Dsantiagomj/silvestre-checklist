@@ -53,3 +53,17 @@ test("marcar un paso del Hielos guarda con su prefijo, sin tocar el del Silvestr
   expect(await readLS(page, "hielos:done")).toEqual({ 1: true });
   expect(await readLS(page, "silvestre:done")).toBeNull();
 });
+
+test("en el embebido el tema sigue en el menú «⋯», con los iconos de Frigost y sus nombres, y se guarda en hielos:theme", async ({ page }) => {
+  // En el sitio el tema es de la cabecera; en el embebido el checklist conserva su interruptor
+  await openHielos(page);
+  await app(page).locator("#moreBtn").click();
+  const btn = app(page).locator("#themeBtn");
+  await expect(btn).toHaveAttribute("aria-label", "Modo oscuro · Kama de hielo");
+  await expect(app(page).locator("#tsLight")).toHaveAttribute("src", `${SITE}img/items/153007.png`);
+  await expect(app(page).locator("#tsDark")).toHaveAttribute("src", `${SITE}img/items/24825.png`);
+  await btn.click();
+  await expect(btn).toHaveAttribute("aria-label", "Modo claro · Copo de nieve");
+  await expect(app(page).locator(".app-root")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => localStorage.getItem("hielos:theme"))).toBe("light");
+});
