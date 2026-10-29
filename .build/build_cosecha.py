@@ -4,7 +4,8 @@ Each row is one monster, in the quest's own order: name, level, image, whether i
 dungeon boss (with its dungeon) or an archmonster, the subarea where it lives, the quest
 stage that asks for it (`e`, 1-18: the 1-based index of its step in the API order of
 `quest.steps`; the recommended levels are ignored) and its region (`r`, the area of its
-first subarea). The embed (src/cosecha/) bundles this file.
+first subarea). The tool (src/tools/cosecha/) bundles this file into its embed
+(src/embeds/cosecha/).
 
 The images are copied to public/img/cosecha/<gfx>.png (several monsters share one) and
 `img` is relative to public/img/: nothing is fetched from DofusDB or Ankama at runtime.

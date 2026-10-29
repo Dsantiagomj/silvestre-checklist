@@ -5,10 +5,10 @@
 // dentro sus 337 almas y no carga la app ni sus datos. Su vista previa en GitHub Pages es
 // public/cosecha/index.html.
 // ============================================================================
-import css from "./cosecha.css?inline";
-import { pageFonts } from "../lib/fonts.js";
-import { renderCosecha } from "./cosecha.js";
-import { fillViewportWidth, followPageHeader } from "../lib/pageHeader.js";
+import css from "../../tools/cosecha/cosecha.css?inline";
+import { pageFonts } from "../../lib/fonts.js";
+import { renderCosecha } from "../../tools/cosecha/cosecha.js";
+import { fillViewportWidth, followPageHeader } from "../../lib/pageHeader.js";
 
 const HOST_ID = "cosecha-root";
 

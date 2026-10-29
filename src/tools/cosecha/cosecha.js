@@ -1,13 +1,13 @@
 // ============================================================================
 // «LA ETERNA COSECHA» — las 337 almas que pide la misión del Dofus Ocre, como cromos que se
 // marcan. A la izquierda el carril con las 18 etapas de la misión (o las 19 regiones); a la
-// derecha las almas del grupo elegido. Las cuentas salen de src/cosecha/souls.js. DOM a mano
+// derecha las almas del grupo elegido. Las cuentas salen de src/tools/cosecha/souls.js. DOM a mano
 // y sin React, como el hub y el inicio.
 // Lo marcado va en cosecha:done, la misma clave que la página anterior (public/cosecha/), y
 // la vista (agrupar, tipo, ocultar hechos y el grupo elegido) en cosecha:ui.
 // ============================================================================
-import SOULS from "../../public/cosecha/cosecha.json";
-import { el, text } from "../lib/dom.js";
+import SOULS from "../../../public/cosecha/cosecha.json";
+import { el, text } from "../../lib/dom.js";
 import { groupsOf, matches, parseDone, parseUi } from "./souls.js";
 
 const DONE_KEY = "cosecha:done";
