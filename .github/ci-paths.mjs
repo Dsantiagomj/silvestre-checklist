@@ -5,7 +5,7 @@
 // siempre, así que no salen aquí.
 //
 // En la CI (job "Qué cambia"): git diff --name-only … | node .github/ci-paths.mjs
-// escribe e2e=…, embed=… y hielos=… para $GITHUB_OUTPUT. Sus pruebas: tests/unit/ci-paths.test.js
+// escribe e2e=…, embed=…, hielos=… y site=… para $GITHUB_OUTPUT. Sus pruebas: tests/unit/ci-paths.test.js
 
 import { pathToFileURL } from "node:url";
 
@@ -14,12 +14,17 @@ const RULES = [
   { match: /\.md$|^docs\/|^LICENSE$/, run: [] },
   // El pipeline de datos y las unitarias: solo las unitarias
   { match: /^\.build\/|^tests\/unit\//, run: [] },
-  // Los embebidos propios (hub, inicio, cosecha), sus vistas previas y sus imágenes
-  { match: /^src\/embeds\/|^tests\/embed\/|^public\/checklists\/|^public\/cosecha\/|^public\/img\/(hub|inicio|cosecha)\//, run: ["embed"] },
+  // Los embebidos propios (hub, inicio, cosecha), sus vistas previas y sus imágenes. Las del
+  // hub salen también en las cartas de la home del sitio
+  { match: /^public\/img\/hub\//, run: ["embed", "site"] },
+  { match: /^src\/embeds\/|^tests\/embed\/|^public\/checklists\/|^public\/cosecha\/|^public\/img\/(inicio|cosecha)\//, run: ["embed"] },
   { match: /^src\/tools\/cosecha\//, run: ["embed"] },
   // La app del checklist: el sitio del Silvestre, el del Hielos y su embebido
   { match: /^src\/tools\/checklist\//, run: ["e2e", "hielos", "embed"] },
-  { match: /^src\/site\/|^index\.html$/, run: ["e2e", "hielos"] },
+  // La entrada del checklist en el sitio (la de los dos Dofus)
+  { match: /^src\/site\/checklist\/|^index\.html$/, run: ["e2e", "hielos"] },
+  // El resto del sitio «Dofus Tools»: la home, la cabecera y sus pruebas
+  { match: /^src\/site\/|^tests\/site\/|^playwright\.site\.config\.js$/, run: ["site"] },
   { match: /^tests\/e2e\//, run: ["e2e"] },
   { match: /^tests\/hielos\//, run: ["hielos"] },
   // Los datos de cada Dofus: su sitio y el embebido (que monta los dos)
@@ -27,9 +32,9 @@ const RULES = [
   { match: /^src\/dofus\/hielos\//, run: ["hielos", "embed"] },
 ];
 
-export const SUITES = ["e2e", "embed", "hielos"];
+export const SUITES = ["e2e", "embed", "hielos", "site"];
 
-/** Las suites que corren para estos archivos: { e2e, embed, hielos }. */
+/** Las suites que corren para estos archivos: { e2e, embed, hielos, site }. */
 export function suites(files) {
   const on = new Set();
   for (const file of files) {
