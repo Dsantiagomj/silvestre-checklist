@@ -445,7 +445,8 @@ El mismo workflow construye también el embebido (`npm run build:embed`), que qu
 `dist/embed/silvestre.js` con sus trozos en `dist/embed/chunks/`. Carga los trozos y las
 imágenes de la dirección absoluta de Pages; las imágenes no se copian dos veces. Después
 construye el hub de los checklists (`npm run build:hub`), que queda en
-`dist/embed/checklists.js`. Cada build borra solo lo suyo dentro de `dist/embed/`, así que
+`dist/embed/checklists.js`, el inicio (`dist/embed/inicio.js`) y «La eterna cosecha»
+(`npm run build:cosecha`, `dist/embed/cosecha.js`). Cada build borra solo lo suyo dentro de `dist/embed/`, así que
 el orden da igual.
 
 El Hielos se publica en el mismo despliegue: su sitio en
@@ -538,6 +539,43 @@ piden a DofusDB ni a Ankama al cargar la página. Ocupa todo el ancho y tiene el
 contenido. Por debajo de 600 px de ancho del bloque va en una sola columna. Se construye
 con `npm run build:inicio`.
 
+### La eterna cosecha
+
+Las 337 almas que pide «La eterna cosecha», la misión del Dofus Ocre, van en otro bloque de
+código:
+
+```html
+<div id="cosecha-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/cosecha.js"></script>
+```
+
+Es un widget aparte (`src/cosecha/`), sin React, que lleva las almas dentro y pesa unos
+74 KB (19 KB comprimido). Arriba van el huevo del Ocre sobre Cania y tres barras: total,
+jefes y archis. A la izquierda, el carril con las 18 etapas de la misión, o con las 19
+regiones si se agrupa «Por región» (de la que más almas tiene a la que menos, y dentro por
+subzona). A la derecha, las almas de la etapa elegida como cromos que se marcan al
+pulsarlos. El botón de la esquina copia el nombre para el mercadillo. «Jefes» y «Archis»
+quitan del carril las etapas sin almas de ese tipo. «Ocultar hechos» esconde las marcadas
+pero no cambia las cuentas. La búsqueda mira en todas las etapas a la vez y apaga en el
+carril las que no tienen nada. «/» lleva a la búsqueda. Por debajo de 700 px de ancho el
+carril pasa a ser una fila de etapas pegada arriba y los cromos van de tres en tres. El
+carril se pega bajo la cabecera fija de Squarespace, que mide `src/lib/pageHeader.js`.
+
+Lo marcado se guarda en `cosecha:done`, la clave de la página suelta que había antes en
+https://dsantiagomj.github.io/silvestre-checklist/cosecha/, así que en ese dominio nadie
+pierde su avance. Esa dirección muestra ahora el mismo checklist a pantalla completa, con
+el mismo snippet y sin nada alrededor (`public/cosecha/index.html`, `noindex`). En
+torrentearcano.com el progreso empieza de cero: el navegador lo guarda por dominio. La vista (agrupar, tipo, ocultar
+hechos y la etapa o región elegida) va en `cosecha:ui`. Otra pestaña abierta se pone al día
+sola.
+
+Las almas salen de `public/cosecha/cosecha.json`, que escribe
+`python3 -I .build/build_cosecha.py` desde DofusDB (misión 439). Cada una lleva su etapa
+(`e`, la posición de su paso en `quest.steps`; los niveles recomendados no cuentan) y su
+región (`r`, el área de su primera subzona). El script copia las imágenes a
+`public/img/cosecha/`, así que no se piden a DofusDB ni a Ankama al cargar. Se construye
+con `npm run build:cosecha`.
+
 ### La página de datos
 
 El checklist clásico, con sus datos, pasa a https://www.torrentearcano.com/checklist-silvestre-datos.
@@ -614,6 +652,7 @@ silvestre-checklist/
 │   ├── main.jsx, App.jsx
 │   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
 │   ├── hub/                  ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
+│   ├── cosecha/              ← «La eterna cosecha»: las almas del Dofus Ocre y su entrada (npm run build:cosecha)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
 │   ├── overlay/              ← ventana Picture-in-Picture (portal de React)

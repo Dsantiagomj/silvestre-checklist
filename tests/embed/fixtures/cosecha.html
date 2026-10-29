@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La eterna cosecha · Torrente Arcano</title>
+<!-- Imita la página de «La eterna cosecha» en Squarespace: la cabecera fija, el título de la
+     página (su h1), el bloque de código en una columna estrecha y el mismo CSS global agresivo
+     que squarespace.html. Nada de esto debe llegar al checklist, ni nada del checklist salir aquí -->
+<style>
+  * { box-sizing: content-box; font-family: serif; letter-spacing: .08em; }
+  html, body { margin: 0; font-size: 21px; line-height: 2.2; color: #c00; background: #fafafa; text-transform: uppercase; }
+  img { max-width: 50%; border: 4px solid magenta; }
+  a { color: orange; }
+  p { margin: 40px 0; }
+  h1 { font-size: 90px; color: lime; }
+  h2, h3 { color: lime; font-size: 60px; }
+  button { background: magenta; border: 6px solid lime; padding: 20px; }
+  :root { --c: red; --fd: serif; --gold: red; --ocre: red; }
+  #header { position: fixed; top: 0; left: 0; right: 0; height: 90px; z-index: 1000; overflow: hidden; background: #18181b; color: #fff; }
+  .page-section { padding-top: 90px; }
+  .content-wrapper { max-width: 1000px; margin: 0 auto; padding: 0 3vw; }
+  #footer-sections { height: 223px; background: #2a3a2a; color: #fff; }
+  @media (max-width: 767px) {
+    #header { height: 84px; }
+    .page-section { padding-top: 84px; }
+    /* Como en Squarespace, el título de la página se encoge y cabe */
+    h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<header id="header">Torrente Arcano · Inicio · Clases · Misiones <input id="page-search" placeholder="Buscar…"></header>
+<main id="page">
+  <section class="page-section">
+    <div class="content-wrapper">
+      <h1>La eterna cosecha</h1>
+      <div class="sqs-block code-block"><div class="sqs-block-content">
+<div id="cosecha-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/cosecha.js"></script>
+      </div></div>
+      <div id="below"><p>Texto de Torrente Arcano después del bloque.</p></div>
+    </div>
+  </section>
+</main>
+<footer id="footer-sections">Dofus es un MMORPG publicado por Ankama…</footer>
+</body>
+</html>

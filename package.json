@@ -11,6 +11,7 @@
     "build:embed:hielos": "DOFUS=hielos EMBED=1 vite build",
     "build:hub": "HUB=1 vite build",
     "build:inicio": "INICIO=1 vite build",
+    "build:cosecha": "COSECHA=1 vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:unit": "node --test tests/unit/*.test.js",
