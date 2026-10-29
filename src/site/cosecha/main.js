@@ -9,6 +9,10 @@ import { mountShell } from "../shell/shell.js";
 import { pageFonts } from "../../lib/fonts.js";
 import { renderCosecha } from "../../tools/cosecha/cosecha.js";
 
+// La cabecera al ancho de la cosecha (1176px con 32px a cada lado, cosecha.css), para que
+// la marca y el huevo empiecen en la misma línea
+document.documentElement.style.setProperty("--dt-max", "1176px");
+document.documentElement.style.setProperty("--dt-side", "64px");
 mountShell("cosecha");
 
 const host = document.getElementById("cosecha");

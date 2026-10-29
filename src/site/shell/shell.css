@@ -40,8 +40,9 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 24px;
-  width: calc(100% - 96px);
-  max-width: 1240px;
+  /* El ancho de la página que la lleva: cada página puede poner el suyo (--dt-max, --dt-side) */
+  width: calc(100% - var(--dt-side, 96px));
+  max-width: var(--dt-max, 1240px);
   height: 100%;
   margin-inline: auto;
 }
