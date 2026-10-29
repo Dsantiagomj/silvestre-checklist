@@ -4,14 +4,22 @@
 // derecha las almas del grupo elegido. Las cuentas salen de src/tools/cosecha/souls.js. DOM a mano
 // y sin React, como el hub y el inicio.
 // Lo marcado va en cosecha:done, la misma clave que la página anterior (public/cosecha/), y
-// la vista (agrupar, tipo, ocultar hechos y el grupo elegido) en cosecha:ui.
+// la vista (agrupar, tipo, ocultar hechos y el grupo elegido) en cosecha:ui. El embebido
+// lleva su interruptor de tema (oscuro o claro, cosecha:theme); en el sitio manda el tema
+// del sitio y no lo lleva.
 // ============================================================================
 import SOULS from "../../../public/cosecha/cosecha.json";
 import { el, text } from "../../lib/dom.js";
+import { createThemeSwitch, syncThemeSwitch, toggleThemeSwitch } from "../../lib/themeSwitch.js";
 import { groupsOf, matches, parseDone, parseUi } from "./souls.js";
 
 const DONE_KEY = "cosecha:done";
 const UI_KEY = "cosecha:ui";
+const THEME_KEY = "cosecha:theme";
+// Los huevos del interruptor, los del checklist del Silvestre
+const EGGS = { light: "items/23011.png", dark: "items/23007.png" };
+const EGG_NAMES = { light: "Dofus Marfil", dark: "Dofus Ébano" };
+const asTheme = t => (t === "light" ? "light" : "dark");
 
 // Las imágenes salen de GitHub Pages: en el embebido la base es la dirección del sitio
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;
@@ -43,11 +51,16 @@ function segButton(label, data) {
 /**
  * Monta el checklist en `container`; `host` es el anfitrión de la página (su --cosecha-top).
  * `heading`: la etiqueta del título; h2 en un embebido, donde la página ya tiene su h1.
+ * `themeSwitch`: el interruptor de tema propio, que guarda en cosecha:theme (el embebido).
+ * Sin él, el tema es `theme` y lo cambia quien lo monta con el `setTheme` que devuelve (el
+ * sitio, que tiene el suyo en la cabecera).
  */
-export function renderCosecha(container, host, { heading = "h2" } = {}) {
+export function renderCosecha(container, host, { heading = "h2", themeSwitch = true, theme: pageTheme = "dark" } = {}) {
   const done = parseDone(read(DONE_KEY));
   const ui = parseUi(read(UI_KEY));
   let q = "";
+  let theme = asTheme(themeSwitch ? read(THEME_KEY) : pageTheme);
+  container.dataset.theme = theme;
 
   const save = () => {
     write(DONE_KEY, JSON.stringify([...done]));
@@ -100,6 +113,24 @@ export function renderCosecha(container, host, { heading = "h2" } = {}) {
   const reset = text("button", "reset", "Reiniciar");
   reset.type = "button";
   tools.append(bySeg, typeSeg, srch, chk, reset);
+  // El interruptor de tema, al final de la fila (en estrecho sube junto a Todo, Jefes y Archis)
+  const sw = themeSwitch && createThemeSwitch({
+    icons: { light: img(EGGS.light), dark: img(EGGS.dark) },
+    names: EGG_NAMES,
+    theme,
+    onToggle: btn => toggleThemeSwitch(btn, theme === "dark" ? "light" : "dark", EGG_NAMES, t => {
+      setTheme(t);
+      write(THEME_KEY, t);
+    }),
+  });
+  if (sw) tools.append(sw);
+
+  /** Cambia el tema: los colores (cosecha.css) y el interruptor, si lo lleva. */
+  function setTheme(t) {
+    theme = asTheme(t);
+    container.dataset.theme = theme;
+    if (sw) syncThemeSwitch(sw, theme, EGG_NAMES);
+  }
 
   // --- El cuerpo: el carril y las almas ---
   const body = el("div", "body");
@@ -370,8 +401,9 @@ export function renderCosecha(container, host, { heading = "h2" } = {}) {
     input.focus();
   });
 
-  // Otra pestaña con la misma lista: se mantiene al día
+  // Otra pestaña con la misma lista (o, en el embebido, que cambia el tema): se mantiene al día
   window.addEventListener("storage", e => {
+    if (sw && e.key === THEME_KEY) return setTheme(e.newValue);
     if (e.key !== DONE_KEY) return;
     done.clear();
     for (const id of parseDone(e.newValue)) done.add(id);
@@ -379,4 +411,5 @@ export function renderCosecha(container, host, { heading = "h2" } = {}) {
   });
 
   render();
+  return { setTheme };
 }

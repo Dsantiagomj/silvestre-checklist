@@ -376,3 +376,118 @@ test("con movimiento reducido las almas no se mueven al pasar el ratón", async 
   expect(await style(first, "transform")).toBe("none");
   expect(await style(cromos(page).nth(0), "transitionDuration")).toMatch(/^0s/);
 });
+
+// El modo claro (cosecha.css, [data-theme=light] en .cosecha): pergamino con el ocre como
+// tinta. En el embebido lo elige su propio interruptor de huevos, al final de las
+// herramientas, y se guarda en cosecha:theme. Por defecto, oscuro
+const THEME = "cosecha:theme";
+const themeSwitch = page => cosecha(page).getByRole("switch");
+const root = page => cosecha(page).locator(".cosecha");
+
+test("el interruptor de huevos cambia a claro, pinta de pergamino y se recuerda tras recargar", async ({ page }) => {
+  const errors = await openCosecha(page);
+  const sw = themeSwitch(page);
+  await expect(sw).toHaveCount(1);
+  await expect(root(page)).toHaveAttribute("data-theme", "dark");
+  await expect(sw).toHaveAttribute("aria-checked", "true");
+  await expect(sw).toHaveAccessibleName("Modo oscuro · Dofus Ébano");
+  // Los huevos del checklist: el Dofus Marfil para el claro y el Ébano para el oscuro, de GitHub Pages
+  await expect(sw.locator("img.ts-light")).toHaveAttribute("src", `${SITE}img/items/23011.png`);
+  await expect(sw.locator("img.ts-dark")).toHaveAttribute("src", `${SITE}img/items/23007.png`);
+  // Al final de la fila de herramientas
+  expect(await sw.evaluate(el => el.parentElement.classList.contains("tools") && !el.nextElementSibling)).toBe(true);
+  expect(await style(root(page), "backgroundColor")).toBe("rgb(11, 12, 10)");
+  // Montar no guarda nada: la clave aparece al elegir
+  expect(await readLS(page, THEME)).toBeNull();
+
+  await sw.click();
+  await expect(root(page)).toHaveAttribute("data-theme", "light");
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+  await expect(sw).toHaveAccessibleName("Modo claro · Dofus Marfil");
+  expect(await page.evaluate(k => localStorage.getItem(k), THEME)).toBe("light");
+  // La paleta del modo claro
+  await expect.poll(() => style(root(page), "backgroundColor")).toBe("rgb(244, 236, 220)");
+  expect(await style(cosecha(page).locator("h2"), "color")).toBe("rgb(42, 33, 20)");
+  expect(await style(cosecha(page).locator(".sub"), "color")).toBe("rgb(77, 64, 48)");
+  expect(await style(cosecha(page).locator(".hd .ey"), "color")).toBe("rgb(138, 75, 5)");
+  expect(await style(cosecha(page).locator(".bigN"), "color")).toBe("rgb(184, 101, 10)");
+  expect(await style(cosecha(page).locator(".stH small"), "color")).toBe("rgb(107, 93, 72)");
+  expect(await style(cromos(page).nth(0), "backgroundImage")).toContain("rgb(255, 250, 240)");
+  // El pulsado: tinta ocre oscura y anillo dorado
+  const pressed = cosecha(page).getByRole("button", { name: "Por etapa" });
+  expect(await style(pressed, "color")).toBe("rgb(106, 58, 4)");
+  expect(await style(pressed, "boxShadow")).toContain("rgba(184, 138, 46");
+  // El huevo de la cabecera sigue oscuro, con su anillo dorado
+  expect(await style(cosecha(page).locator(".hd .egg"), "backgroundImage")).toContain("rgb(74, 51, 21)");
+  // Marcada, el nombre en la tinta ocre de lo marcado
+  await cromo(page, "Jalató Real").click();
+  expect(await style(cromo(page, "Jalató Real").locator("b"), "color")).toBe("rgb(106, 58, 4)");
+
+  await page.reload();
+  await expect(root(page)).toHaveAttribute("data-theme", "light");
+  await expect(themeSwitch(page)).toHaveAttribute("aria-checked", "false");
+  await themeSwitch(page).click();
+  await expect(root(page)).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(k => localStorage.getItem(k), THEME)).toBe("dark");
+  await expect.poll(() => style(root(page), "backgroundColor")).toBe("rgb(11, 12, 10)");
+  expect(errors).toEqual([]);
+});
+
+test("en el modo claro ningún color oscuro se queda atrás, tampoco en estrecho con el carril pegado", async ({ page }) => {
+  const lum = c => {
+    const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => {
+      v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+    });
+    return .2126 * r + .7152 * g + .0722 * b;
+  };
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await openCosecha(page, { seed: { [THEME]: "light" } });
+    await expect(root(page)).toHaveAttribute("data-theme", "light");
+    // Los fondos de lo que se toca, claros
+    for (const sel of [".seg", ".srch input", ".rail", ".stop:not([aria-current]) .num"]) {
+      const bg = await style(cosecha(page).locator(sel).first(), "backgroundColor");
+      expect(lum(bg), `${sel} a ${width}px: ${bg}`).toBeGreaterThan(.6);
+    }
+    // Y el texto, oscuro y legible sobre el pergamino de la página
+    const page_ = lum(await style(root(page), "backgroundColor"));
+    for (const sel of ["h2", ".sub", ".seg button", ".stop .lab", ".stH h3", ".stH small", ".cromo b", ".nav2 button"]) {
+      const fg = lum(await style(cosecha(page).locator(sel).first(), "color"));
+      const [a, b] = [fg, page_].sort((x, y) => y - x);
+      expect((a + .05) / (b + .05), `${sel} a ${width}px`).toBeGreaterThanOrEqual(4.5);
+    }
+  }
+  // En estrecho, el carril pegado es pergamino opaco
+  expect(await style(cosecha(page).locator(".rail"), "backgroundColor")).toBe("rgb(251, 244, 230)");
+});
+
+test("en estrecho el interruptor va en la fila de Todo, Jefes y Archis, a la derecha", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openCosecha(page);
+  const type = await cosecha(page).getByRole("group", { name: "Tipo" }).boundingBox();
+  const sw = await themeSwitch(page).boundingBox();
+  const tools = await cosecha(page).locator(".tools").boundingBox();
+  // En la misma fila
+  expect(sw.y).toBeLessThan(type.y + type.height);
+  expect(sw.y + sw.height).toBeGreaterThan(type.y);
+  // Pegado al borde derecho de las herramientas
+  expect(Math.abs(sw.x + sw.width - (tools.x + tools.width))).toBeLessThanOrEqual(1);
+});
+
+test("sin localStorage (modo privado estricto) el interruptor cambia el tema igual", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "localStorage", { get() { throw new Error("SecurityError"); } });
+  });
+  await openCosecha(page);
+  await themeSwitch(page).click();
+  await expect(root(page)).toHaveAttribute("data-theme", "light");
+});
+
+test("con movimiento reducido el interruptor cambia sin animar los huevos", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openCosecha(page);
+  await themeSwitch(page).click();
+  await expect(root(page)).toHaveAttribute("data-theme", "light");
+  expect(await style(themeSwitch(page).locator(".ts-egg").first(), "transitionDuration")).toMatch(/^0s/);
+  await expect(themeSwitch(page)).not.toHaveClass(/\bpop\b/);
+});

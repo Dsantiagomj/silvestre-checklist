@@ -1,0 +1,95 @@
+/* INTERRUPTOR DE TEMA DE HUEVOS · Dofus Marfil (claro) / Dofus Ébano (oscuro) --------
+   Los dos huevos siempre a la vista: el activo grande a la izquierda, el otro pequeño y
+   apagado a la derecha. Al cambiar intercambian sitio en arco (el que se apaga por arriba,
+   el que se activa por abajo) y el que llega aparece con un rebote y chispas de su color.
+   Lo comparten el checklist (global.css), la cabecera del sitio y la cosecha; el JS está en
+   src/lib/themeSwitch.js. El borde al pasar el ratón y el foco van en --ts-accent y
+   --ts-focus (sin ellos, el acento del checklist, --amber). */
+.theme-switch{
+  position:relative;
+  width:64px; height:34px;
+  flex-shrink:0;
+  margin:0; padding:0; border:0;
+  background:none;
+  border-radius:999px;
+  cursor:pointer;
+  /* Grupo propio en la View Transition: se ve en vivo mientras la página cambia */
+  view-transition-name:theme-switch;
+}
+.ts-track{
+  position:absolute; inset:0;
+  border-radius:999px; overflow:hidden;
+  border:1px solid #d8cd94;
+  background:linear-gradient(180deg, #fffbe6 0%, #f1e6b6 100%);
+  transition:border-color .5s ease;
+}
+/* Los degradados no se interpolan: la noche es una capa encima que se funde */
+.ts-track::before{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, #1b1418 0%, #0c0a0b 100%);
+  opacity:0; transition:opacity .55s ease;
+}
+.theme-switch.is-dark .ts-track{ border-color:#3d2a30; }
+.theme-switch.is-dark .ts-track::before{ opacity:1; }
+
+.ts-egg{
+  position:absolute; top:3px;
+  width:28px; height:28px;
+  object-fit:contain;
+  transition:left .55s cubic-bezier(.65,0,.35,1), transform .55s cubic-bezier(.65,0,.35,1),
+             opacity .55s ease, filter .55s ease;
+}
+/* Claro: Marfil activo */
+.ts-light{ left:3px;  transform:scale(1);   z-index:2; filter:drop-shadow(0 0 5px rgba(255,226,130,.85)); }
+.ts-dark { left:36px; transform:scale(.55); z-index:1; opacity:.45; filter:grayscale(.6); }
+/* Oscuro: Ébano activo */
+.theme-switch.is-dark .ts-light{ left:36px; transform:scale(.55); z-index:1; opacity:.45; filter:grayscale(.6); }
+.theme-switch.is-dark .ts-dark { left:3px;  transform:scale(1);   z-index:2; opacity:1; filter:drop-shadow(0 0 6px rgba(255,90,130,.55)); }
+
+.ts-egg.arc-up{ animation:ts-arc-up .55s cubic-bezier(.65,0,.35,1); }
+.ts-egg.hatch{ animation:ts-arc-down .55s cubic-bezier(.65,0,.35,1), ts-hatch .42s cubic-bezier(.3,1.6,.5,1) .5s; }
+@keyframes ts-arc-up  { 50%{ translate:0 -9px; } }
+@keyframes ts-arc-down{ 50%{ translate:0  9px; } }
+@keyframes ts-hatch   { 0%{ scale:1; } 45%{ scale:1.28; } 100%{ scale:1; } }
+
+.ts-spark{
+  position:absolute; top:50%; left:17px;
+  width:4px; height:4px; margin:-2px;
+  border-radius:50%; pointer-events:none; opacity:0;
+  background:#ffe8a3; box-shadow:0 0 6px #ffd76a;
+}
+.theme-switch.is-dark .ts-spark{ background:#ff9fb8; box-shadow:0 0 6px #ff5a82; }
+/* Sin fill "backwards": durante el retardo la chispa debe seguir invisible */
+.theme-switch.pop .ts-spark{ animation:ts-spark .55s ease-out .5s forwards; }
+@keyframes ts-spark{
+  0%  { opacity:1; transform:translate(0,0) scale(1); }
+  100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(.3); }
+}
+
+.theme-switch:hover .ts-track{ border-color:var(--ts-accent, var(--amber)); }
+.theme-switch:focus-visible{ outline:2px solid var(--ts-focus, var(--ts-accent, var(--amber))); outline-offset:3px; }
+
+/* TRANSICIÓN DE PÁGINA · diagonal desde la esquina del interruptor ----------
+   Siempre se anima la captura oscura: al ir a oscuro entra la nueva desde la
+   esquina; al volver a claro, la vieja (oscura) se recoge hacia esa esquina.
+   Así ida y vuelta son exactamente el mismo recorrido invertido. Solo en una página
+   propia: dentro de una shadow root estas reglas no hacen nada. */
+@property --vt-p{ syntax:'<percentage>'; inherits:false; initial-value:0%; }
+::view-transition-old(root), ::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+html.vt-to-dark::view-transition-new(root),
+html.vt-to-light::view-transition-old(root){
+  -webkit-mask-image:linear-gradient(225deg, #000 calc(var(--vt-p) - 16%), transparent var(--vt-p));
+          mask-image:linear-gradient(225deg, #000 calc(var(--vt-p) - 16%), transparent var(--vt-p));
+}
+html.vt-to-dark::view-transition-new(root){ animation:vt-night 1s cubic-bezier(.65,0,.35,1) both; }
+html.vt-to-light::view-transition-old(root){ z-index:2; animation:vt-night 1s cubic-bezier(.65,0,.35,1) reverse both; }
+@keyframes vt-night{ from{ --vt-p:0%; } to{ --vt-p:122%; } }
+/* El interruptor no se funde: se muestra en vivo por encima */
+::view-transition-old(theme-switch){ display:none; }
+::view-transition-new(theme-switch){ animation:none; }
+::view-transition-group(theme-switch){ z-index:3; animation:none; }
+
+@media (prefers-reduced-motion:reduce){
+  .ts-egg, .ts-track, .ts-track::before{ transition:none; }
+  .ts-egg.arc-up, .ts-egg.hatch, .theme-switch.pop .ts-spark{ animation:none; }
+}
