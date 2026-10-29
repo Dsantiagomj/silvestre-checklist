@@ -191,7 +191,7 @@ jobs:
           fi
           echo "number=$pr" >> "$GITHUB_OUTPUT"
       # Un PR abierto con GITHUB_TOKEN no lanza CI: se lanza a mano sobre la rama y se espera
-      # al check "Pruebas" que exige la protección de main (el único job de la CI): se mira
+      # al check "Pruebas" que exige la protección de main (el último job de la CI): se mira
       # su estado hasta que pasa o falla
 
   # Esperar la CI, fusionar y publicar: aparte de la regeneración, para que el issue diga
