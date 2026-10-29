@@ -212,26 +212,32 @@ test("la ficha va junto a su paso, con la flecha hacia él, y nunca se sale del 
   const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
   for (const n of [1, 9, 10, 30, 37, 55, 91, 100]) {
     await node(page, n).click();
-    // Quieta: si no cabía, el mapa se ha desplazado hasta ella
-    const card = await stable(page, "#mapCard");
-    const box = await page.locator(".step-map-scroll").boundingBox();
-    const at = await node(page, n).boundingBox();
-    // Dentro de lo que se ve del mapa
-    expect(card.x, `paso ${n}`).toBeGreaterThanOrEqual(box.x - 1);
-    expect(card.x + card.width, `paso ${n}`).toBeLessThanOrEqual(box.x + box.width + 1);
-    expect(card.y, `paso ${n}`).toBeGreaterThanOrEqual(box.y - 1);
-    expect(card.y + card.height, `paso ${n}`).toBeLessThanOrEqual(box.y + box.height + 1);
-    // Ni el paso ni sus vecinos quedan debajo. El 9, al final de la primera fila, no tiene
-    // sitio arriba (el mapa empieza en el camino), ni a la derecha, y el camino vuelve por
-    // debajo de él: su ficha tapa al 8, el paso de antes, pero nunca al propio paso
-    for (const m of (n === 9 ? [n] : [n - 1, n, n + 1]).filter(m => m >= 1 && m <= 100)) {
-      expect(overlaps(card, await node(page, m).boundingBox()), `paso ${n}: la ficha tapa el ${m}`).toBe(false);
-    }
-    // La flecha apunta al paso: su punta cae junto al sello
-    const arrow = await page.locator("#mapCard .map-card-arrow").boundingBox();
-    const cx = arrow.x + arrow.width / 2, cy = arrow.y + arrow.height / 2;
-    const dist = Math.hypot(cx - (at.x + at.width / 2), cy - (at.y + at.height / 2));
-    expect(dist, `paso ${n}: flecha lejos`).toBeLessThan(at.width / 2 + 30);
+    // La ficha se recoloca mientras llegan sus misiones y el mapa se desplaza: se mide todo
+    // de una vez (ficha, flecha, mapa y sellos) y se espera a que quede en su sitio
+    await expect(async () => {
+      const m = await page.locator(".step-map-scroll").evaluate((box, n) => {
+        const root = box.getRootNode(), r = el => el.getBoundingClientRect().toJSON();
+        const at = m => root.querySelector(`.map-node[data-n="${m}"]`);
+        const near = (n === 9 ? [n] : [n - 1, n, n + 1]).filter(m => m >= 1 && m <= 100);
+        return {
+          box: r(box), card: r(root.querySelector("#mapCard")), arrow: r(root.querySelector("#mapCard .map-card-arrow")),
+          at: r(at(n)), near: near.map(m => ({ m, rect: r(at(m)) })),
+        };
+      }, n);
+      const { box, card, arrow, at } = m;
+      // Dentro de lo que se ve del mapa
+      expect(card.x, `paso ${n}`).toBeGreaterThanOrEqual(box.x - 1);
+      expect(card.x + card.width, `paso ${n}`).toBeLessThanOrEqual(box.x + box.width + 1);
+      expect(card.y, `paso ${n}`).toBeGreaterThanOrEqual(box.y - 1);
+      expect(card.y + card.height, `paso ${n}`).toBeLessThanOrEqual(box.y + box.height + 1);
+      // Ni el paso ni sus vecinos quedan debajo. El 9, al final de la primera fila, no tiene
+      // sitio arriba (el mapa empieza en el camino), ni a la derecha, y el camino vuelve por
+      // debajo de él: su ficha tapa al 8, el paso de antes, pero nunca al propio paso
+      for (const { m: k, rect } of m.near) expect(overlaps(card, rect), `paso ${n}: la ficha tapa el ${k}`).toBe(false);
+      // La flecha apunta al paso: su punta cae junto al sello
+      const dist = Math.hypot(arrow.x + arrow.width / 2 - (at.x + at.width / 2), arrow.y + arrow.height / 2 - (at.y + at.height / 2));
+      expect(dist, `paso ${n}: flecha lejos`).toBeLessThan(at.width / 2 + 30);
+    }).toPass({ timeout: 5000 });
     await page.keyboard.press("Escape");
   }
   // Y se puede seguir al siguiente con un clic
