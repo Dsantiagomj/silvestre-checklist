@@ -97,6 +97,7 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 | Cosecha | 1176px (five cromos per row) | 32px each side | 14px under 700px |
 | Hub | full width; height from `--checklists-h` (min 300px, `MIN_FIT` in `src/embeds/hub/embed.js`) | 28px | 14px |
 | Site shell and home | 1240px | 48px each side | 16px under 600px (shell), 700px (home) |
+| Site shell on a tool page | the tool's width, set by the page through `--dt-max` and `--dt-side` (cosecha: 1176px, 32px each side) | | |
 
 Backgrounds always reach the edges; only the content column is capped.
 
