@@ -21,7 +21,7 @@ const EMBEDS = [
   { entry: "embed/hielos.js", host: "hielos-root", fonts: "hielos-fonts", top: "--hielos-top", page: "squarespace-hielos.html", prefix: "hielos:", classic: ["dofus_hielos_clean_v2"] },
   { entry: "embed/checklists.js", host: "checklists-root", fonts: "checklists-fonts", top: "--checklists-h", page: "checklists.html" },
   { entry: "embed/inicio.js", host: "inicio-root", fonts: "inicio-fonts", top: null, page: "inicio.html" },
-  { entry: "embed/cosecha.js", host: "cosecha-root", fonts: "cosecha-fonts", top: "--cosecha-top", page: "cosecha.html", prefix: "cosecha:" },
+  { entry: "embed/cosecha.js", host: "cosecha-root", fonts: "cosecha-fonts", top: "--cosecha-top", page: "cosecha.html" },
 ];
 
 test("la base de los embebidos es la de GitHub Pages, también en las vistas previas", () => {
@@ -75,7 +75,7 @@ async function mount(page, { host, page: fixture }) {
 }
 
 for (const embed of EMBEDS) {
-  test(`${embed.entry} se monta en #${embed.host}: shadow root, fuentes en la página y su variable`, async ({ page }) => {
+  test(`${embed.entry} se monta en #${embed.host}: shadow root, fuentes, su variable y sus claves`, async ({ page }) => {
     const errors = await mount(page, embed);
     const host = page.locator(`#${embed.host}`);
     expect(await host.evaluate(el => el.shadowRoot.mode)).toBe("open");
@@ -83,20 +83,17 @@ for (const embed of EMBEDS) {
     // Las variables que pone el embebido en su anfitrión; el inicio no pone ninguna
     const vars = await host.evaluate(el => [...el.style].filter(p => p.startsWith("--")));
     expect(vars).toEqual(embed.top ? [embed.top] : []);
+    // localStorage al montar: el Silvestre y el Hielos guardan con su prefijo y escriben la
+    // entrada compartida cuando llegan sus misiones (van en su propio trozo, después de
+    // pintar), así que se espera a que esté. Los demás no guardan nada hasta que se toca algo
+    // (las claves de la cosecha van arriba, en su bundle)
+    const keys = () => page.evaluate(() => Object.keys(localStorage));
+    if (embed.prefix) {
+      await expect.poll(keys).toContain(SHARED);
+      const own = (await keys()).filter(k => k !== SHARED);
+      expect(own.length).toBeGreaterThan(0);
+      for (const k of own) expect(k.startsWith(embed.prefix), k).toBe(true);
+    } else expect(await keys()).toEqual([]);
     expect(errors).toEqual([]);
   });
 }
-
-test("al montar, cada uno guarda solo con su prefijo; el hub y el inicio, nada", async ({ browser }) => {
-  for (const embed of EMBEDS) {
-    const page = await browser.newPage();
-    await mount(page, embed);
-    const keys = await page.evaluate(() => Object.keys(localStorage));
-    // El Silvestre y el Hielos escriben la entrada compartida al montar y algo suyo
-    expect(keys.includes(SHARED), embed.entry).toBe(!!embed.classic);
-    const own = keys.filter(k => k !== SHARED);
-    if (embed.classic) expect(own.length, embed.entry).toBeGreaterThan(0);
-    for (const k of own) expect(!!embed.prefix && k.startsWith(embed.prefix), `${embed.entry}: ${k}`).toBe(true);
-    await page.close();
-  }
-});
