@@ -106,3 +106,14 @@ for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]]) {
     expect(errors).toEqual([]);
   });
 }
+
+test("la cabecera del sitio va al ancho de la cosecha: la marca y el huevo empiezan en la misma línea", async ({ page }) => {
+  for (const width of [1440, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    const brand = await page.locator(".dt-shell .dt-in").boundingBox();
+    const hd = await tool(page).locator(".hd").boundingBox();
+    expect(Math.abs(brand.x - hd.x), `a ${width}px`).toBeLessThanOrEqual(1);
+    expect(Math.abs(brand.width - hd.width), `a ${width}px`).toBeLessThanOrEqual(1);
+  }
+});
