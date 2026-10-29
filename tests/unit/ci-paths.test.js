@@ -38,10 +38,14 @@ test("la entrada del checklist en el sitio: la app y el Hielos, no los embebidos
   assert.deepEqual(suites(["index.html"]), only("e2e", "hielos"));
 });
 
-test("la home, la cabecera del sitio y sus pruebas: solo el sitio", () => {
-  for (const f of ["src/site/index.html", "src/site/home/home.css", "src/site/shell/shell.js", "tests/site/home.spec.js", "playwright.site.config.js"]) {
+test("la home y sus pruebas: solo el sitio", () => {
+  for (const f of ["src/site/index.html", "src/site/home/home.css", "tests/site/home.spec.js", "playwright.site.config.js"]) {
     assert.deepEqual(suites([f]), only("site"), f);
   }
+});
+
+test("la cabecera del sitio va en la home y encima de los dos checklists", () => {
+  assert.deepEqual(suites(["src/site/shell/shell.css"]), only("e2e", "hielos", "site"));
 });
 
 test("las pruebas de cada suite corren solo su suite", () => {

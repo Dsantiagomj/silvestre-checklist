@@ -39,3 +39,6 @@ tmp/
 
 # Build del sitio (la home) para sus pruebas (playwright.site.config.js)
 .site-test/
+
+# Build del Silvestre para la suite principal (playwright.config.js)
+.e2e-test/

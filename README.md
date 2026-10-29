@@ -289,8 +289,7 @@ Es una app de React 19 con Vite. Necesita Node 20 o superior.
 ```bash
 npm install
 npm run dev        # servidor de desarrollo con recarga en caliente
-npm run build      # genera dist/, un sitio estático
-npm run preview    # sirve dist/ en http://127.0.0.1:4173
+npm run build      # el Silvestre, en dist/silvestre/ (sin public/: ver el sitio, abajo)
 ```
 
 El Dofus del checklist se elige al construir con `DOFUS=<id>` (por defecto `silvestre`):
@@ -300,7 +299,7 @@ prefijo de las claves de `localStorage` (`silvestre:`), las claves del checklist
 la versión de la guía, la copia de seguridad, el embebido (`silvestre-root`,
 `--silvestre-top`), el huevo del hero, la nota de los prerrequisitos, el ejemplo de la nota
 aclaratoria, las notas escritas a mano del diario y dónde se construye (el Silvestre, en
-`dist/` y `dist/embed/silvestre.js`). `index.html` lleva marcas `%DOFUS_*%` que rellena el
+`dist/silvestre/` y `dist/embed/silvestre.js`). `index.html` lleva marcas `%DOFUS_*%` que rellena el
 build con el título y la descripción.
 
 El otro Dofus es el de los Hielos (`src/dofus/hielos/`, 70 pasos de la guía de Torrente
@@ -312,9 +311,9 @@ npm run build:hielos         # su sitio, en dist/hielos/
 npm run build:embed:hielos   # su embebido, en dist/embed/hielos.js
 ```
 
-Su sitio vive en `hielos/`, debajo del del Silvestre, y no lleva otra copia de `public/`:
-sus imágenes son las de la raíz (`__SITE_ROOT__` en `src/tools/checklist/lib/assets.js`). Lleva sus propios
-favicons (`html.icons` en su `config.js`). Lo que cambia en pantalla sale de su
+Su sitio vive en `hielos/`, como el del Silvestre en `silvestre/`, y ninguno lleva otra copia de `public/`:
+sus imágenes son las de la raíz (`__SITE_ROOT__` en `src/tools/checklist/lib/assets.js`). Cada uno lleva sus
+favicons (`html.icons` en su `config.js`), que salen junto a su JS. Lo que cambia en pantalla sale de su
 `config.js`: la paleta (`palette`, azul hielo sobre gris azulado frío en vez del lima del
 Silvestre), el hero (`hero.fx` pone copos de nieve), el ejemplo de la nota y su pie
 (`nota.caption`) y los nombres del interruptor de tema (`themeNames`). La paleta cambia las
@@ -338,7 +337,9 @@ npm run build:site     # la home, en dist/
 ```
 
 La cabecera (`src/site/shell/`) es un módulo sin React, `mountShell(actual)`, que solo carga
-el sitio: ningún embebido la lleva. Un enlace viejo a la raíz con `?…` o `#…` (de cuando el
+el sitio: ningún embebido la lleva. Va también encima de los dos checklists, fuera de la app
+(`src/site/checklist/main.jsx`), con su Dofus como página actual. No se pega al hacer scroll,
+así que la barra de la ventana de pasos sigue arriba del todo. Un enlace viejo a la raíz con `?…` o `#…` (de cuando el
 Silvestre vivía ahí) va a `silvestre/` con lo mismo detrás.
 
 ### Pruebas
@@ -349,11 +350,13 @@ npx playwright test
 
 Son pruebas de extremo a extremo con Playwright en `tests/e2e/`: diario, detalle, misiones,
 filtros, prerrequisitos, lista de objetos, tema, header, reinicio con copia de seguridad,
-importación del checklist clásico, overlay y móvil. Sin `APP_URL`, construyen el sitio y lo prueban en `vite preview`. Con
-`APP_URL` se pueden pasar contra cualquier otro despliegue:
+importación del checklist clásico, overlay y móvil. Sin `APP_URL`, construyen el Silvestre
+en `.e2e-test/silvestre/` y lo sirven en el puerto 4317 como en Pages (`tests/serve.js`): la
+app en `/silvestre/` y las imágenes en la raíz. Con `APP_URL` se pueden pasar contra
+cualquier otro despliegue, con la dirección del Silvestre:
 
 ```bash
-APP_URL=https://mi-despliegue.example/ npx playwright test
+APP_URL=https://mi-despliegue.example/silvestre/ npx playwright test
 ```
 
 Se escribieron contra la antigua versión de un solo archivo antes de migrar a React, y las
@@ -448,7 +451,8 @@ marca y el menú, el salto de los enlaces viejos a `silvestre/`, que nada se sal
 
 ## Despliegue
 
-La app se publica en GitHub Pages: https://dsantiagomj.github.io/silvestre-checklist/
+El sitio se publica en GitHub Pages: la home en https://dsantiagomj.github.io/silvestre-checklist/
+y el Silvestre en https://dsantiagomj.github.io/silvestre-checklist/silvestre/
 
 `main` está protegida: no se puede borrar ni reescribir, y todo cambio entra por un pull
 request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, todas las suites), sin
@@ -457,13 +461,14 @@ en cuanto pasan las pruebas. Al fusionar se borra la rama.
 
 Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, construye con
 `BASE_PATH=/silvestre-checklist/` (la ruta del sitio en Pages) y publica `dist/`. En local y
-en las pruebas `BASE_PATH` no se pasa y la app vive en la raíz. Para comprobar un build como
-el de Pages:
+en las pruebas `BASE_PATH` no se pasa y el sitio vive en la raíz. Para comprobar un build como
+el de Pages (la home vacía `dist/`, el Silvestre va después):
 
 ```bash
+BASE_PATH=/silvestre-checklist/ npm run build:site
 BASE_PATH=/silvestre-checklist/ npm run build
-BASE_PATH=/silvestre-checklist/ npx vite preview --port 4318
-APP_URL=http://127.0.0.1:4318/silvestre-checklist/ npx playwright test
+SITE=1 BASE_PATH=/silvestre-checklist/ npx vite preview --port 4318
+APP_URL=http://127.0.0.1:4318/silvestre-checklist/silvestre/ npx playwright test
 ```
 
 El mismo workflow construye también el embebido (`npm run build:embed`), que queda en
