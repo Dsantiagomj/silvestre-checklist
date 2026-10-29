@@ -28,22 +28,26 @@ img { border: 0; max-width: none; }
   line-height: 1.35;
   letter-spacing: normal;
   text-transform: none;
+  /* Squarespace corta las palabras en el body y se hereda hasta aquí: ninguna se parte */
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
   color: #f2f5ee;
   text-align: left;
 }
 
 /* El contenido no pasa del ancho del diseño; el fondo sí llega a los bordes */
 .featB, .restB, .soonB {
-  width: calc(100% - 80px);
-  max-width: 1090px;
+  width: calc(100% - 96px);
+  max-width: 1240px;
   margin-inline: auto;
 }
 
 /* La portada: el Krosmoz detrás, fundido hacia abajo */
 .hero {
   position: relative;
-  padding: 56px 0 30px;
-  margin: 0 0 18px;
+  padding: 64px 0 36px;
+  margin: 0 0 40px;
   overflow: hidden;
   isolation: isolate;
   text-align: center;
@@ -189,7 +193,7 @@ img { border: 0; max-width: none; }
 .tile.sm { width: 46px; height: 46px; border-radius: 9px; }
 
 /* Las grandes: el PNJ asoma por la derecha y se funde hacia abajo */
-.featB { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.featB { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
 .card.wide { aspect-ratio: 4 / 5; }
 .card.wide .shade {
   position: absolute;
@@ -210,8 +214,8 @@ img { border: 0; max-width: none; }
   -webkit-mask-image: linear-gradient(0deg, transparent 4%, #000 40%);
   mask-image: linear-gradient(0deg, transparent 4%, #000 40%);
 }
-.card.wide .tile, .card.wide .eggs, .ring { position: absolute; z-index: 3; top: 22px; left: 22px; }
-.card.wide .meta { left: 26px; right: 26px; bottom: 26px; }
+.card.wide .tile, .card.wide .eggs, .ring { position: absolute; z-index: 3; top: 26px; left: 26px; }
+.card.wide .meta { left: 32px; right: 32px; bottom: 32px; }
 
 /* Los huevos de los checklists y, en silueta, el que viene */
 .eggs {
@@ -244,16 +248,18 @@ img { border: 0; max-width: none; }
 }
 
 /* Las medianas: el texto a la izquierda, el arte del juego a la derecha */
-.restB { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 22px; }
-.card.mid { aspect-ratio: 16 / 8; }
+.restB { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 32px; }
+.card.mid { aspect-ratio: 16 / 9; }
 .card.mid .shade {
   position: absolute;
   inset: 0;
   z-index: 2;
   background: linear-gradient(90deg, rgba(5, 6, 5, .94) 0%, rgba(5, 6, 5, .86) 48%, rgba(5, 6, 5, .35) 100%);
 }
-.card.mid .meta { left: 24px; right: 50%; top: 50%; transform: translateY(-50%); }
-.card.mid .name { font-size: clamp(20px, 8.3cqw, 29px); }
+.card.mid .meta { left: 30px; right: 46%; top: 50%; transform: translateY(-50%); }
+/* Una sola palabra larga («Alineamiento») cabe entera en su línea */
+.card.mid .name { font-size: clamp(20px, 7.6cqw, 32px); }
+.card.mid .lead { margin-top: 8px; }
 .card.mid .lead { font-size: clamp(12px, 4cqw, 14px); }
 .deco {
   position: absolute;
@@ -297,8 +303,8 @@ img { border: 0; max-width: none; }
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-block: 26px 48px;
-  padding: 14px 18px;
+  margin-block: 40px 64px;
+  padding: 18px 22px;
   border-radius: 14px;
   background: rgba(216, 178, 90, .05);
   border: 1px dashed color-mix(in srgb, var(--gold) 40%, transparent);
@@ -349,13 +355,21 @@ img { border: 0; max-width: none; }
 
 /* Tableta: las medianas no caben de tres en tres; una debajo de otra, más bajas. Lo que
    viene, de dos en dos */
-@container inicio (max-width: 900px) {
-  .restB { grid-template-columns: 1fr; }
-  .card.mid { aspect-ratio: 16 / 5; }
+/* Por debajo de 1180px tres medianas en fila no caben: una por fila, y lo que viene de dos en dos */
+@container inicio (max-width: 1180px) {
+  .restB { grid-template-columns: 1fr; gap: 20px; }
+  /* Una franja de alto fijo: con la proporción, a lo ancho quedaría vacía */
+  .card.mid { aspect-ratio: auto; height: 180px; }
+  .card.mid .meta { right: 40%; }
+  .card.mid .name { font-size: 32px; }
+  .card.mid .lead { font-size: 15px; }
   /* El arte no se estira con la carta: los dos del alineamiento siguen juntos, como en escritorio */
-  .deco { width: min(44%, 160px); }
+  .deco { width: min(36%, 220px); right: 40px; }
   .soonB { display: grid; grid-template-columns: 1fr 1fr; }
   .soonT { grid-column: 1 / -1; margin: 0; }
+}
+
+@container inicio (max-width: 900px) {
   /* Las grandes son más estrechas: sus iconos, como en un móvil */
   .card.wide .tile, .card.wide .eggs, .ring { top: 16px; left: 16px; }
   .card.wide .tile { width: 68px; height: 68px; }
@@ -374,8 +388,8 @@ img { border: 0; max-width: none; }
   .hero h1 { font-size: 44px; }
   .hero p { font-size: 15px; }
   .rule span { width: 80px; }
-  .featB, .restB { grid-template-columns: 1fr; gap: 14px; }
-  .restB { margin-top: 14px; }
+  .featB, .restB { grid-template-columns: 1fr; gap: 18px; }
+  .restB { margin-top: 18px; }
   .card.wide { aspect-ratio: 5 / 4; }
   .card.wide .npc { height: calc(var(--npc-h, 72%) * 1.05); }
   .deco { width: 44%; }
@@ -390,6 +404,9 @@ img { border: 0; max-width: none; }
   .chip .por { width: 44px; height: 44px; }
   .chip .por img { width: 38px; height: 38px; }
   .chip b { font-size: 14px; letter-spacing: .03em; }
+  .card.mid { height: auto; }
+  .card.mid .meta { left: 20px; right: 50%; }
+  .deco { width: 44%; right: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

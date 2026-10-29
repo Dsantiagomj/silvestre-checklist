@@ -160,9 +160,9 @@ test("en escritorio va de borde a borde, con su alto natural, y la página sigue
   for (const b of [...bigs, ...mids]) expect(b.width).toBeGreaterThan(250);
   for (const row of [bigs, mids]) for (const b of row) expect(Math.abs(b.y - row[0].y)).toBeLessThan(1);
   expect(mids[0].y).toBeGreaterThan(bigs[0].bottom);
-  // Las grandes, 4/5; las medianas, 16/8
+  // Las grandes, 4/5; las medianas, 16/9
   expect(Math.abs(bigs[0].width / bigs[0].height - 4 / 5)).toBeLessThan(.02);
-  expect(Math.abs(mids[0].width / mids[0].height - 2)).toBeLessThan(.03);
+  expect(Math.abs(mids[0].width / mids[0].height - 16 / 9)).toBeLessThan(.03);
 });
 
 test("en móvil (≤600px de ancho) todo va en una columna y lo que viene, de dos en dos", async ({ page }) => {
@@ -190,5 +190,30 @@ test("en móvil (≤600px de ancho) todo va en una columna y lo que viene, de do
   for (const [i, b] of cards.entries()) {
     const lead = await inicio(page).locator(".card").nth(i).locator(".lead").boundingBox();
     expect(lead.y + lead.height).toBeLessThanOrEqual(b.y + b.height);
+  }
+});
+
+test("aunque la página corte las palabras, ningún título de carta se parte", async ({ page }) => {
+  // Squarespace pone reglas de corte en el body y se heredan hasta la shadow root
+  const html = PAGE.replace("</head>", "<style>body { overflow-wrap: anywhere; word-break: break-all; hyphens: auto; }</style></head>");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await loadInicio(page, html);
+  await expect(mid(page)).toHaveCount(3);
+  const names = inicio(page).locator(".card .name");
+  for (let i = 0; i < await names.count(); i++) {
+    // Cada palabra en una sola línea: ninguna línea del título empieza a mitad de palabra
+    const broken = await names.nth(i).evaluate(el => {
+      const range = document.createRange();
+      const node = el.firstChild;
+      const words = node.textContent.split(" ");
+      let at = 0;
+      return words.some(w => {
+        range.setStart(node, at);
+        range.setEnd(node, at + w.length);
+        at += w.length + 1;
+        return range.getClientRects().length > 1;
+      });
+    });
+    expect(broken, await names.nth(i).textContent()).toBe(false);
   }
 });
