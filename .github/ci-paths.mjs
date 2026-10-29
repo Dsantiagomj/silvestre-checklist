@@ -21,6 +21,8 @@ const RULES = [
   { match: /^src\/tools\/cosecha\//, run: ["embed"] },
   // La app del checklist: el sitio del Silvestre, el del Hielos y su embebido
   { match: /^src\/tools\/checklist\//, run: ["e2e", "hielos", "embed"] },
+  // La cabecera del sitio: la home y, encima de la app, los dos checklists
+  { match: /^src\/site\/shell\//, run: ["e2e", "hielos", "site"] },
   // La entrada del checklist en el sitio (la de los dos Dofus)
   { match: /^src\/site\/checklist\/|^index\.html$/, run: ["e2e", "hielos"] },
   // El resto del sitio «Dofus Tools»: la home, la cabecera y sus pruebas

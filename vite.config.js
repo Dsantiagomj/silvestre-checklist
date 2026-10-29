@@ -26,8 +26,8 @@ const dofusHtml = {
     .replaceAll("%DOFUS_ICON_NOTE%", CONFIG.html.iconNote),
 };
 
-// Los favicons de index.html son los del Silvestre, en public/. Un Dofus con los suyos
-// (html.icons en su config.js, rutas relativas a su carpeta) los cambia antes de que Vite
+// Los favicons de index.html son los de public/. Un Dofus con los suyos (html.icons en su
+// config.js, rutas relativas a su carpeta; los dos los llevan, sus builds no copian public/) los cambia antes de que Vite
 // procese el HTML: así salen con hash en su build, junto a su JS
 const dofusIcons = {
   name: "dofus-icons",
@@ -39,9 +39,10 @@ const dofusIcons = {
 };
 
 // La raíz del sitio de GitHub Pages, donde están public/ y sus imágenes (img/): en Pages
-// el workflow pasa BASE_PATH; en local y en las pruebas, la raíz. El Silvestre vive ahí
-// mismo; un Dofus con build.outDir (el Hielos, en hielos/) vive debajo y comparte las
-// imágenes de la raíz en vez de llevar otra copia de public/ (src/tools/checklist/lib/assets.js, __SITE_ROOT__)
+// el workflow pasa BASE_PATH; en local y en las pruebas, la raíz. Ahí va la home del sitio
+// (SITE=1); cada Dofus, con su build.outDir (el Silvestre en silvestre/, el Hielos en
+// hielos/), vive debajo y comparte las imágenes de la raíz en vez de llevar otra copia de
+// public/ (src/tools/checklist/lib/assets.js, __SITE_ROOT__)
 const SITE_ROOT = process.env.BASE_PATH || "/";
 
 // El embebido (EMBED=1, npm run build:embed): la app como un solo módulo que se monta en
@@ -104,7 +105,7 @@ const nested = command => command === "build" && !!CONFIG.build.outDir;
 
 // El sitio «Dofus Tools» (SITE=1): su raíz es src/site/, así que src/site/index.html (la
 // home) sale en dist/index.html; cada página más es otra entrada. Va en la raíz del sitio
-// (SITE_ROOT) con public/, como antes el Silvestre. Las pruebas lo construyen en otra carpeta
+// (SITE_ROOT) con public/; los checklists van debajo. Las pruebas lo construyen en otra carpeta
 // (SITE_OUT) para no pisar dist/
 const SITE_DIR = path.resolve("src/site");
 const siteConfig = () => ({
@@ -123,12 +124,13 @@ const siteConfig = () => ({
 export default defineConfig(({ command }) => SITE ? siteConfig() : (command === "build" && embedName() ? embedConfig(embedName()) : {
   plugins: [react(), dofusIcons, dofusHtml],
   resolve,
-  // En GitHub Pages la app vive en /silvestre-checklist/ (SITE_ROOT) y el Hielos en
-  // /silvestre-checklist/hielos/. En desarrollo, siempre la raíz, con public/ servido
+  // En GitHub Pages el Silvestre vive en /silvestre-checklist/silvestre/ y el Hielos en
+  // /silvestre-checklist/hielos/, bajo la raíz (SITE_ROOT). En desarrollo, siempre la raíz,
+  // con public/ servido
   base: nested(command) ? `${SITE_ROOT}${CONFIG.build.outDir}/` : SITE_ROOT,
   define: { __SITE_ROOT__: JSON.stringify(SITE_ROOT) },
   // quests.json (~520 KB) va en su propio chunk diferido a propósito. El sitio de cada
-  // Dofus va en dist/ + build.outDir de su config.js (el Silvestre, en dist/ mismo); el
-  // de debajo no copia public/: sus imágenes son las de la raíz
+  // Dofus va en dist/ + build.outDir de su config.js (el Silvestre, en dist/silvestre/) y
+  // no copia public/: sus imágenes son las de la raíz
   build: { chunkSizeWarningLimit: 600, outDir: path.join("dist", CONFIG.build.outDir), copyPublicDir: !nested(command) },
 }));

@@ -27,6 +27,13 @@ export async function openApp(page, seed = null, { view = "diary" } = {}) {
   return errors;
 }
 
+/**
+ * Dónde acaba la cabecera del sitio (header.dt-shell, src/site/shell/), que va encima de la
+ * app y no es suya: lo que antes arrancaba arriba de la página arranca ahí. 0 sin ella.
+ */
+export const siteHeaderBottom = page =>
+  page.evaluate(() => document.querySelector(".dt-shell")?.getBoundingClientRect().bottom ?? 0);
+
 export const readLS = (page, key) =>
   page.evaluate(k => JSON.parse(localStorage.getItem(k) || "null"), key);
 

@@ -18,6 +18,13 @@ export default {
     title: "Dofus Silvestre · Checklist",
     description: "Checklist del Dofus Silvestre — guía de Sandglass con sistema de progreso ponderado por esfuerzo.",
     iconNote: "El huevo del Dofus Silvestre (DofusDB, objeto 23036), el mismo de la marca",
+    // Sus favicons (vite.config.js), junto a su JS: su build va en silvestre/ y no lleva
+    // public/. Son los mismos que los de public/, que se quedan para la home del sitio
+    icons: {
+      "favicon-32.png": "icons/favicon-32.png",
+      "favicon.png": "icons/favicon.png",
+      "apple-touch-icon.png": "icons/apple-touch-icon.png",
+    },
   },
 
   texts: {
@@ -59,9 +66,10 @@ export default {
   // los errores de consola
   embed: { hostId: "silvestre-root", topVar: "--silvestre-top", fonts: "silvestre-fonts", logName: "Checklist Silvestre" },
 
-  // Dónde se construye (vite.config.js), relativo a dist/: el sitio en la raíz y el embebido
+  // Dónde se construye (vite.config.js), relativo a dist/: el sitio en silvestre/, debajo
+  // de la home del sitio (como el Hielos en hielos/), y el embebido
   build: {
-    outDir: "",
+    outDir: "silvestre",
     embed: { entry: "embed/silvestre.js", chunks: "embed/chunks", assets: "embed/assets" },
   },
 
