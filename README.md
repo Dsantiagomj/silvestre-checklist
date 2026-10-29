@@ -451,18 +451,34 @@ marca y el menú, el salto de los enlaces viejos a `silvestre/`, que nada se sal
 
 ## Despliegue
 
-El sitio se publica en GitHub Pages: la home en https://dsantiagomj.github.io/silvestre-checklist/
-y el Silvestre en https://dsantiagomj.github.io/silvestre-checklist/silvestre/
+El sitio se publica en GitHub Pages: la home en https://dsantiagomj.github.io/silvestre-checklist/,
+el Silvestre en https://dsantiagomj.github.io/silvestre-checklist/silvestre/ y el Hielos en
+https://dsantiagomj.github.io/silvestre-checklist/hielos/
 
 `main` está protegida: no se puede borrar ni reescribir, y todo cambio entra por un pull
 request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, todas las suites), sin
 excepciones ni para el administrador. No hace falta aprobación, así que el PR se fusiona
 en cuanto pasan las pruebas. Al fusionar se borra la rama.
 
-Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, construye con
+Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, construye todo con
 `BASE_PATH=/silvestre-checklist/` (la ruta del sitio en Pages) y publica `dist/`. En local y
-en las pruebas `BASE_PATH` no se pasa y el sitio vive en la raíz. Para comprobar un build como
-el de Pages (la home vacía `dist/`, el Silvestre va después):
+en las pruebas `BASE_PATH` no se pasa y el sitio vive en la raíz. El orden importa:
+
+1. `npm run build:site`: la home en `dist/index.html`, con `public/` (las imágenes en
+   `dist/img/`, las vistas previas de `/checklists/` y `/cosecha/`). Es el único build que
+   vacía `dist/`, por eso va primero.
+2. `npm run build` y `npm run build:hielos`: el Silvestre en `dist/silvestre/` y el Hielos en
+   `dist/hielos/`. Cada uno vacía solo su carpeta y ninguno copia `public/`: sus imágenes son
+   las de la raíz.
+3. Los embebidos: `npm run build:embed` (`dist/embed/silvestre.js`, trozos en
+   `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, trozos en
+   `dist/embed/hielos-chunks/`), `build:hub` (`dist/embed/checklists.js`), `build:inicio`
+   (`dist/embed/inicio.js`) y `build:cosecha` (`dist/embed/cosecha.js`). Cargan sus trozos y
+   las imágenes de la dirección absoluta de Pages, así que las imágenes no se copian dos
+   veces. Cada uno borra solo lo suyo dentro de `dist/embed/`, así que entre ellos el orden
+   da igual.
+
+Para comprobar un build como el de Pages:
 
 ```bash
 BASE_PATH=/silvestre-checklist/ npm run build:site
@@ -470,19 +486,6 @@ BASE_PATH=/silvestre-checklist/ npm run build
 SITE=1 BASE_PATH=/silvestre-checklist/ npx vite preview --port 4318
 APP_URL=http://127.0.0.1:4318/silvestre-checklist/silvestre/ npx playwright test
 ```
-
-El mismo workflow construye también el embebido (`npm run build:embed`), que queda en
-`dist/embed/silvestre.js` con sus trozos en `dist/embed/chunks/`. Carga los trozos y las
-imágenes de la dirección absoluta de Pages; las imágenes no se copian dos veces. Después
-construye el hub de los checklists (`npm run build:hub`), que queda en
-`dist/embed/checklists.js`, el inicio (`dist/embed/inicio.js`) y «La eterna cosecha»
-(`npm run build:cosecha`, `dist/embed/cosecha.js`). Cada build borra solo lo suyo dentro de `dist/embed/`, así que
-el orden da igual.
-
-El Hielos se publica en el mismo despliegue: su sitio en
-https://dsantiagomj.github.io/silvestre-checklist/hielos/ (`npm run build:hielos`, después
-del del Silvestre, que vacía `dist/`) y su embebido en `dist/embed/hielos.js` con sus
-trozos en `dist/embed/hielos-chunks/`.
 
 `dist/` pesa unos 15 MB, casi todo imágenes del juego. Las misiones (`quests.json`) van en un
 archivo aparte que solo se descarga cuando hace falta.
