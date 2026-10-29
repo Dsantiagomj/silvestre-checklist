@@ -456,9 +456,16 @@ recargar y que lo marcado en la vista previa de antes (la misma clave) sigue ah�
 
 ## Despliegue
 
-El sitio se publica en GitHub Pages: la home en https://dsantiagomj.github.io/silvestre-checklist/,
-el Silvestre en https://dsantiagomj.github.io/silvestre-checklist/silvestre/ y el Hielos en
-https://dsantiagomj.github.io/silvestre-checklist/hielos/
+El sitio «Dofus Tools» se publica en GitHub Pages, en https://dsantiagomj.github.io/silvestre-checklist/:
+
+| Dirección | Página | En el menú | De dónde sale |
+|---|---|---|---|
+| `/` | La home, una carta por herramienta | la marca | `src/site/index.html` |
+| `/silvestre/` | El checklist del Silvestre | sí | `index.html` y `src/site/checklist/` |
+| `/hielos/` | El checklist del Hielos | sí | lo mismo, con `DOFUS=hielos` |
+| `/cosecha/` | «La eterna cosecha» | sí | `src/site/cosecha/` |
+| `/checklists/` | Vista previa del hub, `noindex` | no | `public/checklists/index.html` |
+| `/embed/…` | Los embebidos de Torrente Arcano | no | `src/embeds/` |
 
 `main` está protegida: no se puede borrar ni reescribir, y todo cambio entra por un pull
 request con el check "Pruebas" en verde (`.github/workflows/ci.yml`, todas las suites), sin
@@ -686,7 +693,7 @@ progreso de los usuarios en el clásico sigue en sus claves, que la app nunca to
 
 ```
 silvestre-checklist/
-├── index.html                ← entrada de Vite
+├── index.html                ← entrada de Vite de los checklists (el Silvestre y el Hielos)
 ├── src/
 │   ├── tools/checklist/      ← la app del checklist, la misma en el sitio y en el embebido
 │   │   ├── App.jsx
@@ -701,19 +708,26 @@ silvestre-checklist/
 │   ├── site/home/            ← las cartas de la home: main.js, home.css y su manifiesto
 │   ├── site/shell/           ← la cabecera del sitio, mountShell() (solo el sitio, nunca un embebido)
 │   ├── site/checklist/       ← main.jsx, la entrada del checklist en el sitio (index.html)
+│   ├── site/cosecha/         ← la página de «La eterna cosecha»: la cabecera y el checklist debajo
 │   ├── embeds/checklist/     ← embed.jsx, entrada del embebido: la app en una shadow root (npm run build:embed)
 │   ├── embeds/hub/           ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
+│   ├── embeds/inicio/        ← el inicio de Torrente Arcano: manifiesto, cartas y su entrada (npm run build:inicio)
 │   ├── embeds/cosecha/       ← la entrada de la cosecha como embebido (npm run build:cosecha)
-│   ├── lib/                  ← lo que comparten los embebidos: dom.js, fonts.js, pageHeader.js, tilt.js
+│   ├── lib/                  ← lo que comparten embebidos, herramientas y sitio: dom.js, fonts.js, pageHeader.js, tilt.js
 │   ├── dofus/silvestre/      ← config.js (textos, claves y notas del Silvestre), steps.js (los 100
 │   │                           pasos de Sandglass) y los JSON generados; la app los lee por @dofus
-│   └── dofus/hielos/         ← lo mismo del Dofus de los Hielos (70 pasos), con sus favicons en icons/
-├── public/img/               ← las 336 imágenes del juego, auto-alojadas (5.2 MB)
+│   └── dofus/hielos/         ← lo mismo del Dofus de los Hielos (70 pasos); los dos con sus favicons en icons/
+├── public/                   ← favicons; solo lo copia el build del sitio (los checklists y los embebidos usan el de la raíz)
+│   ├── img/                  ← las imágenes del juego, auto-alojadas
+│   ├── checklists/           ← index.html, la vista previa del hub (noindex)
+│   └── cosecha/cosecha.json  ← las almas de la cosecha: datos de origen, publicados en /cosecha/
+├── tests/unit/               ← pruebas sin navegador (npm run test:unit): cuentas, rutas de la CI, fronteras entre carpetas
 ├── tests/e2e/                ← pruebas de Playwright
 ├── tests/embed/              ← pruebas del embebido en una página como la de Squarespace
 ├── tests/hielos/             ← prueba de humo del Hielos, servido como en Pages (npm run test:hielos)
-├── tests/site/               ← la home y la cabecera del sitio (npm run test:site)
-├── tests/serve.js            ← sirve un build como en Pages, con public/ debajo (Hielos y sitio)
+├── tests/site/               ← la home, la cosecha y la cabecera del sitio (npm run test:site)
+├── tests/serve.js            ← sirve un build como en Pages, con public/ debajo (Silvestre, Hielos y sitio)
+├── .github/ci-paths.mjs      ← qué suites corre la CI según las carpetas que cambia un PR
 └── .build/                   ← internos (no enviar al usuario final)
     ├── import_guide.py       ← importa los pasos de la guía desde torrentearcano
     ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
