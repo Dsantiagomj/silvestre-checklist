@@ -51,6 +51,8 @@ test("el checklist va bajo la cabecera del sitio, con «La eterna cosecha» como
   const current = shell.locator('[aria-current="page"]');
   await expect(current).toHaveCount(1);
   await expect(current).toHaveAccessibleName("La eterna cosecha");
+  // Detrás de la cabecera, Cania, la zona de la cosecha
+  await expect(shell.locator("img.dt-art")).toHaveAttribute("src", /\/img\/zones\/cania\.jpg$/);
   expect(await current.evaluate(a => a.href)).toBe(new URL("cosecha/", baseURL).href);
 
   // El checklist en su shadow root, justo debajo de la cabecera y de borde a borde

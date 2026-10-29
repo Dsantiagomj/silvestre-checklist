@@ -1,6 +1,6 @@
 # Design language
 
-The visual rules behind the Torrente Arcano embeds and the "Dofus Tools" site. Every value here comes from shipped CSS: `src/embeds/hub/hub.css`, `src/embeds/inicio/inicio.css`, `src/tools/cosecha/cosecha.css`, `src/site/shell/shell.css`, `src/site/home/home.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
+The visual rules behind the Torrente Arcano embeds and the "Dofus Tools" site. Every value here comes from shipped CSS: `src/embeds/hub/hub.css`, `src/embeds/inicio/inicio.css`, `src/tools/cosecha/cosecha.css`, `src/site/shell/shell.css`, `src/site/home/home.css`, `src/lib/themeSwitch.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
 
 ## Quick path for a new surface
 
@@ -54,6 +54,30 @@ Header art (inicio hero, cosecha header) sits behind the title at opacity .45 or
 | `--archi` | `#b7dc69` | archmonsters, "complete" states |
 
 Gold appears as a frame (1px to 2px inset rings), as text, or as a 40 to 60 percent `color-mix` border. It is never a button fill.
+
+### Light theme
+
+Two surfaces have a light theme: the site (the home, the checklists, the cosecha page) and the cosecha embed. The palette is parchment with ochre ink. Gold only draws rings, ochre only fills (progress, stamps, complete numbers), and text never sits in pale ochre on parchment.
+
+Cosecha keeps every color in a CSS variable on `.cosecha`; `.cosecha[data-theme="light"]` overrides only variables. A new rule in `cosecha.css` takes its colors from those variables, including inside the 700px container query.
+
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `--bg`, `--glow` | `#0b0c0a`, `#211a0e` | `#f4ecdc`, `#fbeac6` | the radial page background |
+| `--ink` | `#f2f5ee` | `#2a2114` | titles and body text |
+| `--ink-2` | `#d9d1bf` | `#4d4030` | lead text, rail labels |
+| `--muted` | `#9f9a8a` | `#6b5d48` | counts, small print |
+| `--accent-ink` | `var(--ocre)` | `#8a4b05` | eyebrow, «Total», result titles, «Etapa» buttons |
+| `--hi`, `--hi-on` | `#f6d48a` | `#8a4b05`, `#6a3a04` | active text; `--hi-on` on a pressed or marked surface |
+| `--big` | `var(--ocre)` | `#b8650a` | the big stage number |
+| `--frame` | `var(--gold)` | `#b88a2e` | rings and lines: the search field's focus ring, the toast, section rules |
+| `--field` | `#14160f` | `#fffaf0` | segmented control, search |
+| `--card` | `#1a1c14` to `#101209` | `#fffaf0` to `#f3e9d6` | cromo |
+| `--done-card` | `#2c200c` to `#16110a` | `#fff0cf` to `#f8ddab` | marked cromo |
+| `--rail-solid` | `#14130d` | `#fbf4e6` | the sticky rail row under 700px |
+| `--art-opacity` | `.28` | `.42` | Cania behind the header, fading into the page |
+
+The egg medallion (`.egg`) stays dark with its gold ring in both themes. The site home uses the same parchment (`#f4ecdc` with a `#fbeac6` glow); its cards keep their art and dark shade.
 
 ### Per-section colors (`src/embeds/inicio/manifest.js`)
 
@@ -112,7 +136,7 @@ Always container queries on the widget root, never media queries: the Squarespac
 | Inicio | `(max-width: 900px)` | smaller tiles, eggs and ring on wide cards |
 | Inicio | `(max-width: 600px)` | one column; wide cards go 5/4; hero 44px |
 | Cosecha | `@container cosecha (max-width: 700px)` | rail becomes a sticky top row; cromos three per row |
-| Site shell | `@container dt-shell (max-width: 600px)` | nav shows only the end of each name (`.dt-pre` hidden); scrolls sideways if it still does not fit |
+| Site shell | `@container dt-shell (max-width: 600px)` | the nav moves to its own row under the brand and the switch, spread edge to edge, showing only the end of each name (`.dt-pre` hidden); it scrolls sideways if it still does not fit |
 | Site home | `@container home (max-width: 700px)` | cards stack, landscape |
 
 The React checklist app still uses media queries; that is a known exception, not the model.
@@ -171,25 +195,43 @@ Use for a collectible the user marks one by one. A `button` in a `.slot`, radius
 
 ### Site shell (`.dt-shell`)
 
-The "Dofus Tools" header on every site page, from `mountShell(current)` in `src/site/shell/`. Plain DOM, prepended to `<body>`, outside any app root; never in an embed.
+The "Dofus Tools" header on every site page, from `mountShell(current)` in `src/site/shell/`. Plain DOM, prepended to `<body>`, outside any app root; never in an embed. It stays dark in both themes: a light header over the checklist's dark bar would stack light, dark and light.
 
 | Rule | Recipe |
 |---|---|
-| Slim | 54px high, `linear-gradient(180deg, #14160f, #0b0c0a)` with a 1px hairline at the bottom; content 1240px wide like the home |
+| Zone strip | 84px high, `#0b0c0a`, with the page's zone art behind at opacity .6 and `object-position: center 38%`. Two gradients darken it: toward both sides (.96 at the left, .5 in the middle, .94 at the right) and slightly toward the bottom. Content is 1240px wide like the home |
+| Zone per page | `art` in `TOOLS` (`shell.js`), picked like a card background: Krosmoz on the home, Amakna on `/silvestre/`, Frigost on `/hielos/`, Cania on `/cosecha/` |
+| Gold rule | 1px at the bottom, `rgba(216,178,90,.75)` between 18 and 82 percent, fading to transparent at both ends |
 | Not sticky | `position: relative`. The app's own sticky bar and the cosecha rail stay at the top of the window; `--cosecha-top` stays 0 |
-| Brand | "Dofus Tools", display 800 23px (20px narrow), links to the home |
-| Nav | one link per tool in `TOOLS` order, display 700 16px, tracking .08em, `#c9c2b0` |
-| Current page | `aria-current="page"`: text `#f6d48a` and a 3px gold bar flush with the header's bottom edge. No side border, no pill, no fill |
-| Self-contained | every value set under `.dt-shell`, so the page below (the checklist's light theme, `a:hover` underlines) cannot change it |
+| Brand | "Dofus Tools", display 800 30px (24px narrow), under a gold eyebrow «Checklists y herramientas» (display 700 12px, tracking .3em, `aria-hidden`); links to the home |
+| Nav | one link per tool in `TOOLS` order, display 700 16px, tracking .08em, `#d9d1bf` with a dark text-shadow, 30px apart |
+| Current page | `aria-current="page"`: text `#f6d48a` and a 3px gold bar with a soft glow, flush with the header's bottom edge. No side border, no pill, no fill |
+| Theme switch | the egg switch (below) at the right, vertically centered |
+| Narrow | `@container dt-shell (max-width: 600px)`: margins 14px; brand and switch on the first row, the nav on its own 46px row with `space-between`, showing only the end of each name |
+| Self-contained | every value set under `.dt-shell`, so the page below (the checklist's light theme, its `img` and `a:hover` rules) cannot change it |
 
 A tool under the shell keeps its own header: the cosecha page shows the shell and then the cosecha `.hd`, whose title is the page's only `h1`. Do not add a page title between the shell and the tool.
+
+### Egg theme switch (`.theme-switch`)
+
+Use for the light and dark theme, and only there. `src/lib/themeSwitch.js` builds it in plain DOM (`createThemeSwitch`); the checklist renders the same markup in `ThemeSwitch.jsx`. Its CSS is `src/lib/themeSwitch.css`, which each surface imports (inside the shadow root for an embed).
+
+| Rule | Recipe |
+|---|---|
+| Shape | 64x34px pill; a parchment track (`#fffbe6` to `#f1e6b6`) with a night layer that fades in for dark |
+| Eggs | the active egg 28px at the left with its glow, the other at `scale(.55)`, faded and greyed at the right. Site and cosecha: Dofus Marfil (`items/23011.png`) for light, Dofus Ébano (`items/23007.png`) for dark. The checklist embeds use `THEME_ICONS` and `themeNames` from their Dofus config |
+| Accessibility | `role="switch"`, `aria-checked` true in dark, `aria-label` «Modo oscuro · Dofus Ébano» or «Modo claro · Dofus Marfil» |
+| Motion | the eggs swap places in an arc, the arriving one bounces with sparks, and the theme lands 140ms later. On a page of our own the whole page changes with a View Transition that sweeps diagonally from the switch's corner (`pageThemeTransition`); in an embed the theme changes without it. Reduced motion: no animation |
+| Colors | hover border and focus ring from `--ts-accent` and `--ts-focus`, which the shell and cosecha set to gold and white (or ink in light cosecha) |
+
+Where it lives: the site header (one theme for the whole site, `dofus-tools:theme`), the cosecha embed's tools row (`cosecha:theme`; under 700px it moves up next to Todo, Jefes and Archis), and the checklist embeds' «⋯» menu (`silvestre:theme`, `hielos:theme`). On the site the checklist and the cosecha widget show no switch of their own.
 
 ### Smaller pieces
 
 | Piece | Recipe | Source |
 |---|---|---|
 | Progress bar | 8px track `rgba(255,255,255,.08)`, fill `linear-gradient(90deg, #b86a12, var(--ocre))`, count in 700 16px display | `.bar` |
-| Segmented control | dark `#14160f` strip with a hairline; pressed button `linear-gradient(180deg, #3a2c12, #251b0b)` plus a gold inset ring, text `#f6d48a` | `.seg` |
+| Segmented control | dark `#14160f` strip with a hairline; pressed button `linear-gradient(180deg, #3a2c12, #251b0b)` plus a gold inset ring, text `#f6d48a`. The first and last buttons inherit the strip's outer radii, so the ring follows the rounded corners | `.seg` |
 | Search field | same dark fill, gold 1.5px ring on focus, clear button appears when it has text | `.srch` |
 | Gold rule | two 180px gradient lines (80px narrow) around a 44px emblem | `.rule` in inicio |
 | Completion ring | `conic-gradient(var(--ocre) calc(var(--p) * 1%), rgba(255,255,255,.08) 0)` with a dark inner disc | `.ring` in cosecha |

@@ -14,10 +14,12 @@ test("el Silvestre vive en silvestre/, con la cabecera del sitio encima de la ap
   expect(await shell.evaluate(el => el.nextElementSibling?.id)).toBe("root");
   const box = await shell.boundingBox();
   expect(box.y).toBe(0);
-  expect(box.height).toBeLessThanOrEqual(60);
+  expect(Math.round(box.height)).toBe(84);
+  // Detrás, Amakna: la zona de Silvosse (la elección de zona de DESIGN.md)
+  await expect(shell.locator("img.dt-art")).toHaveAttribute("src", /\/img\/zones\/reino-de-amakna\.jpg$/);
   // La marca lleva a la raíz del sitio, la home; la página actual es el Silvestre
   const root = new URL("../", baseURL).href;
-  expect(await shell.getByRole("link", { name: "Dofus Tools" }).evaluate(a => a.href)).toBe(root);
+  expect(await shell.getByRole("link", { name: "Dofus Tools", exact: true }).evaluate(a => a.href)).toBe(root);
   const nav = shell.getByRole("navigation").getByRole("link");
   await expect(nav).toHaveCount(3);
   await expect(nav.nth(0)).toHaveAccessibleName("Dofus Silvestre");
@@ -83,3 +85,24 @@ test("el tema es de todo el sitio: se elige en la home y lo siguen el Silvestre 
   expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("dark");
   expect(errors).toEqual([]);
 });
+
+for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]]) {
+  test(`a ${width}px la cabecera del sitio no se sale de lado sobre el Silvestre`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openApp(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const shell = page.locator("header.dt-shell");
+    for (const item of [...await shell.getByRole("link").all(), shell.getByRole("switch")]) {
+      const b = await item.boundingBox();
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width).toBeLessThanOrEqual(width);
+    }
+    // La barra dorada de la página actual, pegada al borde de abajo de la cabecera
+    const bar = await shell.locator('[aria-current="page"]').evaluate(a => {
+      const r = a.getBoundingClientRect();
+      return { bottom: r.bottom, h: parseFloat(getComputedStyle(a, "::after").height) };
+    });
+    expect(Math.abs(bar.bottom - (await shell.boundingBox()).height)).toBeLessThanOrEqual(1);
+    expect(bar.h).toBe(3);
+  });
+}

@@ -169,6 +169,8 @@ test.describe("pantalla baja", () => {
     await expect(page.locator("#moreMenu")).toBeVisible();
     await expect(page.locator("#themeBtn")).toHaveCount(0);
     const btn = page.locator(".dt-shell").getByRole("switch");
+    // Detrás de la cabecera, Frigost
+    await expect(page.locator(".dt-shell img.dt-art")).toHaveAttribute("src", /\/img\/zones\/isla-de-frigost\.jpg$/);
     await expect(btn).toHaveAccessibleName("Modo oscuro · Dofus Ébano");
     await btn.click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
