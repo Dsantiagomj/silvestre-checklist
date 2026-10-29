@@ -41,6 +41,9 @@ jobs:
       - run: npm run build:hub
       # El inicio de torrentearcano.com (dist/embed/inicio.js), con las imágenes de public/img/
       - run: npm run build:inicio
+      # «La eterna cosecha» (dist/embed/cosecha.js), con sus almas dentro y las imágenes de
+      # public/img/cosecha/
+      - run: npm run build:cosecha
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
