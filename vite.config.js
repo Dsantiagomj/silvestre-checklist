@@ -4,13 +4,17 @@ import { pathToFileURL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+// El sitio «Dofus Tools» (SITE=1, npm run build:site): la home y las páginas que no son
+// de un Dofus (siteConfig, abajo). No lee ningún Dofus
+const SITE = !!process.env.SITE;
+
 // El Dofus del checklist se elige al construir: DOFUS=<id> (por defecto el Silvestre). La
 // app lee sus datos y textos de src/dofus/<id>/ por el alias @dofus (config.js y lo que
 // genera .build/ con --dofus <id>)
 const DOFUS = process.env.DOFUS || "silvestre";
 const DOFUS_DIR = path.resolve("src/dofus", DOFUS);
-if (!fs.existsSync(path.join(DOFUS_DIR, "config.js"))) throw new Error(`DOFUS=${DOFUS}: falta src/dofus/${DOFUS}/config.js`);
-const { default: CONFIG } = await import(pathToFileURL(path.join(DOFUS_DIR, "config.js")).href);
+if (!SITE && !fs.existsSync(path.join(DOFUS_DIR, "config.js"))) throw new Error(`DOFUS=${DOFUS}: falta src/dofus/${DOFUS}/config.js`);
+const CONFIG = SITE ? null : (await import(pathToFileURL(path.join(DOFUS_DIR, "config.js")).href)).default;
 const resolve = { alias: { "@dofus": DOFUS_DIR } };
 
 // index.html lleva marcas %DOFUS_*% con el título, la descripción y la nota del favicon
@@ -53,7 +57,7 @@ const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 // de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/embeds/cosecha/embed.js). Esos tres
 // van aparte y solos: no cargan la app ni sus datos
 const EMBEDS = {
-  app: { input: "src/embeds/checklist/embed.jsx", ...CONFIG.build.embed },
+  app: { input: "src/embeds/checklist/embed.jsx", ...CONFIG?.build.embed },
   hub: { input: "src/embeds/hub/embed.js", entry: "embed/checklists.js", chunks: "embed/hub", assets: "embed/hub" },
   inicio: { input: "src/embeds/inicio/embed.js", entry: "embed/inicio.js", chunks: "embed/inicio", assets: "embed/inicio" },
   cosecha: { input: "src/embeds/cosecha/embed.js", entry: "embed/cosecha.js", chunks: "embed/cosecha", assets: "embed/cosecha" },
@@ -98,7 +102,25 @@ const embedName = () => (process.env.COSECHA ? "cosecha" : process.env.INICIO ? 
 // El sitio de un Dofus que no vive en la raíz (build.outDir): en su carpeta y sin public/
 const nested = command => command === "build" && !!CONFIG.build.outDir;
 
-export default defineConfig(({ command }) => (command === "build" && embedName() ? embedConfig(embedName()) : {
+// El sitio «Dofus Tools» (SITE=1): su raíz es src/site/, así que src/site/index.html (la
+// home) sale en dist/index.html; cada página más es otra entrada. Va en la raíz del sitio
+// (SITE_ROOT) con public/, como antes el Silvestre. Las pruebas lo construyen en otra carpeta
+// (SITE_OUT) para no pisar dist/
+const SITE_DIR = path.resolve("src/site");
+const siteConfig = () => ({
+  root: SITE_DIR,
+  publicDir: path.resolve("public"),
+  base: SITE_ROOT,
+  define: { __SITE_ROOT__: JSON.stringify(SITE_ROOT) },
+  build: {
+    outDir: path.resolve(process.env.SITE_OUT || "dist"),
+    // Fuera de su raíz Vite no la vacía si no se le pide
+    emptyOutDir: true,
+    rolldownOptions: { input: { home: path.join(SITE_DIR, "index.html") } },
+  },
+});
+
+export default defineConfig(({ command }) => SITE ? siteConfig() : (command === "build" && embedName() ? embedConfig(embedName()) : {
   plugins: [react(), dofusIcons, dofusHtml],
   resolve,
   // En GitHub Pages la app vive en /silvestre-checklist/ (SITE_ROOT) y el Hielos en

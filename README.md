@@ -327,6 +327,20 @@ pantalla baja no hay botón de Dofus del camino.
 El progreso se guarda en `localStorage`, con las mismas claves que la versión anterior, así
 que quien ya tuviera progreso lo conserva.
 
+El sitio «Dofus Tools» tiene además una home en la raíz, con la cabecera del sitio y una
+carta por herramienta (el Silvestre, el Hielos y «La eterna cosecha»). No es de ningún Dofus:
+se construye con `SITE=1`, con `src/site/` como raíz de Vite, así que `src/site/index.html`
+sale en `dist/index.html`, con `public/`:
+
+```bash
+SITE=1 npm run dev     # la home en desarrollo
+npm run build:site     # la home, en dist/
+```
+
+La cabecera (`src/site/shell/`) es un módulo sin React, `mountShell(actual)`, que solo carga
+el sitio: ningún embebido la lleva. Un enlace viejo a la raíz con `?…` o `#…` (de cuando el
+Silvestre vivía ahí) va a `silvestre/` con lo mismo detrás.
+
 ### Pruebas
 
 ```bash
@@ -383,10 +397,21 @@ npm run test:hielos
 ```
 
 Construye su sitio en `.hielos-test/` y lo sirve en el puerto 4321 como en Pages
-(`tests/hielos/serve.js`): la app en `/hielos/` y las imágenes en la raíz. Comprueba lo que
+(`tests/serve.js`): la app en `/hielos/` y las imágenes en la raíz. Comprueba lo que
 cambia de un Dofus a otro: los 70 pasos sin errores, el hero con nieve, la
 franja de un solo Dofus, la pantalla baja y el móvil, la nota con el ejemplo de los pasos 8,
 12 y 13, el Dofus que se enciende al marcar el 69 y la misión con parada del paso 12.
+
+La home del sitio tiene la suya, en `tests/site/`:
+
+```bash
+npm run test:site
+```
+
+Construye el sitio (`SITE=1`) en `.site-test/` y lo sirve en el puerto 4325 con el mismo
+`tests/serve.js`. Comprueba el título, las tres cartas y sus enlaces, la cabecera con la
+marca y el menú, el salto de los enlaces viejos a `silvestre/`, que nada se salga de lado a
+1440, 1024 y 390 px, que todas las imágenes carguen y que no haya errores.
 
 ---
 
@@ -659,7 +684,10 @@ silvestre-checklist/
 │   │   │                       root.js (dónde vive la app: el documento o la shadow root)
 │   │   └── styles/global.css
 │   ├── tools/cosecha/        ← «La eterna cosecha»: las almas del Dofus Ocre y sus cuentas
-│   ├── site/checklist/       ← main.jsx, la entrada del sitio (index.html)
+│   ├── site/                 ← el sitio «Dofus Tools» (npm run build:site): index.html, la home
+│   ├── site/home/            ← las cartas de la home: main.js, home.css y su manifiesto
+│   ├── site/shell/           ← la cabecera del sitio, mountShell() (solo el sitio, nunca un embebido)
+│   ├── site/checklist/       ← main.jsx, la entrada del checklist en el sitio (index.html)
 │   ├── embeds/checklist/     ← embed.jsx, entrada del embebido: la app en una shadow root (npm run build:embed)
 │   ├── embeds/hub/           ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
 │   ├── embeds/cosecha/       ← la entrada de la cosecha como embebido (npm run build:cosecha)
@@ -671,6 +699,8 @@ silvestre-checklist/
 ├── tests/e2e/                ← pruebas de Playwright
 ├── tests/embed/              ← pruebas del embebido en una página como la de Squarespace
 ├── tests/hielos/             ← prueba de humo del Hielos, servido como en Pages (npm run test:hielos)
+├── tests/site/               ← la home y la cabecera del sitio (npm run test:site)
+├── tests/serve.js            ← sirve un build como en Pages, con public/ debajo (Hielos y sitio)
 └── .build/                   ← internos (no enviar al usuario final)
     ├── import_guide.py       ← importa los pasos de la guía desde torrentearcano
     ├── fetch_dofusdb.py      ← descarga los datos crudos de DofusDB
