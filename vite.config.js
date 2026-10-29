@@ -37,11 +37,11 @@ const dofusIcons = {
 // La raíz del sitio de GitHub Pages, donde están public/ y sus imágenes (img/): en Pages
 // el workflow pasa BASE_PATH; en local y en las pruebas, la raíz. El Silvestre vive ahí
 // mismo; un Dofus con build.outDir (el Hielos, en hielos/) vive debajo y comparte las
-// imágenes de la raíz en vez de llevar otra copia de public/ (lib/assets.js, __SITE_ROOT__)
+// imágenes de la raíz en vez de llevar otra copia de public/ (src/tools/checklist/lib/assets.js, __SITE_ROOT__)
 const SITE_ROOT = process.env.BASE_PATH || "/";
 
 // El embebido (EMBED=1, npm run build:embed): la app como un solo módulo que se monta en
-// una página ajena (src/embed.jsx). Carga sus trozos y las imágenes de GitHub Pages, así
+// una página ajena (src/embeds/checklist/embed.jsx). Carga sus trozos y las imágenes de GitHub Pages, así
 // que la base es la dirección absoluta del sitio
 const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 
@@ -53,7 +53,7 @@ const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 // de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/embeds/cosecha/embed.js). Esos tres
 // van aparte y solos: no cargan la app ni sus datos
 const EMBEDS = {
-  app: { input: "src/embed.jsx", ...CONFIG.build.embed },
+  app: { input: "src/embeds/checklist/embed.jsx", ...CONFIG.build.embed },
   hub: { input: "src/embeds/hub/embed.js", entry: "embed/checklists.js", chunks: "embed/hub", assets: "embed/hub" },
   inicio: { input: "src/embeds/inicio/embed.js", entry: "embed/inicio.js", chunks: "embed/inicio", assets: "embed/inicio" },
   cosecha: { input: "src/embeds/cosecha/embed.js", entry: "embed/cosecha.js", chunks: "embed/cosecha", assets: "embed/cosecha" },

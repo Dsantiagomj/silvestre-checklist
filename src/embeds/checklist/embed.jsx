@@ -7,13 +7,13 @@
 // ============================================================================
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import css from "./styles/global.css?inline";
-import App from "./App.jsx";
-import { applyTheme, getState } from "./state/store.js";
-import { mountIn } from "./lib/root.js";
-import { pageFonts } from "./lib/fonts.js";
-import { paletteCss } from "./lib/palette.js";
-import { fillViewportWidth, followPageHeader } from "./lib/pageHeader.js";
+import css from "../../tools/checklist/styles/global.css?inline";
+import App from "../../tools/checklist/App.jsx";
+import { applyTheme, getState } from "../../tools/checklist/state/store.js";
+import { mountIn } from "../../tools/checklist/lib/root.js";
+import { pageFonts } from "../../lib/fonts.js";
+import { paletteCss } from "../../tools/checklist/lib/palette.js";
+import { fillViewportWidth, followPageHeader } from "../../lib/pageHeader.js";
 import DOFUS from "@dofus/config.js";
 
 const { hostId: HOST_ID, topVar, fonts, logName } = DOFUS.embed;

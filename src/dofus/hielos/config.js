@@ -62,7 +62,7 @@ export default {
   // guía no da otro Dofus que los represente, así que dos cosas de Frigost
   themeNames: { light: "Copo de nieve", dark: "Kama de hielo" },
 
-  // El embebido (src/embed.jsx, npm run build:embed:hielos): el <div> de la página de
+  // El embebido (src/embeds/checklist/embed.jsx, npm run build:embed:hielos): el <div> de la página de
   // Torrente Arcano que lo aloja (checklist-dofus-de-los-hielos), la variable CSS con lo que
   // tapa su cabecera fija, el data-* de la hoja de fuentes y el nombre en los errores
   embed: { hostId: "hielos-root", topVar: "--hielos-top", fonts: "hielos-fonts", logName: "Checklist Hielos" },
@@ -78,7 +78,7 @@ export default {
   // lleva hero: el suyo es el de siempre
   hero: { fx: "snow" },
 
-  // La paleta (lib/palette.js): la del Silvestre es carbón verdoso con acento lima; la del
+  // La paleta (src/tools/checklist/lib/palette.js): la del Silvestre es carbón verdoso con acento lima; la del
   // Hielos, gris azulado frío con acento azul hielo (#9fd8f0, el color del Hielos en el hub).
   // Mismas variables que global.css, por tema; -light solo cuenta en el tema claro. Lo
   // hecho también va en azul hielo; el rojo de las paradas y el ámbar siguen igual.

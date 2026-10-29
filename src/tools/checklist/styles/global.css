@@ -130,7 +130,7 @@
 }
 
 /* RESET ----------------------------------------------------------------------*/
-/* Embebida (src/embed.jsx), la app vive en una shadow root: el anfitrión no hereda nada de
+/* Embebida (src/embeds/checklist/embed.jsx), la app vive en una shadow root: el anfitrión no hereda nada de
    la página que la aloja y .app-root hace de <body> (lleva también data-theme) */
 :host{ all:initial; display:block; }
 *,*::before,*::after{box-sizing:border-box}
@@ -522,7 +522,7 @@ input,select,textarea{font-family:inherit; color:inherit}
 }
 .sheet.open{ transform:translateY(0); }
 /* Embebida, lo que va fijo a la ventana pasa por encima de la cabecera fija de la página */
-/* Embebida va de borde a borde de la ventana (src/embed.jsx): más ancho que la página
+/* Embebida va de borde a borde de la ventana (src/embeds/checklist/embed.jsx): más ancho que la página
    propia, con tope para que en un monitor muy ancho la lista y el detalle no se estiren */
 .is-embed{ --maxw:1720px; }
 .is-embed .sheet-overlay{ z-index:2147483000; }
