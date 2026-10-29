@@ -54,7 +54,7 @@ export default {
   // Lo que es cada icono del interruptor de tema (THEME_ICONS, .build/dofus/<id>.py)
   themeNames: { light: "Dofus Marfil", dark: "Dofus Ébano" },
 
-  // El embebido (src/embed.jsx): el <div> de la página que lo aloja, la variable CSS con lo
+  // El embebido (src/embeds/checklist/embed.jsx): el <div> de la página que lo aloja, la variable CSS con lo
   // que tapa la cabecera fija de la página, el data-* de la hoja de fuentes y el nombre en
   // los errores de consola
   embed: { hostId: "silvestre-root", topVar: "--silvestre-top", fonts: "silvestre-fonts", logName: "Checklist Silvestre" },

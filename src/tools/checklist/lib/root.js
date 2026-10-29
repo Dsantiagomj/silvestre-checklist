@@ -1,6 +1,6 @@
 // ============================================================================
 // DÓNDE VIVE LA APP — en su página, el documento entero; embebida en otra página
-// (src/embed.jsx), una shadow root. Lo que busca elementos de la app los busca aquí,
+// (src/embeds/checklist/embed.jsx), una shadow root. Lo que busca elementos de la app los busca aquí,
 // no en `document`, que embebida es la página de otro.
 // ============================================================================
 import DOFUS from "@dofus/config.js";
