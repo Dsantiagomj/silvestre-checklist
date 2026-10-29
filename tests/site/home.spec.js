@@ -107,3 +107,29 @@ for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]]) {
     expect(errors).toEqual([]);
   });
 }
+
+test("la home en el tema claro: pergamino, las cartas con su arte y la cabecera con el interruptor", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("dofus-tools:theme", "light"));
+  await page.goto("./");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(244, 236, 220)");
+  expect(await page.locator(".hero h1").evaluate(el => getComputedStyle(el).color)).toBe("rgb(42, 33, 20)");
+  const sw = page.locator(".dt-shell").getByRole("switch");
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+  await expect(sw).toHaveAccessibleName("Modo claro · Dofus Marfil");
+  // Las cartas no cambian: su nombre sigue sobre oscuro
+  expect(await page.locator(".home a.card .name").first().evaluate(el => getComputedStyle(el).color)).toBe("rgb(183, 220, 105)");
+});
+
+test("sin tema del sitio se trae el del Hielos si el del Silvestre no está, una sola vez", async ({ page }) => {
+  await page.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.setItem("hielos:theme", "light"); } });
+  await page.goto("./");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
+  // Elegido aquí, manda aunque el del Hielos diga otra cosa
+  await page.locator(".dt-shell").getByRole("switch").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", { timeout: 3_000 });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("hielos:theme"))).toBe("light");
+});

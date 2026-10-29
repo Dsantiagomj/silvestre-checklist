@@ -50,3 +50,36 @@ test("sus favicons cargan: van con su build, que no lleva public/", async ({ pag
     }
   }
 });
+
+test("el tema es de todo el sitio: se elige en la home y lo siguen el Silvestre y la cosecha", async ({ page, baseURL }) => {
+  const errors = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
+  const html = page.locator("html");
+  const sw = page.locator(".dt-shell").getByRole("switch");
+  const bodyBg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  await page.goto(new URL("../", baseURL).href);
+  await expect(page.locator(".home a.card")).toHaveCount(3);
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await sw.click();
+  await expect(html).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
+  // La home en pergamino
+  await expect.poll(bodyBg).toBe("rgb(244, 236, 220)");
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
+
+  await page.locator(".dt-shell").getByRole("link", { name: "Dofus Silvestre" }).click();
+  await expect(page.locator(".diary-row, .map-node").first()).toBeVisible();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+  await expect.poll(bodyBg).not.toBe("rgb(13, 14, 12)");
+
+  await page.locator(".dt-shell").getByRole("link", { name: "La eterna cosecha" }).click();
+  const widget = page.locator("#cosecha .cosecha");
+  await expect(widget).toHaveAttribute("data-theme", "light");
+  await expect(html).toHaveAttribute("data-theme", "light");
+  // Cambiarlo aquí cambia el checklist de la shadow root y se guarda para todo el sitio
+  await sw.click();
+  await expect(widget).toHaveAttribute("data-theme", "dark", { timeout: 3_000 });
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("dark");
+  expect(errors).toEqual([]);
+});

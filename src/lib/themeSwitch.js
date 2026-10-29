@@ -89,3 +89,18 @@ export function createThemeSwitch({ icons, names, theme, onToggle }) {
   btn.addEventListener("click", () => onToggle(btn));
   return btn;
 }
+
+/**
+ * Cambia el tema de una página entera con una View Transition: la noche entra (o se retira)
+ * en diagonal desde la esquina del interruptor (themeSwitch.css). `commit` debe dejar el DOM
+ * con el tema nuevo dentro del callback. Sin View Transitions, el tema cambia sin más. Solo
+ * en una página propia: embebida, la transición cubriría la página de otro.
+ */
+export function pageThemeTransition(next, commit) {
+  if (!document.startViewTransition) return commit();
+  const root = document.documentElement;
+  const cls = next === "dark" ? "vt-to-dark" : "vt-to-light";
+  root.classList.add(cls);
+  const vt = document.startViewTransition(commit);
+  vt.finished.finally(() => root.classList.remove(cls));
+}

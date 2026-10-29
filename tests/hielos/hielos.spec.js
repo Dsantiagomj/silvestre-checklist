@@ -162,15 +162,25 @@ test.describe("pantalla baja", () => {
     expect(errors).toEqual([]);
   });
 
-  test("el tema lleva los iconos de Frigost con sus nombres", async ({ page }) => {
+  test("en el sitio el tema es el de la cabecera: el menú «⋯» ya no lleva interruptor", async ({ page }) => {
+    // Los iconos de Frigost siguen en el interruptor del embebido (tests/embed/hielos.spec.js)
     await openHielos(page);
     await page.click("#moreBtn");
-    const btn = page.locator("#themeBtn");
-    await expect(btn).toHaveAttribute("aria-label", "Modo oscuro · Kama de hielo");
-    await expect(page.locator("#tsLight")).toHaveAttribute("src", /\/img\/items\/153007\.png$/);
-    await expect(page.locator("#tsDark")).toHaveAttribute("src", /\/img\/items\/24825\.png$/);
+    await expect(page.locator("#moreMenu")).toBeVisible();
+    await expect(page.locator("#themeBtn")).toHaveCount(0);
+    const btn = page.locator(".dt-shell").getByRole("switch");
+    await expect(btn).toHaveAccessibleName("Modo oscuro · Dofus Ébano");
     await btn.click();
-    await expect(btn).toHaveAttribute("aria-label", "Modo claro · Copo de nieve");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
+    await expect(btn).toHaveAccessibleName("Modo claro · Dofus Marfil");
+    expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
+  });
+
+  test("el tema que se eligió en el Hielos antes de la cabecera se trae al tema del sitio", async ({ page }) => {
+    await openHielos(page, { "hielos:theme": "light" });
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
+    await expect(page.locator(".dt-shell").getByRole("switch")).toHaveAttribute("aria-checked", "false");
   });
 
   test("la nota de las pausas cuenta el ejemplo del Hielos: 8 y 12 ante el Morsagüino Real, el 13 los cierra", async ({ page }) => {

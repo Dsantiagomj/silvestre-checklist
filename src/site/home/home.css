@@ -5,8 +5,11 @@
    derecha, el huevo arriba con su brillo y el nombre abajo, sobre oscuro. Se inclinan con el
    ratón y el brillo holográfico lo sigue (src/lib/tilt.js). En estrecho (≤700px) van una
    debajo de otra, apaisadas, con el huevo arriba a la izquierda.
+   En el tema claro del sitio (data-theme en <html>, src/site/shell/theme.js) la página es de
+   pergamino, como la cosecha clara; las cartas no cambian: su arte y su texto van sobre oscuro.
    ============================================================================ */
 html, body { margin: 0; background: #0b0c0a; }
+html[data-theme="light"], html[data-theme="light"] body { background: #f4ecdc; }
 
 .home {
   --fd: 'Barlow Condensed', sans-serif;
@@ -92,6 +95,15 @@ html, body { margin: 0; background: #0b0c0a; }
   -webkit-tap-highlight-color: transparent;
 }
 .card:hover { box-shadow: 0 18px 30px rgba(0, 0, 0, .6), 0 0 32px -6px var(--c); }
+
+/* El tema claro: el pergamino con el brillo cálido arriba, el Krosmoz más claro detrás del
+   título y una sombra parda bajo las cartas */
+[data-theme="light"] .home { background: radial-gradient(90% 60% at 50% 0%, #fbeac6, #f4ecdc 70%); color: #2a2114; }
+[data-theme="light"] .hero .hbg { opacity: .42; filter: saturate(.9) brightness(1.15); }
+[data-theme="light"] .hero h1 { color: #2a2114; text-shadow: 0 2px 0 rgba(255, 255, 255, .6); }
+[data-theme="light"] .hero .lead { color: #4d4030; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+[data-theme="light"] .card { box-shadow: 0 18px 30px rgba(74, 52, 16, .3); }
+[data-theme="light"] .card:hover { box-shadow: 0 18px 30px rgba(74, 52, 16, .3), 0 0 32px -6px var(--c); }
 .card:focus { outline: none; }
 .card:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 

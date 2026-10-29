@@ -52,7 +52,7 @@ test("a 1280×720 también cabe en una fila", async ({ page }) => {
   }
 });
 
-test("el menú ⋯ lleva el tema y el reinicio, y los dos funcionan", async ({ page }) => {
+test("el menú ⋯ lleva el reinicio y la nota, y el tema va en la cabecera del sitio", async ({ page }) => {
   await openApp(page);
   const more = page.locator("#moreBtn");
   await expect(more).toHaveAttribute("aria-expanded", "false");
@@ -61,13 +61,10 @@ test("el menú ⋯ lleva el tema y el reinicio, y los dos funcionan", async ({ p
   await expect(more).toHaveAttribute("aria-expanded", "true");
   const menu = page.locator("#moreMenu");
   await expect(menu).toBeVisible();
-  await expect(menu).toContainText("Tema");
-  await expect(menu.locator("#themeBtn")).toBeVisible();
+  await expect(menu).not.toContainText("Tema");
+  await expect(menu.locator("#themeBtn")).toHaveCount(0);
+  await expect(menu.locator("#notaOpen")).toBeVisible();
   await expect(menu.locator("#resetBtn")).toContainText("Reiniciar");
-  // El tema cambia y el menú sigue abierto para volver a cambiarlo
-  await menu.locator("#themeBtn").click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
-  await expect(menu).toBeVisible();
   // Reiniciar abre el diálogo de siempre y cierra el menú
   await menu.locator("#resetBtn").click();
   await expect(page.locator("#resetDialog")).toBeVisible();
@@ -193,7 +190,6 @@ test("en móvil la barra cabe, se queda arriba al bajar y lleva el menú ⋯", a
   await page.evaluate(() => window.scrollTo(0, 2500));
   await expect.poll(() => box(page, "#winBar").then(b => Math.round(b.top))).toBe(0);
   await page.locator("#moreBtn").tap();
-  await expect(page.locator("#moreMenu #themeBtn")).toBeVisible();
   await expect(page.locator("#moreMenu #resetBtn")).toBeVisible();
   await ctx.close();
 });

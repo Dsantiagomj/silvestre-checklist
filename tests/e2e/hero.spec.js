@@ -28,8 +28,7 @@ test("con la guía terminada el fondo es un mapa distinto en cada tema", async (
   // Oscuro: Refugio Silvestre. Claro: Mazmorra de los Escarahojas, un bosque de día.
   await expect.poll(() => heroBg(page)).toContain("223350028");
   const dark = await heroBg(page);
-  await page.click("#moreBtn");
-  await page.click("#themeBtn");
+  await page.locator(".dt-shell").getByRole("switch").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
   await expect.poll(() => heroBg(page)).toContain("88080387");
   const light = await heroBg(page);
