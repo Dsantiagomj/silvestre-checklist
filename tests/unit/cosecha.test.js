@@ -1,10 +1,10 @@
-// Las cuentas de «La eterna cosecha» (src/cosecha/souls.js): cómo se agrupan las almas, qué
+// Las cuentas de «La eterna cosecha» (src/tools/cosecha/souls.js): cómo se agrupan las almas, qué
 // deja cada filtro y lo que se lee de localStorage.
 // Run: npm run test:unit
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { DEFAULT_UI, groupsOf, matches, parseDone, parseUi } from "../../src/cosecha/souls.js";
+import { DEFAULT_UI, groupsOf, matches, parseDone, parseUi } from "../../src/tools/cosecha/souls.js";
 
 const SOULS = JSON.parse(fs.readFileSync(new URL("../../public/cosecha/cosecha.json", import.meta.url), "utf8"));
 
