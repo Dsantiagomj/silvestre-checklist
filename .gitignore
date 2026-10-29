@@ -36,3 +36,6 @@ playwright-report/
 
 # Capturas y maquetas para revisar (tmp/shots/)
 tmp/
+
+# Build del sitio (la home) para sus pruebas (playwright.site.config.js)
+.site-test/

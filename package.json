@@ -12,11 +12,13 @@
     "build:hub": "HUB=1 vite build",
     "build:inicio": "INICIO=1 vite build",
     "build:cosecha": "COSECHA=1 vite build",
+    "build:site": "SITE=1 vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:unit": "node --test tests/unit/*.test.js",
     "test:embed": "playwright test -c playwright.embed.config.js",
-    "test:hielos": "playwright test -c playwright.hielos.config.js"
+    "test:hielos": "playwright test -c playwright.hielos.config.js",
+    "test:site": "playwright test -c playwright.site.config.js"
   },
   "dependencies": {
     "motion": "^14.2.0",
