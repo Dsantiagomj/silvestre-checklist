@@ -14,18 +14,24 @@ test("la documentación no corre nada con navegador", () => {
 });
 
 test("un embebido propio, sus pruebas o sus imágenes: solo el embebido", () => {
-  for (const f of ["src/embeds/hub/hub.js", "src/embeds/inicio/inicio.css", "tests/embed/hub.spec.js", "public/checklists/index.html",
-    "public/cosecha/cosecha.json", "public/img/inicio/dofus-ocre.png", "public/img/cosecha/1234.png"]) {
+  for (const f of ["src/embeds/hub/hub.js", "src/embeds/inicio/inicio.css", "tests/embed/hub.spec.js", "public/checklists/index.html"]) {
     assert.deepEqual(suites([f]), only("embed"), f);
   }
 });
 
-test("las imágenes del hub también salen en las cartas de la home: el embebido y el sitio", () => {
-  assert.deepEqual(suites(["public/img/hub/otomai.png"]), only("embed", "site"));
+test("las imágenes del hub (las cartas de la home) y las de la cosecha (su página): el embebido y el sitio", () => {
+  for (const f of ["public/img/hub/otomai.png", "public/img/cosecha/1234.png", "public/img/inicio/dofus-ocre.png"]) {
+    assert.deepEqual(suites([f]), only("embed", "site"), f);
+  }
 });
 
-test("la cosecha como herramienta: el embebido", () => {
-  assert.deepEqual(suites(["src/tools/cosecha/souls.js"]), only("embed"));
+test("la cosecha como herramienta y sus datos: el embebido y su página del sitio", () => {
+  assert.deepEqual(suites(["src/tools/cosecha/souls.js"]), only("embed", "site"));
+  assert.deepEqual(suites(["public/cosecha/cosecha.json"]), only("embed", "site"));
+});
+
+test("la página de la cosecha en el sitio: solo el sitio", () => {
+  assert.deepEqual(suites(["src/site/cosecha/main.js", "src/site/cosecha/index.html"]), only("site"));
 });
 
 test("la app del checklist va en el sitio, el Hielos y el embebido, no en la home", () => {
