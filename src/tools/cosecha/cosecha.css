@@ -4,7 +4,7 @@
    herramientas, el carril de etapas (o regiones) pegado a la izquierda y los cromos de las
    almas, en gris hasta marcarlas y dorados después. En estrecho (≤700px) el carril es una
    fila de etapas pegada arriba y los cromos van de tres en tres.
-   De borde a borde (src/cosecha/embed.js) con su alto natural. Lo pegado arriba se queda bajo
+   De borde a borde (src/embeds/cosecha/embed.js) con su alto natural. Lo pegado arriba se queda bajo
    la cabecera fija de la página (--cosecha-top, src/lib/pageHeader.js).
    Vive en una shadow root: nada de la página entra ni sale.
    ============================================================================ */

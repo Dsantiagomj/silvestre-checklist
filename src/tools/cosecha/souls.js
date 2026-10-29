@@ -1,6 +1,6 @@
 // ============================================================================
 // LAS CUENTAS DE LA COSECHA — cómo se agrupan las almas en el carril, qué deja cada filtro y
-// lo que se lee de localStorage. Sin DOM: lo pinta src/cosecha/cosecha.js.
+// lo que se lee de localStorage. Sin DOM: lo pinta src/tools/cosecha/cosecha.js.
 // ============================================================================
 
 /** Lo que se recuerda de la vista si no hay nada guardado. */

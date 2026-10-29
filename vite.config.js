@@ -50,13 +50,13 @@ const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 // embed/hielos.js), el hub de los checklists (HUB=1, npm run build:hub,
 // src/embeds/hub/embed.js), una franja por Dofus que lleva a su checklist, y el inicio de
 // torrentearcano.com (INICIO=1, npm run build:inicio, src/embeds/inicio/embed.js) y el checklist
-// de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/cosecha/embed.js). Esos tres
+// de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/embeds/cosecha/embed.js). Esos tres
 // van aparte y solos: no cargan la app ni sus datos
 const EMBEDS = {
   app: { input: "src/embed.jsx", ...CONFIG.build.embed },
   hub: { input: "src/embeds/hub/embed.js", entry: "embed/checklists.js", chunks: "embed/hub", assets: "embed/hub" },
   inicio: { input: "src/embeds/inicio/embed.js", entry: "embed/inicio.js", chunks: "embed/inicio", assets: "embed/inicio" },
-  cosecha: { input: "src/cosecha/embed.js", entry: "embed/cosecha.js", chunks: "embed/cosecha", assets: "embed/cosecha" },
+  cosecha: { input: "src/embeds/cosecha/embed.js", entry: "embed/cosecha.js", chunks: "embed/cosecha", assets: "embed/cosecha" },
 };
 
 function embedConfig(name) {

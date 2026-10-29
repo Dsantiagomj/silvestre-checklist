@@ -549,7 +549,8 @@ código:
 <script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/cosecha.js"></script>
 ```
 
-Es un widget aparte (`src/cosecha/`), sin React, que lleva las almas dentro y pesa unos
+Es un widget aparte (`src/tools/cosecha/`, con su entrada en `src/embeds/cosecha/`), sin
+React, que lleva las almas dentro y pesa unos
 74 KB (19 KB comprimido). Arriba van el huevo del Ocre sobre Cania y tres barras: total,
 jefes y archis. A la izquierda, el carril con las 18 etapas de la misión, o con las 19
 regiones si se agrupa «Por región» (de la que más almas tiene a la que menos, y dentro por
@@ -652,7 +653,8 @@ silvestre-checklist/
 │   ├── main.jsx, App.jsx
 │   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
 │   ├── embeds/hub/           ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
-│   ├── cosecha/              ← «La eterna cosecha»: las almas del Dofus Ocre y su entrada (npm run build:cosecha)
+│   ├── tools/cosecha/        ← «La eterna cosecha»: las almas del Dofus Ocre y sus cuentas
+│   ├── embeds/cosecha/       ← su entrada como embebido (npm run build:cosecha)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…
 │   ├── overlay/              ← ventana Picture-in-Picture (portal de React)
