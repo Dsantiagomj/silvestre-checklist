@@ -92,7 +92,7 @@ button { margin: 0; font: inherit; color: inherit; cursor: pointer; text-transfo
 }
 .egg img { width: 92px; height: 92px; object-fit: contain; filter: drop-shadow(0 0 12px rgba(240, 163, 54, .9)); }
 .ey { font: 700 14px var(--fd); letter-spacing: .3em; text-transform: uppercase; color: var(--ocre); }
-.hd h2 {
+.hd :is(h1, h2) {
   margin: 2px 0 4px;
   font: 800 54px/1 var(--fd);
   letter-spacing: .03em;
@@ -408,7 +408,7 @@ button:focus-visible, .chk input:focus-visible { outline: 2px solid #fff; outlin
   .hd { column-gap: 14px; padding: 22px 0 16px; }
   .egg { grid-row: auto; width: 64px; height: 64px; }
   .egg img { width: 46px; height: 46px; }
-  .hd h2 { font-size: 30px; }
+  .hd :is(h1, h2) { font-size: 30px; }
   .sub { grid-column: 1 / -1; margin-top: 4px; font-size: 13px; }
   .bars { grid-column: 1 / -1; grid-template-columns: 1fr; gap: 8px; }
   .bar { grid-template-columns: 64px 1fr auto; }

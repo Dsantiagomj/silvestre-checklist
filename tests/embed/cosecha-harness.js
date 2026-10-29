@@ -54,18 +54,3 @@ export async function openCosecha(page, opts) {
 /** Dentro del checklist: los localizadores de Playwright atraviesan la shadow root abierta. */
 export const cosecha = page => page.locator("#cosecha-root");
 export const readLS = (page, key) => page.evaluate(k => JSON.parse(localStorage.getItem(k) || "null"), key);
-
-/**
- * La vista previa que publica GitHub Pages en /cosecha/ (public/cosecha/index.html), donde
- * antes estaba la página suelta: en ese dominio, lo marcado allí sigue en cosecha:done.
- */
-export async function openCosechaPreview(page, seed = {}) {
-  const errors = collectErrors(page);
-  await page.context().route(`${SITE}**`, servePages);
-  await page.addInitScript(s => {
-    for (const [k, v] of Object.entries(s)) if (localStorage.getItem(k) == null) localStorage.setItem(k, JSON.stringify(v));
-  }, seed);
-  await page.goto(`${SITE}cosecha/`);
-  await expect(cosecha(page).locator(".cromo")).not.toHaveCount(0, { timeout: 20_000 });
-  return errors;
-}

@@ -117,7 +117,7 @@ const siteConfig = () => ({
     outDir: path.resolve(process.env.SITE_OUT || "dist"),
     // Fuera de su raíz Vite no la vacía si no se le pide
     emptyOutDir: true,
-    rolldownOptions: { input: { home: path.join(SITE_DIR, "index.html") } },
+    rolldownOptions: { input: { home: path.join(SITE_DIR, "index.html"), cosecha: path.join(SITE_DIR, "cosecha/index.html") } },
   },
 });
 

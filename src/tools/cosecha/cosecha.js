@@ -40,8 +40,11 @@ function segButton(label, data) {
   return b;
 }
 
-/** Monta el checklist en `container`; `host` es el anfitrión de la página (su --cosecha-top). */
-export function renderCosecha(container, host) {
+/**
+ * Monta el checklist en `container`; `host` es el anfitrión de la página (su --cosecha-top).
+ * `heading`: la etiqueta del título; h2 en un embebido, donde la página ya tiene su h1.
+ */
+export function renderCosecha(container, host, { heading = "h2" } = {}) {
   const done = parseDone(read(DONE_KEY));
   const ui = parseUi(read(UI_KEY));
   let q = "";
@@ -58,7 +61,7 @@ export function renderCosecha(container, host) {
   const titles = el("div", "tt");
   titles.append(
     text("div", "ey", "Dofus Ocre"),
-    text("h2", null, "La eterna cosecha"),
+    text(heading, null, "La eterna cosecha"),
     text("p", "sub", `Las ${SOULS.length} almas que pide la misión. Toca un alma para marcarla; el icono de la esquina copia su nombre.`),
   );
   const bars = el("div", "bars");

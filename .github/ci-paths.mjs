@@ -14,18 +14,21 @@ const RULES = [
   { match: /\.md$|^docs\/|^LICENSE$/, run: [] },
   // El pipeline de datos y las unitarias: solo las unitarias
   { match: /^\.build\/|^tests\/unit\//, run: [] },
-  // Los embebidos propios (hub, inicio, cosecha), sus vistas previas y sus imágenes. Las del
-  // hub salen también en las cartas de la home del sitio
-  { match: /^public\/img\/hub\//, run: ["embed", "site"] },
-  { match: /^src\/embeds\/|^tests\/embed\/|^public\/checklists\/|^public\/cosecha\/|^public\/img\/(inicio|cosecha)\//, run: ["embed"] },
-  { match: /^src\/tools\/cosecha\//, run: ["embed"] },
+  // Los embebidos propios (hub, inicio, cosecha), su vista previa y sus imágenes. Las del
+  // hub salen también en las cartas de la home del sitio; las de la cosecha y el huevo del
+  // inicio, en la página de la cosecha
+  { match: /^public\/img\/(hub|inicio|cosecha)\//, run: ["embed", "site"] },
+  { match: /^src\/embeds\/|^tests\/embed\/|^public\/checklists\//, run: ["embed"] },
+  // La cosecha y sus almas (cosecha.json, publicado junto a su página): el embebido y su
+  // página del sitio
+  { match: /^src\/tools\/cosecha\/|^public\/cosecha\//, run: ["embed", "site"] },
   // La app del checklist: el sitio del Silvestre, el del Hielos y su embebido
   { match: /^src\/tools\/checklist\//, run: ["e2e", "hielos", "embed"] },
   // La cabecera del sitio: la home y, encima de la app, los dos checklists
   { match: /^src\/site\/shell\//, run: ["e2e", "hielos", "site"] },
   // La entrada del checklist en el sitio (la de los dos Dofus)
   { match: /^src\/site\/checklist\/|^index\.html$/, run: ["e2e", "hielos"] },
-  // El resto del sitio «Dofus Tools»: la home, la cabecera y sus pruebas
+  // El resto del sitio «Dofus Tools»: la home, la página de la cosecha y sus pruebas
   { match: /^src\/site\/|^tests\/site\/|^playwright\.site\.config\.js$/, run: ["site"] },
   { match: /^tests\/e2e\//, run: ["e2e"] },
   { match: /^tests\/hielos\//, run: ["hielos"] },
