@@ -1,9 +1,9 @@
-// Lo que un checklist comparte con los demás en localStorage (src/lib/shared.js): las
+// Lo que un checklist comparte con los demás en localStorage (src/tools/checklist/lib/shared.js): las
 // misiones que da por terminadas y los objetos que tiene, cada uno en su entrada.
 // Run: npm run test:unit
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { NO_SHARED, entryOf, othersOf, ownedKeys, parseShared, withEntry, withPrereqs } from "../../src/lib/shared.js";
+import { NO_SHARED, entryOf, othersOf, ownedKeys, parseShared, withEntry, withPrereqs } from "../../src/tools/checklist/lib/shared.js";
 
 const HIELOS = { name: "Dofus de los Hielos", quests: ["612", "581"], owned: ["391"] };
 const SILVESTRE = { name: "Dofus Silvestre", quests: ["612", "1958"], owned: ["421"] };

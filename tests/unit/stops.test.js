@@ -1,9 +1,9 @@
-// Dónde para un paso según el texto de su guía (src/lib/stops.js), en las dos formas de
+// Dónde para un paso según el texto de su guía (src/tools/checklist/lib/stops.js), en las dos formas de
 // decirlo: «hasta tener que pasar X» (Silvestre) y «hasta que te pida pasar la mazmorra
 // del X» (Hielos, paso 12). Run: npm run test:unit
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { FOLLOW_UP, followUpStop, stopPoint } from "../../src/lib/stops.js";
+import { FOLLOW_UP, followUpStop, stopPoint } from "../../src/tools/checklist/lib/stops.js";
 
 const step = (...marks) => ({ marks });
 
