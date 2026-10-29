@@ -502,9 +502,9 @@ llevan a cada checklist:
 <script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/checklists.js"></script>
 ```
 
-Es un widget aparte (`src/hub/`), sin React ni los datos de la app: pesa unos 9 KB. Se
+Es un widget aparte (`src/embeds/hub/`), sin React ni los datos de la app: pesa unos 9 KB. Se
 monta en una shadow root sobre `#checklists-root` y añade sus fuentes al `<head>`, como la
-app. Los Dofus salen de `src/hub/manifest.js`. Para sumar uno se añade una entrada con su
+app. Los Dofus salen de `src/embeds/hub/manifest.js`. Para sumar uno se añade una entrada con su
 color, la dirección de su checklist, su frase y sus imágenes (el huevo y el PNJ en
 `public/img/hub/`, el fondo en `public/img/zones/`). Cada Dofus es una carta coleccionable
 que enlaza a su checklist: la zona de fondo, el PNJ asomando, el huevo con el brillo de su
@@ -529,11 +529,11 @@ de la web:
 ```
 
 Solo existe como embebido: el sitio de GitHub Pages no tiene una página propia para el
-inicio. Es un widget aparte (`src/inicio/`), sin React, que usa la misma carta del hub (la
+inicio. Es un widget aparte (`src/embeds/inicio/`), sin React, que usa la misma carta del hub (la
 inclinación y el brillo de `src/lib/tilt.js`). Arriba van tres cartas grandes (Misiones,
 Guías Dofus y Checklists), debajo tres medianas (Clases y sets, Alineamiento y Team builder)
 y al final la franja «En camino» con las secciones que aún no tienen página, sin enlace.
-Los textos, los enlaces y las imágenes salen de `src/inicio/manifest.js`. Las imágenes
+Los textos, los enlaces y las imágenes salen de `src/embeds/inicio/manifest.js`. Las imágenes
 están en `public/img/` (las de DofusDB, copiadas en `public/img/inicio/`), así que no se
 piden a DofusDB ni a Ankama al cargar la página. Ocupa todo el ancho y tiene el alto de su
 contenido. Por debajo de 600 px de ancho del bloque va en una sola columna. Se construye
@@ -651,7 +651,7 @@ silvestre-checklist/
 ├── src/
 │   ├── main.jsx, App.jsx
 │   ├── embed.jsx             ← entrada del embebido: la app en una shadow root (npm run build:embed)
-│   ├── hub/                  ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
+│   ├── embeds/hub/           ← el hub de los checklists: manifiesto, cartas y su entrada (npm run build:hub)
 │   ├── cosecha/              ← «La eterna cosecha»: las almas del Dofus Ocre y su entrada (npm run build:cosecha)
 │   ├── state/store.js        ← estado único y persistencia en localStorage
 │   ├── components/           ← Header, ThemeSwitch, Hero, Grid, StepDetail, Shop, ResetDialog…

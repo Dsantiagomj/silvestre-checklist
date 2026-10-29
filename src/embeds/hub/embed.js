@@ -5,9 +5,9 @@
 // `npm run build:hub` (vite.config.js) y no carga la app ni sus datos.
 // ============================================================================
 import css from "./hub.css?inline";
-import { pageFonts } from "../lib/fonts.js";
+import { pageFonts } from "../../lib/fonts.js";
 import { renderHub } from "./hub.js";
-import { fillViewportWidth, fitBetweenHeaderAndFooter } from "../lib/pageHeader.js";
+import { fillViewportWidth, fitBetweenHeaderAndFooter } from "../../lib/pageHeader.js";
 
 // Por debajo de este alto (un móvil con el pie alto de Torrente) el pie queda debajo
 const MIN_FIT = 300;

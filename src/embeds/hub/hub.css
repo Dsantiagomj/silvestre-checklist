@@ -2,10 +2,10 @@
    HUB DE LOS CHECKLISTS · UNA CARTA POR DOFUS
    Un título y debajo cartas coleccionables en fila: la zona de fondo, el PNJ asomando por la derecha, el huevo
    arriba con su brillo y el nombre abajo, sobre oscuro. Con el ratón se inclinan y el brillo
-   holográfico lo sigue (src/hub/hub.js). En estrecho (≤600px) van de dos en dos.
-   A pantalla completa: src/hub/embed.js lo lleva de borde a borde y --checklists-h es el
+   holográfico lo sigue (src/embeds/hub/hub.js). En estrecho (≤600px) van de dos en dos.
+   A pantalla completa: src/embeds/hub/embed.js lo lleva de borde a borde y --checklists-h es el
    alto que dejan la cabecera y el pie de la página; las cartas crecen con ese alto.
-   Vive en una shadow root (src/hub/embed.js): nada de la página entra ni sale.
+   Vive en una shadow root (src/embeds/hub/embed.js): nada de la página entra ni sale.
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
 
@@ -29,7 +29,7 @@
 .cards {
   --pad: 28px;
   --gap: clamp(16px, 2vw, 28px);
-  /* Lo que dejan la cabecera y el pie (src/hub/embed.js); sin script, la pantalla */
+  /* Lo que dejan la cabecera y el pie (src/embeds/hub/embed.js); sin script, la pantalla */
   height: var(--checklists-h, 100svh);
   display: flex;
   flex-direction: column;
@@ -65,7 +65,7 @@
   gap: var(--gap);
 }
 
-/* Lo que cabe de alto o, con muchas, lo que toca a cada una del ancho (--n, src/hub/hub.js) */
+/* Lo que cabe de alto o, con muchas, lo que toca a cada una del ancho (--n, src/embeds/hub/hub.js) */
 .card {
   --c: #b7dc69;
   position: relative;
