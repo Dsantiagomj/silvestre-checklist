@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { DEFAULT_UI, groupsOf, initials, matches, parseDone, parseUi } from "../../src/cosecha/souls.js";
+import { DEFAULT_UI, groupsOf, matches, parseDone, parseUi } from "../../src/cosecha/souls.js";
 
 const SOULS = JSON.parse(fs.readFileSync(new URL("../../public/cosecha/cosecha.json", import.meta.url), "utf8"));
 
@@ -30,12 +30,6 @@ test("el tipo quita los grupos sin almas de ese tipo y deja solo las suyas", () 
   const archis = groupsOf(SOULS, "region", "archi");
   assert.ok(archis.every(g => g.souls.length && g.souls.every(s => s.t === "archi")));
   assert.equal(archis.reduce((n, g) => n + g.souls.length, 0), 286);
-});
-
-test("las iniciales de una región: dos palabras largas o las dos primeras letras", () => {
-  assert.equal(initials("Amakna"), "AM");
-  assert.equal(initials("Llanuras de Cania"), "LC");
-  assert.equal(initials("Isla del Minotauroro"), "ID");
 });
 
 test("la búsqueda no distingue tildes ni mayúsculas y mira nombre, mazmorra, subzona y región", () => {

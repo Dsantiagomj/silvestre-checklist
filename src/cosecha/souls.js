@@ -36,12 +36,6 @@ export function groupsOf(souls, by, type) {
     : groups.sort((a, b) => b.souls.length - a.souls.length || a.key.localeCompare(b.key, "es"));
 }
 
-/** El medallón de una región: las iniciales de sus dos primeras palabras largas, o sus dos primeras letras. */
-export function initials(name) {
-  const words = name.split(" ").filter(w => w.length > 2);
-  return (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || name).slice(0, 2)).toUpperCase();
-}
-
 /** Si el alma coincide con lo buscado: nombre, mazmorra, subzona o región. */
 export function matches(soul, q) {
   const needle = norm(q.trim());
