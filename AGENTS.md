@@ -135,11 +135,11 @@ How the embed tests serve Pages from disk (`tests/embed/harness.js`):
 - Each harness (`openHarness`, `openHub`, `openInicio`, `openCosecha`) collects `pageerror`, console errors, failed requests and responses of 400 or more; specs assert the list is empty. Playwright locators pierce the open shadow root, so `page.locator("#cosecha-root .cromo")` works.
 - Seeds go into `localStorage` through `addInitScript` before navigation, only for keys that are missing.
 
-CI (`.github/workflows/ci.yml`) is ONE job, `Pruebas` (the check `main` requires; `sync-guide-dofus.yml` polls it by name). It was cut to one job while the repo was private and minutes were paid; the repo is public now, so minutes are free and splitting it again (shards ran in about 7 minutes against about 15) is a speed decision, not a cost one. A draft PR runs only the unit tests; marking it ready runs the rest.
+CI (`.github/workflows/ci.yml`) aims for speed (the repo is public, minutes are free): `changes` (Qué cambia), `unit`, six e2e shards and `embed` run in parallel, and `Pruebas` aggregates them (it is the check `main` requires; `sync-guide-dofus.yml` polls it by name; skipped jobs count as passed). A draft PR runs only the unit tests; marking it ready runs the rest.
 
-- The "Qué cambia" step pipes `git diff --name-only origin/<base>...HEAD` into `node .github/ci-paths.mjs`, which prints `e2e`, `embed`, `hielos` and `site`. Manual dispatch on `main` runs everything; on another branch (the guide sync) it diffs against `main`. `tests/unit/ci-paths.test.js` tests the map, so the map and CI cannot drift.
-- `npm run test:unit` always runs; the Python `.build/tests` only when `.build/` changes.
-- Then, as conditional steps and cheapest first: `test:embed`, `test:hielos`, `test:site`, the e2e suite, each with one retry. The job runs in the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it).
+- `changes` (Qué cambia) pipes `git diff --name-only origin/<base>...HEAD` into `node .github/ci-paths.mjs`, which prints `e2e`, `embed`, `hielos` and `site`. Manual dispatch on `main` runs everything; on another branch (the guide sync) it diffs against `main`. `tests/unit/ci-paths.test.js` tests the map, so the map and CI cannot drift.
+- `unit` always runs `npm run test:unit`, and the Python `.build/tests` when `.build/` changes.
+- `e2e` runs in six shards; `embed` (Embebido, Hielos y sitio) runs `test:embed`, `test:hielos` and `test:site` as conditional steps of one job. Both use the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it). Each suite retries once.
 - `deploy.yml` is one job (build and publish) and skips pushes that only touch docs, tests, `.build/` or the CI. The guide sync runs once a day, all on Ubuntu (images through ImageMagick, `.build/imaging.py`).
 
 The path map (`.github/ci-paths.mjs`); the first matching rule wins and a path that matches none runs every suite:

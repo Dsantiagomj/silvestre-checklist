@@ -1,21 +1,23 @@
 name: CI
 
 # Las suites de pruebas en cada pull request a main. La protección de main exige el check
-# "Pruebas". La sincronización de la guía lo lanza a mano sobre su rama, porque un PR
-# abierto con el token del workflow no dispara otros workflows.
+# "Pruebas": es el último job y solo pasa si pasan (o se saltan) todos los demás. La
+# sincronización de la guía lo lanza a mano sobre su rama, porque un PR abierto con el
+# token del workflow no dispara otros workflows.
 #
-# Todo va en UN job: se recortó así cuando el repo era privado y cada minuto se pagaba
-# (cuatro trozos en paralelo terminaban en unos 7 min pero costaban unos 30 minutos por PR;
-# en un job tarda unos 15 y se paga una vez). Un PR en borrador solo pasa las unitarias.
+# Se busca velocidad: el repo es público y los minutos no se pagan. El e2e va partido en
+# 6 trozos que corren a la vez (--shard), cada uno con su build, y los embebidos, el
+# Hielos y el sitio en otro job a la par. Lo que manda es el trozo más lento.
 #
 # Cada suite con navegador corre solo si el PR toca algo que pueda romperla: el mapa de
 # carpetas a suites está en .github/ci-paths.mjs (con sus pruebas en las unitarias). Un PR
-# de solo documentación no corre ninguna. Lanzado a mano sobre main, se prueba todo.
+# de solo documentación no corre ninguna, y uno en borrador solo las unitarias: el resto
+# corre al marcarlo listo. Lanzado a mano sobre main, se prueba todo.
 #
-# Corre en la imagen de Playwright, que ya trae Chromium y lo que necesita del sistema:
-# instalarlo con apt dependía del espejo de Ubuntu, que a veces se quedaba 10 minutos
-# parado. La versión de la imagen es la de @playwright/test en package-lock.json: un paso
-# lo comprueba.
+# Los jobs con navegador corren en la imagen de Playwright, que ya trae Chromium y lo que
+# necesita del sistema: instalarlo con apt dependía del espejo de Ubuntu, que a veces se
+# quedaba 10 minutos parado. La versión de la imagen es la de @playwright/test en
+# package-lock.json: un paso lo comprueba.
 on:
   pull_request:
     branches: [main]
@@ -31,24 +33,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Pruebas
+  changes:
+    name: Qué cambia
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
-      options: --ipc=host
+    timeout-minutes: 5
+    outputs:
+      e2e: ${{ steps.diff.outputs.e2e }}
+      embed: ${{ steps.diff.outputs.embed }}
+      hielos: ${{ steps.diff.outputs.hielos }}
+      site: ${{ steps.diff.outputs.site }}
+      build: ${{ steps.diff.outputs.build }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Qué cambia
-        id: diff
+      - id: diff
         env:
           BASE: ${{ github.base_ref }}
           DRAFT: ${{ github.event.pull_request.draft }}
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # Un PR en borrador solo pasa las unitarias: las suites con navegador, al sacarlo
           if [ "$DRAFT" = true ]; then
             printf 'e2e=false\nembed=false\nhielos=false\nsite=false\nbuild=false\n' | tee -a "$GITHUB_OUTPUT"
@@ -64,6 +67,40 @@ jobs:
           echo "$files"
           echo "$files" | node .github/ci-paths.mjs | tee -a "$GITHUB_OUTPUT"
           if echo "$files" | grep -q '^\.build/'; then echo "build=true"; else echo "build=false"; fi | tee -a "$GITHUB_OUTPUT"
+
+  # Las unitarias, siempre; las del pipeline de .build/ (Python), si cambia .build/
+  unit:
+    name: Unitarias
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+      - if: needs.changes.outputs.build == 'true'
+        run: python3 -I -m unittest discover -s .build/tests
+
+  e2e:
+    name: App (${{ matrix.shard }}/6)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host
+    strategy:
+      # Un trozo que falla no para los demás: se ven todos los fallos de una vez
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -71,25 +108,59 @@ jobs:
       - run: npm ci
       - name: La imagen es la de la versión de Playwright
         run: test "$(node -p "require('@playwright/test/package.json').version")" = "1.64.0"
-      - run: npm run test:unit
-      # El pipeline de .build/ (Python, solo la biblioteca estándar): solo si cambia
-      - name: Pruebas de .build/
-        if: steps.diff.outputs.build == 'true'
-        run: |
-          command -v python3 >/dev/null || { apt-get update -qq && apt-get install -y -qq python3 >/dev/null; }
-          python3 -I -m unittest discover -s .build/tests
-      # Un reintento: los fallos que quedan son de tiempo con la máquina cargada
-      - if: steps.diff.outputs.embed == 'true'
-        run: npm run test:embed -- --retries=1
-      - if: steps.diff.outputs.hielos == 'true'
-        run: npm run test:hielos -- --retries=1
-      - if: steps.diff.outputs.site == 'true'
-        run: npm run test:site -- --retries=1
-      - if: steps.diff.outputs.e2e == 'true'
-        run: npx playwright test --retries=1
+      - run: npx playwright test --shard=${{ matrix.shard }}/6 --retries=1
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.shard }}
           path: test-results
           retention-days: 3
+
+  # Los cinco embebidos con su contrato, la prueba de humo del sitio del Hielos y el sitio
+  # «Dofus Tools» (la home, la página de la cosecha y su cabecera): suites cortas, juntas
+  # para no arrancar tres contenedores; cada paso corre solo si le toca
+  embed:
+    name: Embebido, Hielos y sitio
+    needs: changes
+    if: needs.changes.outputs.embed == 'true' || needs.changes.outputs.hielos == 'true' || needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: La imagen es la de la versión de Playwright
+        run: test "$(node -p "require('@playwright/test/package.json').version")" = "1.64.0"
+      - if: needs.changes.outputs.embed == 'true'
+        run: npm run test:embed -- --retries=1
+      - if: needs.changes.outputs.hielos == 'true'
+        run: npm run test:hielos -- --retries=1
+      - if: needs.changes.outputs.site == 'true'
+        run: npm run test:site -- --retries=1
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces-embed
+          path: test-results
+          retention-days: 3
+
+  # El check que exige main: pasa si todo lo demás pasó o se saltó porque el PR no lo toca
+  tests:
+    name: Pruebas
+    needs: [changes, unit, e2e, embed]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "$RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done
