@@ -1,12 +1,12 @@
 name: Sync guide with Torrente Arcano
 
-# Cada 6 horas lee la página de datos de Torrente Arcano (el checklist clásico) de cada
-# Dofus y, si su guía cambió, regenera sus datos y abre un PR a main
-# (sync-guide-dofus.yml). Lo fusiona y despliega cuando pasan las pruebas de CI, que main
+# Una vez al día (cada minuto se paga) lee la página de datos de Torrente Arcano (el
+# checklist clásico) de cada Dofus y, si su guía cambió, regenera sus datos y abre un PR a
+# main (sync-guide-dofus.yml). Lo fusiona y despliega cuando pasan las pruebas de CI, que main
 # exige. Si algo falla, abre un issue (o comenta en el que ya esté abierto).
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 6 * * *"
   workflow_dispatch:
 
 permissions:

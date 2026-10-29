@@ -650,7 +650,7 @@ claves, nunca las cambia ni las borra (`src/tools/checklist/lib/classic.js`).
 
 ### Sincronización con la guía
 
-`.github/workflows/sync-guide.yml` corre cada 6 horas y también a mano (Actions → Sync
+`.github/workflows/sync-guide.yml` corre una vez al día y también a mano (Actions → Sync
 guide with Torrente Arcano → Run workflow). Baja la página de datos y la importa. La
 dirección sale de la variable del repo `GUIDE_URL`; sin ella, usa
 `https://www.torrentearcano.com/checklist-silvestre-datos`.
@@ -658,8 +658,9 @@ dirección sale de la variable del repo `GUIDE_URL`; sin ella, usa
 Si no cambia nada en `src/dofus/silvestre` ni en `.build/lists/silvestre`, termina ahí. Si cambia, en macOS
 (los scripts de imágenes usan `sips`) regenera los assets con la secuencia de "Regenerar
 los assets" y sube el cambio a la rama `sync/guia` con un PR a `main`,
-`chore(guia): sincroniza con Torrente Arcano`. Lanza la CI sobre esa rama, espera al check
-"Pruebas", fusiona el PR y pide el despliegue. Lo que hace el token del workflow (abrir el
+`chore(guia): sincroniza con Torrente Arcano`. Después, en Ubuntu (un minuto de macOS cuesta
+diez), lanza la CI sobre esa rama, espera al check "Pruebas", fusiona el PR y pide el
+despliegue. Lo que hace el token del workflow (abrir el
 PR, fusionarlo) no lanza otros workflows, por eso la CI y el despliegue se piden aparte.
 
 Si algo falla (la página no responde, no trae los datos, falla la regeneración o una
