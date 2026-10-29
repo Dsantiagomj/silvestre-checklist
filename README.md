@@ -333,12 +333,14 @@ sale en `dist/index.html`, con `public/`:
 
 ```bash
 SITE=1 npm run dev     # la home en desarrollo
-npm run build:site     # la home, en dist/
+npm run build:site     # la home y la cosecha, en dist/
 ```
 
 La cabecera (`src/site/shell/`) es un módulo sin React, `mountShell(actual)`, que solo carga
 el sitio: ningún embebido la lleva. Va también encima de los dos checklists, fuera de la app
-(`src/site/checklist/main.jsx`), con su Dofus como página actual. No se pega al hacer scroll,
+(`src/site/checklist/main.jsx`), con su Dofus como página actual, y encima de «La eterna
+cosecha» (`src/site/cosecha/`), que monta el mismo checklist que el embebido en una shadow
+root, con su título como `h1`. No se pega al hacer scroll,
 así que la barra de la ventana de pasos sigue arriba del todo. Un enlace viejo a la raíz con `?…` o `#…` (de cuando el
 Silvestre vivía ahí) va a `silvestre/` con lo mismo detrás.
 
@@ -405,7 +407,7 @@ cambia de un Dofus a otro: los 70 pasos sin errores, el hero con nieve, la
 franja de un solo Dofus, la pantalla baja y el móvil, la nota con el ejemplo de los pasos 8,
 12 y 13, el Dofus que se enciende al marcar el 69 y la misión con parada del paso 12.
 
-La home del sitio tiene la suya, en `tests/site/`:
+El sitio tiene la suya, en `tests/site/`:
 
 ```bash
 npm run test:site
@@ -414,7 +416,10 @@ npm run test:site
 Construye el sitio (`SITE=1`) en `.site-test/` y lo sirve en el puerto 4325 con el mismo
 `tests/serve.js`. Comprueba el título, las tres cartas y sus enlaces, la cabecera con la
 marca y el menú, el salto de los enlaces viejos a `silvestre/`, que nada se salga de lado a
-1440, 1024 y 390 px, que todas las imágenes carguen y que no haya errores.
+1440, 1024 y 390 px, que todas las imágenes carguen y que no haya errores. En la página de
+«La eterna cosecha» comprueba que sale del build del sitio con `cosecha.json` al lado, el
+checklist bajo la cabecera con su entrada como página actual, que lo marcado sigue tras
+recargar y que lo marcado en la vista previa de antes (la misma clave) sigue ahí.
 
 ---
 
@@ -465,8 +470,8 @@ Cada push a `main` lo despliega `.github/workflows/deploy.yml`: instala, constru
 en las pruebas `BASE_PATH` no se pasa y el sitio vive en la raíz. El orden importa:
 
 1. `npm run build:site`: la home en `dist/index.html`, con `public/` (las imágenes en
-   `dist/img/`, las vistas previas de `/checklists/` y `/cosecha/`). Es el único build que
-   vacía `dist/`, por eso va primero.
+   `dist/img/`, la vista previa de `/checklists/`), y la página de «La eterna cosecha» en
+   `dist/cosecha/`. Es el único build que vacía `dist/`, por eso va primero.
 2. `npm run build` y `npm run build:hielos`: el Silvestre en `dist/silvestre/` y el Hielos en
    `dist/hielos/`. Cada uno vacía solo su carpeta y ninguno copia `public/`: sus imágenes son
    las de la raíz.
@@ -597,8 +602,8 @@ carril se pega bajo la cabecera fija de Squarespace, que mide `src/lib/pageHeade
 
 Lo marcado se guarda en `cosecha:done`, la clave de la página suelta que había antes en
 https://dsantiagomj.github.io/silvestre-checklist/cosecha/, así que en ese dominio nadie
-pierde su avance. Esa dirección muestra ahora el mismo checklist a pantalla completa, con
-el mismo snippet y sin nada alrededor (`public/cosecha/index.html`, `noindex`). En
+pierde su avance. Esa dirección es ahora una página del sitio, con su cabecera y el mismo
+checklist debajo (`src/site/cosecha/`); `cosecha.json` se sigue publicando a su lado. En
 torrentearcano.com el progreso empieza de cero: el navegador lo guarda por dominio. La vista (agrupar, tipo, ocultar
 hechos y la etapa o región elegida) va en `cosecha:ui`. Otra pestaña abierta se pone al día
 sola.

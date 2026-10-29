@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { SITE } from "./harness.js";
-import { PAGE, SCRIPT, SOULS, cosecha, loadCosecha, openCosecha, openCosechaPreview, readLS } from "./cosecha-harness.js";
+import { PAGE, SCRIPT, SOULS, cosecha, loadCosecha, openCosecha, readLS } from "./cosecha-harness.js";
 
 const style = (loc, prop) => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
 const stops = page => cosecha(page).locator(".rail .stop");
@@ -349,22 +349,4 @@ test("con movimiento reducido las almas no se mueven al pasar el ratón", async 
   await first.hover();
   expect(await style(first, "transform")).toBe("none");
   expect(await style(cromos(page).nth(0), "transitionDuration")).toMatch(/^0s/);
-});
-
-test("la página de GitHub Pages (/cosecha/) es el mismo checklist, a pantalla completa y con lo marcado antes", async ({ page }) => {
-  // Lo que se marcó en la página suelta que había en esta misma dirección
-  const errors = await openCosechaPreview(page, { [KEY]: [928, 147] });
-  await expect(page).toHaveTitle(/La eterna cosecha/);
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
-  // Una página propia: sin la cabecera ni el pie de Torrente Arcano alrededor
-  await expect(page.locator("#header, #footer-sections")).toHaveCount(0);
-  const box = await cosecha(page).boundingBox();
-  expect(Math.abs(box.x)).toBeLessThan(1);
-  expect(Math.abs(box.y)).toBeLessThan(1);
-  expect(Math.abs(box.width - page.viewportSize().width)).toBeLessThan(1);
-  expect(await page.locator('script[type="module"]').getAttribute("src")).toMatch(/embed\/cosecha\.js$/);
-  await expect(cosecha(page).locator(".bar.t em")).toHaveText("2/337");
-  // Ya no pide cosecha.json: las almas van dentro del embebido
-  expect(await page.evaluate(() => performance.getEntriesByType("resource").some(r => r.name.endsWith("cosecha.json")))).toBe(false);
-  expect(errors).toEqual([]);
 });

@@ -27,7 +27,6 @@ const EMBEDS = [
 test("la base de los embebidos es la de GitHub Pages, también en las vistas previas", () => {
   expect(read("vite.config.js")).toContain(`"${BASE}"`);
   expect(read("public/checklists/index.html")).toContain(`<div id="checklists-root"></div>\n<script type="module" src="${BASE}embed/checklists.js"></script>`);
-  expect(read("public/cosecha/index.html")).toContain(`<div id="cosecha-root"></div>\n<script type="module" src="${BASE}embed/cosecha.js"></script>`);
   // Cada embebido saca sus trozos e imágenes de ahí
   for (const { entry } of EMBEDS) expect(missing(entry, [BASE]), entry).toEqual([]);
 });
