@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import { openApp, siteHeaderBottom } from "./helpers.js";
 
 // La barra de una fila es la de las pantallas bajas (lib/screen.js); en las altas va la
 // franja de los Dofus encima (screens.spec.js)
@@ -22,7 +22,7 @@ test("en pantallas bajas, una sola fila de herramientas, sin cabecera de la app 
   // Con 900 px de alto o más va el hero encima (hero.spec.js)
   await page.setViewportSize({ width: 1440, height: 860 });
   await openApp(page);
-  await expect(page.locator("header")).toHaveCount(0);
+  await expect(page.locator("#root header")).toHaveCount(0);
   await expect(page.locator(".hero, #heroNext, .title-bar")).toHaveCount(0);
   // El nombre de la página sigue para los lectores de pantalla
   await expect(page.locator("h1")).toHaveText("Checklist del Dofus Silvestre");
@@ -36,8 +36,8 @@ test("en pantallas bajas, una sola fila de herramientas, sin cabecera de la app 
   }
   await expect(page.locator("#overlayBtn")).toBeVisible();
   await expect(page.locator("#overlayBtn")).toHaveAttribute("aria-label", "Abrir overlay sobre el juego");
-  // La ventana arranca arriba de la página: lo primero que se ve es la lista
-  expect((await box(page, ".steps-win")).top).toBeLessThan(40);
+  // La ventana arranca arriba de la página, bajo la cabecera del sitio: lo primero que se ve es la lista
+  expect((await box(page, ".steps-win")).top).toBeLessThan(await siteHeaderBottom(page) + 40);
   await expect(page.locator('.diary-row[data-n="1"]')).toBeInViewport();
 });
 

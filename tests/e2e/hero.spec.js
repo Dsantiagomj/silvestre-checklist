@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import { openApp, siteHeaderBottom } from "./helpers.js";
 
 /**
  * En pantallas altas (900 px de alto o más, en escritorio) el hero vuelve encima de la
@@ -27,14 +27,18 @@ test("con la guía terminada el fondo es un mapa distinto en cada tema", async (
   await openApp(page, { "silvestre:done": upTo(100) });
   // Oscuro: Refugio Silvestre. Claro: Mazmorra de los Escarahojas, un bosque de día.
   await expect.poll(() => heroBg(page)).toContain("223350028");
+  const dark = await heroBg(page);
   await page.click("#moreBtn");
   await page.click("#themeBtn");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light", { timeout: 3_000 });
   await expect.poll(() => heroBg(page)).toContain("88080387");
-  // Los dos mapas existen y cargan
-  for (const id of ["223350028", "88080387"]) {
-    const res = await page.request.get(`img/maps/1/${id}.jpg`);
-    expect(res.ok()).toBe(true);
+  const light = await heroBg(page);
+  // Los dos mapas existen y cargan, de la dirección que usa la app (las imágenes van en la
+  // raíz del sitio, no debajo de la app)
+  for (const [bg, id] of [[dark, "223350028"], [light, "88080387"]]) {
+    const url = bg.match(new RegExp(`url\\("?([^")]*maps/1/${id}\\.jpg)"?\\)`))[1];
+    const res = await page.request.get(url);
+    expect(res.ok(), url).toBe(true);
   }
 });
 
@@ -308,9 +312,9 @@ for (const [w, h] of [[1440, 900], [1920, 1080]]) {
     expect(hero.y).toBeLessThan(win.y);
     expect(hero.width).toBe(w);
     await expect(page.locator("#heroNextGo")).toBeVisible();
-    // Sin cabecera de la app: el hero arranca arriba
-    await expect(page.locator("header, .title-bar")).toHaveCount(0);
-    expect(hero.y).toBeLessThanOrEqual(1);
+    // Sin cabecera de la app: el hero arranca arriba, justo bajo la del sitio
+    await expect(page.locator("#root header, #root .title-bar")).toHaveCount(0);
+    expect(hero.y).toBeLessThanOrEqual(await siteHeaderBottom(page) + 1);
     await expect(page.locator("#winBar > .win-strip .road-dofus")).toHaveCount(12);
     const tools = await page.locator("#winBar > .win-bar-in").boundingBox();
     expect(tools.height).toBeLessThanOrEqual(64);

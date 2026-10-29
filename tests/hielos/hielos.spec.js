@@ -49,8 +49,9 @@ test("los 70 pasos cargan sin errores, en el diario y en el mapa, con sus textos
   await page.click("#stepsViewMap");
   await expect(page.locator(".map-node")).toHaveCount(70);
   await expect(page.locator(".map-end-name")).toHaveText("Dofus de los Hielos");
-  // Nada del Silvestre
-  await expect(page.locator("body")).not.toContainText(/Silvestre|Sandglass|100 pasos/);
+  // Nada del Silvestre en la página, salvo su enlace en el menú de la cabecera del sitio
+  const appText = () => page.evaluate(() => [...document.body.children].filter(el => !el.matches(".dt-shell")).map(el => el.textContent).join(" "));
+  await expect.poll(appText).not.toMatch(/Silvestre|Sandglass|100 pasos/);
   expect(errors).toEqual([]);
 });
 
@@ -67,6 +68,21 @@ test("el sitio vive en hielos/ y sus imágenes y favicons salen de la raíz y de
     expect(href).toMatch(/^\/hielos\/assets\//);
     expect((await request.get(href)).ok()).toBe(true);
   }
+});
+
+test("lleva encima la cabecera del sitio, con el Hielos como página actual", async ({ page }) => {
+  await openHielos(page);
+  const shell = page.locator("header.dt-shell");
+  await expect(shell).toHaveCount(1);
+  expect(await shell.evaluate(el => el.nextElementSibling?.id)).toBe("root");
+  // Los enlaces salen de la raíz del sitio, no de hielos/
+  expect(await shell.getByRole("link", { name: "Dofus Tools" }).getAttribute("href")).toBe("/");
+  const nav = shell.getByRole("navigation").getByRole("link");
+  await expect(nav).toHaveCount(3);
+  await expect(nav.nth(1)).toHaveAccessibleName("Dofus de los Hielos");
+  await expect(nav.nth(1)).toHaveAttribute("aria-current", "page");
+  expect(await nav.nth(1).getAttribute("href")).toBe("/hielos/");
+  for (const i of [0, 2]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
 });
 
 test.describe("pantalla alta", () => {
