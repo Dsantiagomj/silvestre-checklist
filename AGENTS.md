@@ -185,7 +185,7 @@ One folder per audience, so a path tells you which suites a change can break (CI
 | `tests/unit`, `tests/e2e`, `tests/embed`, `tests/hielos`, `tests/site` | One dir per suite (Testing above); `tests/serve.js` serves a build like Pages, with `public/` behind it | |
 | `.github/ci-paths.mjs`, `.github/workflows/` | The CI path map; `ci.yml`, `deploy.yml` and the guide sync | |
 
-Import rules: `src/embeds/` and `src/tools/` never import `src/site/`, and `src/tools/` never imports `src/embeds/` (`tests/unit/import-rules.test.js`). The site imports tools and `src/lib/`, never an embed; that one is a convention the test does not check.
+Import rules (`tests/unit/import-rules.test.js`): `src/embeds/` and `src/tools/` never import `src/site/`; `src/tools/` and `src/site/` never import `src/embeds/`. The site uses tools and `src/lib/`.
 
 Build switches (`vite.config.js`):
 

@@ -99,7 +99,7 @@ jobs:
   # Los cinco embebidos en una página como la de Squarespace, con su contrato
   # (tests/embed construye los del Silvestre, el Hielos, el hub, el inicio y la cosecha),
   # la prueba de humo del sitio del Hielos (DOFUS=hielos), servido como en Pages: en
-  # hielos/ con las imágenes de la raíz, y la del sitio «Dofus Tools» (SITE=1: la home y su
+  # hielos/ con las imágenes de la raíz, y la del sitio «Dofus Tools» (SITE=1: la home, la página de la cosecha y su
   # cabecera). Van en un job porque arrancar otro contenedor cuesta más que los segundos
   # del Hielos o del sitio; cada paso corre solo si le toca
   embed:
