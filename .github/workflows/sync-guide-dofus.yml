@@ -42,8 +42,8 @@ jobs:
       changed: ${{ steps.diff.outputs.changed }}
       reason: ${{ steps.fetch.outputs.reason || steps.import.outputs.reason }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Fetch the data page
@@ -76,45 +76,49 @@ jobs:
             git status --porcelain "src/dofus/$DOFUS" ".build/lists/$DOFUS"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.diff.outputs.changed == 'true'
         with:
           name: page-${{ inputs.dofus }}
           path: ${{ runner.temp }}/ta/page.html
           retention-days: 7
 
-  # En macOS: los scripts de los assets recortan y comprimen las imágenes con `sips`
+  # Los scripts de los assets recortan y comprimen las imágenes con ImageMagick
+  # (.build/imaging.py; en un Mac usan sips)
   sync:
     needs: check
     if: needs.check.outputs.changed == 'true'
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     outputs:
       pr: ${{ steps.pr.outputs.number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # Los datos crudos de DofusDB (~190 MB) y las cachés de la API: así regenerar no
       # vuelve a pedir lo que ya se bajó. Clave nueva en cada ejecución (y Dofus) para guardar
       # lo nuevo; se guarda aunque el job falle (Save the caches), así un reintento no lo baja
       # de nuevo. Los datos crudos son de todos los Dofus: se restaura la última de cualquiera
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: .build/data
           key: dofusdb-${{ inputs.dofus }}-${{ github.run_id }}
           restore-keys: dofusdb-
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: page-${{ inputs.dofus }}
           path: ${{ runner.temp }}/ta
       # La misma página que vio `check`; los scripts solo usan la biblioteca estándar.
+      # La imagen de Ubuntu suele traer ImageMagick; si no, se instala
+      - name: ImageMagick
+        run: command -v magick >/dev/null || command -v convert >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick; }
       # DofusDB y Torrente fallan a veces (502, conexiones cortadas): cada script que va a la
       # red se reintenta hasta 3 veces. Repetirlos es seguro, guardan en caché lo que ya bajaron
       - name: Import and regenerate the assets
@@ -158,7 +162,7 @@ jobs:
           python3 -I .build/build_resources.py
       - name: Save the caches
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: .build/data
           key: dofusdb-${{ inputs.dofus }}-${{ github.run_id }}
@@ -187,11 +191,11 @@ jobs:
           fi
           echo "number=$pr" >> "$GITHUB_OUTPUT"
       # Un PR abierto con GITHUB_TOKEN no lanza CI: se lanza a mano sobre la rama y se espera
-      # al check "Pruebas" que exige la protección de main. Es el último job de CI (llega
-      # cuando acaban los trozos de la suite): se mira su estado hasta que pasa o falla
+      # al check "Pruebas" que exige la protección de main (el único job de la CI): se mira
+      # su estado hasta que pasa o falla
 
-  # Esperar la CI, fusionar y publicar no necesita macOS (sips es solo para regenerar las
-  # imágenes) y sus minutos cuestan diez veces más: va en Ubuntu
+  # Esperar la CI, fusionar y publicar: aparte de la regeneración, para que el issue diga
+  # qué falló
   land:
     needs: sync
     if: needs.sync.outputs.pr
