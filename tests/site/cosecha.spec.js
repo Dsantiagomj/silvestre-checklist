@@ -139,3 +139,19 @@ test("el checklist sigue el tema del sitio, también al cambiarlo en la cabecera
   // Su clave del embebido no se toca
   expect(await page.evaluate(() => localStorage.getItem("cosecha:theme"))).toBeNull();
 });
+
+test("«Reiniciar» en su página usa el diálogo del checklist, no el del navegador, y se puede deshacer", async ({ page }) => {
+  const native = [];
+  page.on("dialog", d => { native.push(d.type()); d.dismiss(); });
+  await open(page, { [KEY]: [928, 147] });
+  await tool(page).getByRole("button", { name: "Reiniciar" }).click();
+  const dlg = tool(page).getByRole("dialog", { name: "¿Desmarcar todas las almas?" });
+  await expect(dlg).toBeVisible();
+  await dlg.getByRole("button", { name: "Desmarcar todas" }).click();
+  await expect(tool(page).locator(".bar.t em")).toHaveText("0/337");
+  expect(await readLS(page, KEY)).toEqual([]);
+  await tool(page).locator(".toast").getByRole("button", { name: "Deshacer" }).click();
+  await expect(tool(page).locator(".bar.t em")).toHaveText("2/337");
+  expect(await readLS(page, KEY)).toEqual([928, 147]);
+  expect(native).toEqual([]);
+});

@@ -235,6 +235,7 @@ Where it lives: the site header (one theme for the whole site, `dofus-tools:them
 | Search field | same dark fill, gold 1.5px ring on focus, clear button appears when it has text | `.srch` |
 | Gold rule | two 180px gradient lines (80px narrow) around a 44px emblem | `.rule` in inicio |
 | Completion ring | `conic-gradient(var(--ocre) calc(var(--p) * 1%), rgba(255,255,255,.08) 0)` with a dark inner disc | `.ring` in cosecha |
+| Reset dialog | a native `<dialog>` opened with `showModal()` (focus trap and Esc for free), never `confirm()`. A 76px ring of what is marked fills on open and drains on confirm (SVG stroke, because `@property` does not register inside a shadow root), the title in display 800, the count of what goes, then Cancelar (hairline ring) and the confirm button (pressed `.seg` fill with its gold ring). After it, the toast offers «Deshacer» for 8 seconds with a draining ochre line. The checklist's reset dialog is the model | `.rd` in cosecha |
 
 ## Asset policy
 
