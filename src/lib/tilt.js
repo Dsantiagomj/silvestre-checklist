@@ -1,7 +1,7 @@
 // ============================================================================
 // LA CARTA QUE SE INCLINA — con el ratón encima se inclina hacia él y el brillo holográfico
 // lo sigue (--fx, --fy, que pinta el CSS de cada embebido). La usan el hub
-// (src/hub/hub.js) y el inicio (src/inicio/inicio.js).
+// (src/embeds/hub/hub.js) y el inicio (src/embeds/inicio/inicio.js).
 // ============================================================================
 const still = matchMedia("(prefers-reduced-motion: reduce)");
 

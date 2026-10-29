@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { HUB } from "../../src/hub/manifest.js";
+import { HUB } from "../../src/embeds/hub/manifest.js";
 import { PAGE_FIXTURE, hub, openHub, openHubPreview } from "./hub-harness.js";
 
 const style = (loc, prop) => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
