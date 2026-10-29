@@ -23,5 +23,5 @@ style.textContent = pageFonts(css, "cosecha-fonts");
 const root = document.createElement("div");
 root.className = "cosecha";
 shadow.append(style, root);
-// En su página el título es el de la página: h1
-renderCosecha(root, host, { heading: "h1" });
+// En su página el título es el de la página: h1. Sin interruptor propio: el tema es el del sitio
+renderCosecha(root, host, { heading: "h1", themeSwitch: false });

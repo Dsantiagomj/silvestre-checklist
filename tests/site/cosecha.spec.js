@@ -117,3 +117,9 @@ test("la cabecera del sitio va al ancho de la cosecha: la marca y el huevo empie
     expect(Math.abs(brand.width - hd.width), `a ${width}px`).toBeLessThanOrEqual(1);
   }
 });
+
+test("en su página el checklist no lleva interruptor de tema propio ni lee cosecha:theme", async ({ page }) => {
+  await open(page, { "cosecha:theme": "light" });
+  await expect(tool(page).getByRole("switch")).toHaveCount(0);
+  await expect(tool(page).locator(".cosecha")).toHaveAttribute("data-theme", "dark");
+});

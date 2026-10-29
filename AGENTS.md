@@ -27,11 +27,11 @@ Torre's live pages must not notice any change. Bundle bytes and chunk hashes may
 | Hielos checklist | `embed/hielos.js` | `embed/hielos-chunks`, `embed/hielos-assets` | `#hielos-root` | `hielos-fonts` | `--hielos-top` | prefix `hielos:`; reads `dofus_hielos_clean_v2`; shares `dofus-checklists:shared` |
 | Checklists hub | `embed/checklists.js` | `embed/hub` | `#checklists-root` | `checklists-fonts` | none (sets the height var `--checklists-h`) | none |
 | Torrente home (inicio) | `embed/inicio.js` | `embed/inicio` | `#inicio-root` | `inicio-fonts` | none | none |
-| La eterna cosecha | `embed/cosecha.js` | `embed/cosecha` | `#cosecha-root` | `cosecha-fonts` | `--cosecha-top` | `cosecha:done`, `cosecha:ui` |
+| La eterna cosecha | `embed/cosecha.js` | `embed/cosecha` | `#cosecha-root` | `cosecha-fonts` | `--cosecha-top` | `cosecha:done`, `cosecha:ui`, `cosecha:theme` |
 
 Also frozen: the classic keys are read-only (`src/tools/checklist/lib/classic.js`); `dofus-checklists:shared` is read and written by both checklists (`src/tools/checklist/lib/shared.js`); the stored formats; shadow-root isolation (`mode: "open"`); the preview page `/checklists/` (`noindex, nofollow`), which loads the live bundle from `EMBED_BASE`; `cosecha:done` on the site's `/cosecha/` page, which replaced the old `noindex` preview at the same URL; and the published `/cosecha/cosecha.json`.
 
-Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `storagePrefix`, `classicKeys`), `vite.config.js` (`EMBEDS`, `EMBED_BASE`), `src/embeds/{hub,inicio,cosecha}/embed.js` (host id and fonts key, hard-coded), `src/tools/cosecha/cosecha.js` (`DONE_KEY`, `UI_KEY`). `tests/embed/contract.spec.js` holds these values as literals and checks them against the configs and the built bundles; keep them literal, a test that reads the configs passes whatever they say.
+Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `storagePrefix`, `classicKeys`), `vite.config.js` (`EMBEDS`, `EMBED_BASE`), `src/embeds/{hub,inicio,cosecha}/embed.js` (host id and fonts key, hard-coded), `src/tools/cosecha/cosecha.js` (`DONE_KEY`, `UI_KEY`, `THEME_KEY`). `tests/embed/contract.spec.js` holds these values as literals and checks them against the configs and the built bundles; keep them literal, a test that reads the configs passes whatever they say.
 
 | Rule | Detail |
 |---|---|

@@ -47,7 +47,7 @@ test("cada bundle lleva su anfitrión y su marca de fuentes", () => {
 test("las claves de localStorage que ya tiene la gente siguen en los bundles", () => {
   // El clásico solo se lee; la entrada compartida es la misma en los dos checklists
   for (const { entry, classic } of EMBEDS.filter(e => e.classic)) expect(missing(entry, [...classic, SHARED]), entry).toEqual([]);
-  expect(missing("embed/cosecha.js", ["cosecha:done", "cosecha:ui"])).toEqual([]);
+  expect(missing("embed/cosecha.js", ["cosecha:done", "cosecha:ui", "cosecha:theme"])).toEqual([]);
   // El hub y el inicio no guardan nada
   for (const entry of ["embed/checklists.js", "embed/inicio.js"]) expect(missing(entry, ["localStorage"], false), entry).toEqual([]);
 });
