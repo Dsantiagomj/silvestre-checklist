@@ -118,7 +118,10 @@ test("por región: 19 regiones de la que más almas tiene a la que menos, con su
   const labels = await stops(page).locator(".lab span").allTextContents();
   expect(labels.slice(0, 3)).toEqual(["Amakna", "Llanuras de Cania", "Isla de Otomai"]);
   await expect(stops(page).nth(0).locator(".lab small")).toHaveText("0/85");
-  await expect(stops(page).nth(0).locator(".num")).toHaveText("AM");
+  // Las regiones no tienen orden ni número: sin medallón, y el nombre entero en su sitio
+  await expect(stops(page).locator(".num")).toHaveCount(0);
+  const cut = await stops(page).locator(".lab span").evaluateAll(els => els.filter(e => e.scrollWidth > e.clientWidth).map(e => e.textContent));
+  expect(cut).toEqual([]);
   await expect(cosecha(page).locator(".stH h3")).toHaveText("Amakna");
   await expect(cromos(page)).toHaveCount(85);
   // Dentro de la región, una cabecera por subzona

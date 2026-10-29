@@ -217,7 +217,8 @@ button:focus-visible, .chk input:focus-visible { outline: 2px solid #fff; outlin
   font: 800 17px var(--fd);
   color: #d9d1bf;
 }
-.stop .num.r { font-size: 13px; }
+/* Una región no tiene número: la fila es solo nombre, cuenta y barra */
+.stop.r { grid-template-columns: minmax(0, 1fr); }
 .stop .lab {
   display: flex;
   justify-content: space-between;
@@ -432,6 +433,8 @@ button:focus-visible, .chk input:focus-visible { outline: 2px solid #fff; outlin
   .stop .lab { flex-direction: column; align-items: center; gap: 1px; width: 100%; font-size: 11px; text-align: center; }
   /* Una región larga no cabe en la ficha: se corta con puntos */
   .stop .lab span { max-width: 100%; }
+  /* Sin medallón, la ficha de una región se ensancha con su nombre */
+  .stop.r { width: auto; min-width: 78px; max-width: 150px; padding: 8px 10px; }
   .stop .lab small { font-size: 10.5px; }
   .stop .mini { width: 100%; }
   .bigN { font-size: 44px; }

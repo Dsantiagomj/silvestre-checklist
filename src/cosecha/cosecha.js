@@ -8,7 +8,7 @@
 // ============================================================================
 import SOULS from "../../public/cosecha/cosecha.json";
 import { el, text } from "../lib/dom.js";
-import { groupsOf, initials, matches, parseDone, parseUi } from "./souls.js";
+import { groupsOf, matches, parseDone, parseUi } from "./souls.js";
 
 const DONE_KEY = "cosecha:done";
 const UI_KEY = "cosecha:ui";
@@ -168,7 +168,7 @@ export function renderCosecha(container, host) {
       const d = g.souls.filter(s => done.has(s.id)).length;
       const n = g.souls.length;
       const hits = searching ? g.souls.filter(s => !(ui.hide && done.has(s.id)) && matches(s, q)).length : 0;
-      const b = el("button", `stop${d === n ? " full" : ""}${searching && !hits ? " none" : ""}`, { type: "button", "data-key": g.key });
+      const b = el("button", `stop${isEtapa() ? "" : " r"}${d === n ? " full" : ""}${searching && !hits ? " none" : ""}`, { type: "button", "data-key": g.key });
       if (!searching && g.key === sel) b.setAttribute("aria-current", "true");
       b.setAttribute("aria-label", `${groupTitle(g)}: ${searching ? `${hits} ${hits === 1 ? "resultado" : "resultados"}` : `${d} de ${n}`}`);
       const lab = el("span", "lab");
@@ -177,7 +177,9 @@ export function renderCosecha(container, host) {
       const fill = el("i");
       fill.style.width = `${pct(d, n)}%`;
       mini.append(fill);
-      b.append(text("span", `num${isEtapa() ? "" : " r"}`, isEtapa() ? `${g.key}` : initials(g.label)), lab, mini);
+      // Las etapas llevan su número; las regiones no tienen orden, solo nombre
+      if (isEtapa()) b.append(text("span", "num", `${g.key}`));
+      b.append(lab, mini);
       return b;
     }));
   }
