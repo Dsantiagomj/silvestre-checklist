@@ -44,14 +44,23 @@ test("la cabecera del sitio: la marca lleva a la home y el menú a cada herramie
   await page.goto("./");
   const shell = page.locator("header.dt-shell");
   await expect(shell).toHaveCount(1);
-  // Va arriba del todo, delgada y sin pegarse al hacer scroll
+  // Va arriba del todo, una franja de 84px, y no se pega al hacer scroll
   const box = await shell.boundingBox();
   expect(box.y).toBe(0);
-  expect(box.height).toBeGreaterThanOrEqual(48);
-  expect(box.height).toBeLessThanOrEqual(60);
+  expect(Math.round(box.height)).toBe(84);
   expect(await shell.evaluate(el => getComputedStyle(el).position)).not.toMatch(/sticky|fixed/);
+  // Detrás, la zona de la página (en la home, el Krosmoz), oscurecida hacia los dos lados
+  const art = shell.locator("img.dt-art");
+  await expect(art).toHaveAttribute("src", /\/img\/zones\/krosmoz\.jpg$/);
+  await expect(art).toHaveAttribute("alt", "");
+  expect(await shell.evaluate(el => getComputedStyle(el, "::before").backgroundImage)).toMatch(/^linear-gradient\(90deg/);
+  // La regla dorada de abajo, fundida en los dos extremos
+  expect(await shell.evaluate(el => getComputedStyle(el, "::after").backgroundImage)).toMatch(/rgba\(0, 0, 0, 0\).*rgba\(216, 178, 90, 0\.75\).*rgba\(0, 0, 0, 0\)/);
 
-  const brand = shell.getByRole("link", { name: "Dofus Tools" });
+  // La marca, con su línea dorada encima; el nombre accesible es solo la marca
+  const brand = shell.getByRole("link", { name: "Dofus Tools", exact: true });
+  await expect(brand.locator(".dt-ey")).toHaveText("Checklists y herramientas");
+  expect(await brand.locator(".dt-ey").evaluate(el => getComputedStyle(el).color)).toBe("rgb(216, 178, 90)");
   expect(await brand.evaluate(a => a.href)).toBe(new URL("./", baseURL).href);
   // En la home, la marca es la página actual y ninguna herramienta lo es
   await expect(brand).toHaveAttribute("aria-current", "page");
@@ -84,10 +93,13 @@ for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]]) {
     await page.goto("./", { waitUntil: "load" });
     await expect(page.locator(".home a.card")).toHaveCount(TOOLS.length);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    // La cabecera cabe en una fila y sus enlaces caben en ella
+    // La cabecera: una fila de 84px en ancho; en estrecho, la marca y el interruptor arriba y
+    // el menú debajo, a todo el ancho. Sus enlaces y el interruptor caben
     const shell = page.locator("header.dt-shell");
-    expect((await shell.boundingBox()).height).toBeLessThanOrEqual(60);
-    for (const link of await shell.getByRole("link").all()) {
+    const h = (await shell.boundingBox()).height;
+    if (width > 600) expect(Math.round(h)).toBe(84);
+    else expect(h).toBeLessThanOrEqual(120);
+    for (const link of [...await shell.getByRole("link").all(), shell.getByRole("switch")]) {
       const b = await link.boundingBox();
       expect(b.x).toBeGreaterThanOrEqual(0);
       expect(b.x + b.width).toBeLessThanOrEqual(width);
@@ -107,6 +119,31 @@ for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]]) {
     expect(errors).toEqual([]);
   });
 }
+
+test("en estrecho el menú va en su propia fila, de lado a lado, con solo el final de cada nombre", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./");
+  const shell = page.locator("header.dt-shell");
+  const brand = await shell.getByRole("link", { name: "Dofus Tools", exact: true }).boundingBox();
+  const sw = await shell.getByRole("switch").boundingBox();
+  const links = shell.getByRole("navigation").getByRole("link");
+  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "COSECHA"]);
+  const boxes = await links.evaluateAll(l => l.map(a => a.getBoundingClientRect().toJSON()));
+  // La marca y el interruptor en la primera fila; el menú debajo
+  expect(Math.abs(sw.y + sw.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(12);
+  for (const b of boxes) expect(b.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+  // Repartido: el primero al borde izquierdo de la marca y el último al derecho del interruptor
+  expect(Math.abs(boxes[0].x - brand.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(boxes[2].right - (sw.x + sw.width))).toBeLessThanOrEqual(1);
+});
+
+test("la cabecera se queda oscura en el tema claro", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("dofus-tools:theme", "light"));
+  await page.goto("./");
+  const shell = page.locator("header.dt-shell");
+  expect(await shell.evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgb(11, 12, 10)");
+  expect(await shell.getByRole("link", { name: "Dofus Tools", exact: true }).locator(".dt-lbl").evaluate(el => getComputedStyle(el).color)).toBe("rgb(242, 245, 238)");
+});
 
 test("la home en el tema claro: pergamino, las cartas con su arte y la cabecera con el interruptor", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("dofus-tools:theme", "light"));

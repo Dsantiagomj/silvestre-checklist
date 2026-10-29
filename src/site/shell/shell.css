@@ -1,12 +1,15 @@
 /* ============================================================================
-   LA CABECERA DEL SITIO «DOFUS TOOLS»
-   Una franja delgada (54px) de borde a borde con el contenido al ancho del sitio: la marca a
-   la izquierda y el menú de herramientas a la derecha. No se pega al hacer scroll: debajo, la
-   barra fija de cada app sigue arriba del todo. La página actual va en oro claro con una
-   barra dorada abajo, sin borde lateral. En estrecho (≤600px) el menú muestra solo el final
-   de cada nombre y, si aun así no cabe, se desliza de lado.
+   LA CABECERA DEL SITIO «DOFUS TOOLS» · FRANJA DE ZONA
+   Una franja oscura de 84px de borde a borde con la zona de la página detrás (la home, el
+   Krosmoz; cada herramienta, la suya: shell.js), oscurecida hacia los dos lados, y una regla
+   dorada abajo que se funde en los extremos. Encima, al ancho del sitio: la marca con su
+   línea dorada a la izquierda, el menú de herramientas y el interruptor del tema a la
+   derecha. La página actual va en oro claro con una barra dorada abajo, sin borde lateral.
+   Oscura en los dos temas. No se pega al hacer scroll: debajo, la barra fija de cada app
+   sigue arriba del todo. En estrecho (≤600px) la marca y el interruptor van arriba y el menú
+   debajo, repartido a todo el ancho y con solo el final de cada nombre.
    Todo va bajo .dt-shell y con sus valores puestos: la página de debajo (la app del
-   checklist, su tema claro) no la cambia.
+   checklist, su tema claro, sus img y a:hover) no la cambia.
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
 
@@ -19,11 +22,11 @@
   container: dt-shell / inline-size;
   box-sizing: border-box;
   position: relative;
-  height: 54px;
+  overflow: hidden;
+  isolation: isolate;
   margin: 0;
   padding: 0;
-  background: linear-gradient(180deg, #14160f, #0b0c0a);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .1);
+  background: #0b0c0a;
   font-family: 'Barlow', sans-serif;
   font-size: 16px;
   line-height: 1.35;
@@ -37,22 +40,56 @@
 }
 .dt-shell *, .dt-shell *::before, .dt-shell *::after { box-sizing: border-box; }
 
+/* La zona de la página, detrás y oscurecida hacia los dos lados (y un poco hacia abajo) */
+.dt-shell .dt-art {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  object-fit: cover;
+  object-position: center 38%;
+  opacity: .6;
+  filter: saturate(1.1);
+}
+.dt-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(11, 12, 10, .96) 0%, rgba(11, 12, 10, .55) 34%, rgba(11, 12, 10, .5) 58%, rgba(11, 12, 10, .94) 100%),
+    linear-gradient(180deg, rgba(11, 12, 10, .2), rgba(11, 12, 10, .65));
+}
+/* La regla dorada de abajo, fundida en los dos extremos */
+.dt-shell::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(216, 178, 90, .75) 18%, rgba(216, 178, 90, .75) 82%, transparent);
+}
+
 /* El contenido, al ancho del sitio; el fondo llega a los bordes */
 .dt-in {
   display: flex;
   align-items: stretch;
-  justify-content: space-between;
-  gap: 24px;
+  gap: 28px;
   /* El ancho de la página que la lleva: cada página puede poner el suyo (--dt-max, --dt-side) */
   width: calc(100% - var(--dt-side, 96px));
   max-width: var(--dt-max, 1240px);
-  height: 100%;
+  height: 84px;
   margin-inline: auto;
 }
 
 .dt-brand, .dt-link {
   display: flex;
-  align-items: center;
   margin: 0;
   padding: 0;
   border: 0;
@@ -67,17 +104,29 @@
 .dt-shell a:hover { text-decoration: none; }
 .dt-brand {
   flex: none;
-  font-size: 23px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 5px;
+  margin-right: auto;
+}
+.dt-ey {
+  font: 700 12px/1 var(--dt-fd);
+  letter-spacing: .3em;
+  color: var(--dt-gold);
+}
+.dt-brand .dt-lbl {
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: .04em;
   color: #f2f5ee;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .6), 0 0 18px rgba(0, 0, 0, .7);
 }
 
 .dt-nav {
   display: flex;
   align-items: stretch;
-  gap: 28px;
+  gap: 30px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -87,10 +136,12 @@
 .dt-link {
   position: relative;
   flex: none;
+  align-items: center;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: .08em;
-  color: #c9c2b0;
+  color: #d9d1bf;
+  text-shadow: 0 1px 3px #000;
   transition: color .15s;
 }
 .dt-link:hover { color: #f2f5ee; }
@@ -105,7 +156,11 @@
   height: 3px;
   border-radius: 3px 3px 0 0;
   background: var(--dt-gold);
+  box-shadow: 0 0 12px rgba(216, 178, 90, .6);
 }
+
+/* El interruptor del tema, a la derecha del menú */
+.dt-shell .theme-switch { flex: none; align-self: center; }
 
 /* El foco, sobre el texto: el menú puede deslizarse y recortaría un anillo por fuera */
 .dt-brand:focus, .dt-link:focus { outline: none; }
@@ -115,13 +170,13 @@
   border-radius: 2px;
 }
 
-/* El interruptor del tema, a la derecha del menú */
-.dt-shell .theme-switch { flex: none; align-self: center; }
-
+/* Estrecho: la marca y el interruptor arriba; el menú debajo, repartido a todo el ancho */
 @container dt-shell (max-width: 600px) {
-  .dt-in { width: calc(100% - 32px); gap: 18px; }
-  .dt-brand { font-size: 20px; }
-  .dt-nav { gap: 18px; }
+  .dt-in { width: calc(100% - 28px); flex-wrap: wrap; height: auto; gap: 0 12px; padding-top: 14px; }
+  .dt-brand { gap: 4px; }
+  .dt-ey { font-size: 10.5px; letter-spacing: .26em; }
+  .dt-brand .dt-lbl { font-size: 24px; }
+  .dt-nav { order: 3; width: 100%; height: 46px; justify-content: space-between; gap: 12px; margin-top: 6px; }
   .dt-link { font-size: 15px; letter-spacing: .06em; }
   .dt-pre { display: none; }
 }

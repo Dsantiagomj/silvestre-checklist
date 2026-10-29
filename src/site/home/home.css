@@ -17,7 +17,7 @@ html[data-theme="light"], html[data-theme="light"] body { background: #f4ecdc; }
   container: home / inline-size;
   /* Que el margen de abajo de lo último quede dentro del fondo */
   display: flow-root;
-  min-height: calc(100svh - 54px);
+  min-height: calc(100svh - 84px);
   background: radial-gradient(90% 60% at 50% 0%, #1d1a12, #0b0c0a 70%);
   font-family: var(--fb);
   font-size: 16px;
