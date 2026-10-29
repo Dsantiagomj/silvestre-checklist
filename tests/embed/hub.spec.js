@@ -18,6 +18,7 @@ test("el hub se monta en una shadow root con una carta por Dofus y la de Próxim
   // Cada carta es un enlace con el nombre del Dofus
   await expect(hub(page).getByRole("link", { name: "Dofus Silvestre · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus de los Hielos · Ver checklist" })).toHaveCount(1);
+  await expect(hub(page).getByRole("link", { name: "Dofus Ocre · Ver checklist" })).toHaveCount(1);
   // Las fuentes van en la página: @font-face no funciona dentro de una shadow root
   await expect(page.locator('head link[rel="stylesheet"][href*="fonts.googleapis.com"]')).toHaveCount(1);
   // Las imágenes salen de GitHub Pages, no de Squarespace ni de DofusDB; son decorativas
@@ -47,6 +48,8 @@ test("las cartas siguen el orden del manifiesto y cada una lleva a su checklist"
     await expect(card).not.toContainText(/%|Guardián/);
   }
   expect(HUB.dofus[0].url).toBe("https://www.torrentearcano.com/checklist-silvestre");
+  // La eterna cosecha va en su propia página de Torrente
+  expect(HUB.dofus.find(d => d.id === "ocre")?.url).toBe("https://www.torrentearcano.com/lista-ocre");
 });
 
 test("la carta de Próximamente no es un enlace: gris, su huevo en silueta y «???»", async ({ page }) => {
@@ -205,7 +208,7 @@ test("la vista previa en GitHub Pages (/checklists/) monta el hub con el mismo s
   await expect(page.locator("#header")).toBeVisible();
   await expect(page.locator("#footer-sections")).toBeVisible();
   await expect.poll(() => noScroll(page)).toBe(true);
-  await expect(cards(page)).toHaveCount(3);
+  await expect(cards(page)).toHaveCount(HUB.dofus.length + 1);
   await expect(cards(page).nth(0)).toHaveAttribute("href", HUB.dofus[0].url);
   expect(await page.locator('script[type="module"]').getAttribute("src")).toMatch(/embed\/checklists\.js$/);
   expect(errors).toEqual([]);
