@@ -175,6 +175,32 @@ test("«Ocultar hechos» esconde las marcadas sin cambiar las cuentas, y una eta
   await expect(cosecha(page).getByLabel("Ocultar hechos")).toBeChecked();
 });
 
+test("el anillo dorado del botón pulsado sigue las esquinas redondeadas de su botonera, también en estrecho", async ({ page }) => {
+  const radii = loc => loc.evaluate(el => {
+    const s = getComputedStyle(el);
+    return [s.borderTopLeftRadius, s.borderTopRightRadius, s.borderBottomRightRadius, s.borderBottomLeftRadius];
+  });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await openCosecha(page);
+    for (const group of ["Agrupar", "Tipo"]) {
+      const seg = cosecha(page).getByRole("group", { name: group });
+      const [r] = await radii(seg);
+      expect(r, `${group} a ${width}px`).toBe("10px");
+      const buttons = seg.getByRole("button");
+      // Pulsados, el primero y el último: su anillo va en su caja, que redondea las esquinas de fuera como la botonera
+      await buttons.first().click();
+      await expect(buttons.first()).toHaveAttribute("aria-pressed", "true");
+      expect(await radii(buttons.first()), `${group} a ${width}px`).toEqual([r, "0px", "0px", r]);
+      await buttons.last().click();
+      await expect(buttons.last()).toHaveAttribute("aria-pressed", "true");
+      expect(await radii(buttons.last()), `${group} a ${width}px`).toEqual(["0px", r, r, "0px"]);
+      // Uno de en medio no redondea ninguna
+      if (await buttons.count() > 2) expect(await radii(buttons.nth(1))).toEqual(["0px", "0px", "0px", "0px"]);
+    }
+  }
+});
+
 test("buscar «rata» enseña lo de todas las etapas y apaga en el carril las que no tienen", async ({ page }) => {
   await openCosecha(page);
   await stops(page).nth(7).click();

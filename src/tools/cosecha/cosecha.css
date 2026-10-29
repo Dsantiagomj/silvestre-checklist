@@ -125,6 +125,10 @@ button { margin: 0; font: inherit; color: inherit; cursor: pointer; text-transfo
   color: #c9c2b0;
 }
 .seg.big button { padding: 10px 18px; }
+/* El anillo del pulsado va en la caja del botón: el primero y el último redondean sus
+   esquinas de fuera como la botonera, o el recorte de la botonera se come el anillo ahí */
+.seg button:first-child { border-start-start-radius: inherit; border-end-start-radius: inherit; }
+.seg button:last-child { border-start-end-radius: inherit; border-end-end-radius: inherit; }
 .seg button:hover { color: #f6d48a; }
 .seg button[aria-pressed=true] {
   background: linear-gradient(180deg, #3a2c12, #251b0b);
