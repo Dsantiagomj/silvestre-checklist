@@ -11,7 +11,7 @@ Every change: code, data, docs, CI. Read this file before the first edit. For UI
 1. One branch per change, in a worktree under `../silvestre-checklist-worktrees/<name>`.
 2. Check the frozen embed contract below. If the change touches a row, stop and ask.
 3. Strict TDD: write or adjust the test, watch it fail, then implement.
-4. Run all five suites locally (see Testing). Report failures verbatim.
+4. Run all six suites locally (see Testing). Report failures verbatim.
 5. UI change: screenshots at 1440, 1024 and 390 px in `tmp/shots/`, compared with the approved mockup.
 6. Open the PR (Spanish body, conventional commit title). No auto-merge unless asked.
 
@@ -55,7 +55,7 @@ Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `stor
 | Rule | Detail |
 |---|---|
 | One branch per change | Worktrees under `../silvestre-checklist-worktrees/`, never inside the repo |
-| All five suites before push | `npm run test:unit`, `npm run test:embed`, `npm run test:hielos`, `npm run test:site`, `npm run test:e2e`. Re-run a suspected flake alone (`--retries 0`) before calling it a flake |
+| All six suites before push | `npm run test:unit`, `npm run test:embed`, `npm run test:hielos`, `npm run test:global`, `npm run test:site`, `npm run test:e2e`. Re-run a suspected flake alone (`--retries 0`) before calling it a flake |
 | One concern per PR | Chain PRs when a change mixes concerns or passes about 400 changed lines. A pure `git mv` PR is exempt; review it with `git diff -M --stat` and say so in the body |
 | Merge method | Rebase for human PRs. The guide-sync bot squash-merges (`gh pr merge --squash` in `sync-guide-dofus.yml`) and stays that way |
 | Auto-merge | Only when the user asks |
@@ -141,7 +141,7 @@ CI (`.github/workflows/ci.yml`) aims for speed (the repo is public, minutes are 
 
 - `changes` (Qué cambia) pipes `git diff --name-only origin/<base>...HEAD` into `node .github/ci-paths.mjs`, which prints `e2e`, `embed`, `hielos` and `site`. Manual dispatch on `main` runs everything; on another branch (the guide sync) it diffs against `main`. `tests/unit/ci-paths.test.js` tests the map, so the map and CI cannot drift.
 - `unit` always runs `npm run test:unit`, and the Python `.build/tests` when `.build/` changes.
-- `e2e` runs in six shards; `embed` (Embebido, Hielos y sitio) runs `test:embed`, `test:hielos` and `test:site` as conditional steps of one job. Both use the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it). Each suite retries once.
+- `e2e` runs in six shards; `embed` (Embebido, Hielos, Global y sitio) runs `test:embed`, `test:hielos`, `test:global` and `test:site` as conditional steps of one job. Both use the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it). Each suite retries once.
 - `deploy.yml` is one job (build and publish) and skips pushes that only touch docs, tests, `.build/` or the CI. The guide sync runs once a day, all on Ubuntu (images through ImageMagick, `.build/imaging.py`).
 
 The path map (`.github/ci-paths.mjs`); the first matching rule wins and a path that matches none runs every suite:

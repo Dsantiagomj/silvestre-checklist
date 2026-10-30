@@ -6,6 +6,7 @@ const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", path: "silvestre/" },
   { id: "hielos", name: "Dofus de los Hielos", path: "hielos/" },
   { id: "cosecha", name: "La eterna cosecha", path: "cosecha/" },
+  { id: "global", name: "Guía global", path: "global/" },
 ];
 
 /** Los fallos de la página: errores de JS, de consola y respuestas de 400 o más del sitio. */
@@ -127,14 +128,14 @@ test("en estrecho el menú va en su propia fila, de lado a lado, con solo el fin
   const brand = await shell.getByRole("link", { name: "Dofus Tools", exact: true }).boundingBox();
   const sw = await shell.getByRole("switch").boundingBox();
   const links = shell.getByRole("navigation").getByRole("link");
-  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "COSECHA"]);
+  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "COSECHA", "GLOBAL"]);
   const boxes = await links.evaluateAll(l => l.map(a => a.getBoundingClientRect().toJSON()));
   // La marca y el interruptor en la primera fila; el menú debajo
   expect(Math.abs(sw.y + sw.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(12);
   for (const b of boxes) expect(b.y).toBeGreaterThanOrEqual(brand.y + brand.height);
   // Repartido: el primero al borde izquierdo de la marca y el último al derecho del interruptor
   expect(Math.abs(boxes[0].x - brand.x)).toBeLessThanOrEqual(1);
-  expect(Math.abs(boxes[2].right - (sw.x + sw.width))).toBeLessThanOrEqual(1);
+  expect(Math.abs(boxes.at(-1).right - (sw.x + sw.width))).toBeLessThanOrEqual(1);
 });
 
 test("la cabecera se queda oscura en el tema claro", async ({ page }) => {

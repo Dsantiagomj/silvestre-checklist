@@ -53,6 +53,10 @@ jobs:
       - run: npm run build:hielos
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      # La guía global en dist/global/, sin embebido
+      - run: npm run build:global
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
       # Los embebidos para Torrente Arcano (dist/embed/silvestre.js y dist/embed/hielos.js),
       # junto al sitio: cargan sus trozos y las imágenes de este mismo despliegue
       - run: npm run build:embed

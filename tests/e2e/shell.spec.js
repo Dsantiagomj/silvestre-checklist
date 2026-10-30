@@ -21,11 +21,11 @@ test("el Silvestre vive en silvestre/, con la cabecera del sitio encima de la ap
   const root = new URL("../", baseURL).href;
   expect(await shell.getByRole("link", { name: "Dofus Tools", exact: true }).evaluate(a => a.href)).toBe(root);
   const nav = shell.getByRole("navigation").getByRole("link");
-  await expect(nav).toHaveCount(3);
+  await expect(nav).toHaveCount(4);
   await expect(nav.nth(0)).toHaveAccessibleName("Dofus Silvestre");
   await expect(nav.nth(0)).toHaveAttribute("aria-current", "page");
   expect(await nav.nth(0).evaluate(a => a.href)).toBe(new URL("silvestre/", root).href);
-  for (const i of [1, 2]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
+  for (const i of [1, 2, 3]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
   expect(errors).toEqual([]);
 });
 
@@ -60,7 +60,7 @@ test("el tema es de todo el sitio: se elige en la home y lo siguen el Silvestre 
   const sw = page.locator(".dt-shell").getByRole("switch");
   const bodyBg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   await page.goto(new URL("../", baseURL).href);
-  await expect(page.locator(".home a.card")).toHaveCount(3);
+  await expect(page.locator(".home a.card")).toHaveCount(4);
   await expect(html).toHaveAttribute("data-theme", "dark");
   await sw.click();
   await expect(html).toHaveAttribute("data-theme", "light", { timeout: 3_000 });

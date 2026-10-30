@@ -5,8 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { suites } from "../../.github/ci-paths.mjs";
 
-const NONE = { e2e: false, embed: false, hielos: false, site: false };
-const ALL = { e2e: true, embed: true, hielos: true, site: true };
+const NONE = { e2e: false, embed: false, hielos: false, global: false, site: false };
+const ALL = { e2e: true, embed: true, hielos: true, global: true, site: true };
 const only = (...names) => ({ ...NONE, ...Object.fromEntries(names.map(n => [n, true])) });
 
 test("la documentación no corre nada con navegador", () => {
@@ -34,14 +34,14 @@ test("la página de la cosecha en el sitio: solo el sitio", () => {
   assert.deepEqual(suites(["src/site/cosecha/main.js", "src/site/cosecha/index.html"]), only("site"));
 });
 
-test("la app del checklist va en el sitio, el Hielos y el embebido, no en la home", () => {
-  assert.deepEqual(suites(["src/tools/checklist/components/Hero.jsx"]), only("e2e", "hielos", "embed"));
+test("la app del checklist va en el sitio, el Hielos, la guía global y el embebido, no en la home", () => {
+  assert.deepEqual(suites(["src/tools/checklist/components/Hero.jsx"]), only("e2e", "hielos", "global", "embed"));
   assert.deepEqual(suites(["src/embeds/checklist/embed.jsx"]), only("embed"));
 });
 
-test("la entrada del checklist en el sitio: la app y el Hielos, no los embebidos", () => {
-  assert.deepEqual(suites(["src/site/checklist/main.jsx"]), only("e2e", "hielos"));
-  assert.deepEqual(suites(["index.html"]), only("e2e", "hielos"));
+test("la entrada del checklist en el sitio: la app, el Hielos y la guía global, no los embebidos", () => {
+  assert.deepEqual(suites(["src/site/checklist/main.jsx"]), only("e2e", "hielos", "global"));
+  assert.deepEqual(suites(["index.html"]), only("e2e", "hielos", "global"));
 });
 
 test("la home y sus pruebas: solo el sitio", () => {
@@ -50,18 +50,21 @@ test("la home y sus pruebas: solo el sitio", () => {
   }
 });
 
-test("la cabecera del sitio va en la home y encima de los dos checklists", () => {
-  assert.deepEqual(suites(["src/site/shell/shell.css"]), only("e2e", "hielos", "site"));
+test("la cabecera del sitio va en la home y encima de los tres checklists", () => {
+  assert.deepEqual(suites(["src/site/shell/shell.css"]), only("e2e", "hielos", "global", "site"));
 });
 
 test("las pruebas de cada suite corren solo su suite", () => {
   assert.deepEqual(suites(["tests/e2e/map.spec.js"]), only("e2e"));
   assert.deepEqual(suites(["tests/hielos/smoke.spec.js"]), only("hielos"));
+  assert.deepEqual(suites(["tests/global/global.spec.js"]), only("global"));
 });
 
 test("los datos de cada Dofus: su sitio y el embebido", () => {
   assert.deepEqual(suites(["src/dofus/silvestre/quests.json"]), only("e2e", "embed"));
   assert.deepEqual(suites(["src/dofus/hielos/config.js"]), only("hielos", "embed"));
+  // La guía global no tiene embebido publicado: solo su suite
+  assert.deepEqual(suites(["src/dofus/global/steps.js"]), only("global"));
 });
 
 test("el pipeline de .build/ y las unitarias: solo las unitarias, que corren siempre", () => {

@@ -41,6 +41,7 @@ jobs:
       e2e: ${{ steps.diff.outputs.e2e }}
       embed: ${{ steps.diff.outputs.embed }}
       hielos: ${{ steps.diff.outputs.hielos }}
+      global: ${{ steps.diff.outputs.global }}
       site: ${{ steps.diff.outputs.site }}
       build: ${{ steps.diff.outputs.build }}
     steps:
@@ -54,13 +55,13 @@ jobs:
         run: |
           # Un PR en borrador solo pasa las unitarias: las suites con navegador, al sacarlo
           if [ "$DRAFT" = true ]; then
-            printf 'e2e=false\nembed=false\nhielos=false\nsite=false\nbuild=false\n' | tee -a "$GITHUB_OUTPUT"
+            printf 'e2e=false\nembed=false\nhielos=false\nglobal=false\nsite=false\nbuild=false\n' | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
           # A mano sobre main se prueba todo; sobre otra rama (la de la sincronización de la
           # guía), lo que cambia respecto a main
           if [ -z "$BASE" ] && [ "$GITHUB_REF_NAME" = main ]; then
-            printf 'e2e=true\nembed=true\nhielos=true\nsite=true\nbuild=true\n' | tee -a "$GITHUB_OUTPUT"
+            printf 'e2e=true\nembed=true\nhielos=true\nglobal=true\nsite=true\nbuild=true\n' | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
           files="$(git diff --name-only "origin/${BASE:-main}...HEAD")"
@@ -120,9 +121,9 @@ jobs:
   # «Dofus Tools» (la home, la página de la cosecha y su cabecera): suites cortas, juntas
   # para no arrancar tres contenedores; cada paso corre solo si le toca
   embed:
-    name: Embebido, Hielos y sitio
+    name: Embebido, Hielos, Global y sitio
     needs: changes
-    if: needs.changes.outputs.embed == 'true' || needs.changes.outputs.hielos == 'true' || needs.changes.outputs.site == 'true'
+    if: needs.changes.outputs.embed == 'true' || needs.changes.outputs.hielos == 'true' || needs.changes.outputs.global == 'true' || needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -141,6 +142,8 @@ jobs:
         run: npm run test:embed -- --retries=1
       - if: needs.changes.outputs.hielos == 'true'
         run: npm run test:hielos -- --retries=1
+      - if: needs.changes.outputs.global == 'true'
+        run: npm run test:global -- --retries=1
       - if: needs.changes.outputs.site == 'true'
         run: npm run test:site -- --retries=1
       - uses: actions/upload-artifact@v7
