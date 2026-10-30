@@ -39,8 +39,18 @@ export const groupsOf = n => (data?.STEP_GROUPS?.[n] || null);
  */
 export const questKind = (n, id) => data?.STEP_QUEST_KINDS?.[n]?.[id] || "mandatory";
 
+// El bando del jugador (store: setSide), "bonta" | "brakmar" | null. Las misiones de
+// alineamiento (QUESTS[id].side) del otro bando no se hacen: questsOf las quita
+const SIDES = ["bonta", "brakmar"];
+let side = null;
+/** Elige el bando por el que se filtran las misiones; un valor que no es un bando, ninguno. */
+export const setQuestSide = s => { side = SIDES.includes(s) ? s : null; };
+export const questSide = () => side;
+/** Si la misión se hace con el bando elegido: sin bando elegido o sin bando propio, sí. */
+export const questOnSide = q => !side || !q.side || q.side === side;
+
 export const questsOf = n =>
-  data ? (data.STEP_QUESTS[n] || []).map(id => ({ id, kind: questKind(n, id), ...data.QUESTS[id] })) : [];
+  data ? (data.STEP_QUESTS[n] || []).map(id => ({ id, kind: questKind(n, id), ...data.QUESTS[id] })).filter(questOnSide) : [];
 
 /** La siguiente misión que se hace tras la `i` (las de solo tomarla no), o -1. */
 export const nextWalked = (list, i) => list.findIndex((q, j) => j > i && q.kind !== "take");

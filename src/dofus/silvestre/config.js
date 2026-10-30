@@ -54,6 +54,9 @@ export default {
   // Versión de la guía de Sandglass con la que se numeran los pasos guardados
   guideVersion: 4,
 
+  // Sin misiones de alineamiento: ningún selector de bando
+  sides: null,
+
   // La copia de seguridad: el id que la marca como de este checklist y el nombre del archivo
   backup: { app: "silvestre-checklist", file: "silvestre-progreso" },
 

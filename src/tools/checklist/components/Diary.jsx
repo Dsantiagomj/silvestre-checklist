@@ -10,7 +10,7 @@ import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import {
   clearFilters, hasActiveFilters, isMobile, isStepsView, nextPending, ownedCount, prereqsPending, revealMapNode, selectStep,
-  setSearch, setStatusFilter, setStepsView, showStepsWindow, takeMapFocus,
+  setSearch, setSide, setStatusFilter, setStepsView, showStepsWindow, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
 import Journal from "./Journal.jsx";
@@ -292,6 +292,39 @@ function WinTabs({ s }) {
         })}
       </div>
       <span className="win-tab-pill" ref={pillRef} aria-hidden="true"></span>
+    </div>
+  );
+}
+
+/**
+ * El bando del jugador (DOFUS.sides: Bonta o Brakmar), junto a las pestañas. Las misiones
+ * de alineamiento del otro bando no se hacen y desaparecen de los pasos; sin bando
+ * elegido se ven todas. Solo en una guía con bandos: el Silvestre y el Hielos no lo llevan.
+ */
+function SideSwitch({ s }) {
+  if (!DOFUS.sides) return null;
+  const sides = Object.entries(DOFUS.sides);
+  const onKey = e => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const keys = sides.map(([k]) => k);
+    const next = keys[(Math.max(keys.indexOf(s.side), 0) + step + keys.length) % keys.length];
+    setSide(next);
+    requestAnimationFrame(() => e.currentTarget.querySelector('[aria-checked="true"]')?.focus());
+  };
+  return (
+    <div className="seg side-switch" id="sideSwitch" role="radiogroup" aria-labelledby="sideLabel" onKeyDown={onKey}>
+      <span className="side-label" id="sideLabel">{DOFUS.texts.sideLabel}</span>
+      {sides.map(([key, name]) => {
+        const on = s.side === key;
+        return (
+          <button type="button" role="radio" key={key} id={"side" + key[0].toUpperCase() + key.slice(1)} aria-checked={on}
+            tabIndex={on || (!s.side && key === sides[0][0]) ? 0 : -1}
+            onClick={() => setSide(on ? null : key)}>{name}</button>
+        );
+      })}
     </div>
   );
 }
@@ -602,7 +635,7 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
           herramientas, overlay y menú) y, debajo, lo que se elija */}
       <div className="steps-win">
         <WinBar s={s} tall={tall} onOverlay={onOverlay} onReset={onReset}
-          tabs={<WinTabs s={s} />}
+          tabs={<><WinTabs s={s} /><SideSwitch s={s} /></>}
           tools={<StepsTools s={s} current={current} enter={mounted.current} reduce={reduce} full={tall} />} />
         <div className={"steps-stage" + (swap != null ? " swap" : "")} ref={stageRef}
           style={swap != null && flow ? { minHeight: swap } : undefined}>

@@ -1713,7 +1713,7 @@ button.ov-num:hover{ filter:brightness(1.15); }
   transition:background-color .18s ease, color .18s ease;
 }
 .seg button:hover{ color:var(--txt); }
-.seg button[aria-pressed="true"]{ background:color-mix(in srgb, var(--soon) 22%, transparent); color:var(--soon-ink); }
+.seg button[aria-pressed="true"], .seg button[aria-checked="true"]{ background:color-mix(in srgb, var(--soon) 22%, transparent); color:var(--soon-ink); }
 .seg .n{ font-weight:600; color:var(--txt-mute); font-variant-numeric:tabular-nums; transition:color .18s ease; }
 .seg button[aria-pressed="true"] .n{ color:inherit; }
 .seg-fill{ display:flex; }
@@ -1736,6 +1736,10 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .diary-next:hover:not(:disabled){ filter:brightness(1.08); }
 .diary-next:disabled{ opacity:.6; cursor:default; }
 
+/* El bando del jugador (solo en una guía con bandos): un control segmentado con su
+   etiqueta dentro, junto a las pestañas */
+.side-switch{ flex:none; align-items:center; }
+.side-label{ padding:0 6px 0 10px; font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--txt-mute); }
 /* Pestañas de la ventana: las vistas de los pasos y, tras una raya, las listas */
 .steps-view, .needs-view-tabs{ display:inline-flex; flex:none; padding:3px; border-radius:999px; border:1px solid var(--line-2); background:var(--inset); }
 .steps-view button, .needs-view-tabs button{
@@ -1988,6 +1992,8 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
     -webkit-mask-image:linear-gradient(90deg, #000 calc(100% - 18px), transparent);
             mask-image:linear-gradient(90deg, #000 calc(100% - 18px), transparent);
   }
+  /* Con bando, las cuatro pestañas por delante: si no cabe a su lado, baja a su fila */
+  .win-bar-views:has(.side-switch) .win-tabs{ flex-basis:240px; }
   .win-bar-tools{ flex:none; }
   .diary-search:focus-within, .diary-search.is-filled{ width:calc(100cqw - 20px); }
   .win-bar-tools:has(.diary-search:focus-within, .diary-search.is-filled){ flex-basis:100%; }
@@ -3065,6 +3071,13 @@ button.obj-med:not(:disabled):hover{ transform:scale(1.08); border-color:#f3d98a
   border:1px solid color-mix(in srgb, var(--gw-gold) 55%, transparent);
   background:color-mix(in srgb, var(--gw-gold) 12%, transparent);
   font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-gold);
+}
+/* Misión de alineamiento: su bando, para saber por qué está (o no) en el paso */
+.q-side{
+  padding:1px 8px; border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--gw-ink) 30%, transparent);
+  background:color-mix(in srgb, var(--gw-ink) 7%, transparent);
+  font:700 11px var(--font-display); letter-spacing:.1em; text-transform:uppercase; color:var(--gw-soft); white-space:nowrap;
 }
 /* Misión terminada en el otro checklist (el Silvestre o el Hielos): una etiqueta discreta */
 .q-shared{
