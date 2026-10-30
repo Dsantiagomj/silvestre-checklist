@@ -420,9 +420,14 @@ test("en escritorio va de borde a borde, el carril a la izquierda se pega bajo l
   expect(Math.abs(box.x)).toBeLessThan(1);
   expect(Math.abs(box.width - 1440)).toBeLessThan(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  // Con su alto natural: el texto de Torrente va justo después (tras el margen de 40px de sus párrafos)
-  const below = await page.locator("#below p").boundingBox();
-  expect(Math.abs(below.y - 40 - (box.y + box.height))).toBeLessThan(2);
+  // Con su alto natural: el texto de Torrente va justo después (tras el margen de 40px de sus párrafos).
+  // Las dos cajas se miden a la vez y hasta que el alto se asienta: mientras cargan las fuentes el
+  // widget aún crece, y medirlas por separado daba un hueco de más
+  await expect.poll(() => page.evaluate(() => {
+    const host = document.getElementById("cosecha-root").getBoundingClientRect();
+    const below = document.querySelector("#below p").getBoundingClientRect();
+    return Math.abs(below.top - 40 - host.bottom) < 2;
+  })).toBe(true);
   const rail = cosecha(page).locator(".rail");
   const main = cosecha(page).locator(".main");
   const r = await rail.boundingBox();
