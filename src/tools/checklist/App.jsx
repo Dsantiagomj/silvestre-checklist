@@ -82,7 +82,7 @@ export default function App() {
       </div>
       <BottomSheet mobile={mobile} />
       <ResetDialog ref={resetRef} />
-      <NotaDialog />
+      {DOFUS.nota && <NotaDialog />}
       <Toast />
       <OverlayWindow win={overlayWin} />
     </>

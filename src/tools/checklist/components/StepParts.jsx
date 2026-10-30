@@ -27,7 +27,7 @@ export function CoordChip({ x, y }) {
 
   return (
     <button className={"coord-chip" + (copied ? " ok" : "")} data-travel={label} title={`Copiar /travel ${label}`} onClick={copyTravel}>
-      {copied ? "Copiado" : <><img src={imgUrl(OBJ_ICONS.map)} alt="" />[{label}]</>}
+      {copied ? "Copiado" : <>{OBJ_ICONS.map && <img src={imgUrl(OBJ_ICONS.map)} alt="" />}[{label}]</>}
     </button>
   );
 }
@@ -92,7 +92,7 @@ export function Objectives({ objs, stop, stops, kids = [], onKid, route = false,
             <button type="button" className="obj-med" disabled={!onPick}
               aria-label={`${i < at ? "Desmarcar" : "Marcar como hecho"}: ${o.t}`}
               onClick={() => onPick(i < at ? i : i + 1)}>
-              <img src={imgUrl(OBJ_ICONS[o.k] || OBJ_ICONS.free)} alt="" />
+              {(OBJ_ICONS[o.k] || OBJ_ICONS.free) && <img src={imgUrl(OBJ_ICONS[o.k] || OBJ_ICONS.free)} alt="" />}
             </button>
           ) : (
             <span className="obj-ic" aria-hidden="true">{OBJ_ICON[o.k] || "•"}</span>

@@ -95,7 +95,7 @@ function PrereqCard({ p, done }) {
         {optional && <span className="pr-tag optional">Opcional</span>}
       </button>
       {guide && (
-        <a className="pr-guide" href={guide} target="_blank" rel="noopener" title="Guía del logro en Torrente Arcano">Guía ↗</a>
+        <a className="pr-guide" href={guide} target="_blank" rel="noopener" title={`Guía del logro en ${DOFUS.texts.guideSource}`}>Guía ↗</a>
       )}
     </div>
   );

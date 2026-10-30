@@ -12,14 +12,18 @@ const PAUSED = STEPS.filter(s => s.text.toLowerCase().includes(PHRASE)).length;
 
 // Ejemplo real (nota en config.js): en el Silvestre, los pasos 43 y 44 se detienen ante
 // Kodámade; el 45 pasa la mazmorra y "se terminan las misiones de los incisos 43, 44 y 45"
-const EXAMPLE = { paused: DOFUS.nota.paused, closer: DOFUS.nota.closer };
+// Sin nota (nota: null, la guía global): nada se monta (App.jsx) y estos valores no se usan
+const NOTA = DOFUS.nota || { paused: [], closer: 0, caption: "", pauseAt: {}, checkAt: {} };
+/** Si la guía tiene nota que explicar: con ella, el menú «⋯» y la «i» de los avisos la abren. */
+export const HAS_NOTA = !!DOFUS.nota;
+const EXAMPLE = { paused: NOTA.paused, closer: NOTA.closer };
 const BOSS = assetsFor(EXAMPLE.closer)?.bosses?.[0] ?? null;
 // El pie de foto, con el jefe del paso que cierra donde dice {boss}
-const CAPTION = DOFUS.nota.caption.replace("{boss}", BOSS?.name ?? "el jefe");
+const CAPTION = NOTA.caption.replace("{boss}", BOSS?.name ?? "el jefe");
 // Cuándo pasa el punto por cada casilla en pausa y la deja marcada (s)
-const PAUSE_AT = DOFUS.nota.pauseAt;
+const PAUSE_AT = NOTA.pauseAt;
 // Cuándo se marca cada casilla (s): primero la del que cierra al vencer al jefe, luego hacia atrás
-const CHECK_AT = DOFUS.nota.checkAt;
+const CHECK_AT = NOTA.checkAt;
 // Lo que tarda el rebobinado antes de repetir (ms); igual que en el CSS
 const REWIND_MS = 450;
 

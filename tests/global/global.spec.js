@@ -9,11 +9,7 @@ const STEPS = 219;
 async function openGlobal(page, { view = "diary" } = {}) {
   const errors = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
-  // Los iconos de los avisos (CALL_ICONS) aún no están generados para la guía: su 404 no
-  // es un error de la app. Cualquier otro error de consola sí cuenta
-  page.on("console", m => {
-    if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errors.push(`console: ${m.text()}`);
-  });
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
   await page.addInitScript(v => {
     if (localStorage.getItem("global:stepsView") == null) localStorage.setItem("global:stepsView", v);
   }, view);
@@ -40,10 +36,37 @@ test("lleva encima la cabecera del sitio, con la guía global como página actua
   expect(await current.getAttribute("href")).toBe("/global/");
 });
 
-test("el primer paso abre en el diario con sus misiones", async ({ page }) => {
-  await openGlobal(page);
+/** El texto de la app sin la cabecera del sitio (que enlaza a los otros checklists). */
+const appText = page => page.evaluate(() => [...document.body.children]
+  .filter(el => !el.matches(".dt-shell")).map(el => el.textContent).join(" "));
+
+test("el primer paso abre en el diario con sus misiones, la mazmorra y el farmeo del paso", async ({ page }) => {
+  const errors = await openGlobal(page);
   await page.click('.diary-row[data-n="1"] .row-num');
   await expect(page.locator("#journal .journal-num")).toHaveText("1");
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
   expect(await page.locator("#journal .q-item").count()).toBeGreaterThan(5);
+  // La mazmorra y los farmeos del paso son avisos propios, no «lo que se resuelve» ni notas
+  const dungeon = page.locator("#journal .call.dungeon").first();
+  await expect(dungeon.locator("b").first()).toHaveText("Mazmorra");
+  await expect(dungeon).toContainText("Pasa la mazmorra");
+  const farm = page.locator("#journal .call.farm").first();
+  await expect(farm.locator("b").first()).toHaveText("Farmeo");
+  await expect(farm).toContainText("Farmea en");
+  // Sin icono generado, el medallón va vacío: ninguna imagen rota
+  expect(await page.locator("#journal .call i img").evaluateAll(imgs => imgs.filter(i => i.complete && i.naturalWidth === 0).length)).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test("sin Dofus ni guía de Torrente Arcano: ni franja de Dofus del camino ni enlaces a guías", async ({ page }) => {
+  await openGlobal(page);
+  await page.click('.diary-row[data-n="1"] .row-num');
+  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#winRoad, .road-head, .road-menu")).toHaveCount(0);
+  await expect.poll(() => appText(page)).not.toMatch(/Dofus del camino|Torrente Arcano/);
+  // Los nombres de las misiones no son enlaces: no hay guía a la que llevar
+  await expect(page.locator("#journal a.q-name")).toHaveCount(0);
+  await expect(page.locator("#journal .q-howto")).toHaveText("Pulsa una misión para darla por hecha.");
+  // Tampoco la nota de las pausas: la guía no la tiene
+  await expect(page.locator("#notaDialog, #notaOpen, .nota-open")).toHaveCount(0);
 });

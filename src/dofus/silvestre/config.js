@@ -39,6 +39,8 @@ export default {
     // El pie: quién escribió la guía
     footerLead: "Guía original de los 100 pasos por",
     author: "Sandglass",
+    // De quién es la guía que enlazan las misiones y los logros (null: sin guía que enlazar)
+    guideSource: "Torrente Arcano",
     // Bajo el detalle del paso
     assetNote: "Texto de Sandglass · resaltados de Torrente Arcano · imágenes vía DofusDB",
     // El título de la ventana del overlay (popup)

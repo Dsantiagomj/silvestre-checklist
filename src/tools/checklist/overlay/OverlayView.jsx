@@ -9,6 +9,7 @@ import {
 import { Objectives } from "../components/StepParts.jsx";
 import { Actions, Call, CurrentQuestDone, GuideCalls, Needs, Quests, Tri, progressOf } from "../components/Journal.jsx";
 import { stepGuide } from "../lib/guides.js";
+import DOFUS from "@dofus/config.js";
 import { WinBadge } from "../components/Diary.jsx";
 
 const TAB_KEY = LS.overlayTab;
@@ -22,7 +23,7 @@ const readTab = () => {
 function GuideLink({ step, s }) {
   const href = stepGuide(step, s.questsLoaded ? questsOf(step.n) : []);
   return href ? (
-    <a className="q-guide ov-guide-link" href={href} target="_blank" rel="noopener" title="Guía del paso en Torrente Arcano">Guía</a>
+    <a className="q-guide ov-guide-link" href={href} target="_blank" rel="noopener" title={`Guía del paso en ${DOFUS.texts.guideSource}`}>Guía</a>
   ) : null;
 }
 
