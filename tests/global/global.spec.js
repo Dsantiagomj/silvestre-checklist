@@ -70,3 +70,71 @@ test("sin Dofus ni guía de Torrente Arcano: ni franja de Dofus del camino ni en
   // Tampoco la nota de las pausas: la guía no la tiene
   await expect(page.locator("#notaDialog, #notaOpen, .nota-open")).toHaveCount(0);
 });
+
+// El bando del jugador (Bonta o Brakmar): las misiones de alineamiento del otro bando no se
+// hacen, así que el selector de la barra las quita. El paso 14 lleva misiones de los dos
+// bandos y una sin bando (STEP_QUESTS[14] → QUESTS[id].side en src/dofus/global/quests.json):
+// «El destino» y «Un jabalí demasiado agresivo...» (Bonta), «La fatalidad» (Brakmar) y
+// «Kartier Tremai confiesa» (ninguno)
+const MIXED_STEP = 14;
+
+async function openStep(page, n) {
+  await page.click(`.diary-row[data-n="${n}"] .row-num`);
+  await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
+  await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
+}
+
+const quest = (page, name) => page.locator("#journal .q-item")
+  .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
+
+test("el selector de bando ofrece Bonta y Brakmar, sin ninguno elegido al empezar", async ({ page }) => {
+  const errors = await openGlobal(page);
+  const sw = page.locator("#sideSwitch");
+  await expect(sw).toBeVisible();
+  await expect(sw).toHaveAttribute("role", "radiogroup");
+  await expect(sw).toContainText("Bando");
+  await expect(page.locator("#sideBonta")).toHaveText("Bonta");
+  await expect(page.locator("#sideBrakmar")).toHaveText("Brakmar");
+  await expect(page.locator("#sideBonta")).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator("#sideBrakmar")).toHaveAttribute("aria-checked", "false");
+  // Sin bando se ven todas las misiones, con la etiqueta de su bando
+  await openStep(page, MIXED_STEP);
+  await expect(page.locator("#journal .q-item")).toHaveCount(4);
+  await expect(quest(page, "El destino").locator(".q-side")).toHaveText("Bonta");
+  await expect(quest(page, "La fatalidad").locator(".q-side")).toHaveText("Brakmar");
+  await expect(quest(page, "Kartier Tremai confiesa").locator(".q-side")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("elegir Brakmar quita las misiones de Bonta y deja las de Brakmar y las sin bando", async ({ page }) => {
+  const errors = await openGlobal(page);
+  await openStep(page, MIXED_STEP);
+  await page.click("#sideBrakmar");
+  await expect(page.locator("#sideBrakmar")).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator("#sideBonta")).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator("#journal .q-item")).toHaveCount(2);
+  await expect(quest(page, "El destino")).toHaveCount(0);
+  await expect(quest(page, "Un jabalí demasiado agresivo...")).toHaveCount(0);
+  await expect(quest(page, "La fatalidad")).toHaveCount(1);
+  await expect(quest(page, "La fatalidad").locator(".q-side")).toBeVisible();
+  await expect(quest(page, "Kartier Tremai confiesa")).toHaveCount(1);
+  // El recuento de misiones del paso sigue al filtro
+  await expect(page.locator("#journal .journal-h .n")).toHaveText("(2)");
+  // Y Bonta, al revés
+  await page.click("#sideBonta");
+  await expect(page.locator("#journal .q-item")).toHaveCount(3);
+  await expect(quest(page, "La fatalidad")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("el bando se guarda en global:side y al recargar sigue elegido", async ({ page }) => {
+  await openGlobal(page);
+  await page.click("#sideBrakmar");
+  expect(await page.evaluate(() => localStorage.getItem("global:side"))).toBe("brakmar");
+  await page.reload();
+  await expect(page.locator(".diary-row")).toHaveCount(STEPS);
+  await expect(page.locator("#sideBrakmar")).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator("#sideBonta")).toHaveAttribute("aria-checked", "false");
+  await openStep(page, MIXED_STEP);
+  await expect(page.locator("#journal .q-item")).toHaveCount(2);
+});

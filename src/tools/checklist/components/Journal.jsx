@@ -387,6 +387,12 @@ export function progressOf(s, n, quests, i, q) {
  * junto al interruptor de la fila, nunca dentro: pulsarlo abre la guía y no la completa
  * ni la despliega. Sin guía, solo el nombre.
  */
+/** El bando de una misión de alineamiento (QUESTS[id].side), para saber por qué está en el paso. */
+function QuestSide({ q }) {
+  const name = q.side && DOFUS.sides?.[q.side];
+  return name ? <span className="q-side" title="Misión de alineamiento">{name}</span> : null;
+}
+
 function QuestTitle({ q }) {
   const href = missionGuide(q.n);
   if (!href) return <span className="q-name">{q.n}</span>;
@@ -406,6 +412,7 @@ function TakeOnly({ q, notes }) {
       <div className="q-head">
         <QuestMark className="q-mark" />
         <QuestTitle q={q} />
+        <QuestSide q={q} />
         <span className="q-take" title="No hace falta hacerla: basta con tenerla tomada">Solo tomarla</span>
         <span className="q-lv">{`Niv. ${q.lv}`}</span>
       </div>
@@ -575,6 +582,7 @@ export function Quests({ step, quests, loaded, s }) {
         <div className="q-head">
           <QuestMark className="q-mark" />
           <QuestTitle q={q} />
+          <QuestSide q={q} />
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           {there && <span className="q-shared">{`Hecha en el ${there}`}</span>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>

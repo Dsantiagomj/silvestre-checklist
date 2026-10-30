@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "@dofus/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "@dofus/weights.json";
-import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf } from "../lib/quests.js";
+import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf, setQuestSide } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { STRIP_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
@@ -31,6 +31,8 @@ export const LS = {
   itemsPageSize: key("itemsPageSize"),
   stepsView: key("stepsView"),
   selectedStep: key("selectedStep"),
+  // El bando del jugador (DOFUS.sides), "bonta" | "brakmar"
+  side: key("side"),
   // Ya se trajo el progreso del checklist clásico (la primera visita)
   classicImported: key("classicImported"),
   // Los pasos del clásico con los que se cerró su aviso (classicKey)
@@ -129,6 +131,17 @@ const readStepsView = () => {
 };
 
 /**
+ * El bando elegido, solo si la guía tiene bandos (DOFUS.sides) y es uno de ellos; si no,
+ * ninguno. Se aplica a las misiones (lib/quests.js) al leerlo.
+ */
+const readSide = () => {
+  const v = localStorage.getItem(LS.side);
+  const side = DOFUS.sides && v in DOFUS.sides ? v : null;
+  setQuestSide(side);
+  return side;
+};
+
+/**
  * Progreso guardado, migrado una sola vez si viene de la versión anterior de la guía y,
  * después (ya con su numeración), si viene del modelo anterior de las misiones.
  */
@@ -197,6 +210,8 @@ function initialState() {
     // Pestaña de la ventana de pasos: mapa del camino (por defecto), diario (lista +
     // detalle), prerrequisitos u objetos
     stepsView: readStepsView(),
+    // El bando del jugador: las misiones del otro no se ven (null: todas)
+    side: readSide(),
     // status: all | pending | done (las pestañas del diario)
     filters: { zones: [], status: "all", search: "" },
     shopTab: "todo",
@@ -547,6 +562,26 @@ export function setStepsView(view) {
   if (isStepsView(view)) lastStepsView = view;
   setState({ stepsView: view });
 }
+
+/**
+ * Elige el bando del jugador (uno de DOFUS.sides, o null: todas las misiones). Las
+ * misiones del otro bando desaparecen de los pasos, así que lo que de ellas dependía
+ * (questIndexOf) se vuelve a calcular, y un paso al que ya no le falta ninguna queda
+ * hecho solo, como al marcar.
+ */
+export function setSide(side) {
+  if (!DOFUS.sides) return;
+  const next = side in DOFUS.sides ? side : null;
+  if (next === state.side) return;
+  if (next) localStorage.setItem(LS.side, next);
+  else localStorage.removeItem(LS.side);
+  // Los que ya estaban listos con el bando de antes siguen pendientes (como al marcar)
+  const ready = new Set(readySteps(state));
+  setQuestSide(next);
+  questIndex = null;
+  setState({ side: next });
+  if (questsData()) completeOthers(state, ready);
+}
 /**
  * Desde el diario: vuelve al mapa con ese paso abierto (en móvil cierra la hoja) y lo
  * deja a la vista, centrado, cuando el mapa ya está pintado.
@@ -794,16 +829,16 @@ const readySteps = s => (questsData() ? STEPS.filter(st => !s.done[st.n] && ques
 /**
  * Tras marcar pasos, los pendientes que con eso tienen hechas todas sus obligatorias
  * (las terminó el paso marcado, questDoneElsewhere) quedan hechos también, como con
- * completeIfDone. Solo los que no lo estaban ya antes: uno que se desmarcó a mano con
- * todo hecho sigue pendiente. Cada paso hecho puede completar otro: se repite hasta que
- * no queda ninguno (como mucho, un paso por vuelta). Sin las misiones cargadas, nada.
+ * completeIfDone. Solo los que no lo estaban ya antes (`skip`): uno que se desmarcó a
+ * mano con todo hecho sigue pendiente. Cada paso hecho puede completar otro: se repite
+ * hasta que no queda ninguno (como mucho, un paso por vuelta). Sin las misiones cargadas,
+ * nada.
  */
 let cascading = false;
-function completeOthers(before) {
+function completeOthers(before, skip = new Set(readySteps(before))) {
   if (cascading) return;
   cascading = true;
   try {
-    const skip = new Set(readySteps(before));
     for (let i = 0; i < STEPS.length; i++) {
       const n = readySteps(state).find(m => !skip.has(m));
       if (n == null) break;

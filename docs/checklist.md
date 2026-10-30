@@ -152,6 +152,8 @@ Two more kinds exist for guides generated from DofusDB rather than from a Torren
 
 Three config switches let a checklist drop what only a Torrente Arcano guide has: `texts.guideSource` names who wrote the linked guides (null hides the "its name opens its guide" hint and the link titles), `nota: null` removes the "hasta tener que pasar" explainer from the «⋯» menu and the callouts, and an empty `DOFUS_ROAD` with no `egg.final` hides the "Dofus del camino" strip and menu altogether, keeping only the progress.
 
+A guide with alignment quests sets `sides` in its config (`sides: { bonta: "Bonta", brakmar: "Brakmar" }` in `src/dofus/global/config.js`; `null` in Silvestre and Hielos). The window bar then shows a «Bando» radio group (`#sideSwitch`, label from `texts.sideLabel`) and the choice persists in `<prefix>side` (`global:side`). `questsOf()` in `src/tools/checklist/lib/quests.js` drops every quest whose `side` is set and differs from the chosen one, so the journal, the hero, the overlay and the progress functions all see the same filtered list; with no side chosen every quest shows. Quests that carry a side get a `.q-side` badge with its name. Picking a side resets the store's quest index and runs the same cascade as marking a step: a step whose remaining mandatory quests all belonged to the other side gets marked done.
+
 Some notes go inside a quest instead of on the step:
 
 - A note that starts with "Misión N: Nombre." goes at the top of that quest, without that prefix. In step 93, "Se pasa Miauvisor y se dropea el tótem de sorpresa" shows in "El dragón blanco". N is the quest's number in the achievement, so "Nordalia", as the guide spells it, lands in "Nordalía".

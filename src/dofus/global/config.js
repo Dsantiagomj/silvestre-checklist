@@ -30,7 +30,13 @@ export default {
     guideSource: null,
     assetNote: "Datos e imágenes vía DofusDB",
     overlayTitle: "Guía global · Overlay",
+    // La etiqueta del selector de bando de la barra
+    sideLabel: "Bando",
   },
+
+  // Los bandos del alineamiento: el jugador es de uno solo, y las misiones del otro
+  // (QUESTS[id].side en quests.json) no se hacen. El elegido se guarda en global:side
+  sides: { bonta: "Bonta", brakmar: "Brakmar" },
 
   // localStorage: sin checklist clásico que importar
   storagePrefix: "global:",

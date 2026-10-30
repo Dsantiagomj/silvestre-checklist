@@ -277,3 +277,9 @@ test("una misión terminada en el Silvestre sale hecha aquí, y el paso con todo
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dofus-checklists:shared")).silvestre.quests)).toEqual(["581", "615"]);
   expect(errors).toEqual([]);
 });
+
+test("sin misiones de alineamiento no hay selector de bando", async ({ page }) => {
+  await openHielos(page);
+  await openStep(page, 1);
+  await expect(page.locator("#sideSwitch, .q-side")).toHaveCount(0);
+});
