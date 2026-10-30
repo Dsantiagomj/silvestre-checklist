@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:hielos": "DOFUS=hielos vite build",
+    "build:global": "DOFUS=global vite build",
     "build:embed": "EMBED=1 vite build",
     "build:embed:hielos": "DOFUS=hielos EMBED=1 vite build",
     "build:hub": "HUB=1 vite build",
