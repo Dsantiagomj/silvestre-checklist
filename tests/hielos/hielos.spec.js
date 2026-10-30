@@ -78,11 +78,11 @@ test("lleva encima la cabecera del sitio, con el Hielos como página actual", as
   // Los enlaces salen de la raíz del sitio, no de hielos/
   expect(await shell.getByRole("link", { name: "Dofus Tools" }).getAttribute("href")).toBe("/");
   const nav = shell.getByRole("navigation").getByRole("link");
-  await expect(nav).toHaveCount(3);
+  await expect(nav).toHaveCount(4);
   await expect(nav.nth(1)).toHaveAccessibleName("Dofus de los Hielos");
   await expect(nav.nth(1)).toHaveAttribute("aria-current", "page");
   expect(await nav.nth(1).getAttribute("href")).toBe("/hielos/");
-  for (const i of [0, 2]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
+  for (const i of [0, 2, 3]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
 });
 
 test.describe("pantalla alta", () => {

@@ -21,6 +21,8 @@ export const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", short: "Silvestre", path: "silvestre/", art: "zones/reino-de-amakna.jpg" },
   { id: "hielos", name: "Dofus de los Hielos", short: "Hielos", path: "hielos/", art: "zones/isla-de-frigost.jpg" },
   { id: "cosecha", name: "La eterna cosecha", short: "cosecha", path: "cosecha/", art: "zones/cania.jpg" },
+  // La guía global recorre todo el Mundo de los Doce: el Krosmoz, como la home
+  { id: "global", name: "Guía global", short: "Global", path: "global/", art: "zones/krosmoz.jpg" },
 ];
 // La de la home: el Krosmoz, como su título
 const HOME_ART = "zones/krosmoz.jpg";

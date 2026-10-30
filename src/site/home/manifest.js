@@ -34,5 +34,15 @@ export const HOME = {
       npcFit: { h: "74%", r: "-40%", t: "6%" },
       lead: "Las 337 almas de la misión del Dofus Ocre, etapa por etapa.",
     },
+    global: {
+      color: "#d8b25a",
+      // El Dofus plateado centelleante, el último de la ruta (DofusDB, icono 23027)
+      egg: "hub/dofus-plateado.png",
+      bg: "zones/krosmoz.jpg",
+      // Meriana, la que reparte las misiones de los Dofus (renderer de Ankama)
+      npc: "hub/meriana.png",
+      npcFit: { h: "72%", r: "-30%", t: "4%" },
+      lead: "Todo el PvE del Mundo de los Doce, del nivel 1 al 200, en el orden en que el juego lo plantea.",
+    },
   },
 };

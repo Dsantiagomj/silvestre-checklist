@@ -34,6 +34,9 @@ playwright-report/
 # Build del sitio del Hielos para sus pruebas (playwright.hielos.config.js)
 .hielos-test/
 
+# Build de la guía global para sus pruebas (playwright.global.config.js)
+.global-test/
+
 # Capturas y maquetas para revisar (tmp/shots/)
 tmp/
 

@@ -34,7 +34,14 @@ What changes on screen comes from its `config.js`:
 | `egg.final` | The Dofus de los Hielos, at step 69. The guide gives no Dofus before it, so the strip holds only that one and short screens get no Dofus del camino button |
 | `html.icons` | Its favicons, which ship next to its JS |
 
-Each checklist lives in its own folder, `silvestre/` or `hielos/`, and neither carries a copy of `public/`: their images are the ones at the root (`__SITE_ROOT__` in `src/tools/checklist/lib/assets.js`).
+The third checklist is the Guía global (`src/dofus/global/`), a PvE progression guide from level 1 to 200. It follows no Torrente Arcano guide: its steps (one per zone and 20-level band), quests, stops and by-product achievements are generated from DofusDB data by a scheduler that lives outside the repo for now. It has no published embed, no Dofus at the end (`egg.final` is null) and no classic keys to import.
+
+```bash
+DOFUS=global npm run dev     # the Guía global in development
+npm run build:global         # its site, in dist/global/
+```
+
+Each checklist lives in its own folder, `silvestre/`, `hielos/` or `global/`, and none carries a copy of `public/`: their images are the ones at the root (`__SITE_ROOT__` in `src/tools/checklist/lib/assets.js`).
 
 Progress is stored in `localStorage` under the same keys as the previous version of the app, so anyone who already had progress keeps it.
 
@@ -55,7 +62,7 @@ The build variables (`SITE`, `DOFUS`, `EMBED`, `HUB`, `INICIO`, `COSECHA`, `BASE
 
 ## Tests
 
-Run all five suites before pushing a branch. The browser suites build into their own folder, so they never overwrite `dist/`.
+Run all six suites before pushing a branch. The browser suites build into their own folder, so they never overwrite `dist/`.
 
 | Suite | Builds and serves | Viewport |
 |---|---|---|
@@ -63,6 +70,7 @@ Run all five suites before pushing a branch. The browser suites build into their
 | `npm run test:e2e` | The Silvestre in `.e2e-test/silvestre/`, served by `tests/serve.js` on port 4317 like Pages: the app at `/silvestre/`, images at the root | 1440×900 |
 | `npm run test:embed` | The five embeds in `.embed-test/`, no server | 1440×900 |
 | `npm run test:hielos` | The Hielos in `.hielos-test/`, on port 4321, with the app at `/hielos/` | 1440×1000 |
+| `npm run test:global` | The Guía global in `.global-test/`, on port 4322, with the app at `/global/` | 1440×1000 |
 | `npm run test:site` | The site (`SITE=1`) in `.site-test/`, on port 4325 | 1440×900 |
 
 The `.build/` pipeline has its own, standard library only: `python3 -I -m unittest discover -s .build/tests`.
@@ -93,6 +101,10 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 
 `tests/hielos/` checks what differs from one Dofus to another: the 70 steps without errors, the snowy hero, the single-Dofus strip, short screens and mobile, the note with the example of steps 8, 12 and 13, the Dofus that lights up when step 69 is checked and the quest with a stop in step 12.
 
+### The Guía global
+
+`tests/global/` is a smoke test of what differs: the 219 steps load without errors in the diary and the map, the title and the steps heading, the site header marking `/global/` as the current page, and the first step opening with its quests.
+
 ### The site
 
 `tests/site/` checks on the home page the title, the cards and their links, the header with the brand and the nav, the redirect of old links to `silvestre/`, no horizontal overflow at 1440, 1024 and 390 px, that every image loads and that there are no errors. On «La eterna cosecha» it checks that the page comes from the site build with `cosecha.json` next to it, the checklist under the header, that marks survive a reload and that marks from the preview that used to live at that address are still there.
@@ -104,7 +116,7 @@ Every push to `main` is deployed by `.github/workflows/deploy.yml`: one job that
 Order matters:
 
 1. `npm run build:site`: the home page in `dist/index.html` with `public/` (images in `dist/img/`, the `/checklists/` preview) and the «La eterna cosecha» page in `dist/cosecha/`. It is the only build that empties `dist/`, so it goes first.
-2. `npm run build` and `npm run build:hielos`: the Silvestre in `dist/silvestre/` and the Hielos in `dist/hielos/`. Each empties only its own folder and neither copies `public/`.
+2. `npm run build`, `npm run build:hielos` and `npm run build:global`: the Silvestre in `dist/silvestre/`, the Hielos in `dist/hielos/` and the Guía global in `dist/global/`. Each empties only its own folder and none copies `public/`.
 3. The embeds: `build:embed` (`dist/embed/silvestre.js`, chunks in `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, chunks in `dist/embed/hielos-chunks/`), `build:hub`, `build:inicio` and `build:cosecha`. They load their chunks and images from the absolute Pages address. Each deletes only its own files inside `dist/embed/`, so their order does not matter.
 
 To check a build the way Pages serves it:
@@ -129,7 +141,7 @@ APP_URL=http://127.0.0.1:4318/silvestre-checklist/silvestre/ npm run test:e2e
 | `changes` | Qué cambia | Diffs the PR against its base and asks `.github/ci-paths.mjs` which suites to run |
 | `unit` | Unitarias | Always runs `npm run test:unit`; the Python `.build/tests` only when `.build/` changed |
 | `e2e` | App (1/6) to App (6/6) | The e2e suite in six shards that run at once, each with its own build |
-| `embed` | Embebido, Hielos y sitio | `test:embed`, `test:hielos` and `test:site` as conditional steps of one job |
+| `embed` | Embebido, Hielos, Global y sitio | `test:embed`, `test:hielos`, `test:global` and `test:site` as conditional steps of one job |
 | `tests` | Pruebas | Passes when every other job passed or was skipped. This is the check `main` requires |
 
 - The browser jobs run only when the PR touches something they cover, each suite with one retry. The folder-to-suite map is in `.github/ci-paths.mjs`, tested by `tests/unit/ci-paths.test.js`; its table is in `AGENTS.md`. A docs-only PR runs no browser suite.
