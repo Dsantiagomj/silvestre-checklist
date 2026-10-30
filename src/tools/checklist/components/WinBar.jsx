@@ -1,12 +1,12 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { STEPS } from "@dofus/steps.js";
-import { BRAND_ICON, DOFUS_ROAD, HEADER_ICONS, SOLO_ROAD, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, DOFUS_ROAD, HEADER_ICONS, NO_ROAD, SOLO_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { useDismiss } from "../lib/useDismiss.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 import ThemeSwitch from "./ThemeSwitch.jsx";
 import { isEmbedded } from "../lib/root.js";
-import { openNota } from "./Nota.jsx";
+import { HAS_NOTA, openNota } from "./Nota.jsx";
 import WinStrip from "./WinStrip.jsx";
 import DOFUS from "@dofus/config.js";
 
@@ -189,10 +189,12 @@ function MoreMenu({ onReset }) {
               <ThemeSwitch />
             </div>
           )}
-          <button type="button" className="more-item" id="notaOpen" onClick={then(openNota)}>
-            <span className="more-ic" aria-hidden="true">i</span>
-            <span className="more-label">Qué es «hasta tener que pasar»</span>
-          </button>
+          {HAS_NOTA && (
+            <button type="button" className="more-item" id="notaOpen" onClick={then(openNota)}>
+              <span className="more-ic" aria-hidden="true">i</span>
+              <span className="more-label">Qué es «hasta tener que pasar»</span>
+            </button>
+          )}
           <button type="button" className="more-item danger" id="resetBtn" aria-label="Reiniciar progreso" onClick={then(onReset)}>
             <GameIcon path={HEADER_ICONS?.reset} fallback="↺" kind="hourglass" />
             <span className="more-label">Reiniciar</span>
@@ -220,7 +222,7 @@ export default function WinBar({ s, tall, tabs, tools, onOverlay, onReset }) {
         {!tall && (
           <div className="win-bar-status">
             <WinProgress s={s} />
-            {!SOLO_ROAD && <RoadMenu s={s} />}
+            {!SOLO_ROAD && !NO_ROAD && <RoadMenu s={s} />}
             <NextButton s={s} />
           </div>
         )}

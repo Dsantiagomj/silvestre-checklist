@@ -148,6 +148,10 @@ These are torrentearcano.com's highlights in three colours. Red says how far to 
 
 Each kind has its own colour and game icon.
 
+Two more kinds exist for guides generated from DofusDB rather than from a Torrente Arcano page: `dungeon` ("Mazmorra", the dungeon the step enters with the quests that need it in progress) and `farm` ("Farmeo", where to fight for several quests at once). The hero shows the step's first `stop`, `done`, `dungeon` or `farm` callout. A kind without an icon in `CALL_ICONS` renders an empty medallion instead of a broken image.
+
+Three config switches let a checklist drop what only a Torrente Arcano guide has: `texts.guideSource` names who wrote the linked guides (null hides the "its name opens its guide" hint and the link titles), `nota: null` removes the "hasta tener que pasar" explainer from the «⋯» menu and the callouts, and an empty `DOFUS_ROAD` with no `egg.final` hides the "Dofus del camino" strip and menu altogether, keeping only the progress.
+
 Some notes go inside a quest instead of on the step:
 
 - A note that starts with "Misión N: Nombre." goes at the top of that quest, without that prefix. In step 93, "Se pasa Miauvisor y se dropea el tótem de sorpresa" shows in "El dragón blanco". N is the quest's number in the achievement, so "Nordalia", as the guide spells it, lands in "Nordalía".

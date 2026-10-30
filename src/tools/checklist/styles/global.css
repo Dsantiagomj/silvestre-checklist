@@ -1207,6 +1207,8 @@ button.ov-num:hover{ filter:brightness(1.15); }
   display:flex; align-items:center; gap:12px; max-width:100%; margin:0 0 18px;
 }
 .hero-call.stop{ --call:#e05a4f; }
+.hero-call.dungeon{ --call:#c99a4b; }
+.hero-call.farm{ --call:#7fb66a; }
 .hero-call-med{
   flex:none; display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
   /* La madera oscura y el oro de los medallones del diario, en los dos temas como el estandarte */
@@ -2723,6 +2725,9 @@ button.more-item:hover{ background:color-mix(in srgb, var(--txt) 6%, transparent
 .call.includes{ --call:#d9b45a; }
 .call.must{ --call:#e8923c; }
 .call.note{ --call:#a99c84; }
+/* Los de la guía global: la mazmorra que se pasa y dónde farmear */
+.call.dungeon{ --call:#c99a4b; }
+.call.farm{ --call:#7fb66a; }
 .call i .quest-mark{ width:20px; height:27px; }
 .call i{
   display:grid; place-items:center; width:44px; height:44px; border-radius:50%;

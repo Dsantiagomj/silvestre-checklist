@@ -75,7 +75,8 @@ function useMorph(stage) {
 }
 
 // Los avisos de la guía que valen para el hero: dónde parar (rojo) o lo que se resuelve (verde)
-const CALL_LABEL = { stop: "Hasta dónde llegar", done: "Lo que se resuelve" };
+// Lo que el hero destaca del paso: su parada o lo que resuelve (la mazmorra o el farmeo, en la guía global)
+const CALL_LABEL = { stop: "Hasta dónde llegar", done: "Lo que se resuelve", dungeon: "Mazmorra", farm: "Farmeo" };
 
 /**
  * El paso en una línea, con lo que sale barato: su zona, dónde empieza y, si ya cargaron
@@ -106,7 +107,9 @@ function HeroStep({ s, step }) {
   const fig = bannerFigure(step.n);
   const call = stepCalls(step).find(([kind]) => CALL_LABEL[kind]);
   // En el medallón, el jefe que se pasa o ante el que se para; si no lo hay, el icono de la guía
-  const icon = call && (call[0] === "done" ? doneIcon(step.n) : stopBoss(step.n, call[1])?.img || CALL_ICONS.stop);
+  const icon = call && (call[0] === "done" ? doneIcon(step.n)
+    : call[0] === "stop" ? stopBoss(step.n, call[1])?.img || CALL_ICONS.stop
+    : CALL_ICONS[call[0]] || null);
   return (
     <div className="hero-step-in" id={live ? "heroNext" : undefined} inert={!live}>
       <Banner step={step} className="hero-banner" />

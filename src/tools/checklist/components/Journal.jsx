@@ -16,7 +16,7 @@ import Slot from "./needs/Slot.jsx";
 import { useLeaving } from "../lib/leaving.js";
 import QuestMark from "./QuestMark.jsx";
 import Banner from "./Banner.jsx";
-import { openNota } from "./Nota.jsx";
+import { HAS_NOTA, openNota } from "./Nota.jsx";
 import { useTallScreen } from "../lib/screen.js";
 import DOFUS from "@dofus/config.js";
 
@@ -29,10 +29,16 @@ import DOFUS from "@dofus/config.js";
  */
 export const StepGo = createContext(selectStep);
 
+// De quién es la guía que enlazan las misiones (texts.guideSource); null, sin guía que enlazar
+const GUIDE_SOURCE = DOFUS.texts.guideSource ?? null;
+
 // short: el rótulo de la ficha plegada en el diario (el entero va en su título)
 const CALL = {
   stop: { label: "Hasta dónde llegar", short: "Hasta dónde" },
   done: { label: "Lo que se resuelve", short: "Resuelve" },
+  // Los de la guía global: la mazmorra que se pasa con sus misiones en curso y dónde farmear
+  dungeon: { label: "Mazmorra", short: "Mazmorra" },
+  farm: { label: "Farmeo", short: "Farmeo" },
   includes: { label: "Incluye", short: "Incluye" },
   must: { label: "También hay que", short: "También" },
   tip: { label: "Consejo", short: "Consejo" },
@@ -241,7 +247,7 @@ function GoalRoute({ step, done, label = "Texto de la guía", chips = false }) {
           {asides.map((x, i) => (
             <CallChip key={i} step={step} kind={x.kind} text={x.text} peek={x.peek} id={`call-${step.n}-${i}`}>{x.body}</CallChip>
           ))}
-          {paused && (
+          {paused && HAS_NOTA && (
             <button type="button" className="nota-open" onClick={openNota}
               aria-label="Qué significa «hasta tener que pasar»" title="Qué significa «hasta tener que pasar»">i</button>
           )}
@@ -317,8 +323,8 @@ function CallIcon({ step, kind }) {
     <i aria-hidden="true">
       {kind === "must" ? <QuestMark />
         : kind === "done" ? <img src={imgUrl(doneIcon(step.n))} alt="" />
-        : kind === "closedin" ? <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
-        : kind === "resumedin" ? <img src={imgUrl(OBJ_ICONS.map)} alt="" />
+        : kind === "closedin" ? OBJ_ICONS.fight && <img src={imgUrl(OBJ_ICONS.fight)} alt="" />
+        : kind === "resumedin" ? OBJ_ICONS.map && <img src={imgUrl(OBJ_ICONS.map)} alt="" />
         : CALL_ICONS[kind] && <img src={imgUrl(CALL_ICONS[kind])} alt="" />}
     </i>
   );
@@ -385,7 +391,7 @@ function QuestTitle({ q }) {
   const href = missionGuide(q.n);
   if (!href) return <span className="q-name">{q.n}</span>;
   return (
-    <a className="q-name" href={href} target="_blank" rel="noopener" title="Guía en Torrente Arcano"
+    <a className="q-name" href={href} target="_blank" rel="noopener" title={`Guía en ${GUIDE_SOURCE}`}
       onClick={e => e.stopPropagation()}>{q.n}</a>
   );
 }
@@ -601,7 +607,7 @@ export function Quests({ step, quests, loaded, s }) {
       <h3 className="journal-h"><span className="t">Misiones</span> <span className="n">({quests.length})</span></h3>
       {/* Pulsar la misión la completa; su nombre lleva a la guía, que da el camino */}
       <p className="q-howto">
-        Pulsa una misión para darla por hecha. Su <b>nombre</b> abre su guía de Torrente Arcano, con adónde ir y qué hacer.
+        Pulsa una misión para darla por hecha.{GUIDE_SOURCE && <> Su <b>nombre</b> abre su guía de {GUIDE_SOURCE}, con adónde ir y qué hacer.</>}
       </p>
       {grouped ? grouped.map(([name, img, count], g) => {
         const from = grouped.slice(0, g).reduce((a, x) => a + x[2], 0);

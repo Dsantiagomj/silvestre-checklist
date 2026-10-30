@@ -26,6 +26,8 @@ export default {
     stepsTitle: "Los pasos de la guía global",
     footerLead: "Orden generado desde los datos de",
     author: "DofusDB",
+    // Sin guía externa que enlazar: los nombres de las misiones no son enlaces
+    guideSource: null,
     assetNote: "Datos e imágenes vía DofusDB",
     overlayTitle: "Guía global · Overlay",
   },
@@ -53,15 +55,8 @@ export default {
   feminine: null,
   prereqNote: null,
 
-  // La nota aclaratoria («hasta tener que pasar X»): el ejemplo se ajusta cuando haya pasos
-  // con parada y cierre elegidos a mano; mientras, los dos primeros
-  nota: {
-    paused: [1],
-    closer: 2,
-    pauseAt: { 1: 0.5 },
-    checkAt: { 2: 3.6, 1: 5.0 },
-    caption: "Un paso puede dejar una misión a medias; otro paso posterior la termina.",
-  },
+  // Sin nota de las pausas: la guía no usa «hasta tener que pasar X»
+  nota: null,
 
   journal: {
     extraNotes: {},

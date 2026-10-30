@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import { STEPS } from "@dofus/steps.js";
-import { SOLO_ROAD, STRIP_ROAD, imgUrl } from "../lib/assets.js";
+import { NO_ROAD, SOLO_ROAD, STRIP_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 
@@ -56,6 +56,7 @@ function RoadHead({ s, countRef }) {
  * lo resume en una fila (WinProgress, RoadMenu).
  */
 export default function WinStrip({ s }) {
+  if (NO_ROAD) return <WinStripBare s={s} />;
   const pct = progressPct(s);
   const next = nextPending(s);
   const listRef = useRef(null);
@@ -80,6 +81,15 @@ export default function WinStrip({ s }) {
           );
         })}
       </ul>
+      <WinProgressBlock s={s} pct={pct} next={next} />
+    </div>
+  );
+}
+
+/** El progreso de la franja (porcentaje, barra, pasos hechos) y «Siguiente». */
+function WinProgressBlock({ s, pct, next }) {
+  return (
+    <>
       <div className="win-progress">
         <b className="win-pct" id="winPct">{pct}%</b>
         <span className="win-meter" aria-hidden="true"><i id="winFill" style={{ width: pct + "%" }}></i></span>
@@ -88,6 +98,17 @@ export default function WinStrip({ s }) {
       <button type="button" className="diary-next" id="diaryNext" disabled={next == null} onClick={goToNextPending}>
         {next != null ? <>Siguiente: <b>{next}</b> <span aria-hidden="true">→</span></> : "Guía completa"}
       </button>
+    </>
+  );
+}
+
+/** La franja sin Dofus (NO_ROAD): solo el progreso y el siguiente pendiente. */
+function WinStripBare({ s }) {
+  const pct = progressPct(s);
+  const next = nextPending(s);
+  return (
+    <div className="win-strip is-bare">
+      <WinProgressBlock s={s} pct={pct} next={next} />
     </div>
   );
 }
