@@ -64,19 +64,22 @@ const EMBED_BASE = "https://dsantiagomj.github.io/silvestre-checklist/";
 // embed/hielos.js), el hub de los checklists (HUB=1, npm run build:hub,
 // src/embeds/hub/embed.js), una franja por Dofus que lleva a su checklist, y el inicio de
 // torrentearcano.com (INICIO=1, npm run build:inicio, src/embeds/inicio/embed.js) y el checklist
-// de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/embeds/cosecha/embed.js). Esos tres
-// van aparte y solos: no cargan la app ni sus datos
+// de «La eterna cosecha» (COSECHA=1, npm run build:cosecha, src/embeds/cosecha/embed.js) y las guías
+// de los Dofus (GUIAS=1, npm run build:guias, src/embeds/guias/embed.js). Esos cuatro van aparte y
+// solos: no cargan la app ni sus datos
 const EMBEDS = {
   app: { input: "src/embeds/checklist/embed.jsx", ...CONFIG?.build.embed },
   hub: { input: "src/embeds/hub/embed.js", entry: "embed/checklists.js", chunks: "embed/hub", assets: "embed/hub" },
   inicio: { input: "src/embeds/inicio/embed.js", entry: "embed/inicio.js", chunks: "embed/inicio", assets: "embed/inicio" },
   cosecha: { input: "src/embeds/cosecha/embed.js", entry: "embed/cosecha.js", chunks: "embed/cosecha", assets: "embed/cosecha" },
+  guias: { input: "src/embeds/guias/embed.js", entry: "embed/guias.js", chunks: "embed/guias", assets: "embed/guias" },
 };
 
 function embedConfig(name) {
   // Junto al sitio normal: dist/embed/silvestre.js y sus trozos en dist/embed/chunks/ (el
   // Hielos, dist/embed/hielos.js y dist/embed/hielos-chunks/); el hub, dist/embed/checklists.js;
-  // el inicio, dist/embed/inicio.js; la cosecha, dist/embed/cosecha.js. Las imágenes no se copian, son las de public/ que ya
+  // el inicio, dist/embed/inicio.js; la cosecha, dist/embed/cosecha.js; las guías,
+  // dist/embed/guias.js. Las imágenes no se copian, son las de public/ que ya
   // publica el sitio. Las pruebas lo construyen en otra carpeta (EMBED_OUT) para no pisar
   // dist/. Cada uno borra solo lo suyo: construir uno no se lleva el otro
   const { input, entry, chunks, assets } = EMBEDS[name];
@@ -107,7 +110,7 @@ function embedConfig(name) {
   };
 }
 
-const embedName = () => (process.env.COSECHA ? "cosecha" : process.env.INICIO ? "inicio" : process.env.HUB ? "hub" : process.env.EMBED ? "app" : null);
+const embedName = () => (process.env.GUIAS ? "guias" : process.env.COSECHA ? "cosecha" : process.env.INICIO ? "inicio" : process.env.HUB ? "hub" : process.env.EMBED ? "app" : null);
 
 // El sitio de un Dofus que no vive en la raíz (build.outDir): en su carpeta y sin public/
 const nested = command => command === "build" && !!CONFIG.build.outDir;
