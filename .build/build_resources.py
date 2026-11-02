@@ -312,7 +312,23 @@ def check_against_compiled(steps, items):
     print(f"comparado con el compilado: {len(want) - len(diff)}/{len(want)} filas iguales")
 
 
-def main():
+def with_quests(steps, purpose):
+    """steps with each row's "m", the quests item_quests.json gives its key in its step.
+    On the page's rows (listed), before expand_crafted passes a crafted item's quests to
+    its ingredients: audit_resources.py labels those same rows."""
+    steps = {n: [dict(r) for r in rows] for n, rows in steps.items()}
+    for n, rows in steps.items():
+        for row in rows:
+            if purpose.get(n, {}).get(row["k"]):
+                row["m"] = purpose[n][row["k"]]
+    return steps
+
+
+def listed():
+    """(steps, items, missing): the page's rows per step, as the checklist keeps them (one
+    order, moved, without duplicates, with the extra items) but with the crafted quest items
+    still as such, every item they name and the names DofusDB does not know.
+    audit_resources.py labels these same rows."""
     source = json.loads(SOURCE.read_text())
     cache = json.loads(CACHE.read_text()) if CACHE.exists() else {}
     items, steps, missing = {}, {}, set()
@@ -381,12 +397,14 @@ def main():
                              "a": [[key, qty]], "p": prereq})
             print(f"paso {n}: con {hit['name']} ×{qty} ({label})")
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
+    return steps, items, missing
+
+
+def main():
+    steps, items, missing = listed()
     # "m": the quests each item is for, so the app can say what it is for
     purpose = json.loads(ITEM_QUESTS.read_text()) if ITEM_QUESTS.exists() else {}
-    for n, rows in steps.items():
-        for row in rows:
-            if purpose.get(n, {}).get(row["k"]):
-                row["m"] = purpose[n][row["k"]]
+    steps = with_quests(steps, purpose)
     # The crafted quest items, by their ingredients (after the check: the page counts them)
     crafts = json.loads(CRAFTS.read_text()) if CRAFTS.exists() else {"recipes": {}, "items": {}}
 

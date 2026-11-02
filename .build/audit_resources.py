@@ -1,7 +1,8 @@
 """Audit the items each step asks for against what its quests really need.
 
-For every step it compares the checklist (src/dofus/<dofus>/resources.json, from the
-torrentearcano page) with two sources:
+For every step it compares the checklist (the page's rows as build_resources.py keeps
+them, build_resources.listed, with the crafted quest items still as such) with two
+sources:
   - DofusDB: each objective of the step's quests that consumes items ("Entrégale",
     "Fabrica"), with the quantities DofusDB generates (need.generated). Crafted
     items are expanded through their recipes down to what you gather, which is
@@ -13,11 +14,15 @@ Usage:
   python3 -I .build/audit_resources.py 1 5-8      some steps
   (--dofus <id> or DOFUS picks the Dofus; silvestre by default)
 
-Reads  : src/dofus/<dofus>/{resources,quests,guides}.json, .build/data/quests.json
+Reads  : the page's rows (build_resources.listed: .build/lists/<dofus>/torrentearcano.json),
+         src/dofus/<dofus>/{quests,guides}.json, the item names of resources.json (the
+         ingredients too, for the + lines), .build/data/quests.json
 Caches : .build/data/ta_needs.json (guide pages), .build/data/recipes.json
 Writes : .build/lists/<dofus>/item_quests.json when it checks every step: {step: {row key:
          [quest names]}}, the quests that use each item up (build_resources.py
-         shows it with the item: "para qué misión es")
+         shows it with the item: "para qué misión es"). Keyed by the page's rows, which
+         build_resources.py labels before it turns a crafted quest item into its
+         ingredients: they take its quests
 Prints, per step:
   ✓ item qty   explained by a quest (DofusDB or its guide)
   ≠ item qty   explained, but the quest asks for another quantity
@@ -29,7 +34,9 @@ prerequisite against DofusDB alone: each one resolves to its quests (an achievem
 only the numbered ones when it names them, or a single quest by name), and the items
 step 0 ties to it (PREREQ_OF) are compared with what those quests consume.
 """
+import contextlib
 import html
+import io
 import json
 import pathlib
 import re
@@ -43,6 +50,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+import build_resources  # noqa: E402
 D = dofus.CONFIG
 SRC = dofus.SRC
 DATA = ROOT / "data"
@@ -178,13 +186,13 @@ def prereq_quests(text, achievements, quests, cache):
     return [q for q in picked if q]
 
 
-def audit_prereqs(res, raw, recipes, names):
+def audit_prereqs(steps, raw, recipes, names):
     steps_js = (SRC / "steps.js").read_text()
     block = steps_js.split("export const PREREQS_LOGROS = [", 1)[1].split("];", 1)[0]
     prereqs = re.findall(r'\{ id: "(\w+)", text: "((?:[^"\\]|\\.)*)" \}', block)
     achievements = {a["id"]: a for a in json.loads((DATA / "achievements.json").read_text())}
     by_name = {norm(q["name"]["es"]): q for q in raw.values()}
-    rows = res["steps"].get("0", [])
+    rows = steps.get("0", [])
     print("\nPrerrequisitos (DofusDB)")
     for pid, text in prereqs:
         text = json.loads(f'"{text}"')
@@ -212,6 +220,32 @@ def audit_prereqs(res, raw, recipes, names):
             print("    sin misiones en DofusDB (logro de otro tipo): nada que consumir")
 
 
+def page():
+    """(steps, items): the page's rows per step and the items they name, the rows
+    build_resources.py labels with item_quests.json (build_resources.listed), without
+    what it prints while it reads them."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        steps, items, _ = build_resources.listed()
+    return steps, items
+
+
+def purpose_of(n, rows, why):
+    """{row key: [quest names]}: the quests each row of step n is for, those that ask for
+    that same quantity, or else every quest that asks for it. MANUAL wins."""
+    out = {}
+    for row in rows:
+        key, qty = row["a"][0]
+        found = why.get(key, [])
+        exact = [m for q, m, _ in found if q == qty]
+        quests = list(dict.fromkeys(exact or [m for _, m, _ in found]))
+        manual = MANUAL.get(str(n), {}).get(key)
+        if manual:
+            quests = [manual]
+        if quests:
+            out[row["k"]] = quests
+    return out
+
+
 def steps_arg(args):
     wanted = set()
     for a in args:
@@ -221,16 +255,19 @@ def steps_arg(args):
 
 
 def main(args):
-    res = json.loads((SRC / "resources.json").read_text())
+    steps, items = page()
     diary = json.loads((SRC / "quests.json").read_text())
     links = json.loads((SRC / "guides.json").read_text())
     guides = {**links["missions"], **links.get("quests", {})}
     raw = {q["id"]: q for q in json.loads((DATA / "quests.json").read_text())}
     ta = json.loads(TA_CACHE.read_text()) if TA_CACHE.exists() else {}
     recipes = json.loads(RECIPES.read_text()) if RECIPES.exists() else {}
-    names = {k: v["name"] for k, v in res["items"].items()}
+    # Con los nombres de resources.json, que tiene además los ingredientes de los objetos
+    # fabricados: el aviso "+" solo sale para lo que el checklist lista en algún paso
+    checklist = json.loads((SRC / "resources.json").read_text())["items"]
+    names = {k: v["name"] for k, v in {**checklist, **items}.items()}
     by_name = {norm(v): k for k, v in names.items()}
-    prereq = {r["k"]: r["a"][0][1] for r in res["steps"].get("0", [])}
+    prereq = {r["k"]: r["a"][0][1] for r in steps.get("0", [])}
 
     def explain(n):
         """What each quest of step n consumes: {item key: [(qty, quest name, source)]}."""
@@ -247,7 +284,7 @@ def main(args):
         return why
 
     if not args or "0" in args:
-        audit_prereqs(res, raw, recipes, names)
+        audit_prereqs(steps, raw, recipes, names)
         args = [a for a in args if a != "0"]
         if not args and "0" in sys.argv[1:]:
             return
@@ -263,19 +300,12 @@ def main(args):
     totals = {"ok": 0, "qty": 0, "unexplained": 0, "prereq": 0, "missing": 0}
     purpose = {}
     for n in chosen:
-        rows = res["steps"].get(str(n), [])
+        rows = steps.get(str(n), [])
         why = every[n]
         # Para qué misión es cada objeto: las que piden esa misma cantidad, si no todas
-        for row in rows:
-            key, qty = row["a"][0]
-            found = why.get(key, [])
-            exact = [m for q, m, _ in found if q == qty]
-            quests = list(dict.fromkeys(exact or [m for _, m, _ in found]))
-            manual = MANUAL.get(str(n), {}).get(key)
-            if manual:
-                quests = [manual]
-            if quests:
-                purpose.setdefault(str(n), {})[row["k"]] = quests
+        quests = purpose_of(n, rows, why)
+        if quests:
+            purpose[str(n)] = quests
         lines = []
         listed = set()
         for row in rows:

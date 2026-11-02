@@ -90,7 +90,7 @@ Two names do not exist in DofusDB and show without an image: Esencia de cil and 
 
 ### Which quest each item is for
 
-`.build/audit_resources.py` cross-checks what each step asks for against what its quests consume in DofusDB (hand-ins and crafts, with their recipes) and against the "Necesitarás" section of its Torrente Arcano guide. It writes `.build/lists/silvestre/item_quests.json`, and `build_resources.py` reads it to store in `resources.json` which quest each item is for, which the app shows on hover. It also prints what does not match: items no quest of the step asks for (and which neighbouring step does), different quantities, and what the quests consume that the list misses. With `0` it checks the prerequisites.
+`.build/audit_resources.py` cross-checks what each step asks for against what its quests consume in DofusDB (hand-ins and crafts, with their recipes) and against the "Necesitarás" section of its Torrente Arcano guide. It writes `.build/lists/silvestre/item_quests.json`, and `build_resources.py` reads it to store in `resources.json` which quest each item is for, which the app shows on hover. The audit reads the page's rows the way `build_resources.py` does (`listed()`), before the crafted quest items become their ingredients, so `item_quests.json` keys the same rows `build_resources.py` labels. The prototypes of «La desglaciación» (step 26) get the quest, and their ingredients take it from them. It also prints what does not match: items no quest of the step asks for (and which neighbouring step does), different quantities, and what the quests consume that the list misses. With `0` it checks the prerequisites.
 
 ## Guide links
 
