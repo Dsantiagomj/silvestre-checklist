@@ -156,13 +156,32 @@ test("copiar el nombre de un objeto no lo marca", async ({ page, context }) => {
   await expect(slot).not.toHaveClass(/\bowned\b/);
 });
 
-test("un objeto genérico de la guía lleva una imagen representativa", async ({ page }) => {
+test("ningún objeto se queda sin imagen, tampoco los genéricos de la guía", async ({ page }) => {
   await openItems(page);
+  await expect(page.locator("#items .slot").first()).toBeVisible();
+  await expect(page.locator("#items .item-unknown")).toHaveCount(0);
   // Paso 66: cualquier recurso recolectable de los reinos de tinta y papel. Lleva el
   // Tulipán de papel, una flor del Reino de Papel, pero la clave sigue siendo genérica
   const tinta = page.locator('#items .slot[data-id="x:recursos recolectables de los reinos de tinta y papel"]');
   await expect(tinta).toHaveAttribute("data-first", "66");
   await expect(tinta.locator(".slot-art img")).toHaveAttribute("src", /items\/164832\.png$/);
+  // Paso 60: la «Esencia de cil» de la guía es la Esencia del Cil de DofusDB
+  const cil = page.locator('#items .slot[data-id="14693|28488"]');
+  await expect(cil).toHaveAttribute("data-first", "60");
+  await expect(cil.locator(".slot-art img").first()).toHaveAttribute("src", /items\/167001\.png$/);
+});
+
+test("lo conseguido con la «Esencia de cil» de antes sigue conseguido en el paso 60", async ({ page }) => {
+  await openItems(page);
+  // Guardado ya con las claves del modelo 1, cuando la fila era «x:esencia de cil|28488»
+  await page.evaluate(() => {
+    localStorage.setItem("silvestre:owned", JSON.stringify({ "x:esencia de cil|28488": true, "311": true }));
+    localStorage.setItem("silvestre:ownedModel", "1");
+  });
+  await page.reload();
+  await expect(page.locator('#items .slot[data-id="14693|28488"]')).toHaveClass(/\bowned\b/);
+  expect(await readLS(page, "silvestre:ownedModel")).toBe(2);
+  expect(await readLS(page, "silvestre:owned")).toEqual({ "14693|28488#60": true, "311": true });
 });
 
 test("marcar todo y limpiar actúan sobre lo que se ve", async ({ page }) => {
