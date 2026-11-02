@@ -267,17 +267,17 @@ test("al volver al mapa con un paso lejano, lo desplaza hasta dejarlo a la vista
   await expect(page.locator("#mapCard")).toBeInViewport({ ratio: 0.95, timeout: 3000 });
 });
 
-test("sin nada guardado, los pasos se abren en el mapa y el selector va primero", async ({ page }) => {
+test("sin nada guardado, la ventana se abre en los prerrequisitos y el selector de los pasos va primero", async ({ page }) => {
   await openApp(page, null, { view: null });
-  await expect(page.locator(".map-node")).toHaveCount(100);
-  await expect(page.locator("#stepsViewMap")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#prereqs")).toBeVisible();
+  await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
   const order = await page.locator(".steps-view [role=tab]").evaluateAll(bs => bs.map(b => b.id));
   expect(order).toEqual(["stepsViewMap", "stepsViewDiary"]);
 });
 
 test("nada sobresale recortado: ni el Dofus del primer paso, ni «Estás aquí», ni el marcador de zona", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openApp(page, null, { view: null });
+  await openApp(page, null, { view: "map" });
   await page.waitForTimeout(800);
   // Lo que asoma por arriba (huevo, «Estás aquí», marcador) cabe en su contenedor
   const room = (inner, outer) => page.evaluate(([i, o]) =>
@@ -292,7 +292,7 @@ test("nada sobresale recortado: ni el Dofus del primer paso, ni «Estás aquí»
 
 test("la ficha del mapa se cierra al pulsar fuera o con Escape; otro paso la cambia", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openApp(page, null, { view: null });
+  await openApp(page, null, { view: "map" });
   await page.waitForTimeout(500);
   await node(page, 34).click();
   await expect(page.locator("#mapCard")).toBeVisible();

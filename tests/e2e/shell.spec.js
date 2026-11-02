@@ -69,7 +69,7 @@ test("el tema es de todo el sitio: se elige en la home y lo siguen el Silvestre 
   expect(await page.evaluate(() => localStorage.getItem("dofus-tools:theme"))).toBe("light");
 
   await page.locator(".dt-shell").getByRole("link", { name: "Dofus Silvestre" }).click();
-  await expect(page.locator(".diary-row, .map-node").first()).toBeVisible();
+  await expect(page.locator(".steps-win")).toBeVisible();
   await expect(html).toHaveAttribute("data-theme", "light");
   await expect(sw).toHaveAttribute("aria-checked", "false");
   await expect.poll(bodyBg).not.toBe("rgb(13, 14, 12)");

@@ -372,7 +372,7 @@ test("con todo a mano, la vista nueva aparece sin agotar la espera", async ({ pa
 
 test("ir al diario y volver al mapa deja el mapa donde estaba", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openApp(page, null, { view: null });
+  await openApp(page, null, { view: "map" });
   await page.waitForLoadState("networkidle");
   // La ventana a la vista y, dentro, el mapa desplazado hasta el paso 40
   await page.evaluate(() => document.getElementById("diary").scrollIntoView({ block: "start", behavior: "instant" }));

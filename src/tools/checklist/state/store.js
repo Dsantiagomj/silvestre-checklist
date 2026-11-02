@@ -122,12 +122,13 @@ const readList = key => {
 export const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
 // Pestañas de la ventana de pasos: las dos vistas de los pasos y las dos listas de lo
-// que necesitas. Se guarda la abierta con la clave de siempre (antes solo mapa o diario)
+// que necesitas. Se guarda la abierta con la clave de siempre (antes solo mapa o diario).
+// La primera vez, sin nada guardado, los prerrequisitos: es lo primero que hay que reunir
 export const WIN_TABS = ["map", "diary", "prereqs", "items"];
 export const isStepsView = v => v === "map" || v === "diary";
 const readStepsView = () => {
   const v = localStorage.getItem(LS.stepsView);
-  return WIN_TABS.includes(v) ? v : "map";
+  return WIN_TABS.includes(v) ? v : "prereqs";
 };
 
 /**
@@ -207,8 +208,8 @@ function initialState() {
     // El paso del overlay, si se ha movido desde él; null: sigue al de la página
     overlayN: null,
     sheetOpen: false,
-    // Pestaña de la ventana de pasos: mapa del camino (por defecto), diario (lista +
-    // detalle), prerrequisitos u objetos
+    // Pestaña de la ventana de pasos: mapa del camino, diario (lista + detalle),
+    // prerrequisitos (la primera vez) u objetos
     stepsView: readStepsView(),
     // El bando del jugador: las misiones del otro no se ven (null: todas)
     side: readSide(),
