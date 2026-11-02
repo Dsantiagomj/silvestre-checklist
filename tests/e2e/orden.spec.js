@@ -28,3 +28,27 @@ test("el paso 78 solo pide los recursos de la orden Espíritu de la salvación",
   await expect(page.locator("#journal .journal-needs")).not.toContainText("Ojo atento");
   expect(errors).toEqual([]);
 });
+
+test("el paso 78 enlaza las misiones de orden de Corazón valiente y Ojo atento, por si se elige otra", async ({ page }) => {
+  const errors = await openApp(page);
+  await openStep(page, 78);
+  const note = page.locator("#journal .call.note", { hasText: "¿Otra orden?" });
+  await expect(note).toHaveCount(1);
+  await expect(note.locator("b")).toHaveText("Nota");
+  const SITE = "https://www.torrentearcano.com/aprendizaje-";
+  const links = {
+    // Corazón valiente (Menalt)
+    "Discípulo de Menalt": "discipulo-de-menalt", "Escudero": "escudero",
+    "Caballero de la esperanza": "caballero-de-la-esperanza", "Campeón maravilloso": "campeon-maravilloso",
+    // Ojo atento (Silvosse)
+    "Discípulo de Silvosse": "discipulo-de-silvosse", "Espía silencioso": "espia-silencioso",
+    "Cazador de renegados": "cazador-de-renegados", "Asesino supremo": "asesino-supremo",
+  };
+  await expect(note.locator("a.guide-link")).toHaveCount(Object.keys(links).length);
+  for (const [name, slug] of Object.entries(links)) {
+    await expect(note.locator("a.guide-link", { hasText: name })).toHaveAttribute("href", SITE + slug);
+  }
+  await expect(note).toContainText("Corazón valiente");
+  await expect(note).toContainText("Ojo atento");
+  expect(errors).toEqual([]);
+});

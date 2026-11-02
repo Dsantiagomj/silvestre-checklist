@@ -53,6 +53,23 @@ TEXT_MISSIONS = ["Flovoración", "La sombra del reino"]
 # de Maimame", and the page is the one of "Los tótems de Maimane".
 MISSION_URLS = {"Los tótems de Maimame": SITE + "los-totems-de-maimane"}
 
+# Quests a hand-written note names (journal.extraNotes in src/dofus/<id>/config.js), by
+# the name the note writes, as linkify matches it: each one gets its page like a mission
+# of the text. Step 78 follows the order Espíritu de la salvación (CHOSEN_ORDER); its note
+# links the order quests 1 to 4 of the other two, for a player who picks another one:
+# Corazón valiente (Menalt) and Ojo atento (Silvosse).
+NOTE_MISSIONS = {
+    name: SITE + "aprendizaje-" + page for name, page in [
+        ("Discípulo de Menalt", "discipulo-de-menalt"), ("Escudero", "escudero"),
+        ("Caballero de la esperanza", "caballero-de-la-esperanza"),
+        ("Campeón maravilloso", "campeon-maravilloso"),
+        ("Discípulo de Silvosse", "discipulo-de-silvosse"), ("Espía silencioso", "espia-silencioso"),
+        ("Cazador de renegados", "cazador-de-renegados"), ("Asesino supremo", "asesino-supremo"),
+    ]
+}
+TEXT_MISSIONS += list(NOTE_MISSIONS)
+MISSION_URLS.update(NOTE_MISSIONS)
+
 # Achievements the text names that achievementLinks lacks: step 1 "incluye también el logro
 # "En marcha hacia la aventura" y el logro "Un ciudadano modelo"". Both pages answer;
 # "Respuestas para todo", a quest of the first one, has none.
