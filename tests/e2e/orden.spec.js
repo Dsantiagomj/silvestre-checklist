@@ -1,11 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { openApp } from "./helpers.js";
 
-// La guía sigue la orden de Bonta Espíritu de la salvación: el paso 78 («Hasta la misión
-// de orden 4») lleva sus cuatro misiones, y Torrente Arcano lista los recursos de las tres
-// órdenes. Solo quedan los de la suya (CHOSEN_ORDER en .build/dofus/silvestre.py)
+// La guía sigue la orden de Bonta Espíritu de la salvación, y Torrente Arcano lista en el
+// paso 78 los recursos de las tres órdenes. Solo quedan los de la suya (CHOSEN_ORDER en
+// .build/dofus/silvestre.py). Su misión de orden 3 («adepto a las escrituras») para ante
+// Roble Blando, y la 4 («Maestro de los Pergaminos») pide la 3 terminada (QF>121): va al
+// paso 80, donde se pasan Roble Blando y Ugah (TEXT_FIXES, STEP_EXTRA)
 
 const ESPIRITU = "Orden Espíritu de la salvación";
+const ORDER_3 = "Aprendizaje: adepto a las escrituras";
+const ORDER_4 = "Aprendizaje: Maestro de los Pergaminos";
 
 async function openStep(page, n) {
   // Por el número: en el centro de la fila puede caer la etiqueta "cierra el…"
@@ -13,6 +17,52 @@ async function openStep(page, n) {
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await expect(page.locator("#journal .asset-note", { hasText: "Cargando misiones" })).toHaveCount(0, { timeout: 15_000 });
 }
+
+const quests = page => page.locator("#journal .q-item .q-name").allInnerTexts();
+const quest = (page, name) => page.locator("#journal .q-item")
+  .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
+
+test("el paso 78 llega a la misión de orden 3 y para ante Roble Blando", async ({ page }) => {
+  const errors = await openApp(page);
+  await openStep(page, 78);
+  await expect(page.locator("#journal .journal-title")).toContainText("Hasta la misión de orden 3");
+  expect(await quests(page)).toEqual(["Aprendizaje: Discípulo de Jiva", "Aprendizaje: Aprendiz iluminado", ORDER_3]);
+  // La parada, en la misión de orden 3: antes de explorar el Claro del Roble Blando
+  const q3 = quest(page, ORDER_3);
+  await expect(q3.locator(".obj-stop")).toHaveText("Hasta tener que pasar Roble Blando");
+  await expect(q3.locator(".obj-stop + .obj-row")).toContainText("Explora el Claro del Roble Blando");
+  // La nota de la guía, para una sola orden: Roble Blando se pasa en el 80, con Ugah
+  const note = page.locator("#journal .call.note", { hasText: "Roble Blando se pasa en el inciso" });
+  await expect(note).toContainText("junto a Ugah, con el ídolo del dios Sadida");
+  await expect(note.locator('.step-ref[data-n="80"]')).toHaveCount(1);
+  await expect(page.locator("#journal")).not.toContainText("Si se escoge la orden");
+  await expect(page.locator("#journal .call.closedin")).toContainText("paso 80");
+  expect(errors).toEqual([]);
+});
+
+test("el paso 77 para ante Roble Blando, que se pasa en el 80 junto a Ugah", async ({ page }) => {
+  await openApp(page);
+  await openStep(page, 77);
+  const stop = page.locator("#journal .call.stop");
+  await expect(stop).toContainText("Hasta tener que pasar Roble Blando con el ídolo del dios Sadida");
+  await expect(stop).not.toContainText("según la orden");
+  await stop.locator('.step-ref[data-n="80"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("80");
+});
+
+test("el paso 80 hace la misión de orden 4 tras «Alma máster», hasta Ugah, y sigue cerrando el 77 y el 78", async ({ page }) => {
+  const errors = await openApp(page);
+  await openStep(page, 80);
+  expect(await quests(page)).toEqual(["La última piedra", "Alma máster", ORDER_4]);
+  // Las dos misiones pasan Ugah: la línea de lo que se resuelve va antes de su objetivo
+  await expect(quest(page, "Alma máster").locator(".obj-resume + .obj-row")).toContainText("Vence a 1 x Ugah");
+  await expect(quest(page, ORDER_4).locator(".obj-resume + .obj-row")).toContainText("Encuentra la estatuilla de Sumens");
+  const note = page.locator("#journal .call.note", { hasText: "misión de orden 4" });
+  await expect(note).toContainText("Tras pasar Roble Blando se termina la misión de orden 3");
+  await expect(note).toContainText("hasta tener que pasar Ugah, que la termina");
+  await expect(page.locator('.diary-row[data-n="80"]')).toContainText("cierra el 77, 78");
+  expect(errors).toEqual([]);
+});
 
 test("el paso 78 solo pide los recursos de la orden Espíritu de la salvación", async ({ page }) => {
   const errors = await openApp(page);

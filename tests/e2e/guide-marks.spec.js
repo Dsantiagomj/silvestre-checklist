@@ -13,10 +13,11 @@ test("cada paso trae sus resaltados por tipo, sin paréntesis sueltos", () => {
     ["done", "Se pasa Lasoberaña y se terminan las misiones de los incisos 33 y 34."],
   ]);
   // El paso 43 repite el mismo rojo para dos misiones: cuenta una vez. Los que solo
-  // decían "Completo" (2 rojos y 17 azules) pasan a ser step.complete
+  // decían "Completo" (2 rojos y 17 azules) pasan a ser step.complete. Uno azul es nuestro:
+  // el del 80 con la misión de orden 4 (TEXT_FIXES en .build/dofus/silvestre.py)
   const count = k => STEPS.flatMap(s => s.marks || []).filter(m => m[0] === k).length;
   const blue = ["includes", "must", "tip", "note"].reduce((a, k) => a + count(k), 0);
-  expect([count("stop"), count("done"), blue]).toEqual([60, 25, 43]);
+  expect([count("stop"), count("done"), blue]).toEqual([60, 25, 44]);
 });
 
 test("el texto base no repite lo resaltado y el texto completo no cambia", () => {
@@ -48,7 +49,7 @@ test("el verde dice qué otros pasos se cierran; lo que solo se actualiza no cue
 
 test("un resaltado entre paréntesis los pierde aunque lleve otros dentro", () => {
   expect(step(77).marks[0][1]).toBe(
-    "Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 78) con el ídolo del dios Sadida");
+    "Hasta tener que pasar Roble Blando con el ídolo del dios Sadida (se pasa en el inciso 80, junto a Ugah)");
 });
 
 test("«(Completo)» no es un aviso: marca el paso como logro completo", () => {

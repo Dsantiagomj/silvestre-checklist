@@ -40,6 +40,30 @@ CLOSES = {87: [73]}
 # la misión del inciso 63". Golosotrón is passed in 81, so step 63 is picked up there.
 UPDATES = {81: [63]}
 
+# Passages of a step's text rewritten for the order the guide follows (CHOSEN_ORDER in
+# build_resources.py): step -> [(the page's passage, ours)], on the page's raw text with
+# its colour markers. The page writes steps 77, 78 and 80 for any of the three Bonta
+# orders. With Espíritu de la salvación, order mission 3 ("Aprendizaje: adepto a las
+# escrituras") stops at Roble Blando ("Explora el Claro del Roble Blando en busca de Ani
+# N'Hubb"), and order mission 4 ("Maestro de los Pergaminos") starts only with mission 3
+# finished (startCriterion QF>121): step 78 goes up to mission 3, and mission 4 is done in
+# step 80, where Roble Blando and Ugah are passed with the Sadida idol (STEP_EXTRA).
+TEXT_FIXES = {
+    77: [("(Hasta tener que pasar Roble Blando o Ugah (según la orden escogida, véase el inciso 78) con el ídolo"
+          " del dios Sadida)",
+          "(Hasta tener que pasar Roble Blando con el ídolo del dios Sadida (se pasa en el inciso 80, junto a Ugah))")],
+    78: [("Hasta la misión de orden 4.", "Hasta la misión de orden 3."),
+         ("[[RED]](Hasta tener que pasar Ugah) [[/RED]]", "[[RED]](Hasta tener que pasar Roble Blando) [[/RED]]"),
+         ("[[BLUE]](Si se escoge la orden Espíritu de la salvación, en la misión de orden 3 se tendrá que pasar Roble"
+          " blando, por tanto, en el inciso 77 se puede pasar Roble blando con el ídolo del dios Sadida para validar"
+          " ambas misiones)[[/BLUE]]",
+          "[[BLUE]](Roble Blando se pasa en el inciso 80, junto a Ugah, con el ídolo del dios Sadida)[[/BLUE]]")],
+    80: [("[[RED]](Hasta tener que pasar Ugah)[[/RED]]\n",
+          "[[RED]](Hasta tener que pasar Ugah)[[/RED]]\n[[BLUE]](Tras pasar Roble Blando se termina la misión de"
+          " orden 3 y se hace la misión de orden 4, Maestro de los Pergaminos, hasta tener que pasar Ugah, que la"
+          " termina)[[/BLUE]]\n")],
+}
+
 
 # ---------------------------------------------------------------------------
 # import_guide_links.py
@@ -135,9 +159,12 @@ MISSING_OBJECTIVES = {565: [439]}
 MISSION_TYPOS = {}
 
 # Quests a step needs that its text doesn't name, put first. Step 78 is "hasta la misión
-# de orden 4": the four order quests of Espíritu de la salvación, each one requiring the
-# previous (startCriterion Qf=). Step 80's "Alma máster" requires "La última piedra",
-# mission 1 of "Cuatro de seis", which can only start after step 79. Step 89 is the
+# de orden 3" (TEXT_FIXES): the first three order quests of Espíritu de la salvación, each
+# one requiring the previous (startCriterion Qf=); the 3rd stops at Roble Blando. The 4th,
+# "Maestro de los Pergaminos", needs the 3rd finished (QF>121), so it goes in step 80,
+# after "Alma máster" (QUEST_AFTER): both pass Ugah there. Step 80's "Alma máster" requires
+# "La última piedra", mission 1 of "Cuatro de seis", which can only start after step 79.
+# Step 89 is the
 # order quest 5 of the same line, which requires the 4th (need.quests) and alignment
 # level 100 (Pa>99): before it goes Bonta mission 100, "El exorcista" (Pa=99&Qf=1901),
 # since step 85 stops at mission 99. Step 12's
@@ -164,7 +191,7 @@ MISSION_TYPOS = {}
 # &Qo>9997)) and done any time before step 80; step 81's "La sombra de lo que era" needs
 # it finished (Qf=1665). 38 does it, right after "Esto parece el Sur" (QUEST_AFTER).
 STEP_EXTRA = {12: [1504, 1505, 1506, 1507], 21: [619], 28: [620], 33: [439], 38: [1665, 621], 50: [622],
-              52: [623], 61: [624], 78: [434, 111, 121, 423], 80: [1782], 81: [626], 83: [2010], 87: [2122, 2138],
+              52: [623], 61: [624], 78: [434, 111, 121], 80: [1782, 423], 81: [626], 83: [2010], 87: [2122, 2138],
               89: [1903, 1917]}
 
 # Quests another quest gives on the way and that it waits for, right after it in every
@@ -187,7 +214,9 @@ STEP_SKIP = {53: [2198]}
 # finished (Qf=1848), which the achievement lists after it. The "Abono de peaje" quests
 # (STEP_EXTRA) go after the quest where their dungeon is passed: at the end of 21, 50, 61
 # and 81, after "Pesca en aguas congeladas" in 28 and after "La bruja mala del Este" in 38.
-QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656, 619: 1527, 620: 577, 621: 1657, 622: 1661, 624: 1719, 626: 1793}
+# Order mission 4 (step 80, STEP_EXTRA) goes after "Alma máster": Roble Blando first.
+QUEST_AFTER = {2198: 2180, 1849: 1848, 1665: 1656, 619: 1527, 620: 577, 621: 1657, 622: 1661, 624: 1719, 626: 1793,
+               423: 1784}
 
 # Quest -> the quest that needs it, where it would go elsewhere: it goes right before it
 # in every step that lists both. Step 33 takes "La eterna cosecha" for "La razón del más

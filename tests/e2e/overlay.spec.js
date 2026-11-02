@@ -409,7 +409,8 @@ test("a 400 px el título largo del paso cabe en dos líneas, sin cortarse", asy
 });
 
 test("tras el último objetivo, la misión queda «Misión completada» y «Siguiente misión» lleva a la otra", async ({ page, context }) => {
-  // Paso 80: «La última piedra» (33 objetivos) y «Alma máster»; en el último objetivo de la primera
+  // Paso 80: «La última piedra» (33 objetivos), «Alma máster» y la misión de orden 4; en el
+  // último objetivo de la primera
   await openApp(page, { "silvestre:done": upTo(79), "silvestre:questObjective": { 1782: 32 } });
   const ov = await openOverlay(page, context);
   await expect(ov.locator(".ov-num")).toHaveText("80");
@@ -432,7 +433,7 @@ test("tras el último objetivo, la misión queda «Misión completada» y «Sigu
   await expect(next).toBeEnabled();
   await next.click();
   await expect(qname(ov)).toHaveText("Alma máster");
-  await expect(body.locator(".ov-qsel")).toContainText("2 de 2");
+  await expect(body.locator(".ov-qsel")).toContainText("2 de 3");
   await expect(objCount(ov)).toHaveText("Objetivo 1 de 30");
   await expect(body.getByRole("button", { name: "✓ Completar objetivo" })).toBeEnabled();
   // En el desplegable, la primera sale tachada con su ✓
@@ -446,11 +447,12 @@ test("tras el último objetivo, la misión queda «Misión completada» y «Sigu
 });
 
 test("en la última misión del paso, terminada, solo queda «Misión completada»", async ({ page, context }) => {
-  await openApp(page, { "silvestre:done": upTo(79), "silvestre:questPos": { 80: 1 }, "silvestre:questObjective": { 1782: 33, 1784: 29 } });
+  // La última del 80 es la misión de orden 4, «Maestro de los Pergaminos» (13 objetivos)
+  await openApp(page, { "silvestre:done": upTo(79), "silvestre:questPos": { 80: 2 }, "silvestre:questObjective": { 1782: 33, 1784: 30, 423: 12 } });
   await openStep(page, 80);
   const ov = await openOverlay(page, context);
-  await expect(qname(ov)).toHaveText("Alma máster", { timeout: 15_000 });
-  await expect(objCount(ov)).toHaveText("Objetivo 30 de 30");
+  await expect(qname(ov)).toHaveText("Aprendizaje: Maestro de los Pergaminos", { timeout: 15_000 });
+  await expect(objCount(ov)).toHaveText("Objetivo 13 de 13");
   const body = ov.locator(".ov-tab-body");
   await body.getByRole("button", { name: "✓ Completar objetivo" }).click();
   // Con todas sus misiones hechas el paso queda hecho solo y el overlay sigue en él

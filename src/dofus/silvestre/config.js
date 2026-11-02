@@ -230,8 +230,10 @@ export default {
       73: [["Las cuatro voluntades", "Impide que Guerra tome el Krosmoz a sangre y fuego"]],
       // "Debes pasar primero Kimbo… Ahora deberás pasar Roble Blando… Por último… Ugah"
       77: [["Santísimo poder", "Vence a 1 x Roble Blando en un solo combate"]],
-      // La orden 4 pide la estatuilla del Templo del Gran Ugah: "vencer al jefe de mazmorra"
-      78: [["Aprendizaje: Maestro de los Pergaminos", "Encuentra la estatuilla de Sumens"]],
+      // Las dos misiones del 80 pasan Ugah: «Alma máster» lo vence y la orden 4 pide la
+      // estatuilla del Templo del Gran Ugah ("vencer al jefe de mazmorra"). La parada del 78,
+      // ante Roble Blando, la sitúa su texto (el claro de la misión de orden 3)
+      80: [["Alma máster", "Vence a 1 x Ugah"], ["Aprendizaje: Maestro de los Pergaminos", "Encuentra la estatuilla de Sumens"]],
       // Justo después de vencer a Dazahk y obtener "La biblia de los rencores"
       83: [["Birk, hija de Bork", "Salda varias afrentas de la biblia de los rencores"]],
       // "Hasta tener que pasar Ilyzaelle": su combate, no el mapa de su mirador, que va antes
