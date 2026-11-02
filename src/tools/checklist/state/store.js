@@ -672,10 +672,9 @@ export function mapShown(box) {
  * la ventana si esta no se ve entera), y el paso se centra en lo que se ve del mapa, no
  * en el marco entero. En móvil el mapa va en la página.
  */
-export function revealMapNode(n) {
+export function revealMapNode(n, { behavior = prefersReducedMotion() ? "auto" : "smooth", page = true } = {}) {
   const node = appRoot().querySelector(`.map-node[data-n="${n}"]`);
   if (!node) return;
-  const behavior = prefersReducedMotion() ? "auto" : "smooth";
   const r = node.getBoundingClientRect();
   const box = node.closest(".step-map-scroll");
   if (box && box.scrollHeight > box.clientHeight + 1) {
@@ -686,6 +685,7 @@ export function revealMapNode(n) {
       shift = top - box.scrollTop;
       box.scrollTo({ top, behavior });
     }
+    if (!page) return;
     // Donde quedará el sello: si ni así se ve (o queda bajo la barra de la ventana), la
     // página baja hasta la ventana. La ventana suele pasar de la pantalla: si ni con ella
     // arriba se ve (un paso del final, con el mapa ya al fondo), la página baja lo justo
@@ -693,16 +693,55 @@ export function revealMapNode(n) {
     const head = appRoot().getElementById("winBar")?.getBoundingClientRect().bottom ?? 0;
     const top = r.top - shift, bottom = r.bottom - shift;
     const lift = (appRoot().getElementById("diary")?.getBoundingClientRect().top ?? 8) - 8;
-    if (top < head || (bottom > innerHeight && lift > 0 && bottom - lift <= innerHeight)) showStepsWindow();
+    if (top < head || (bottom > innerHeight && lift > 0 && bottom - lift <= innerHeight)) showStepsWindow(behavior);
     else if (bottom > innerHeight) window.scrollBy({ top: (top + bottom - innerHeight) / 2, behavior });
     return;
   }
-  if (r.top < 80 || r.bottom > innerHeight) node.scrollIntoView({ behavior, block: "center" });
+  if (page && (r.top < 80 || r.bottom > innerHeight)) node.scrollIntoView({ behavior, block: "center" });
 }
 
 /** Lleva la página hasta la ventana de los pasos, que queda entera a la vista en escritorio. */
-export function showStepsWindow() {
-  appRoot().getElementById("diary")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+export function showStepsWindow(behavior = prefersReducedMotion() ? "auto" : "smooth") {
+  appRoot().getElementById("diary")?.scrollIntoView({ behavior, block: "start" });
+}
+
+/**
+ * El paso abierto al cargar (el guardado), hasta que resumePosition lo deje a la vista.
+ * Solo una vez: después la página es de quien la usa.
+ */
+let resumeStep = state.selectedStep;
+
+/**
+ * Volver a la página la deja donde se dejó. Al recargar, o al ir atrás y adelante, el
+ * navegador ya devuelve la página adonde estaba; al abrirla de nuevo (otra pestaña, otro
+ * día) empieza arriba y, si había un paso abierto, la página baja hasta él: en el diario,
+ * la ventana (la lista ya lo trae a la vista por dentro), en móvil la fila del paso, y en
+ * el mapa, su sello. Lo justo: si el paso ya se ve, la página no se mueve. Igual embebida,
+ * bajo la cabecera fija de la página de Torrente (scroll-margin-top de .diary). De golpe,
+ * sin desplazamiento suave: es llegar, no ir. Un #ancla en la dirección manda sobre lo
+ * guardado.
+ */
+export function resumePosition() {
+  const n = resumeStep;
+  resumeStep = null;
+  if (n == null || n !== state.selectedStep) return;
+  const nav = performance.getEntriesByType?.("navigation")[0]?.type;
+  const page = !location.hash && (nav == null || nav === "navigate");
+  const behavior = "instant";
+  if (state.stepsView === "map") return revealMapNode(n, { behavior, page });
+  if (!page) return;
+  const row = state.stepsView === "diary" && appRoot().querySelector(`.diary-row[data-n="${n}"]`);
+  if (row && inView(row)) return;
+  if (row && isMobile()) return row.scrollIntoView({ behavior, block: "center" });
+  showStepsWindow(behavior);
+}
+
+/** Si el elemento se ve entero, debajo de lo que tapa la cabecera de la página. */
+function inView(el) {
+  const diary = appRoot().getElementById("diary");
+  const covered = diary ? parseFloat(getComputedStyle(diary).scrollMarginTop) || 0 : 0;
+  const r = el.getBoundingClientRect();
+  return r.top >= covered && r.bottom <= innerHeight;
 }
 
 export function showOnMap(n) {

@@ -9,7 +9,8 @@ const PAGE_URL = "https://www.torrentearcano.com/checklist-dofus-de-los-hielos";
 const HARNESS = path.join(import.meta.dirname, "fixtures/squarespace-hielos.html");
 const app = page => page.locator("#hielos-root");
 
-async function openHielos(page) {
+/** Empieza en el diario salvo que se elija otra pestaña (view: null deja la de la app). */
+async function openHielos(page, { view = "diary" } = {}) {
   const errors = [];
   const context = page.context();
   await context.route(`${SITE}**`, servePages);
@@ -19,11 +20,12 @@ async function openHielos(page) {
       : route.fulfill({ status: 404, body: "" }));
   page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
-  await page.addInitScript(() => {
-    if (!localStorage.getItem("hielos:stepsView")) localStorage.setItem("hielos:stepsView", "diary");
-  });
+  await page.addInitScript(v => {
+    if (v && !localStorage.getItem("hielos:stepsView")) localStorage.setItem("hielos:stepsView", v);
+  }, view);
   await page.goto(PAGE_URL);
-  await expect(app(page).locator(".diary-row")).toHaveCount(70, { timeout: 20_000 });
+  if (view === "diary") await expect(app(page).locator(".diary-row")).toHaveCount(70, { timeout: 20_000 });
+  else await expect(app(page).locator(".steps-win")).toBeVisible({ timeout: 20_000 });
   return errors;
 }
 
@@ -74,4 +76,25 @@ test("los prerrequisitos del Hielos no llevan el aviso de la orden de Bonta, que
   await expect(app(page).locator("#prereqs .pr-card").first()).toBeVisible();
   await expect(app(page).locator("#prereqs .pr-order")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("embebido, la primera vez abre los prerrequisitos y, al volver, el paso 60 del diario a la vista", async ({ page, context }) => {
+  const errors = await openHielos(page, { view: null });
+  await expect(app(page).locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
+  await expect(app(page).locator("#prereqs")).toBeVisible();
+  await app(page).locator("#stepsViewDiary").click();
+  await app(page).locator('.diary-row[data-n="60"] .row-num').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("60");
+  expect(await readLS(page, "hielos:selectedStep")).toBe(60);
+  expect(errors).toEqual([]);
+  const again = await context.newPage();
+  await page.close();
+  await again.goto(PAGE_URL);
+  const row = app(again).locator('.diary-row[data-n="60"]');
+  await expect(app(again).locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "true");
+  await expect(row).toHaveAttribute("aria-current", "step");
+  await expect(row).toBeInViewport();
+  await expect(app(again).locator("#journal .journal-num")).toBeInViewport();
+  const header = await again.evaluate(() => document.getElementById("header").getBoundingClientRect().bottom);
+  expect(await row.evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(header);
 });

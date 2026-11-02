@@ -360,3 +360,21 @@ test("los prerrequisitos no llevan el aviso de la orden de Bonta, que es del Sil
   await expect(page.locator("#prereqs .pr-order")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test("la primera vez abre los prerrequisitos y, al volver, el paso en el que se dejó, a la vista", async ({ page, context }) => {
+  await page.goto("");
+  await expect(page.locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#prereqs")).toBeVisible();
+  // Lo guardado es del Hielos (hielos:…): el diario en el paso 60
+  await page.click("#stepsViewDiary");
+  await page.click('.diary-row[data-n="60"] .row-num');
+  await expect(page.locator("#journal .journal-num")).toHaveText("60");
+  expect(await page.evaluate(() => [localStorage.getItem("hielos:stepsView"), localStorage.getItem("hielos:selectedStep")])).toEqual(["diary", "60"]);
+  const again = await context.newPage();
+  await page.close();
+  await again.goto("");
+  await expect(again.locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "true");
+  await expect(again.locator("#journal .journal-num")).toHaveText("60");
+  await expect(again.locator('.diary-row[data-n="60"]')).toBeInViewport();
+  await expect(again.locator("#journal .journal-num")).toBeInViewport();
+});

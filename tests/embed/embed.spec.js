@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { app, openHarness, readLS } from "./harness.js";
+import { PAGE_URL, app, openHarness, readLS } from "./harness.js";
 
 const style = (loc, prop) => loc.evaluate((el, p) => getComputedStyle(el)[p], prop);
 
@@ -396,4 +396,58 @@ test("en el embebido los prerrequisitos explican la orden que sigue la guía y l
   await note.locator('.step-ref[data-n="78"]').click();
   await expect(app(page).locator("#journal .journal-num")).toHaveText("78");
   expect(errors).toEqual([]);
+});
+
+/** Lo que tapa la cabecera fija de la página de Torrente: lo que queda debajo es lo que se ve. */
+const headerBottom = page => page.evaluate(() => document.getElementById("header").getBoundingClientRect().bottom);
+const topOf = loc => loc.evaluate(el => el.getBoundingClientRect().top);
+
+test("sin nada guardado, la ventana abre los prerrequisitos y la página de Torrente no se mueve", async ({ page }) => {
+  const errors = await openHarness(page, {}, { view: null });
+  await expect(app(page).locator("#tabPrereqs")).toHaveAttribute("aria-selected", "true");
+  await expect(app(page).locator("#prereqs")).toBeVisible();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+/** El diario en el paso n, a la vista bajo la cabecera de Torrente, y la página bajada lo justo. */
+async function expectDiaryAt(page, n) {
+  const row = app(page).locator(`.diary-row[data-n="${n}"]`);
+  await expect(app(page).locator("#stepsViewDiary")).toHaveAttribute("aria-selected", "true");
+  await expect(app(page).locator("#journal .journal-num")).toHaveText(String(n));
+  await expect(row).toHaveAttribute("aria-current", "step");
+  await expect(row).toBeInViewport();
+  await expect(app(page).locator("#journal .journal-num")).toBeInViewport();
+  const header = await headerBottom(page);
+  expect(await topOf(row)).toBeGreaterThanOrEqual(header);
+  expect(await topOf(app(page).locator("#journal .journal-num"))).toBeGreaterThanOrEqual(header);
+  // Lo justo: la ventana queda bajo la cabecera, no más arriba
+  expect(await topOf(app(page).locator("#diary"))).toBeGreaterThanOrEqual(header - 2);
+}
+
+test("en el diario en el paso 75, al recargar y al volver en otra pestaña, el paso queda a la vista", async ({ page, context }) => {
+  await openHarness(page);
+  await app(page).locator('.diary-row[data-n="75"] .row-num').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("75");
+  await page.reload();
+  await expectDiaryAt(page, 75);
+  const again = await context.newPage();
+  await page.close();
+  await again.goto(PAGE_URL);
+  await expectDiaryAt(again, 75);
+});
+
+test("en el mapa en el paso 75, al volver la ficha y el sello quedan a la vista bajo la cabecera", async ({ page, context }) => {
+  await openHarness(page);
+  await app(page).locator("#stepsViewMap").click();
+  await app(page).locator('.map-node[data-n="75"]').click();
+  await expect(app(page).locator("#mapCard .journal-num")).toHaveText("75");
+  const again = await context.newPage();
+  await page.close();
+  await again.goto(PAGE_URL);
+  const node = app(again).locator('.map-node[data-n="75"]');
+  await expect(app(again).locator("#mapCard .journal-num")).toHaveText("75");
+  await expect(node).toBeInViewport();
+  expect(await topOf(node)).toBeGreaterThanOrEqual(await headerBottom(again));
 });

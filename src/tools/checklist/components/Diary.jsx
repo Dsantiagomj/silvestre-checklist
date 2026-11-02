@@ -9,7 +9,7 @@ import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import {
-  clearFilters, hasActiveFilters, isMobile, isStepsView, nextPending, ownedCount, prereqsPending, revealMapNode, selectStep,
+  clearFilters, hasActiveFilters, isMobile, isStepsView, nextPending, ownedCount, prereqsPending, resumePosition, revealMapNode, selectStep,
   setSearch, setSide, setStatusFilter, setStepsView, showStepsWindow, takeMapFocus,
   stepMatchesFilters, stepMatchesStatus, toggleStep, useAppState,
 } from "../state/store.js";
@@ -593,6 +593,11 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
   // Lo que aparece después de montarse la página se anima; lo que ya estaba, no
   const mounted = useRef(false);
   useEffect(() => { mounted.current = true; }, []);
+  // Al abrir la página, el paso en el que se dejó, a la vista (ya pintado y medido)
+  useEffect(() => {
+    const id = requestAnimationFrame(resumePosition);
+    return () => cancelAnimationFrame(id);
+  }, []);
   const swapInfo = useRef({ current: null, seq: 0, channel: makeChannel() }).current;
   // El zoom es solo entre mapa y diario; a las listas y desde ellas se cambia sin más
   // Entre mapa y diario, el zoom; a las listas y desde ellas, un deslizamiento hacia el

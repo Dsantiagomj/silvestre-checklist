@@ -31,9 +31,11 @@ export async function servePages(route) {
 
 /**
  * Abre la página de Torrente Arcano con el bloque de la app, con claves de localStorage
- * opcionales ya guardadas al cargar (solo las que falten: una recarga no las pisa).
+ * opcionales ya guardadas al cargar (solo las que falten: una recarga no las pisa). Empieza
+ * en el diario salvo que se elija otra pestaña (view: null deja la de la app, la primera vez
+ * los prerrequisitos).
  */
-export async function openHarness(page, seed = {}) {
+export async function openHarness(page, seed = {}, { view = "diary" } = {}) {
   const errors = [];
   const context = page.context();
   await context.route(`${SITE}**`, servePages);
@@ -43,14 +45,15 @@ export async function openHarness(page, seed = {}) {
       : route.fulfill({ status: 404, body: "" }));
   page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
-  await page.addInitScript(s => {
-    if (!localStorage.getItem("silvestre:stepsView")) localStorage.setItem("silvestre:stepsView", "diary");
-    for (const [k, v] of Object.entries(s)) {
-      if (localStorage.getItem(k) == null) localStorage.setItem(k, typeof v === "string" ? v : JSON.stringify(v));
+  await page.addInitScript(([s, v]) => {
+    if (v && !localStorage.getItem("silvestre:stepsView")) localStorage.setItem("silvestre:stepsView", v);
+    for (const [k, val] of Object.entries(s)) {
+      if (localStorage.getItem(k) == null) localStorage.setItem(k, typeof val === "string" ? val : JSON.stringify(val));
     }
-  }, seed);
+  }, [seed, view]);
   await page.goto(PAGE_URL);
-  await expect(page.locator("#silvestre-root .diary-row")).toHaveCount(100, { timeout: 20_000 });
+  if (view === "diary") await expect(page.locator("#silvestre-root .diary-row")).toHaveCount(100, { timeout: 20_000 });
+  else await expect(page.locator("#silvestre-root .steps-win")).toBeVisible({ timeout: 20_000 });
   return errors;
 }
 
