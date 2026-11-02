@@ -366,7 +366,7 @@ test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible 
 
 // La guía sigue la orden de Bonta Espíritu de la salvación (tests/e2e/orden.spec.js): en
 // la página de Torre se ve igual que en el sitio, con el mismo código de la app
-test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación y enlaza las otras órdenes", async ({ page }) => {
+test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación, para en Roble Blando y enlaza las otras órdenes", async ({ page }) => {
   const errors = await openHarness(page);
   await app(page).locator('.diary-row[data-n="78"] .row-num').click();
   await expect(app(page).locator("#journal .journal-num")).toHaveText("78");
@@ -375,6 +375,7 @@ test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación
   for (const id of await slots.evaluateAll(els => els.map(e => e.dataset.id))) {
     expect(id).toMatch(/@orden espiritu de la salvacion$/);
   }
+  await expect(app(page).locator("#journal .q-item .obj-stop")).toHaveText("Hasta tener que pasar Roble Blando");
   const note = app(page).locator("#journal .call.note", { hasText: "¿Otra orden?" });
   await expect(note.locator("a.guide-link")).toHaveCount(8);
   await expect(note.locator("a.guide-link", { hasText: "Escudero" }))

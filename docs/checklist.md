@@ -164,6 +164,14 @@ Some notes go inside a quest instead of on the step:
 
 Mentions of other steps ("véase el inciso 78") link to that step.
 
+The guide's text is kept as the page writes it, with one exception. Steps 77, 78 and 80 are written for any of the three Bonta orders, and the guide follows Espíritu de la salvación. Its order mission 3 stops at Roble Blando, and order mission 4 needs mission 3 finished (`QF>121` in DofusDB), so `TEXT_FIXES` in `.build/dofus/silvestre.py` rewrites those passages before the import:
+
+- Step 77 stops at Roble Blando, which is passed in step 80 together with Ugah.
+- Step 78 goes up to order mission 3 and stops at Roble Blando, before "Explora el Claro del Roble Blando" in "adepto a las escrituras". Its note says Roble Blando is passed in step 80.
+- Step 80 gets a note: after Roble Blando, order mission 3 is finished and order mission 4 is done up to Ugah, which finishes it. Step 80 still closes 77 and 78.
+
+If the page changes one of those passages, the import stops so the fix can be reviewed.
+
 ### Quests and objectives
 
 Below the objective, styled like the game's Quests window (dark wood, or parchment in the light theme), comes what you need to gather and then the quests with the game's «!». Opening a step shows all of them folded.
@@ -343,7 +351,7 @@ Some quests do not come from the text and `.build/dofus/silvestre.py` adds them:
 
 | Table | What it does | Cases |
 |---|---|---|
-| `STEP_EXTRA` | Adds quests the step requires | Step 12 lists Cofrología, Tesorfanato, El maleficio del cofre and Las grandes galerías before "Espionaje industrial". Step 78 has the Espíritu de la salvación order quests up to 4, and step 89 the order 5 quest with "El exorcista" first, Bonta's quest 100, because the order 5 quest needs alignment level 100 and step 85 reaches 99. Step 80 starts with "La última piedra", which "Alma máster" needs first |
+| `STEP_EXTRA` | Adds quests the step requires | Step 12 lists Cofrología, Tesorfanato, El maleficio del cofre and Las grandes galerías before "Espionaje industrial". Step 78 has the Espíritu de la salvación order quests up to 3. Their order quest 4, "Maestro de los Pergaminos", goes in step 80 after "Alma máster" (`QUEST_AFTER`), because it needs order quest 3 finished and both pass Ugah. Step 89 the order 5 quest with "El exorcista" first, Bonta's quest 100, because the order 5 quest needs alignment level 100 and step 85 reaches 99. Step 80 starts with "La última piedra", which "Alma máster" needs first |
 | `STEP_EXTRA` and `QUEST_AFTER` | The "Abono de peaje" quests, which have no step of their own. Each is a run through a Frigost dungeon that the island's quests require. They go under their achievement, after the quest where their dungeon is passed | Antimonárquico in 21, Las joyas de la corona in 28, Duerme y tendrás un pastel in 38, Lavandería automática in 50, Hace fresco, pero no importa in 52, Canozzirujana in 61 and Allá arriba, en el pico helado… in 81. No quest needs "Allá en la montaña…", so it is left out |
 | `FIGURE_QUEST` | The banner and its map stay those of the step's own quest, not of what was added | 31, 40, 52, 83, 86, 87 and 89 |
 | `SUBQUESTS` | Quests another quest gives along the way and waits for | In step 83, "Birk, hija de Bork" gives "Los enemigos de mis enemigos son mis enemigos" and "Los nanoinsumisos" and does not continue until both are finished. They go right after Birk, before the stop, and are required |

@@ -65,6 +65,9 @@ CLOSES = {13: [8], 62: [50], 66: [53], 68: [64]}
 # (61); step 62 finishes it with Mizz Frizz.
 UPDATES = {60: [58], 61: [58]}
 
+# Nothing in the page's text to rewrite.
+TEXT_FIXES = {}
+
 
 # ---------------------------------------------------------------------------
 # import_guide_links.py

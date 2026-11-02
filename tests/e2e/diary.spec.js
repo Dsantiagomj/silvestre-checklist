@@ -367,8 +367,8 @@ test("misiones y logros enlazan a su guía en Torrente Arcano", async ({ page })
 test("las referencias a otros incisos llevan a esos pasos", async ({ page }) => {
   await openApp(page);
   await page.click('.diary-row[data-n="77"] .row-num');
-  await page.locator('#journal .call.stop .step-ref[data-n="78"]').click();
-  await expect(page.locator("#journal .journal-num")).toHaveText("78");
+  await page.locator('#journal .call.stop .step-ref[data-n="80"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("80");
 });
 
 test("el paso 64 llega en «De la mano» hasta entregar la cerveza fuerte, y una nota dice por qué", async ({ page }) => {
@@ -799,14 +799,14 @@ test("los objetos revisados con Torrente Arcano y DofusDB van en el paso donde s
   expect((await stepData(page, 76)).needs).toEqual(expect.arrayContaining(["16496", "16494", "16499", "16492", "9935"]));
 });
 
-test("el paso 78 lleva las misiones de orden hasta la 4 y el 80 empieza por «La última piedra»", async ({ page }) => {
+test("el paso 78 lleva las misiones de orden hasta la 3 y el 80 empieza por «La última piedra»", async ({ page }) => {
   await openApp(page);
   const s78 = await stepData(page, 78);
   expect(s78.quests).toEqual(["Aprendizaje: Discípulo de Jiva", "Aprendizaje: Aprendiz iluminado",
-    "Aprendizaje: adepto a las escrituras", "Aprendizaje: Maestro de los Pergaminos"]);
-  // La parada de Ugah: antes de buscar la estatuilla en el templo del Gran Ugah
-  const quest = page.locator("#journal .q-item", { hasText: "Maestro de los Pergaminos" });
-  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Encuentra la estatuilla de Sumens");
+    "Aprendizaje: adepto a las escrituras"]);
+  // La parada de Roble Blando: antes de explorar su claro (la orden 4 va en el 80, orden.spec.js)
+  const quest = page.locator("#journal .q-item", { hasText: "adepto a las escrituras" });
+  await expect(quest.locator(".obj-stop + .obj-row")).toContainText("Explora el Claro del Roble Blando");
   expect((await stepData(page, 80)).quests.slice(0, 2)).toEqual(["La última piedra", "Alma máster"]);
   // El 89, la misión de orden 5, que da Elviana Tirips y pide nivel de alineamiento 100: antes
   // va la misión 100 de Bonta, «El exorcista» (el 85 llega a la 99). El estandarte sigue

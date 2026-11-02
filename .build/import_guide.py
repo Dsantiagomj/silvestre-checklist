@@ -34,6 +34,10 @@ the step is done without it. CLOSES adds by hand what a step finishes and its te
 not say (step 87 finishes step 73's mission), and UPDATES what it picks up (step 81's
 reminder about step 63).
 
+TEXT_FIXES rewrites passages of a step's text, marks included, where the page's words do
+not fit the guide's route: Silvestre's steps 77, 78 and 80 are written for any Bonta order,
+and the guide follows Espíritu de la salvación. The snapshot keeps the page's own text.
+
 Zone and effort tier are not on the page. A step that maps to a single old step
 keeps that step's zone and tier; merged steps take the highest tier; steps
 split out of an old one use SPLIT_TIERS. A guide with no previous version gives them
@@ -53,6 +57,7 @@ SNAPSHOT = dofus.LISTS / "torrentearcano.json"
 
 TIER_ORDER = ["trivial", "corto", "medio", "largo", "epico"]
 SPLIT_TIERS = D.SPLIT_TIERS  # per Dofus, in .build/dofus/<id>.py
+TEXT_FIXES = D.TEXT_FIXES  # per Dofus, in .build/dofus/<id>.py
 STEP_ZONE = D.STEP_ZONE  # per Dofus, in .build/dofus/<id>.py
 
 
@@ -191,6 +196,19 @@ def updates(n, raw):
     return sorted(set(found))
 
 
+def fix_texts(raws, fixes):
+    """The page's step texts with TEXT_FIXES applied: step -> [(passage, replacement)], on
+    the raw text, colour markers included. A passage the page no longer has stops the
+    import: the page changed there and the fix has to be reviewed."""
+    out = list(raws)
+    for n, pairs in fixes.items():
+        for old, new in pairs:
+            if old not in out[n - 1]:
+                raise SystemExit(f"el paso {n} ya no dice {old!r}: revisa TEXT_FIXES")
+            out[n - 1] = out[n - 1].replace(old, new)
+    return out
+
+
 def read_old_steps():
     body = STEPS_JS.read_text().split("export const STEPS = [", 1)[1].split("\n];", 1)[0]
     pattern = re.compile(r'\{ n: (\d+), zone: "(.*?)", effort: "(\w+)", text: ')
@@ -231,12 +249,14 @@ def read_page(html):
 
 def main(page):
     html = pathlib.Path(page).read_text(encoding="utf-8")
-    raws, resources, previous = read_page(html)
+    page_raws, resources, previous = read_page(html)
+    # The snapshot keeps the page as it is; the steps get the fixes
+    raws = fix_texts(page_raws, TEXT_FIXES)
     texts = [clean(t) for t in raws]
 
     SNAPSHOT.write_text(json.dumps({
         "source": D.SOURCE_URL,
-        "steps": raws,
+        "steps": page_raws,
         "resources": resources,
         "previousStepsByNewStep": previous,
     }, ensure_ascii=False, indent=1) + "\n")
