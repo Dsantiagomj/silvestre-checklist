@@ -14,11 +14,11 @@ const RULES = [
   { match: /\.md$|^docs\/|^LICENSE$/, run: [] },
   // El pipeline de datos y las unitarias: solo las unitarias
   { match: /^\.build\/|^tests\/unit\//, run: [] },
-  // Los embebidos propios (hub, inicio, cosecha), su vista previa y sus imágenes. Las del
+  // Los embebidos propios (hub, inicio, cosecha, guías), sus vistas previas y sus imágenes. Las del
   // hub salen también en las cartas de la home del sitio; las de la cosecha y el huevo del
   // inicio, en la página de la cosecha
   { match: /^public\/img\/(hub|inicio|cosecha)\//, run: ["embed", "site"] },
-  { match: /^src\/embeds\/|^tests\/embed\/|^public\/checklists\//, run: ["embed"] },
+  { match: /^src\/embeds\/|^tests\/embed\/|^public\/(checklists|guias-dofus)\//, run: ["embed"] },
   // La cosecha y sus almas (cosecha.json, publicado junto a su página): el embebido y su
   // página del sitio
   { match: /^src\/tools\/cosecha\/|^public\/cosecha\//, run: ["embed", "site"] },
