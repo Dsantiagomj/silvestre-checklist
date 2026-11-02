@@ -91,6 +91,15 @@ export default {
     quest: "La eterna cosecha",
     achievement: "El fin de la eternidad",
   },
+  // La orden de Bonta que sigue la guía (CHOSEN_ORDER en .build/dofus/silvestre.py): el paso
+  // 78 solo lista sus recursos y su nota enlaza las misiones de las otras dos. El «paso 78»
+  // del texto lleva al paso; img, su PNJ (el del estandarte del 78). null, sin aviso
+  orderNote: {
+    title: "La guía sigue la orden Espíritu de la salvación",
+    text: "Por eso solo se listan los recursos de esa orden. Si eliges Corazón valiente u Ojo atento,"
+      + " el paso 78 enlaza las misiones de la tuya.",
+    img: "npcs/npc-6312.png",
+  },
 
   // La nota aclaratoria («Hasta tener que pasar X»), con un ejemplo real: los pasos 43 y 44
   // se detienen ante Kodámade; el 45 pasa la mazmorra y "se terminan las misiones de los

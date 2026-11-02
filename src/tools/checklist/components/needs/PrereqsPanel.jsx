@@ -2,7 +2,7 @@ import { OCRE_STEP, PREREQS_HECHIZOS, PREREQS_LOGROS, PREREQS_OCRE, PREREQS_OFIC
 import { useLiveIds } from "../../lib/leaving.js";
 import { OCRE_ICON, PREREQ_ICONS, imgUrl } from "../../lib/assets.js";
 import { PREREQ_STEP, aggregate } from "../../lib/resources.js";
-import { achievementGuide, missionGuide } from "../../lib/guides.js";
+import { achievementGuide, linkify, missionGuide } from "../../lib/guides.js";
 import { isPrereqDone, openInDiary, rowHave, togglePrereq, toggleRowOwned, useAppState } from "../../state/store.js";
 import Slot from "./Slot.jsx";
 import QuestMark from "../QuestMark.jsx";
@@ -130,6 +130,31 @@ function OcreNote() {
   );
 }
 
+/**
+ * La orden de alineamiento que sigue la guía (el Silvestre: Espíritu de la salvación) y por
+ * qué solo salen sus recursos. Sus textos, en orderNote de config.js; los pasos que nombra
+ * («paso 78») llevan a ese paso, como en las notas del diario. Sin ella, no se muestra.
+ */
+function OrderNote() {
+  const note = DOFUS.orderNote;
+  if (!note) return null;
+  return (
+    <aside className="pr-order">
+      {note.img && <img src={imgUrl(note.img)} alt="" />}
+      <div>
+        <b>{note.title}</b>
+        <p>
+          {linkify(note.text).map((part, i) => part.href ? (
+            <a key={i} className="guide-link" href={part.href} target="_blank" rel="noopener">{part.t}</a>
+          ) : part.step ? (
+            <button key={i} type="button" className="step-ref" data-n={part.step} onClick={() => showStep(part.step)}>{part.t}</button>
+          ) : part.t)}
+        </p>
+      </div>
+    </aside>
+  );
+}
+
 /** PRERREQUISITOS · tarjetas por grupo y, debajo, los objetos que piden. */
 export default function PrereqsPanel() {
   const live = useLiveIds();
@@ -137,6 +162,7 @@ export default function PrereqsPanel() {
   return (
     <div className="needs-panel prereqs-panel" id={live("prereqs")} role="tabpanel" aria-labelledby={live("tabPrereqs")}>
       <OcreNote />
+      <OrderNote />
       {GROUPS.map(g => (
         <section className="pr-group" key={g.title} aria-label={g.title}>
           <h3>{g.title} <span className="pr-count">{g.items.filter(p => isPrereqDone(s, p.id)).length}/{g.items.length}</span></h3>
