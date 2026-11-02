@@ -1,6 +1,6 @@
 # Design language
 
-The visual rules behind the Torrente Arcano embeds and the "Dofus Tools" site. Every value here comes from shipped CSS: `src/embeds/hub/hub.css`, `src/embeds/inicio/inicio.css`, `src/tools/cosecha/cosecha.css`, `src/site/shell/shell.css`, `src/site/home/home.css`, `src/lib/themeSwitch.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
+The visual rules behind the Torrente Arcano embeds and the "Dofus Tools" site. Every value here comes from shipped CSS: `src/embeds/hub/hub.css`, `src/embeds/inicio/inicio.css`, `src/embeds/guias/guias.css`, `src/tools/cosecha/cosecha.css`, `src/site/shell/shell.css`, `src/site/home/home.css`, `src/lib/themeSwitch.css`, plus the manifests and Dofus configs that feed them. When this file and the CSS disagree, the CSS wins and this file gets fixed.
 
 ## Quick path for a new surface
 
@@ -57,7 +57,7 @@ Gold appears as a frame (1px to 2px inset rings), as text, or as a 40 to 60 perc
 
 ### Light theme
 
-Two surfaces have a light theme: the site (the home, the checklists, the cosecha page) and the cosecha embed. The palette is parchment with ochre ink. Gold only draws rings, ochre only fills (progress, stamps, complete numbers), and text never sits in pale ochre on parchment.
+Three surfaces have a light theme: the site (the home, the checklists, the cosecha page), the cosecha embed and the guías embed (its cards stay dark, like the home's). The palette is parchment with ochre ink. Gold only draws rings, ochre only fills (progress, stamps, complete numbers), and text never sits in pale ochre on parchment.
 
 Cosecha keeps every color in a CSS variable on `.cosecha`; `.cosecha[data-theme="light"]` overrides only variables. A new rule in `cosecha.css` takes its colors from those variables, including inside the 700px container query.
 
@@ -119,6 +119,7 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 |---|---|---|---|
 | Inicio | 1240px | 48px each side (`calc(100% - 96px)`) | 16px under 600px |
 | Cosecha | 1176px (five cromos per row) | 32px each side | 14px under 700px |
+| Guías | 1240px grid; the filter bar 980px | 48px each side | 16px under 600px |
 | Hub | full width; height from `--checklists-h` (min 300px, `MIN_FIT` in `src/embeds/hub/embed.js`) | 28px | 14px |
 | Site shell and home | 1240px | 48px each side | 16px under 600px (shell), 700px (home) |
 | Site shell on a tool page | the tool's width, set by the page through `--dt-max` and `--dt-side` (cosecha: 1176px, 32px each side) | | |
@@ -136,6 +137,8 @@ Always container queries on the widget root, never media queries: the Squarespac
 | Inicio | `(max-width: 900px)` | smaller tiles, eggs and ring on wide cards |
 | Inicio | `(max-width: 600px)` | one column; wide cards go 5/4; hero 44px |
 | Cosecha | `@container cosecha (max-width: 700px)` | rail becomes a sticky top row; cromos three per row |
+| Guías | `@container guias (max-width: 1180px)` | cards four per row instead of six |
+| Guías | `(max-width: 600px)` | cards two per row at 4/5; filters on their own row above search and the switch; title 40px |
 | Site shell | `@container dt-shell (max-width: 600px)` | the nav moves to its own row under the brand and the switch, spread edge to edge, showing only the end of each name (`.dt-pre` hidden); it scrolls sideways if it still does not fit |
 | Site home | `@container home (max-width: 700px)` | cards stack, landscape |
 
@@ -224,7 +227,7 @@ Use for the light and dark theme, and only there. `src/lib/themeSwitch.js` build
 | Motion | the eggs swap places in an arc, the arriving one bounces with sparks, and the theme lands 140ms later. On a page of our own the whole page changes with a View Transition that sweeps diagonally from the switch's corner (`pageThemeTransition`); in an embed the theme changes without it. Reduced motion: no animation |
 | Colors | hover border and focus ring from `--ts-accent` and `--ts-focus`, which the shell and cosecha set to gold and white (or ink in light cosecha) |
 
-Where it lives: the site header (one theme for the whole site, `dofus-tools:theme`), the cosecha embed's tools row (`cosecha:theme`; under 700px it moves up next to Todo, Jefes and Archis), and the checklist embeds' «⋯» menu (`silvestre:theme`, `hielos:theme`). On the site the checklist and the cosecha widget show no switch of their own.
+Where it lives: the site header (one theme for the whole site, `dofus-tools:theme`), the cosecha embed's tools row (`cosecha:theme`; under 700px it moves up next to Todo, Jefes and Archis), the end of the guías embed's filter bar (`guias:theme`), and the checklist embeds' «⋯» menu (`silvestre:theme`, `hielos:theme`). On the site the checklist and the cosecha widget show no switch of their own.
 
 ### Smaller pieces
 
