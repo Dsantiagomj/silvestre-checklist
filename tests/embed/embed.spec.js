@@ -363,3 +363,37 @@ test("a 2000×980, en un paso corto el diario mide 1,3 veces el alto disponible 
   expect(Math.abs(m.side.height - m.sideWant), msg).toBeLessThanOrEqual(1);
   expect(m.side.bottom, msg).toBeLessThanOrEqual(m.vh + 0.5);
 });
+
+// La guía sigue la orden de Bonta Espíritu de la salvación (tests/e2e/orden.spec.js): en
+// la página de Torre se ve igual que en el sitio, con el mismo código de la app
+test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación y enlaza las otras órdenes", async ({ page }) => {
+  const errors = await openHarness(page);
+  await app(page).locator('.diary-row[data-n="78"] .row-num').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("78");
+  const slots = app(page).locator("#journal .journal-needs .slot");
+  await expect(slots.first()).toBeVisible({ timeout: 15_000 });
+  for (const id of await slots.evaluateAll(els => els.map(e => e.dataset.id))) {
+    expect(id).toMatch(/@orden espiritu de la salvacion$/);
+  }
+  const note = app(page).locator("#journal .call.note", { hasText: "¿Otra orden?" });
+  await expect(note.locator("a.guide-link")).toHaveCount(8);
+  await expect(note.locator("a.guide-link", { hasText: "Escudero" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/aprendizaje-escudero");
+  await expect(note.locator("a.guide-link", { hasText: "Asesino supremo" }))
+    .toHaveAttribute("href", "https://www.torrentearcano.com/aprendizaje-asesino-supremo");
+  expect(errors).toEqual([]);
+});
+
+test("en el embebido los prerrequisitos explican la orden que sigue la guía y llevan al paso 78", async ({ page }) => {
+  const errors = await openHarness(page);
+  await app(page).locator("#tabPrereqs").click();
+  const note = app(page).locator("#prereqs .pr-order");
+  await expect(note).toHaveCount(1);
+  await expect(note.locator("b")).toHaveText("La guía sigue la orden Espíritu de la salvación");
+  // Con el estilo de la app, no el de la página (fondo propio y su borde)
+  expect(await style(note, "borderTopStyle")).toBe("solid");
+  expect(await style(note, "display")).toBe("flex");
+  await note.locator('.step-ref[data-n="78"]').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("78");
+  expect(errors).toEqual([]);
+});
