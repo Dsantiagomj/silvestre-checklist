@@ -67,3 +67,11 @@ test("en el embebido el tema sigue en el menú «⋯», con los iconos de Frigos
   await expect(app(page).locator(".app-root")).toHaveAttribute("data-theme", "light");
   expect(await page.evaluate(() => localStorage.getItem("hielos:theme"))).toBe("light");
 });
+
+test("los prerrequisitos del Hielos no llevan el aviso de la orden de Bonta, que es del Silvestre", async ({ page }) => {
+  const errors = await openHielos(page);
+  await app(page).locator("#tabPrereqs").click();
+  await expect(app(page).locator("#prereqs .pr-card").first()).toBeVisible();
+  await expect(app(page).locator("#prereqs .pr-order")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
