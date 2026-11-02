@@ -197,8 +197,9 @@ function DiaryBar({ s, full }) {
   );
 }
 
-// Pestañas de la ventana: las dos vistas de los pasos (el mapa es la de por defecto: se
-// recorre el camino y se entra al diario de un paso) y, aparte, lo que hay que reunir
+// Pestañas de la ventana: las dos vistas de los pasos (en el mapa se recorre el camino y se
+// entra al diario de un paso) y, aparte, lo que hay que reunir (la primera vez, los
+// prerrequisitos)
 const VIEWS = [
   ["map", "Mapa", "stepsViewMap"],
   ["diary", "Diario", "stepsViewDiary"],
