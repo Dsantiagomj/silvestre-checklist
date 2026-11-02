@@ -141,8 +141,9 @@ jobs:
           retry python3 -I .build/build_figures.py
           retry python3 -I .build/fetch_start_maps.py
           retry python3 -I .build/build_resources.py
-      # Para qué misión es cada objeto (item_quests.json): el audit lee los objetos que
-      # acaba de escribir build_resources.py y este los vuelve a escribir ya con su misión.
+      # Para qué misión es cada objeto (item_quests.json): el audit lee los objetos de la
+      # página como build_resources.py (build_resources.listed, con los objetos fabricados
+      # aún sin cambiar por sus ingredientes) y este los vuelve a escribir ya con su misión.
       # Lo que ninguna misión pide (?) o falta (+) queda en el resumen del run
       - name: Audit the items against their quests
         run: |
