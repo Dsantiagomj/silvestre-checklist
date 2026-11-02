@@ -1,6 +1,6 @@
 # Mounting on Torrente Arcano
 
-Torrente Arcano (torrentearcano.com, built on Squarespace) uses five embeds from this repo. Each one is a code block with a `<div>` and a script loaded from GitHub Pages. All five are live:
+Torrente Arcano (torrentearcano.com, built on Squarespace) uses six embeds from this repo. Each one is a code block with a `<div>` and a script loaded from GitHub Pages. The first five are live; «Guías de Dofus» is waiting to be pasted:
 
 | Embed | Page | Code |
 |---|---|---|
@@ -9,6 +9,7 @@ Torrente Arcano (torrentearcano.com, built on Squarespace) uses five embeds from
 | Checklists hub | https://www.torrentearcano.com/checklists | `src/embeds/hub/` |
 | Site home (inicio) | https://www.torrentearcano.com/ | `src/embeds/inicio/` |
 | La eterna cosecha | https://www.torrentearcano.com/lista-ocre | `src/embeds/cosecha/` and `src/tools/cosecha/` |
+| Guías de Dofus | https://www.torrentearcano.com/guias-dofus | `src/embeds/guias/` |
 
 The entries, the `<div>`s, the `localStorage` keys and the CSS variables are a frozen contract: changing them breaks Torrente Arcano's pages. The full table is in `AGENTS.md`, and `tests/embed/contract.spec.js` checks it.
 
@@ -86,6 +87,27 @@ The 337 souls that «La eterna cosecha», the Dofus Ocre quest, asks for. It is 
 Marks are saved in `cosecha:done`, the key of the standalone page that used to live at https://dsantiagomj.github.io/silvestre-checklist/cosecha/, so nobody on that domain loses progress. The view (grouping, type, hide done and the chosen stage or region) goes in `cosecha:ui`. Another open tab updates itself. On torrentearcano.com progress started from zero, because the browser stores it per domain.
 
 The souls come from `public/cosecha/cosecha.json`, written by `python3 -I .build/build_cosecha.py` from DofusDB (quest 439). Each soul carries its stage (`e`, the position of its step in `quest.steps`; recommended levels do not count) and its region (`r`, the area of its first subzone). The script copies the images to `public/img/cosecha/`. `cosecha.json` is published next to the `/cosecha/` page. Build it with `npm run build:cosecha`.
+
+## Guías de Dofus
+
+```html
+<div id="guias-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/guias.js"></script>
+```
+
+The page with every Dofus guide on Torrente Arcano. It replaces the code block Torre wrote by hand for `/guias-dofus` (its own HTML, CSS and script). Pasting the snippet in place of that block is the only change on Torre's side: no CSS variables, no page title, no other block. The embed measures the fixed header itself (`--guias-top`, through `followPageHeader`), adds its fonts to the page `<head>` and starts in the dark theme.
+
+It is a separate widget (`src/embeds/guias/`), without React, at about 24 KB (8 KB compressed). It renders the page's `h1`, «Guías de Dofus», like the inicio does, because the page has no other title once the old block is gone.
+
+- At the top, the title over the Krosmoz and Torre's intro text.
+- Below it, a bar with the filters (Todos, Primordiales, Eventos, each with its count), the search field and the egg theme switch. It sticks under Squarespace's fixed header and turns opaque once stuck.
+- Then one collectible card per guide, in the order of Torre's page: the egg glowing in the Dofus colour, a pill for Primordial or Evento, the name and the Dofus level. With a mouse the card tilts and the shine follows it; with reduced motion or on a touch screen it stays still. Six cards per row, four below 1180 px of widget width, two below 600 px.
+- Search ignores accents and case and also knows the alternate names Torre had in its own search («zanahoria», «kaliptus»). With no match it shows «No se ha encontrado ningún Dofus.».
+- Kalipto and Piñata de Pino have no guide yet (Torre linked them to `/wip`): they show «Próximamente», grey, without a link and without the tilt.
+
+The theme goes in `guias:theme`; nothing else is stored. The 30 guides are kept by hand in `src/embeds/guias/manifest.js`: name, Torre URL (or `null` while there is no guide), tag, level, the card colour from Torre's `--accent` and the Dofus item icon. Every icon is the item icon from DofusDB, self-hosted in `public/img/items/` (icon ids, not item ids). To add a guide, add an entry there with its icon. Build it with `npm run build:guias`.
+
+Before pasting it you can preview it at https://dsantiagomj.github.io/silvestre-checklist/guias-dofus/ (`public/guias-dofus/index.html`), a dark page with Torre's header heights, the same snippet and the published embed, marked `noindex`.
 
 ## Order to go live
 

@@ -68,7 +68,7 @@ Run all six suites before pushing a branch. The browser suites build into their 
 |---|---|---|
 | `npm run test:unit` | Nothing: `node --test tests/unit/*.test.js` | |
 | `npm run test:e2e` | The Silvestre in `.e2e-test/silvestre/`, served by `tests/serve.js` on port 4317 like Pages: the app at `/silvestre/`, images at the root | 1440×900 |
-| `npm run test:embed` | The five embeds in `.embed-test/`, no server | 1440×900 |
+| `npm run test:embed` | The six embeds in `.embed-test/`, no server | 1440×900 |
 | `npm run test:hielos` | The Hielos in `.hielos-test/`, on port 4321, with the app at `/hielos/` | 1440×1000 |
 | `npm run test:global` | The Guía global in `.global-test/`, on port 4322, with the app at `/global/` | 1440×1000 |
 | `npm run test:site` | The site (`SITE=1`) in `.site-test/`, on port 4325 | 1440×900 |
@@ -96,6 +96,7 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 | `hielos.spec.js` | The Hielos on a page like `/checklist-dofus-de-los-hielos` |
 | `hub.spec.js` | One card per Dofus in the manifest, in order and with its link, the Próximamente card without a link, keyboard navigation, the mouse tilt (and none with reduced motion), isolated CSS, two cards per row on mobile and the `/checklists/` preview |
 | `inicio.spec.js`, `cosecha.spec.js` | The other two widgets on their pages |
+| `guias.spec.js` | «Guías de Dofus» on a page like `/guias-dofus` (fixed header of 102, 92 and 84 px, only the snippet in the block): the `h1`, the 30 guides in Torre's order with their links, the filters and their counts, accent-insensitive search with Torre's alternate names, the empty state, the «Próximamente» cards without links, the filter bar under the page header, the mouse-only tilt, reduced motion, the theme in `guias:theme` and the `/guias-dofus/` preview |
 
 ### The Hielos
 
@@ -115,9 +116,9 @@ Every push to `main` is deployed by `.github/workflows/deploy.yml`: one job that
 
 Order matters:
 
-1. `npm run build:site`: the home page in `dist/index.html` with `public/` (images in `dist/img/`, the `/checklists/` preview) and the «La eterna cosecha» page in `dist/cosecha/`. It is the only build that empties `dist/`, so it goes first.
+1. `npm run build:site`: the home page in `dist/index.html` with `public/` (images in `dist/img/`, the `/checklists/` and `/guias-dofus/` previews) and the «La eterna cosecha» page in `dist/cosecha/`. It is the only build that empties `dist/`, so it goes first.
 2. `npm run build`, `npm run build:hielos` and `npm run build:global`: the Silvestre in `dist/silvestre/`, the Hielos in `dist/hielos/` and the Guía global in `dist/global/`. Each empties only its own folder and none copies `public/`.
-3. The embeds: `build:embed` (`dist/embed/silvestre.js`, chunks in `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, chunks in `dist/embed/hielos-chunks/`), `build:hub`, `build:inicio` and `build:cosecha`. They load their chunks and images from the absolute Pages address. Each deletes only its own files inside `dist/embed/`, so their order does not matter.
+3. The embeds: `build:embed` (`dist/embed/silvestre.js`, chunks in `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, chunks in `dist/embed/hielos-chunks/`), `build:hub`, `build:inicio`, `build:cosecha` and `build:guias`. They load their chunks and images from the absolute Pages address. Each deletes only its own files inside `dist/embed/`, so their order does not matter.
 
 To check a build the way Pages serves it:
 
