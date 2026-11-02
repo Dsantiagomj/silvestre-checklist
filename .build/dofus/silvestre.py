@@ -359,6 +359,14 @@ EXTRA_ITEMS = {
           ("Equipables", "Opcional · Altos vuelos", "l10", "Alas de madera mejoradas", 1)],
 }
 
+# Steps where the page lists one group of resources per order and the guide follows one:
+# step -> the order whose group stays ("<order> - Recursos" on the page). Step 78 ("Hasta
+# la misión de orden 4") lists the three Bonta orders; the guide's quests are the ones of
+# Espíritu de la salvación (STEP_EXTRA), so the other two go. Applied after the check
+# against the compiled list, which counts all three. Step 89 (order mission 5) lists one
+# resource of no order: nothing to choose there.
+CHOSEN_ORDER = {"78": "Espíritu de la salvación"}
+
 # Only needed if the alteration is gone: listed in its step, left out of totals.
 OPTIONAL_ITEM = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
 
