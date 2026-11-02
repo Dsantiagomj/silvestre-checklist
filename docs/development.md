@@ -9,7 +9,7 @@ The checklist is a React 19 app built with Vite. `DOFUS=<id>` picks the Dofus, `
 - the texts (title, hero, footer) and the guide version;
 - the `localStorage` key prefix (`silvestre:`) and the classic checklist's keys;
 - the backup file and the embed settings (`silvestre-root`, `--silvestre-top`);
-- the hero egg, the prerequisites note and the explanatory note's example;
+- the hero egg, the prerequisites notes (the Dofus Ocre, the alignment order the guide follows) and the explanatory note's example;
 - the diary's hand-written notes (`journal`);
 - where it builds: the Silvestre into `dist/silvestre/` and `dist/embed/silvestre.js`.
 

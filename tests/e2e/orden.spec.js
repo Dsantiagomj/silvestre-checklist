@@ -52,3 +52,18 @@ test("el paso 78 enlaza las misiones de orden de Corazón valiente y Ojo atento,
   await expect(note).toContainText("Ojo atento");
   expect(errors).toEqual([]);
 });
+
+test("los prerrequisitos explican que la guía sigue la orden Espíritu de la salvación", async ({ page }) => {
+  const errors = await openApp(page, null, { view: "prereqs" });
+  const note = page.locator("#prereqs .pr-order");
+  await expect(note).toHaveCount(1);
+  await expect(note.locator("b")).toHaveText("La guía sigue la orden Espíritu de la salvación");
+  await expect(note).toContainText("solo se listan los recursos de esa orden");
+  await expect(note).toContainText("Corazón valiente");
+  await expect(note).toContainText("Ojo atento");
+  // Va junto al aviso del Dofus Ocre, con su mismo estilo, y lleva al paso 78
+  await expect(page.locator("#prereqs .pr-ocre + .pr-order")).toHaveCount(1);
+  await note.locator('.step-ref[data-n="78"]').click();
+  await expect(page.locator("#journal .journal-num")).toHaveText("78");
+  expect(errors).toEqual([]);
+});

@@ -126,8 +126,9 @@ export default {
   egg: { pre: null, final: 69 },
   feminine: null,
 
-  // Sin recomendación aparte sobre los prerrequisitos
+  // Sin recomendación aparte sobre los prerrequisitos ni orden de alineamiento que elegir
   prereqNote: null,
+  orderNote: null,
 
   // La nota aclaratoria («Hasta tener que pasar X»), con un ejemplo real: el 8 se detiene
   // ante el Morsagüino Real y el 12 lo deja «hasta que te pida pasar la mazmorra del

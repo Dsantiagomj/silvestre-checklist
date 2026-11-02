@@ -21,7 +21,8 @@ async function openHielos(page, seed = {}, { view = "diary" } = {}) {
     }
   }, [seed, view]);
   await page.goto("");
-  await expect(page.locator(view === "map" ? ".map-node" : ".diary-row")).toHaveCount(70);
+  if (view === "prereqs") await expect(page.locator("#prereqs")).toBeVisible();
+  else await expect(page.locator(view === "map" ? ".map-node" : ".diary-row")).toHaveCount(70);
   return errors;
 }
 
@@ -351,4 +352,11 @@ test("sin misiones de alineamiento no hay selector de bando", async ({ page }) =
   await openHielos(page);
   await openStep(page, 1);
   await expect(page.locator("#sideSwitch, .q-side")).toHaveCount(0);
+});
+
+test("los prerrequisitos no llevan el aviso de la orden de Bonta, que es del Silvestre", async ({ page }) => {
+  const errors = await openHielos(page, {}, { view: "prereqs" });
+  await expect(page.locator("#prereqs .pr-card").first()).toBeVisible();
+  await expect(page.locator("#prereqs .pr-order")).toHaveCount(0);
+  expect(errors).toEqual([]);
 });

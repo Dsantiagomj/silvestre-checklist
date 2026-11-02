@@ -254,7 +254,7 @@ An item that several steps need is added up in Objetos. What you collected for o
 
 ## Prerequisites
 
-There are 20, kept in line with torrentearcano.com: 11 earlier achievements and quests, 6 professions and 3 spells. "La tierra banquisa" is not here because it is the first quest of step 23. At the top sits Sandglass's advice to start the Dofus Ocre as early as possible, with a notice that links to step 79. Prerequisites do not count towards Silvestre progress: they are tracked separately.
+There are 20, kept in line with torrentearcano.com: 11 earlier achievements and quests, 6 professions and 3 spells. "La tierra banquisa" is not here because it is the first quest of step 23. At the top sits Sandglass's advice to start the Dofus Ocre as early as possible, with a notice that links to step 79. Below it, a second notice in the same style says the guide follows the Bonta order Espíritu de la salvación, so only that order's resources are listed, and that step 78 links the quests of Corazón valiente and Ojo atento (`orderNote` in `config.js`; null in Hielos and the global guide). Prerequisites do not count towards Silvestre progress: they are tracked separately.
 
 Each one is a card you can check, with the items it needs below. Professions and spells show their game icon. Prerequisites that ask for specific quests show the quest «!»; those that ask for a full achievement, the small book with a trophy. Optional ones carry a blue tag and a dashed border.
 

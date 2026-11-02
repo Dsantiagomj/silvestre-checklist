@@ -60,6 +60,7 @@ export default {
   egg: { pre: null, final: null },
   feminine: null,
   prereqNote: null,
+  orderNote: null,
 
   // Sin nota de las pausas: la guía no usa «hasta tener que pasar X»
   nota: null,

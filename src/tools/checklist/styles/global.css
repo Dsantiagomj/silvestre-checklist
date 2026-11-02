@@ -3295,15 +3295,16 @@ a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
 .q-guide:hover{ text-decoration:underline; }
 .q-guide::after{ content:" ↗"; font-size:.85em; }
 
-/* Recomendación del Dofus Ocre sobre los prerrequisitos */
-.pr-ocre{
+/* Recomendación del Dofus Ocre sobre los prerrequisitos y, con el mismo aspecto, la orden de
+   alineamiento que sigue la guía */
+.pr-ocre, .pr-order{
   display:flex; gap:14px; align-items:flex-start; margin-bottom:16px; padding:12px 16px; border-radius:12px;
   background:color-mix(in srgb, var(--soon) 10%, transparent);
   border:1px solid color-mix(in srgb, var(--soon) 45%, transparent);
 }
-.pr-ocre img{ flex:none; width:44px; height:44px; object-fit:contain; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
-.pr-ocre b{ display:block; font-size:14.5px; color:var(--soon-ink); }
-.pr-ocre p{ margin:4px 0 0; font-size:13.5px; line-height:1.55; color:var(--txt-soft); }
+.pr-ocre img, .pr-order img{ flex:none; width:44px; height:44px; object-fit:contain; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
+.pr-ocre b, .pr-order b{ display:block; font-size:14.5px; color:var(--soon-ink); }
+.pr-ocre p, .pr-order p{ margin:4px 0 0; font-size:13.5px; line-height:1.55; color:var(--txt-soft); }
 .pr-ocre .pr-ocre-step{ color:var(--txt); }
 
 /* MOVIMIENTO ------------------------------------------------------------------
