@@ -278,6 +278,75 @@ test("una misión terminada en el Silvestre sale hecha aquí, y el paso con todo
   expect(errors).toEqual([]);
 });
 
+// «Bienvenido a Frigost» (649, el 5) no la pide nadie: el juego la termina sola al terminar
+// «La tierra banquisa», «Una alcaldesa de hielo», «Full contact» (las del 2) y «Los
+// monólogos de la vacuna» (el 4). COMPLETED_BY en quests.json
+const bienvenido = page => quest(page, "Bienvenido a Frigost").locator(".q-check");
+
+test("terminar las misiones del 2 y del 4 termina «Bienvenido a Frigost»", async ({ page }) => {
+  const errors = await openHielos(page);
+  await openStep(page, 2);
+  for (const name of ["La tierra banquisa", "Una alcaldesa de hielo", "Full contact"]) {
+    await quest(page, name).locator(".q-check").click();
+  }
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "false");
+  await openStep(page, 4);
+  await quest(page, "Los monólogos de la vacuna").locator(".q-check").click();
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "true");
+  await expect(bienvenido(page)).toHaveAttribute("title", "Completada sola al terminar «Los monólogos de la vacuna»");
+  expect(errors).toEqual([]);
+});
+
+test("marcar el 4 con el 2 hecho marca también el 5", async ({ page }) => {
+  const errors = await openHielos(page, { "hielos:done": { 2: true } });
+  await page.click('.diary-row[data-n="4"] .row-check');
+  await expect(page.locator('.diary-row[data-n="5"]')).toHaveClass(/\bdone\b/);
+  expect(errors).toEqual([]);
+});
+
+test("con los pasos 2 y 4 hechos «Bienvenido a Frigost» sale hecha, y deshacer uno la deja pendiente", async ({ page }) => {
+  const errors = await openHielos(page, { "hielos:done": { 2: true, 4: true } });
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "true");
+  // No se deshace aquí: se deshace la que la termina
+  await expect(bienvenido(page)).toBeDisabled();
+  await expect(bienvenido(page)).toHaveAttribute("title", "Completada sola al terminar «Los monólogos de la vacuna»");
+  // No se guarda: desmarcar el 4 la deja como estaba
+  await page.click('.diary-row[data-n="4"] .row-check');
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(bienvenido(page)).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
+test("las misiones del 2 y del 4 terminadas en el Silvestre terminan aquí «Bienvenido a Frigost»", async ({ page }) => {
+  const errors = await openHielos(page, {
+    "dofus-checklists:shared": { silvestre: { name: "Dofus Silvestre", quests: ["612", "613", "614", "615"], owned: [] } },
+  });
+  // Llegan del Silvestre: el 4 y el 5 se marcan solos, como con cualquier misión de allí
+  await expect(page.locator('.diary-row[data-n="5"]')).toHaveClass(/\bdone\b/);
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "true");
+  expect(errors).toEqual([]);
+});
+
+test("con unas misiones aquí y otras en el Silvestre, también, con el nombre del Silvestre", async ({ page }) => {
+  // La del 4 ya había llegado (sharedSeen): no marca ningún paso
+  const errors = await openHielos(page, {
+    "hielos:done": { 2: true },
+    "hielos:sharedSeen": ["615"],
+    "dofus-checklists:shared": { silvestre: { name: "Dofus Silvestre", quests: ["615"], owned: [] } },
+  });
+  await expect(page.locator('.diary-row[data-n="5"]')).not.toHaveClass(/\bdone\b/);
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "true");
+  // La del 4 se hizo allí: se deshace allí
+  await expect(bienvenido(page)).toBeDisabled();
+  await expect(quest(page, "Bienvenido a Frigost").locator(".q-shared")).toHaveText("Hecha en el Dofus Silvestre");
+  expect(errors).toEqual([]);
+});
+
 test("sin misiones de alineamiento no hay selector de bando", async ({ page }) => {
   await openHielos(page);
   await openStep(page, 1);

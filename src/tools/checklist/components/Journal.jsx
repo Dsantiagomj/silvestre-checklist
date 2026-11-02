@@ -9,7 +9,7 @@ import {
 } from "../lib/journal.js";
 import { rowsOf } from "../lib/resources.js";
 import {
-  alsoText, closeSteps, closingPlan, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, rowHave, rowSharedBy, selectStep, sharedBy, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
+  alsoText, closeSteps, closingPlan, finishedBy, loadQuests, optionalDoneBy, pendingCloses, questDone, questDoneElsewhere, questFocus, requiredBy, rowHave, rowSharedBy, selectStep, sharedBy, setObjective, showOnMap, toggleRowOwned, toggleStep, useAppState,
 } from "../state/store.js";
 import { CoordChip, Objectives } from "./StepParts.jsx";
 import Slot from "./needs/Slot.jsx";
@@ -460,18 +460,19 @@ function QuestStart({ q }) {
 }
 
 /** Por qué no se pulsa una misión hecha fuera de ella, o null: se deshace allí. */
-const lockedWhy = (elsewhere, by, there) => (elsewhere ? `Completada en el paso ${elsewhere}`
-  : by ? `Completada: la pide terminada «${by}»` : there ? `Hecha en el ${there}` : null);
+const lockedWhy = (elsewhere, by, there, alone) => (elsewhere ? `Completada en el paso ${elsewhere}`
+  : by ? `Completada: la pide terminada «${by}»` : alone ? `Completada sola al terminar «${alone}»`
+  : there ? `Hecha en el ${there}` : null);
 
 /**
  * «Completar» / «✓ Completada» de la misión en curso del overlay; terminada en otro paso,
  * o porque otra terminada la pide (`by`, su nombre), no se pulsa: se deshace allí.
  */
-function QuestDone({ finished, elsewhere, by, there, onClick }) {
+function QuestDone({ finished, elsewhere, by, there, alone, onClick }) {
   return (
     <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-      disabled={!!elsewhere || !!by || !!there}
-      title={lockedWhy(elsewhere, by, there) || (finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada")}
+      disabled={!!elsewhere || !!by || !!there || !!alone}
+      title={lockedWhy(elsewhere, by, there, alone) || (finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada")}
       aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
       {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
   );
@@ -483,8 +484,8 @@ function QuestDone({ finished, elsewhere, by, there, onClick }) {
  * fuera de ella (en otro paso, porque otra terminada la pide o en otro checklist,
  * `there`), no se pulsa.
  */
-function QuestCheck({ name, finished, elsewhere, by, there, onClick }) {
-  const why = lockedWhy(elsewhere, by, there);
+function QuestCheck({ name, finished, elsewhere, by, there, alone, onClick }) {
+  const why = lockedWhy(elsewhere, by, there, alone);
   return (
     <button type="button" className={"q-check" + (finished ? " is-done" : "")} aria-pressed={finished} disabled={!!why}
       aria-label={finished ? `Marcar «${name}» sin hacer` : `Marcar «${name}» como hecha`}
@@ -504,9 +505,11 @@ export function CurrentQuestDone({ n, cur, s }) {
   const total = q.s.reduce((a, stg) => a + stg.o.length, 0);
   const finished = progressOf(s, n, list, i, q) >= total;
   const elsewhere = q.kind === "optional" ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, n);
-  const by = !elsewhere && (s.questObj[q.id] || 0) < total ? impliedBy(s.questObj, q.id) : null;
+  const mine = !elsewhere && (s.questObj[q.id] || 0) < total;
+  const by = mine ? impliedBy(s.questObj, q.id) ?? requiredBy(s, q.id) : null;
+  const alone = mine ? finishedBy(s, q.id) : null;
   const there = sharedBy(s, n, q);
-  return <QuestDone finished={finished} elsewhere={elsewhere} by={by} there={there} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
+  return <QuestDone finished={finished} elsewhere={elsewhere} by={by} there={there} alone={alone} onClick={() => setObjective(n, i, q.id, finished ? 0 : total, total)} />;
 }
 
 /**
@@ -564,8 +567,11 @@ export function Quests({ step, quests, loaded, s }) {
     // Terminada en otro paso: sale hecha y aquí no se deshace (se deshace desmarcando ese)
     // Una opcional, si la termina otro paso hecho (OPTIONAL_DONE_BY: «Arma letal», en el 93)
     const elsewhere = optional ? optionalDoneBy(s, q.id) : questDoneElsewhere(s, q.id, step.n);
-    // Terminada porque la pide otra terminada: se deshace deshaciendo esa
-    const by = !elsewhere && (s.questObj[q.id] || 0) < total ? impliedBy(s.questObj, q.id) : null;
+    // Terminada porque la pide otra terminada: se deshace deshaciendo esa. Y la que el
+    // juego termina sola al terminar otras (finishedBy), deshaciendo una de esas
+    const mine = !elsewhere && (s.questObj[q.id] || 0) < total;
+    const by = mine ? impliedBy(s.questObj, q.id) ?? requiredBy(s, q.id) : null;
+    const alone = mine ? finishedBy(s, q.id) : null;
     // Terminada en el otro checklist (y aquí no): lo dice y se deshace allí
     const there = sharedBy(s, step.n, q);
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
@@ -586,7 +592,7 @@ export function Quests({ step, quests, loaded, s }) {
           {optional && <span className="q-optional" title="Opcional pero útil">Opcional</span>}
           {there && <span className="q-shared">{`Hecha en el ${there}`}</span>}
           <span className="q-lv">{`Niv. ${q.lv}`}</span>
-          <QuestCheck name={q.n} finished={finished} elsewhere={elsewhere} by={by} there={there} onClick={() => pick(finished ? 0 : total)} />
+          <QuestCheck name={q.n} finished={finished} elsewhere={elsewhere} by={by} there={there} alone={alone} onClick={() => pick(finished ? 0 : total)} />
         </div>
         {/* Plegada, de dónde sale solo si no es un PNJ fijo: el templo de tu clase o la misión de tu alineamiento */}
         {(open || q.st?.cls || q.st?.ali) && <QuestStart q={q} />}
