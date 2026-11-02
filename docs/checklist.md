@@ -191,6 +191,8 @@ To make progress:
 
 A quest shared by several steps shows as completed in all of them once a done step finishes it. In the other steps its button and medallions are disabled and the button reads "Completada en el paso 38", or whichever step it was; unchecking that step sets the quest back to pending. If checking a step leaves another pending step with all its required quests done, that one is checked too, in a chain. `questDoneElsewhere` in `src/tools/checklist/state/store.js` computes this without storing anything.
 
+A few Frigost quests finish on their own in game once a set of other quests is done. "Bienvenido a Frigost" (649) is one: "La tierra banquisa", "Una alcaldesa de hielo", "Full contact" and "Los monólogos de la vacuna" finish it. DofusDB has no quest link for this, so the list is written by hand in `.build/lists/completed_by.json`, shared by every checklist, and `build_quests_js.py` copies the entries on each route to `COMPLETED_BY` in `quests.json`. The app counts such a quest done when every quest that finishes it is done, here or in another checklist, and then also the quests it needs finished to start (`PREREQS`). Its button is disabled and reads "Completada sola al terminar «Los monólogos de la vacuna»", or "Hecha en el Dofus Silvestre" when one of its quests was done there. Nothing is stored: undoing one of those quests sets it back to pending. `completedBy` in `src/tools/checklist/lib/shared.js` does the work.
+
 ### Quest kinds
 
 `build_quests_js.py` writes each quest's kind to `STEP_QUEST_KINDS`.
