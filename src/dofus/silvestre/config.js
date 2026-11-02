@@ -109,11 +109,15 @@ export default {
     /**
      * Notas escritas a mano, para lo que la guía no dice. En el 64, por qué se llega hasta
      * la cerveza fuerte (STOP_AT) y no solo hasta la taberna. En el 87, por qué termina la
-     * misión del 73 (closes a mano en import_guide.py).
+     * misión del 73 (closes a mano en import_guide.py). En el 78, las misiones de orden de las
+     * otras dos órdenes, para quien no siga Espíritu de la salvación: sus guías las enlaza
+     * NOTE_MISSIONS (.build/dofus/silvestre.py), con los nombres tal como van aquí.
      */
     extraNotes: {
       64: "Para empezar la misión 2, «Dos alientos, una inspiración» (paso 66), hay que llegar hasta entregarle"
         + " la cerveza fuerte a Pandawelo. «De la mano» se termina en el paso 67, con el logro completo.",
+      78: "¿Otra orden? Corazón valiente: Discípulo de Menalt, Escudero, Caballero de la esperanza y Campeón"
+        + " maravilloso · Ojo atento: Discípulo de Silvosse, Espía silencioso, Cazador de renegados y Asesino supremo.",
       87: "Sus dos misiones piden tener tomada «Toma de conciencia», que se hace en el paso 91, y esta pide"
         + " terminada «Las cuatro voluntades», que el paso 73 deja a medias: se termina aquí. Las dos misiones"
         + " se hacen de una en una.",

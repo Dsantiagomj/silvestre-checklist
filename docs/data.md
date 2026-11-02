@@ -94,10 +94,11 @@ Two names do not exist in DofusDB and show without an image: Esencia de cil and 
 
 ## Guide links
 
-The quests and achievements named in a step's text link to their guide on torrentearcano.com, as in the classic checklist. `.build/import_guide_links.py` takes the names from the page, builds the same URLs and keeps only those that answer, in `src/dofus/silvestre/guides.json`: 72 achievements and 103 quests from the text. "Draconantopía" is missing.
+The quests and achievements named in a step's text link to their guide on torrentearcano.com, as in the classic checklist. `.build/import_guide_links.py` takes the names from the page, builds the same URLs and keeps only those that answer, in `src/dofus/silvestre/guides.json`: 72 achievements and 111 quests from the text and the hand-written notes. "Draconantopía" is missing.
 
 - The page does not link "En marcha hacia la aventura" or "Un ciudadano modelo", the two achievements step 1 includes: `EXTRA_ACHIEVEMENTS` gives them their guide. "Respuestas para todo" has no page.
 - Where the guide misspells a name, `MISSION_URLS` gives the page: "Los tótems de Maimame", in step 92, links to "Los tótems de Maimane".
+- A hand-written note (`journal.extraNotes` in `config.js`) links quests through `NOTE_MISSIONS`, keyed by the name exactly as the note writes it. Step 78's note names the order quests 1 to 4 of Corazón valiente and Ojo atento, the two orders the guide does not follow, so a player on another path finds their guides. `guides.json` is not touched by the daily sync, and a manual run of the script keeps these entries.
 - It also links each quest in the diary list to its guide when the page is in the site's sitemap: 361 of 363. The "Prólogo invernal" links each alignment's guide from its start. These are kept apart (`quests` in `guides.json`) and are only linked in the list, because a short title like "Memo" must not link stray words in the text.
 
 ## Updating the guide
