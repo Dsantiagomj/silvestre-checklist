@@ -65,6 +65,33 @@ export function withPrereqs(quests, prereqs) {
 }
 
 /**
+ * Las misiones que el juego termina solas al terminar otras (`table`, COMPLETED_BY de las
+ * misiones: { id: [las que la terminan] }) con todas esas hechas, y las que ellas
+ * necesitaban terminadas para empezar (`prereqs`, PREREQS). `done(id)` dice si una está
+ * hecha: true en este checklist, el nombre de otro si se hizo allí, o nada. Una terminada
+ * sola cuenta para las demás, hasta que no sale ninguna más. Devuelve { id: { by, there } }:
+ * `by`, la que la termina (la última de su lista; de las que pide, ella misma) y `there`,
+ * el otro checklist si alguna de las suyas se hizo allí (o null). Las ya hechas no salen.
+ */
+export function completedBy(table, prereqs, done) {
+  const out = {};
+  const mark = id => (id in out ? out[id].there ?? true : done(id));
+  for (let more = true; more;) {
+    more = false;
+    for (const [id, by] of Object.entries(table || {})) {
+      if (id in out || done(id)) continue;
+      const marks = by.map(x => mark(String(x)));
+      if (!marks.every(Boolean)) continue;
+      const there = marks.find(m => typeof m === "string") ?? null;
+      out[id] = { by: String(by.at(-1)), there };
+      for (const x of prereqs?.[id] || []) if (!(x in out) && !done(String(x))) out[x] = { by: id, there };
+      more = true;
+    }
+  }
+  return out;
+}
+
+/**
  * Los objetos que se comparten: los conseguidos enteros (clave sola). Las partes de un
  * paso ("clave#paso") y las claves compuestas ("8918@…", "13423|6812") son de cada guía.
  */

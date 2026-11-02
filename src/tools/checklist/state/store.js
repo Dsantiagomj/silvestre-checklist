@@ -7,13 +7,13 @@ import { prefersReducedMotion } from "../lib/motion.js";
 import { STEPS, ALL_PREREQS, PREVIOUS_STEPS } from "@dofus/steps.js";
 // El peso de cada paso y de cada una de sus misiones: su nivel (.build/build_weights.py)
 import WEIGHTS from "@dofus/weights.json";
-import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questsData, questsOf, setQuestSide } from "../lib/quests.js";
+import { childrenOf, currentQuest, impliedDone, loadQuests as loadQuestsData, nextOpen, nextWalked, parentIn, prereqsOf, questSide, questsData, questsOf, setQuestSide } from "../lib/quests.js";
 import { ALL_ROWS, PREREQ_OF_ROW, PREREQ_STEP, ROW_BY_KEY, STEPS_WITH_ITEMS } from "../lib/resources.js";
 import { STRIP_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
-import { NO_SHARED, SHARED_KEY, entryOf, othersOf, parseShared, withEntry, withPrereqs } from "../lib/shared.js";
+import { NO_SHARED, SHARED_KEY, completedBy, entryOf, othersOf, parseShared, withEntry, withPrereqs } from "../lib/shared.js";
 import DOFUS from "@dofus/config.js";
 
 // Las claves de localStorage, con el prefijo del Dofus ("silvestre:done"…)
@@ -381,11 +381,63 @@ function sharedDone(s) {
 export const ownState = s => (s.shared === NO_SHARED ? s : { ...s, shared: NO_SHARED });
 
 /**
- * El nombre del Dofus de otro checklist si la misión `q` del paso `n` está hecha solo por
- * él (aquí no lo estaría), o null: el diario lo dice y aquí no se deshace.
+ * Las misiones que el juego termina solas al terminar otras (COMPLETED_BY: «Bienvenido a
+ * Frigost», con las del 2 y el 4 del Hielos), con las que estas piden terminadas
+ * (completedBy en lib/shared.js): { id: { by, there } }. Las suyas cuentan hechas aquí
+ * como en el diario (doneHere) o en otro checklist (sharedDone), con su nombre. No se
+ * guardan: deshacer una de las suyas las deja como estaban. Una vez por cada progreso
+ * (done, questObj, shared), bando y llegada de las misiones.
  */
-export const sharedBy = (s, n, q) =>
-  (q.id in sharedDone(s) && !questDone(ownState(s), n, q) ? sharedDone(s)[q.id] : null);
+const NOT_ALONE = Object.freeze({});
+const aloneMemo = new WeakMap();
+function doneAlone(s) {
+  const data = questsData();
+  // Sin ninguna en la ruta (el Silvestre) o sin las misiones cargadas, ninguna
+  if (!data?.COMPLETED_BY || !Object.keys(data.COMPLETED_BY).length) return NOT_ALONE;
+  const level = (map, k) => map.get(k) ?? (map.set(k, new WeakMap()), map.get(k));
+  const memo = level(level(aloneMemo, s.questObj), s.done);
+  const hit = memo.get(s.shared);
+  if (hit && hit.data === data && hit.side === questSide()) return hit.out;
+  const own = new Set(impliedDone(s.questObj));
+  for (const st of STEPS) {
+    for (const q of questsOf(st.n)) if (q.kind !== "take" && doneHere(s, st.n, q)) own.add(String(q.id));
+  }
+  const shared = sharedDone(s);
+  const out = completedBy(data.COMPLETED_BY, data.PREREQS, id => own.has(id) || shared[id]);
+  memo.set(s.shared, { data, side: questSide(), out });
+  return out;
+}
+
+/**
+ * La que hecha aquí termina sola a la misión `id` (de su COMPLETED_BY, doneAlone): su
+ * nombre, o null. Esa no se deshace sola, se deshace la que la termina.
+ */
+export function finishedBy(s, id) {
+  const x = doneAlone(s)[id];
+  const data = questsData();
+  if (!x || x.there || !(data.COMPLETED_BY[id] || []).some(c => String(c) === x.by)) return null;
+  return data.QUESTS[x.by]?.n ?? null;
+}
+
+/**
+ * La que, terminada sola con lo de aquí (doneAlone), pide terminada a la misión `id`
+ * (PREREQS): su nombre, o null. Como impliedBy, pero con una que no se terminó a mano.
+ */
+export function requiredBy(s, id) {
+  const x = doneAlone(s)[id];
+  if (!x || x.there || finishedBy(s, id)) return null;
+  return questsData().QUESTS[x.by]?.n ?? null;
+}
+
+/**
+ * El nombre del Dofus de otro checklist si la misión `q` del paso `n` está hecha solo por
+ * él (aquí no lo estaría), o null: el diario lo dice y aquí no se deshace. También una
+ * que se termina sola con alguna de las suyas hecha allí (doneAlone).
+ */
+export function sharedBy(s, n, q) {
+  const there = sharedDone(s)[q.id] ?? doneAlone(s)[q.id]?.there;
+  return there && !questDone(ownState(s), n, q) ? there : null;
+}
 
 /** El paso hecho que termina la misión opcional `qid` (OPTIONAL_DONE_BY), o null. */
 export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIONAL_DONE_BY[qid] : null);
@@ -397,10 +449,16 @@ export const optionalDoneBy = (s, qid) => (s.done[OPTIONAL_DONE_BY[qid]] ? OPTIO
  * Con el paso hecho, sus obligatorias también. Ir por una misión no da por hechas las de
  * antes: solo las que esta pide. Una opcional, ni con el paso hecho: la termina el paso
  * que la termina (optionalDoneBy). Terminada en otro checklist (sharedDone), también,
- * aunque sea opcional: allí se hizo entera.
+ * aunque sea opcional: allí se hizo entera. Y la que el juego termina sola al terminar
+ * otras, con esas hechas (doneAlone).
  */
 export function questDone(s, n, q, total = objCount(q)) {
-  if ((s.questObj[q.id] || 0) >= total || impliedDone(s.questObj).has(String(q.id)) || q.id in sharedDone(s)) return true;
+  return doneHere(s, n, q, total) || q.id in sharedDone(s) || String(q.id) in doneAlone(s);
+}
+
+/** questDone solo con lo de aquí: sin otros checklists ni las que se terminan solas. */
+function doneHere(s, n, q, total = objCount(q)) {
+  if ((s.questObj[q.id] || 0) >= total || impliedDone(s.questObj).has(String(q.id))) return true;
   if (q.kind === "optional") return !!optionalDoneBy(s, q.id);
   return !!s.done[n] || !!questDoneElsewhere(s, q.id, n);
 }
@@ -422,15 +480,17 @@ export const currentOf = (s, n) => currentQuest(n, s.questPos, s.questObj, quest
  * Lo que valen las misiones terminadas de un paso sin marcar, con el mismo avance que
  * el diario (questDone, con los pesos: sin esperar a las misiones). Las que dan por
  * hechas otras (impliedDone) o otro paso hecho (questDoneElsewhere) se suman cuando
- * llegan las misiones; las terminadas en otro checklist (sharedDone), como las propias.
- * Las opcionales y las de solo tomarla valen 0.
+ * llegan las misiones; las terminadas en otro checklist (sharedDone), como las propias,
+ * y las que se terminan solas (doneAlone), también. Las opcionales y las de solo tomarla
+ * valen 0.
  */
 function questPts(s, n) {
   const { q = [], ids = [], os = [] } = WEIGHTS[n] || {};
   const implied = impliedDone(s.questObj);
   const shared = sharedDone(s);
+  const alone = doneAlone(s);
   return q.reduce((a, p, i) => a + ((s.questObj[ids[i]] || 0) >= os[i] || implied.has(ids[i]) || ids[i] in shared
-    || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
+    || ids[i] in alone || questDoneElsewhere(s, ids[i], n) ? p : 0), 0);
 }
 export const donePts = s => STEPS.reduce((a, st) => a + (s.done[st.n] ? weight(st.n) : questPts(s, st.n)), 0);
 /**
@@ -684,7 +744,8 @@ export function toggleStep(n) {
 function reopenLast(n) {
   if (!questsAllDone(state, n)) return;
   const quests = questsOf(n);
-  const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n) && !(q.id in sharedDone(state)));
+  const j = quests.findLastIndex(q => q.kind === "mandatory" && !questDoneElsewhere(state, q.id, n) && !(q.id in sharedDone(state))
+    && !(String(q.id) in doneAlone(state)));
   if (j < 0) return;
   const q = quests[j];
   const keep = quests.filter((x, i) => i !== j && x.kind === "mandatory" && (state.questObj[x.id] || 0) < objCount(x)
@@ -734,13 +795,14 @@ export function closingPlan(s, closes) {
   // también las que piden terminadas las que termina, de este paso cerrado o de otro
   const questObj = { ...s.questObj, ...out.questObj };
   const implied = impliedDone(questObj);
+  const alone = doneAlone({ ...s, questObj });
   for (const { c, whole, quests, later } of plans) {
     if (whole) {
       out.done.push(c);
       continue;
     }
     const missing = quests.filter(q => q.kind === "mandatory" && !implied.has(String(q.id)) && !(q.id in sharedDone(s))
-      && (questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
+      && !(String(q.id) in alone) && (questObj[q.id] ?? 0) < (later[String(q.id)] ?? objCount(q)) && !questDoneElsewhere(s, q.id, c));
     if (missing.length) out.pending.push({ n: c, missing });
     else out.done.push(c);
   }
