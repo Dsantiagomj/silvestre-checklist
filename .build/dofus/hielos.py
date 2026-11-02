@@ -256,6 +256,7 @@ MOVED = {
 }
 
 EXTRA_ITEMS = {}
+CHOSEN_ORDER = {}
 
 # Nothing is listed only in case an alteration is gone.
 OPTIONAL_ITEM = re.compile(r"(?!)")

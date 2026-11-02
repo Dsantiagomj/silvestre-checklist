@@ -60,6 +60,7 @@ PREREQ_OF = D.PREREQ_OF  # per Dofus, in .build/dofus/<id>.py
 DUPLICATES = D.DUPLICATES  # per Dofus, in .build/dofus/<id>.py
 MOVED = D.MOVED  # per Dofus, in .build/dofus/<id>.py
 EXTRA = D.EXTRA_ITEMS  # per Dofus, in .build/dofus/<id>.py
+CHOSEN_ORDER = D.CHOSEN_ORDER  # per Dofus, in .build/dofus/<id>.py
 OPTIONAL = D.OPTIONAL_ITEM  # per Dofus, in .build/dofus/<id>.py
 # The page's group for what nothing on the route needs (Hielos, step 65: the key of the
 # Forjafría de Mizz Frizz). Its rows are listed apart and left out of the totals
@@ -67,6 +68,8 @@ OPTIONAL_GROUP = "Opcional"
 # DofusDB's type for items only quests use. One with a recipe cannot be bought: you
 # craft it from what you gather, so the step lists that instead
 QUEST_ITEM = "Recurso de misión"
+# The page's group of one order's resources ("Ojo atento - Recursos")
+ORDER_GROUP = re.compile(r"^(.+) - Recursos$")
 
 
 def slug(name):
@@ -83,10 +86,23 @@ def category(label):
         return "recursos", "Misión opcional"
     if label == OPTIONAL_GROUP:
         return "recursos", "Opcional"
-    m = re.match(r"^(.+) - Recursos$", label)
+    m = ORDER_GROUP.match(label)
     if m:
         return "recursos", f"Orden {m.group(1)}"
     raise SystemExit(f"categoría desconocida: {label}")
+
+
+def keep_order(rows, order):
+    """A step's rows without the other orders' groups, where the guide follows one order
+    (CHOSEN_ORDER); rows of no order stay. Rows still carry the page's group ("src").
+    Stops the build if the page has no group of that order: it renamed or dropped it."""
+    def of(row):
+        m = ORDER_GROUP.match(row["src"])
+        return m.group(1) if m else None
+
+    if not any(of(row) == order for row in rows):
+        raise SystemExit(f"el paso no tiene recursos de la orden {order}")
+    return [row for row in rows if of(row) in (None, order)]
 
 
 def parse_entry(text):
@@ -303,6 +319,10 @@ def main():
     for n, drop in DUPLICATES.items():
         steps[n] = [row for row in steps[n] if row["k"] not in drop]
         print(f"paso {n}: sin {', '.join(f'{items[k]["name"]} ({why})' for k, why in drop.items())}")
+    # After the check: the page's compiled list counts every order
+    for n, order in CHOSEN_ORDER.items():
+        steps[n] = keep_order(steps[n], order)
+        print(f"paso {n}: solo los recursos de la orden {order}")
     for rows in steps.values():
         for row in rows:
             del row["src"], row["names"]

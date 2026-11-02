@@ -64,13 +64,14 @@ The exception is the hero background, the next step's map in high resolution, wh
 
 ## Required items
 
-They come from the same Torrente Arcano page. Sandglass lists, step by step, only what you need to gather (base resources, equipment, consumables, souls, creatures), without the intermediate items crafted along the way. "Step 0" is the prerequisites. `.build/build_resources.py` looks each name up in DofusDB for its image and writes `src/dofus/silvestre/resources.json`: 442 items in 68 steps.
+They come from the same Torrente Arcano page. Sandglass lists, step by step, only what you need to gather (base resources, equipment, consumables, souls, creatures), without the intermediate items crafted along the way. "Step 0" is the prerequisites. `.build/build_resources.py` looks each name up in DofusDB for its image and writes `src/dofus/silvestre/resources.json`: 437 items in 68 steps.
 
 The totals follow the rules of the page's own compiled list, and the script compares them row by row with `.build/lists/silvestre/compilado.txt`:
 
 - What you keep after using it (Mazorrasombrero, Varita pitusa, Piedra de alma mediana, Calzoncillo de repuesto de capitán chafer) counts once even if two steps ask for it.
 - The Elixir de los barquerontes shows in its step but does not add up: you only need it if you lost the alteration.
 - Items for an optional quest or for a single alignment order carry a tag. They count in the total like the rest: they are tied to their steps, so completing those covers them.
+- Step 78 lists the resources of the three Bonta orders. The guide follows Espíritu de la salvación, so only that order's resources stay (`CHOSEN_ORDER`, below).
 
 ### Fixes to the page's list
 
@@ -82,6 +83,7 @@ All checked against each quest's guide and DofusDB. The tables are in `.build/do
 | `DUPLICATES` | The Ortiga ×50 and Lana de jalatín negro ×5 of "El despertar de Pandala" appear twice, in the prerequisites (l11) and in step 1, whose "El receptáculo de los dofus" requires that quest: they stay only in the prerequisites. The planks and rope in step 75 duplicate step 76's, from when the page split the old step 75: they are removed |
 | `MOVED` | The Lana de jalató ×5 and the Llave del Laboratorio de Brumen Tinctorias sit in step 4 (Barnabé en el espacio, which only asks for a fight) and belong to step 5: they are the first objective of its two quests. Same in step 19: the Calavera, the Llave del Ring Eskarlata and the Tallo de bambuto belong to quests 5 and 6 of Púrpura profundo, in step 21. The Glándula de arak-hai in step 34 is handed in at step 35 |
 | `EXTRA_ITEMS` | The Casco and the Alas de madera are for the cannon to Moon island in "Ida sin vuelta" (Pan Koko Mío): carrying them is enough. "Altos vuelos", which is optional, asks instead for the Casco mejorado and the Alas de madera mejoradas; the page does not list them, so they are added with the tag "Opcional · Altos vuelos" |
+| `CHOSEN_ORDER` | Step 78 ("Hasta la misión de orden 4") lists the resources of the three Bonta orders, one group each. The guide's quests are the ones of Espíritu de la salvación (`STEP_EXTRA`), so the Corazón valiente and Ojo atento groups are dropped after the check against the compiled list, which counts all three. If the page no longer has a group for the chosen order, the script stops. Step 89 (order mission 5) lists one resource with no order, so it needs no rule |
 | `PREREQ_OF` | Ties each prerequisite item to the prerequisite it is spent on, from the objectives of its quests in DofusDB |
 
 Two names do not exist in DofusDB and show without an image: Esencia de cil and "Recursos recolectables de los reinos de tinta y papel".
