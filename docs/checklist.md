@@ -44,7 +44,7 @@ Step 1 moves the percentage by 0.6 %, and step 61, with level 200 quests, by 6.7
 
 ## The steps window
 
-The whole checklist lives in one window with four tabs: Mapa, Diario, Prerrequisitos and Objetos. Mapa and Diario are two views of the same steps; a divider separates them from the other two. The open tab and the view are remembered.
+The whole checklist lives in one window with four tabs: Mapa, Diario, Prerrequisitos and Objetos. Mapa and Diario are two views of the same steps; a divider separates them from the other two. On a first visit, with nothing saved, the window opens on Prerrequisitos. After that the open tab is remembered (`silvestre:stepsView`), and a stored tab is kept as it is.
 
 At the top sits the "Dofus del camino" strip, with progress. Below it, a toolbar that has the same height on all four tabs and only changes its contents:
 
@@ -78,7 +78,7 @@ The "Zona: Todas · 79/100 ▾" button shows the chosen zone and its progress. I
 
 ## The map
 
-This is the default view: the 100 steps as a path on parchment, dark and warm in the dark theme and light in the light one, drawn with gradients and no images. The trail winds top to bottom in rows that wave. At the end is the Dofus Silvestre, unlit until you finish.
+The 100 steps as a path on parchment, dark and warm in the dark theme and light in the light one, drawn with gradients and no images. The trail winds top to bottom in rows that wave. At the end is the Dofus Silvestre, unlit until you finish.
 
 - The path walked, from the first step to the last one done, lights up in green. Done steps are green with their ✓, pending ones carry their zone colour on the border, and the next pending step pulses with "Estás aquí".
 - The 12 Dofus del camino are large landmarks with their egg. Steps that pass a boss show its small portrait next to them.
@@ -108,6 +108,8 @@ The 100 steps run in one list with no chapters per Dofus, because many steps hav
 - the "se cierra en el 34" and "cierra" tags, which jump to those steps on click. On desktop they sit on the right next to the portrait; on mobile, under the title.
 
 With the Pendientes filter, a row you check stays a moment with its ✓ and then folds away. With nothing selected, the detail shows the next pending step. The open step is saved in `silvestre:selectedStep`: after a reload, the diary and the map stay on it.
+
+Coming back resumes where you left off. On a reload or back and forward, the browser puts the page back where it was. When the page is opened again (a new tab, another day) it starts at the top, so the app jumps, without smooth scrolling, to the open step: in the diary the window comes into view with the step's row inside the list, on mobile the row (the sheet stays closed), and in the map its seal. If the step is already in view, the page does not move. The embed does the same on Torre's page, scrolling it only as far as needed to leave the step under the page's fixed header. A `#anchor` in the URL wins over the saved step.
 
 ### The banner
 
