@@ -1,15 +1,20 @@
 import { test, expect } from "@playwright/test";
-import { openApp } from "./helpers.js";
+import fs from "node:fs";
+import { openApp, readLS } from "./helpers.js";
 
-// La guía sigue la orden de Bonta Espíritu de la salvación, y Torrente Arcano lista en el
-// paso 78 los recursos de las tres órdenes. Solo quedan los de la suya (CHOSEN_ORDER en
-// .build/dofus/silvestre.py). Su misión de orden 3 («adepto a las escrituras») para ante
-// Roble Blando, y la 4 («Maestro de los Pergaminos») pide la 3 terminada (QF>121): va al
-// paso 80, donde se pasan Roble Blando y Ugah (TEXT_FIXES, STEP_EXTRA)
+// La guía sigue la orden de Bonta Espíritu de la salvación. Torrente Arcano lista en el
+// paso 78 los recursos de las tres órdenes: solo quedan los de la suya, como objetos de
+// siempre, sin grupo (CHOSEN_ORDER en .build/dofus/silvestre.py). Su misión de orden 3
+// («adepto a las escrituras») para ante Roble Blando, y la 4 («Maestro de los
+// Pergaminos») pide la 3 terminada (QF>121): va al paso 80, donde se pasan Roble Blando y
+// Ugah, con sus objetos (TEXT_FIXES, STEP_EXTRA y MOVED)
 
-const ESPIRITU = "Orden Espíritu de la salvación";
+const RESOURCES = JSON.parse(fs.readFileSync(new URL("../../src/dofus/silvestre/resources.json", import.meta.url), "utf8"));
 const ORDER_3 = "Aprendizaje: adepto a las escrituras";
 const ORDER_4 = "Aprendizaje: Maestro de los Pergaminos";
+// Los objetos de la misión de orden 4 (DofusDB y su guía): Pócima de envejecimiento, Polvos
+// mágicos, Mandrágora, Mijo, Tenca, Corteza de abrakno oscuro y Cuerda de escalada
+const ORDER_4_ITEMS = ["17060", "519", "16389", "16456", "16469", "16154", "9935"];
 
 async function openStep(page, n) {
   // Por el número: en el centro de la fila puede caer la etiqueta "cierra el…"
@@ -17,7 +22,7 @@ async function openStep(page, n) {
   await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
   await expect(page.locator("#journal .asset-note", { hasText: "Cargando misiones" })).toHaveCount(0, { timeout: 15_000 });
 }
-
+const needs = page => page.locator("#journal .journal-needs .slot").evaluateAll(els => els.map(e => e.dataset.id));
 const quests = page => page.locator("#journal .q-item .q-name").allInnerTexts();
 const quest = (page, name) => page.locator("#journal .q-item")
   .filter({ has: page.locator(".q-name").getByText(name, { exact: true }) });
@@ -64,19 +69,67 @@ test("el paso 80 hace la misión de orden 4 tras «Alma máster», hasta Ugah, y
   expect(errors).toEqual([]);
 });
 
-test("el paso 78 solo pide los recursos de la orden Espíritu de la salvación", async ({ page }) => {
+test("los objetos de la misión de orden 4 van al paso 80 y el 78 guarda los de la 2", async ({ page }) => {
   const errors = await openApp(page);
   await openStep(page, 78);
-  const slots = page.locator("#journal .journal-needs .slot");
-  await expect(slots.first()).toBeVisible();
-  const ids = await slots.evaluateAll(els => els.map(e => e.dataset.id));
-  expect(ids.length).toBeGreaterThan(0);
-  for (const id of ids) expect(id).toMatch(/@orden espiritu de la salvacion$/);
-  // Cada casilla dice de qué orden es
-  for (const tip of await slots.locator(".slot-tip").allTextContents()) expect(tip).toContain(ESPIRITU);
-  await expect(page.locator("#journal .journal-needs")).not.toContainText("Corazón valiente");
-  await expect(page.locator("#journal .journal-needs")).not.toContainText("Ojo atento");
+  // «Aprendiz iluminado»: 15 Polvos mágicos y la Pócima de resucitador, sin grupo ni «Orden»
+  expect(await needs(page)).toEqual(["519", "14443"]);
+  await expect(page.locator("#journal .journal-needs .slot-tag")).toHaveCount(0);
+  await expect(page.locator('#journal .journal-needs .slot[data-id="519"] .q')).toHaveText("15");
+  await openStep(page, 80);
+  const s80 = await needs(page);
+  for (const id of ORDER_4_ITEMS) expect(s80).toContain(id);
+  await expect(page.locator('#journal .journal-needs .slot[data-id="519"] .q')).toHaveText("10");
+  await expect(page.locator('#journal .journal-needs .slot[data-id="519"] .slot-tip')).toContainText(ORDER_4.replace("Aprendizaje: ", ""));
+  await expect(page.locator("#journal .journal-needs .slot-tag")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("en Objetos cuentan como los demás: una casilla por objeto, sumada con la de otros pasos", async ({ page }) => {
+  await openApp(page, null, { view: "items" });
+  await page.click('.needs-sort [data-sort="qty"]');
+  await expect(page.locator('#items .slot[data-id*="@orden"]')).toHaveCount(0);
+  // Los Polvos mágicos: los 15 del 78 y los 10 del 80 suman con los de los demás pasos
+  const rows = Object.entries(RESOURCES.steps).filter(([, rs]) => rs.some(r => r.k === "519"));
+  const total = rows.flatMap(([, rs]) => rs).filter(r => r.k === "519").reduce((a, r) => a + r.a[0][1], 0);
+  expect(rows.map(([n]) => n)).toEqual(expect.arrayContaining(["78", "80"]));
+  const polvos = page.locator('#items .slot[data-id="519"]');
+  await expect(polvos).toHaveCount(1);
+  await expect(polvos.locator(".q")).toHaveText(String(total));
+  await expect(polvos.locator(".slot-tag")).toHaveCount(0);
+  // Con más de cuatro pasos el aviso nombra tres y cuenta el resto
+  await expect(polvos.locator(".slot-tip")).toContainText(rows.length > 4 ? `y ${rows.length - 3} más` : "80");
+});
+
+test("lo conseguido con las claves de la orden pasa a las nuevas al cargar", async ({ page }) => {
+  await openApp(page);
+  // Guardado por la versión de antes (sin silvestre:ownedModel): el objeto entero y
+  // partes de un paso
+  await page.evaluate(() => {
+    localStorage.setItem("silvestre:owned", JSON.stringify({
+      "519@orden espiritu de la salvacion": true,
+      "17060@orden espiritu de la salvacion#78": true,
+      "14443@orden espiritu de la salvacion#78": true,
+      "311": true,
+    }));
+    localStorage.removeItem("silvestre:ownedModel");
+  });
+  await page.reload();
+  await expect(page.locator(".diary-row")).toHaveCount(100);
+  expect(await readLS(page, "silvestre:ownedModel")).toBe(1);
+  await expect.poll(() => readLS(page, "silvestre:owned")).toEqual({
+    "519#78": true, "519#80": true, "17060#80": true, "14443#78": true, "311": true,
+  });
+  await openStep(page, 78);
+  for (const id of ["519", "14443"]) await expect(page.locator(`#journal .journal-needs .slot[data-id="${id}"]`)).toHaveClass(/owned/);
+  await openStep(page, 80);
+  for (const id of ["519", "17060", "311"]) await expect(page.locator(`#journal .journal-needs .slot[data-id="${id}"]`)).toHaveClass(/owned/);
+  await expect(page.locator('#journal .journal-needs .slot[data-id="16389"]')).not.toHaveClass(/owned/);
+  // Y se queda así al recargar
+  await page.reload();
+  expect(await readLS(page, "silvestre:owned")).toEqual({
+    "519#78": true, "519#80": true, "17060#80": true, "14443#78": true, "311": true,
+  });
 });
 
 test("el paso 78 enlaza las misiones de orden de Corazón valiente y Ojo atento, por si se elige otra", async ({ page }) => {
