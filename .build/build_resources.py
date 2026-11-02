@@ -53,6 +53,7 @@ CATEGORY = {"Recursos": "recursos", "Consumibles": "consumibles", "Equipables": 
             "Almas": "almas", "Criaturas": "criaturas", "Cosméticos": "cosmeticos"}
 CORRECTIONS = D.CORRECTIONS  # per Dofus, in .build/dofus/<id>.py
 ALIASES = D.ALIASES  # per Dofus, in .build/dofus/<id>.py
+GENERIC_IMG = D.GENERIC_IMG  # per Dofus, in .build/dofus/<id>.py
 LINE = re.compile(r"^(\d+) x (.+)$")
 NOTE = re.compile(r"\s*\(([^)]*)\)\s*")
 REUSABLE = D.REUSABLE  # per Dofus, in .build/dofus/<id>.py
@@ -195,6 +196,13 @@ def lookup(name, cache):
     return found
 
 
+def unknown_item(name, generic=GENERIC_IMG):
+    """(key, item) of a name DofusDB lacks: "x:<slug>", with the icon of a representative
+    item when the row is a generic one (GENERIC_IMG), else none."""
+    key = slug(name)
+    return "x:" + key, {"name": name, "img": generic.get(key), "type": "", "lvl": 0}
+
+
 def item_info(hit):
     return {"name": hit["name"], "img": f"items/{hit['iconId']}.png" if hit["iconId"] else None,
             "type": hit["type"] or "", "lvl": hit["lvl"] or 0}
@@ -331,9 +339,9 @@ def main():
                         key = str(hit["id"])
                         items[key] = item_info(hit)
                     else:
-                        key = "x:" + slug(name)
-                        items[key] = {"name": name, "img": None, "type": "", "lvl": 0}
-                        missing.add(name)
+                        key, items[key] = unknown_item(name)
+                        if not items[key]["img"]:
+                            missing.add(name)
                     alts.append([key, q])
                     names.append(name)
                 row_key = "|".join(k for k, _ in alts) + (f"@{slug(label)}" if label else "")

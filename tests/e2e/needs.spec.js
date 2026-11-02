@@ -156,6 +156,15 @@ test("copiar el nombre de un objeto no lo marca", async ({ page, context }) => {
   await expect(slot).not.toHaveClass(/\bowned\b/);
 });
 
+test("un objeto genérico de la guía lleva una imagen representativa", async ({ page }) => {
+  await openItems(page);
+  // Paso 66: cualquier recurso recolectable de los reinos de tinta y papel. Lleva el
+  // Tulipán de papel, una flor del Reino de Papel, pero la clave sigue siendo genérica
+  const tinta = page.locator('#items .slot[data-id="x:recursos recolectables de los reinos de tinta y papel"]');
+  await expect(tinta).toHaveAttribute("data-first", "66");
+  await expect(tinta.locator(".slot-art img")).toHaveAttribute("src", /items\/164832\.png$/);
+});
+
 test("marcar todo y limpiar actúan sobre lo que se ve", async ({ page }) => {
   await openItems(page);
   await page.click('.needs-cat[data-cat="almas"]');

@@ -343,6 +343,16 @@ ALIASES = {
     "pocima sesamobolizante": 10204,        # "Pócima de sesamobolizante"
 }
 
+# Generic rows no DofusDB item matches: slug -> the icon of a representative item, so the
+# row shows an image instead of a bare "?". The key stays "x:<slug>": marking the row
+# never marks that item. Step 66 asks for 30 gatherable resources of the realms of ink
+# and paper ("6 lotes de 5 recursos iguales"), any of them: the Tulipán de papel (23824)
+# is a flower harvested in the Reino de Papel (subarea 957), and no row of the step lists
+# it (the Pétalos de tinta and de papel the step does list are monster drops).
+GENERIC_IMG = {
+    "recursos recolectables de los reinos de tinta y papel": "items/164832.png",
+}
+
 # Same rules as the page's compiled list (buildCompiledResourcesData): these are kept
 # after use, so two steps asking for one still need just one.
 REUSABLE = {"mazorrasombrero", "varita pitusa", "piedra de alma mediana",
