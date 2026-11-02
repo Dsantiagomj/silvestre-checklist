@@ -1,0 +1,35 @@
+{
+ "_doc": "Quests the game finishes on its own once every quest in `by` is finished. DofusDB cannot tell: their objectives are free text with no quest link. Shared by every Dofus; build_quests_js.py writes the ones on each route as COMPLETED_BY in quests.json. 653 (Frigost, une île pas comme les autres) is left out: dungeons complete it, not quests.",
+ "quests": {
+  "649": {
+   "name": "Bienvenido a Frigost",
+   "by": [612, 613, 614, 615],
+   "source": "https://www.gamosaurus.com/guide/solution-de-la-quete-bienvenue-a-frigost-dofus"
+  },
+  "650": {
+   "name": "Lo esencial está en el lago helado",
+   "by": [577, 578, 628, 629, 579],
+   "source": "https://www.gamosaurus.com/guide/solution-de-la-quete-lessentiel-est-dans-le-lac-gele-dofus"
+  },
+  "651": {
+   "name": "Los supervivientes de Frigost",
+   "by": [589, 590, 591, 592, 593, 594, 595],
+   "source": "https://www.gamosaurus.com/guide/solution-de-la-quete-les-rescapes-de-frigost-dofus"
+  },
+  "652": {
+   "name": "Desarrollo sostenible",
+   "by": [556, 557, 558, 559, 560, 561, 562, 563, 564, 565],
+   "source": "https://www.gamosaurus.com/guide/solution-de-la-quete-developpement-durable-dofus"
+  },
+  "1330": {
+   "name": "Los supervivientes de El Pueblo Sepultado",
+   "by": [596, 597, 598],
+   "source": "https://dofus.jeuxonline.info/article/14182/hiver-arrive"
+  },
+  "1325": {
+   "name": "Los últimos supervivientes",
+   "by": [1319, 1320, 1321, 1322, 1323, 1324],
+   "source": "https://dofus.jeuxonline.info/article/14182/hiver-arrive (the Hielos guide: «Esta misión se irá actualizando sola»)"
+  }
+ }
+}

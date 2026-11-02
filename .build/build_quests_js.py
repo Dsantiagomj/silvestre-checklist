@@ -20,14 +20,19 @@ How a step maps to quests:
   * What a quest needs finished before it can start (its startCriterion, through
     every quest it needs in turn) is PREREQS: quest -> [route quests]. Finishing a
     quest finishes those; the app counts no other quest done by being behind it.
+  * Some quests finish on their own once a set of other quests is finished, and
+    DofusDB cannot tell (their objectives are free text). The hand-written list in
+    .build/lists/completed_by.json, shared by every Dofus, says which: the ones on the
+    route go to COMPLETED_BY: quest -> [the quests that finish it, on the route or not].
   * "Alineamiento Bontariano: Misión N" maps to the Bontarian alignment quest
     whose start criterion is `Ps=1&Pa=N-1` (side Bonta, alignment level N-1).
     The step covers the run from the previous alignment step's mission, which
     was left paused, up to N.
 
-Reads  : .build/data/{achievements,quests}.json, .build/data/<dofus>/step_assets.json
+Reads  : .build/data/{achievements,quests}.json, .build/data/<dofus>/step_assets.json,
+         .build/lists/completed_by.json
 Writes : src/dofus/<dofus>/quests.json (STEP_QUESTS, STEP_GROUPS, STEP_QUEST_KINDS, PARENT,
-         QUESTS and PREREQS; the app loads it lazily)
+         QUESTS, PREREQS and COMPLETED_BY; the app loads it lazily)
 Caches : .build/data/lookup_<kind>.json  (names and map positions from the API)
 Run    : python3 -I .build/build_quests_js.py   (after match_assets.py; --dofus <id> or DOFUS,
          silvestre by default)
@@ -48,6 +53,8 @@ OUT_JSON = dofus.SRC / "quests.json"
 # What each step asks for, as the step card draws it (small, loaded with the page)
 OUT_PLANS = dofus.SRC / "plans.json"
 ASSETS_JSON = dofus.SRC / "assets.json"
+# The quests the game finishes on its own after others, for every Dofus (written by hand)
+COMPLETED_BY_JSON = ROOT / ".build" / "lists" / "completed_by.json"
 API = "https://api.dofusdb.fr"
 
 KIND = {
@@ -635,6 +642,19 @@ def prerequisites(step_quests, quests, alts, class_quests):
     return out
 
 
+def read_completed_by(path=COMPLETED_BY_JSON):
+    """The hand-written list: {quest: [the quests that finish it]}, ids as numbers."""
+    entries = json.loads(pathlib.Path(path).read_text())["quests"]
+    return {int(k): [int(x) for x in v["by"]] for k, v in entries.items()}
+
+
+def completed_by(step_quests, table):
+    """The quests of `table` on the route, with every quest that finishes them (on the
+    route or not, the other checklists may have them): {"quest": [quests]}, in order."""
+    route = {q for ids in step_quests.values() for q in ids}
+    return {str(q): list(table[q]) for q in sorted(table) if q in route}
+
+
 def main():
     report = json.loads((dofus.WORK / "step_assets.json").read_text())
     achievements = {a["id"]: a for a in json.loads((DATA / "achievements.json").read_text())}
@@ -790,7 +810,8 @@ def main():
     prereqs = prerequisites(step_quests, quests, {k: v[1] for k, v in alts.items()}, class_quests)
     OUT_JSON.write_text(payload({"STEP_QUESTS": step_quests, "STEP_GROUPS": step_groups,
                                     "STEP_QUEST_KINDS": step_kinds_out, "PARENT": parent,
-                                    "QUESTS": out_quests, "PREREQS": prereqs}) + "\n")
+                                    "QUESTS": out_quests, "PREREQS": prereqs,
+                                    "COMPLETED_BY": completed_by(step_quests, read_completed_by())}) + "\n")
     OUT_PLANS.write_text(payload(plans) + "\n")
 
     objs = [o for q in out_quests.values() for s in q["s"] for o in s["o"]]
