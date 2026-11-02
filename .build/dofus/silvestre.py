@@ -341,6 +341,7 @@ ALIASES = {
     "jalabola dedicada a bonta": 26059,     # "Jalabola dedicada de Bonta"
     "jalabola dedicada a brakmar": 26061,   # "Jalabola dedicada de Brakmar"
     "pocima sesamobolizante": 10204,        # "Pócima de sesamobolizante"
+    "esencia de cil": 14693,                # "Esencia del Cil", the Cil dungeon guardian's
 }
 
 # Generic rows no DofusDB item matches: slug -> the icon of a representative item, so the
@@ -449,6 +450,9 @@ MANUAL = {
     # "Ver a Dark Vlad y morir... o no" asks to do this one first (torrentearcano)
     "1": {"2268": "Un péndulo para guiar sus pasos", "9318": "Un péndulo para guiar sus pasos",
           "746": "Un péndulo para guiar sus pasos"},
+    # Its guide asks for "1 x Esencia de Cil", which DofusDB calls "Esencia del Cil"
+    # (ALIASES): the name no longer matches, so the quest goes here
+    "60": {"14693": "El último de nosotros"},
     # The beer of "De la mano" is brewed in the tavern, after step 64 stops at its door
     # and before "Dos alientos" (step 66) lets it go on
     "66": {"1977": "De la mano", "23972": "De la mano", "23179": "De la mano", "7055": "De la mano"},

@@ -99,8 +99,10 @@ export function migrateQuestPos(questPos = {}, questObj = {}) {
 
 // Las claves de lo conseguido: hasta la 0, las de entonces; desde la 1, con los cambios de
 // clave de ownedMoves (config.js) aplicados: en el Silvestre, los recursos del paso 78 sin
-// el grupo de su orden («519@orden espiritu de la salvacion» -> «519»), parte en el 80
-export const OWNED_MODEL = 1;
+// el grupo de su orden («519@orden espiritu de la salvacion» -> «519»), parte en el 80;
+// desde la 2, también la «Esencia de cil» del paso 60 («x:esencia de cil|28488» ->
+// «14693|28488»). Aplicar los cambios otra vez no toca lo ya pasado
+export const OWNED_MODEL = 2;
 const OWNED_MOVES = DOFUS.ownedMoves || {};
 
 /**

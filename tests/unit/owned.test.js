@@ -4,6 +4,7 @@
 // demás («519») y los de la misión de orden 4 van al paso 80. Run: npm run test:unit
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { migrateOwned } from "../../src/tools/checklist/lib/owned.js";
 
 const MOVES = {
@@ -39,4 +40,23 @@ test("sin cambios de clave (el Hielos, la guía global) lo devuelve igual", () =
 test("aplicarlo dos veces da lo mismo", () => {
   const once = migrateOwned({ "519@orden espiritu de la salvacion#78": true }, MOVES);
   assert.deepEqual(migrateOwned(once, MOVES), once);
+});
+
+// Los cambios de clave del Silvestre de verdad (ownedMoves en su config.js)
+const SILVESTRE = (await import("../../src/dofus/silvestre/config.js")).default.ownedMoves;
+const RESOURCES = JSON.parse(readFileSync(new URL("../../src/dofus/silvestre/resources.json", import.meta.url), "utf8"));
+
+test("la «Esencia de cil» del paso 60 pasa a la Esencia del Cil de DofusDB", () => {
+  // La guía la llama «Esencia de cil» y DofusDB «Esencia del Cil» (14693): la fila deja la
+  // clave genérica y lo marcado con ella, entero o la parte del paso 60, sigue marcado
+  assert.deepEqual(migrateOwned({ "x:esencia de cil|28488": true }, SILVESTRE), { "14693|28488#60": true });
+  assert.deepEqual(migrateOwned({ "x:esencia de cil|28488#60": true }, SILVESTRE), { "14693|28488#60": true });
+});
+
+test("cada clave nueva es una fila de los pasos que dice", () => {
+  for (const [old, [to, steps]] of Object.entries(SILVESTRE)) {
+    for (const n of steps) {
+      assert.ok(RESOURCES.steps[n]?.some(r => r.k === to), `${old} -> ${to} no está en el paso ${n}`);
+    }
+  }
 });

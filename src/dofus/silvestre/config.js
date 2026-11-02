@@ -61,12 +61,15 @@ export default {
   // conseguido con la vieja pasa a esas partes de la nueva al cargar (OWNED_MODEL en
   // store.js). El paso 78 llevaba los recursos de su orden con su grupo; sin él son objetos
   // como los demás, y los de la misión de orden 4 van al 80 (CHOSEN_ORDER y MOVED en
-  // .build/dofus/silvestre.py). Los Polvos mágicos se reparten: 15 en el 78 y 10 en el 80
+  // .build/dofus/silvestre.py). Los Polvos mágicos se reparten: 15 en el 78 y 10 en el 80.
+  // La «Esencia de cil» del paso 60 no tenía objeto en DofusDB; es la Esencia del Cil (14693,
+  // ALIASES en .build/dofus/silvestre.py)
   ownedMoves: {
     "519@orden espiritu de la salvacion": ["519", [78, 80]],
     "14443@orden espiritu de la salvacion": ["14443", [78]],
     ...Object.fromEntries(["17060", "16389", "16456", "16469", "16154", "9935"]
       .map(id => [`${id}@orden espiritu de la salvacion`, [id, [80]]])),
+    "x:esencia de cil|28488": ["14693|28488", [60]],
   },
 
   // La copia de seguridad: el id que la marca como de este checklist y el nombre del archivo

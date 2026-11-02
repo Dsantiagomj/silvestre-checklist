@@ -5,6 +5,7 @@ de tinta y papel" (Silvestre, step 66) is any gatherable resource of those realm
 stay "x:<slug>", so their progress never merges with a real item's, but they no longer
 show a bare "?": GENERIC_IMG (.build/dofus/<id>.py) gives each the icon of a
 representative item, mirrored into public/img/ like every other item.
+Names that only differ from DofusDB's go through ALIASES and become the real item.
 Run: python3 -I -m unittest discover -s .build/tests
 """
 import importlib.util
@@ -56,6 +57,18 @@ class GenericImgTableTest(unittest.TestCase):
         for dofus_id in ("silvestre", "hielos"):
             for name, img in config(dofus_id).GENERIC_IMG.items():
                 self.assertTrue((PUBLIC_IMG / img).is_file(), f"{dofus_id}: {name} -> {img}")
+
+
+class EsenciaDeCilTest(unittest.TestCase):
+    def test_the_guide_name_points_at_the_esencia_del_cil(self):
+        # Step 60: "1 x Esencia de cil o 1 x Esencia de silvespíritu"; DofusDB calls it
+        # "Esencia del Cil" (14693), the essence of the Cil dungeon guardian
+        self.assertEqual(config("silvestre").ALIASES.get("esencia de cil"), 14693)
+
+    def test_it_keeps_the_quest_it_is_for(self):
+        # The quest's guide writes "1 x Esencia de Cil", which no longer matches the
+        # item's name: audit_resources.py takes the quest from MANUAL instead
+        self.assertEqual(config("silvestre").MANUAL.get("60"), {"14693": "El último de nosotros"})
 
 
 if __name__ == "__main__":

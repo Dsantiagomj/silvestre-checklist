@@ -116,7 +116,7 @@ test("lo conseguido con las claves de la orden pasa a las nuevas al cargar", asy
   });
   await page.reload();
   await expect(page.locator(".diary-row")).toHaveCount(100);
-  expect(await readLS(page, "silvestre:ownedModel")).toBe(1);
+  expect(await readLS(page, "silvestre:ownedModel")).toBe(2);
   await expect.poll(() => readLS(page, "silvestre:owned")).toEqual({
     "519#78": true, "519#80": true, "17060#80": true, "14443#78": true, "311": true,
   });
