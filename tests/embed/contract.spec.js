@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { EMBED_OUT, servePages } from "./harness.js";
 
-// El contrato público de los cinco embebidos: lo que ya está pegado en Squarespace y lo que
+// El contrato público de los seis embebidos: lo que ya está pegado en Squarespace y lo que
 // guardó la gente en localStorage. Mover carpetas de src/ no puede cambiar nada de esto, así
 // que aquí no se importa nada de src/ y lo esperado va escrito a mano, sin leer configs
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -22,18 +22,20 @@ const EMBEDS = [
   { entry: "embed/checklists.js", host: "checklists-root", fonts: "checklists-fonts", top: "--checklists-h", page: "checklists.html" },
   { entry: "embed/inicio.js", host: "inicio-root", fonts: "inicio-fonts", top: null, page: "inicio.html" },
   { entry: "embed/cosecha.js", host: "cosecha-root", fonts: "cosecha-fonts", top: "--cosecha-top", page: "cosecha.html" },
+  { entry: "embed/guias.js", host: "guias-root", fonts: "guias-fonts", top: "--guias-top", page: "guias.html" },
 ];
 
 test("la base de los embebidos es la de GitHub Pages, también en las vistas previas", () => {
   expect(read("vite.config.js")).toContain(`"${BASE}"`);
   expect(read("public/checklists/index.html")).toContain(`<div id="checklists-root"></div>\n<script type="module" src="${BASE}embed/checklists.js"></script>`);
+  expect(read("public/guias-dofus/index.html")).toContain(`<div id="guias-root"></div>\n<script type="module" src="${BASE}embed/guias.js"></script>`);
   // Cada embebido saca sus trozos e imágenes de ahí
   for (const { entry } of EMBEDS) expect(missing(entry, [BASE]), entry).toEqual([]);
 });
 
 test("el build deja cada entrada con su nombre fijo y los trozos de la app en su carpeta", () => {
   for (const { entry } of EMBEDS) expect(fs.statSync(path.join(EMBED_OUT, entry)).isFile(), entry).toBe(true);
-  // Solo la app parte su código (quests.json va aparte); el hub, el inicio y la cosecha van
+  // Solo la app parte su código (quests.json va aparte); el hub, el inicio, la cosecha y las guías van
   // en un solo archivo y ninguno saca assets: el CSS va dentro y las imágenes son las de public/
   for (const dir of ["embed/chunks", "embed/hielos-chunks"]) {
     expect(fs.readdirSync(path.join(EMBED_OUT, dir)).filter(f => f.endsWith(".js")).length, dir).toBeGreaterThan(0);
@@ -48,6 +50,7 @@ test("las claves de localStorage que ya tiene la gente siguen en los bundles", (
   // El clásico solo se lee; la entrada compartida es la misma en los dos checklists
   for (const { entry, classic } of EMBEDS.filter(e => e.classic)) expect(missing(entry, [...classic, SHARED]), entry).toEqual([]);
   expect(missing("embed/cosecha.js", ["cosecha:done", "cosecha:ui", "cosecha:theme"])).toEqual([]);
+  expect(missing("embed/guias.js", ["guias:theme"])).toEqual([]);
   // El hub y el inicio no guardan nada
   for (const entry of ["embed/checklists.js", "embed/inicio.js"]) expect(missing(entry, ["localStorage"], false), entry).toEqual([]);
 });
