@@ -57,6 +57,18 @@ export default {
   // Sin misiones de alineamiento: ningún selector de bando
   sides: null,
 
+  // Claves de objeto que ya no existen: la vieja -> [la nueva, pasos donde está ahora]. Lo
+  // conseguido con la vieja pasa a esas partes de la nueva al cargar (OWNED_MODEL en
+  // store.js). El paso 78 llevaba los recursos de su orden con su grupo; sin él son objetos
+  // como los demás, y los de la misión de orden 4 van al 80 (CHOSEN_ORDER y MOVED en
+  // .build/dofus/silvestre.py). Los Polvos mágicos se reparten: 15 en el 78 y 10 en el 80
+  ownedMoves: {
+    "519@orden espiritu de la salvacion": ["519", [78, 80]],
+    "14443@orden espiritu de la salvacion": ["14443", [78]],
+    ...Object.fromEntries(["17060", "16389", "16456", "16469", "16154", "9935"]
+      .map(id => [`${id}@orden espiritu de la salvacion`, [id, [80]]])),
+  },
+
   // La copia de seguridad: el id que la marca como de este checklist y el nombre del archivo
   backup: { app: "silvestre-checklist", file: "silvestre-progreso" },
 

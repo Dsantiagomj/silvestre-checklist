@@ -378,7 +378,9 @@ DUPLICATES = {
            "9935": "paso 76"},
 }
 
-# Rows the page puts one step early. Step -> (step they belong to, {item: why}).
+# Rows the page puts one step early. Step -> (step they belong to, {item: why}), or
+# {item: (qty, why)} to move only that many of it.
+ORDER_4 = "Aprendizaje: Maestro de los Pergaminos"
 MOVED = {
     # "Barnabé en el espacio" (step 4) only asks for a fight. Both items are the first
     # objective of step 5's quests, in DofusDB and in their guides on torrentearcano:
@@ -394,6 +396,14 @@ MOVED = {
     # Step 34 stops at "Arak-hais, ¿dónde vais?"; the glands are handed over in the
     # next mission, "Munster descubre el misterio" (step 35), per its guide.
     "34": ("35", {"16215": "Munster descubre el misterio"}),
+    # Order mission 4, "Maestro de los Pergaminos", is done in step 80 (TEXT_FIXES): its
+    # hand-ins in DofusDB (5 Pócima de envejecimiento, 10 Polvos mágicos, 14 Mandrágora, Mijo
+    # and Tenca, 4 Corteza de abrakno oscuro) and the Cuerda de escalada of its guide. Step
+    # 78's mission 2, "Aprendiz iluminado", keeps the other 15 Polvos mágicos and the Pócima
+    # de resucitador. (qty, why) moves only that part of the row. After CHOSEN_ORDER, whose
+    # rows have plain keys
+    "78": ("80", {"17060": ORDER_4, "519": (10, ORDER_4), "16389": ORDER_4, "16456": ORDER_4,
+                  "16469": ORDER_4, "16154": ORDER_4, "9935": ORDER_4}),
 }
 
 # Rows the page leaves out: what an optional prerequisite asks for. Step -> [(category,
@@ -406,11 +416,12 @@ EXTRA_ITEMS = {
 }
 
 # Steps where the page lists one group of resources per order and the guide follows one:
-# step -> the order whose group stays ("<order> - Recursos" on the page). Step 78 ("Hasta
-# la misión de orden 4") lists the three Bonta orders; the guide's quests are the ones of
-# Espíritu de la salvación (STEP_EXTRA), so the other two go. Applied after the check
-# against the compiled list, which counts all three. Step 89 (order mission 5) lists one
-# resource of no order: nothing to choose there.
+# step -> the order whose group stays ("<order> - Recursos" on the page). Step 78 lists the
+# three Bonta orders; the guide's quests are the ones of Espíritu de la salvación
+# (STEP_EXTRA), so the other two go, and the kept rows lose their group: they are plain
+# items, counted with the same item in other steps. Applied after the check against the
+# compiled list, which counts all three, and before MOVED. Step 89 (order mission 5) lists
+# one resource of no order: nothing to choose there.
 CHOSEN_ORDER = {"78": "Espíritu de la salvación"}
 
 # Only needed if the alteration is gone: listed in its step, left out of totals.
@@ -431,10 +442,9 @@ MANUAL = {
     # The beer of "De la mano" is brewed in the tavern, after step 64 stops at its door
     # and before "Dos alientos" (step 66) lets it go on
     "66": {"1977": "De la mano", "23972": "De la mano", "23179": "De la mano", "7055": "De la mano"},
-    # Order 4: "4 de ellas con cuerda de escalada (uno de ellos siendo tú)"
-    "78": {"9935": "Aprendizaje: Maestro de los Pergaminos"},
-    # "Muerte y renovación" needs "Santísimo poder" done, which step 80 finishes
-    "80": {"311": "Muerte y renovación"},
+    # Order 4 (step 80, MOVED): "4 de ellas con cuerda de escalada (uno de ellos siendo tú)"
+    "80": {"9935": "Aprendizaje: Maestro de los Pergaminos", "311": "Muerte y renovación"},
+    # "Muerte y renovación" needs "Santísimo poder" done, which step 80 finishes: in "80" above
 }
 
 # Quests that hand over what they then ask for: nothing to gather.

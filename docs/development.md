@@ -43,7 +43,7 @@ npm run build:global         # its site, in dist/global/
 
 Each checklist lives in its own folder, `silvestre/`, `hielos/` or `global/`, and none carries a copy of `public/`: their images are the ones at the root (`__SITE_ROOT__` in `src/tools/checklist/lib/assets.js`).
 
-Progress is stored in `localStorage` under the same keys as the previous version of the app, so anyone who already had progress keeps it.
+Progress is stored in `localStorage` under the same keys as the previous version of the app, so anyone who already had progress keeps it. When the build changes an item's key, `ownedMoves` in `config.js` maps the old key to the new one and the steps where it now sits. On load, `store.js` moves what was marked under the old key to those per-step parts, once (`<prefix>ownedModel`, `OWNED_MODEL`). Restoring a backup does the same.
 
 ## The site
 

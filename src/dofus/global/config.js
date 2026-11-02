@@ -43,6 +43,9 @@ export default {
   classicKeys: { v4: null, v3: null },
   guideVersion: 1,
 
+  // Sin claves de objeto que hayan cambiado
+  ownedMoves: {},
+
   backup: { app: "global-checklist", file: "global-progreso" },
   overlayWindow: "global-overlay",
 

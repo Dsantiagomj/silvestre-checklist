@@ -57,6 +57,9 @@ export default {
   // Sin misiones de alineamiento: ningún selector de bando
   sides: null,
 
+  // Sin claves de objeto que hayan cambiado
+  ownedMoves: {},
+
   // La copia de seguridad: el id que la marca como de este checklist y el nombre del archivo
   backup: { app: "hielos-checklist", file: "hielos-progreso" },
 

@@ -14,6 +14,7 @@ import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
 import { NO_SHARED, SHARED_KEY, completedBy, entryOf, othersOf, parseShared, withEntry, withPrereqs } from "../lib/shared.js";
+import { migrateOwned } from "../lib/owned.js";
 import DOFUS from "@dofus/config.js";
 
 // Las claves de localStorage, con el prefijo del Dofus ("silvestre:done"…)
@@ -26,6 +27,7 @@ export const LS = {
   questPos: key("questPos"),
   questObj: key("questObjective"),
   questModel: key("questModel"),
+  ownedModel: key("ownedModel"),
   guide: key("guide"),
   itemsView: key("itemsView"),
   itemsPageSize: key("itemsPageSize"),
@@ -93,6 +95,29 @@ export function migrateQuestPos(questPos = {}, questObj = {}) {
     for (let i = 0; i < pos; i++) if (q[i] > 0 && (out[ids[i]] || 0) < os[i]) out[ids[i]] = os[i];
   }
   return out;
+}
+
+// Las claves de lo conseguido: hasta la 0, las de entonces; desde la 1, con los cambios de
+// clave de ownedMoves (config.js) aplicados: en el Silvestre, los recursos del paso 78 sin
+// el grupo de su orden («519@orden espiritu de la salvacion» -> «519»), parte en el 80
+export const OWNED_MODEL = 1;
+const OWNED_MOVES = DOFUS.ownedMoves || {};
+
+/**
+ * Lo conseguido guardado, pasado una sola vez a las claves de ahora si se guardó con las
+ * de antes (OWNED_MODEL). El formato no cambia; solo se guarda con qué claves está.
+ */
+function readOwned() {
+  let owned = readObj(LS.owned);
+  if (localStorage.getItem(LS.ownedModel) !== String(OWNED_MODEL)) {
+    const moved = migrateOwned(owned, OWNED_MOVES);
+    if (JSON.stringify(moved) !== JSON.stringify(owned)) {
+      owned = moved;
+      localStorage.setItem(LS.owned, JSON.stringify(owned));
+    }
+    localStorage.setItem(LS.ownedModel, String(OWNED_MODEL));
+  }
+  return owned;
 }
 
 const readSelectedStep = () => {
@@ -197,7 +222,7 @@ function initialState() {
   return {
     done,
     prereqs,
-    owned: readObj(LS.owned),
+    owned: readOwned(),
     theme: localStorage.getItem(LS.theme) || "dark",
     questPos, // paso -> índice de la misión en curso (solo eso: no da por hechas las de antes)
     questObj, // misión -> índice de objetivo
@@ -1188,7 +1213,8 @@ export function applySnapshot(snap) {
   setState(s => ({
     done: snap.done || {},
     prereqs: snap.prereqs || {},
-    owned: snap.owned || {},
+    // Una copia de antes de un cambio de clave trae las viejas; con las nuevas no cambia nada
+    owned: migrateOwned(snap.owned || {}, OWNED_MOVES),
     questPos: snap.questPos || {},
     questObj: snap.questObj || {},
     selectedStep: null,

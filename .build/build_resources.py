@@ -92,17 +92,62 @@ def category(label):
     raise SystemExit(f"categoría desconocida: {label}")
 
 
+def add_row(rows, row):
+    """rows with row added: to the row of the same key if there is one (one item, no
+    alternatives), as a new row otherwise."""
+    same = next((r for r in rows if r["k"] == row["k"]), None)
+    if not same:
+        return rows + [row]
+    if len(same["a"]) != 1 or len(row["a"]) != 1:
+        raise SystemExit(f"no se pueden sumar dos filas con alternativas: {row['k']}")
+    same["a"] = [[same["a"][0][0], same["a"][0][1] + row["a"][0][1]]]
+    return rows
+
+
 def keep_order(rows, order):
     """A step's rows without the other orders' groups, where the guide follows one order
-    (CHOSEN_ORDER); rows of no order stay. Rows still carry the page's group ("src").
-    Stops the build if the page has no group of that order: it renamed or dropped it."""
+    (CHOSEN_ORDER). The chosen order's rows are for every player now: they lose the group
+    and its key suffix, and add up with the same item of the step. Rows of no order stay.
+    Rows still carry the page's group ("src"). Stops the build if the page has no group of
+    that order: it renamed or dropped it."""
     def of(row):
         m = ORDER_GROUP.match(row["src"])
         return m.group(1) if m else None
 
     if not any(of(row) == order for row in rows):
         raise SystemExit(f"el paso no tiene recursos de la orden {order}")
-    return [row for row in rows if of(row) in (None, order)]
+    out = []
+    for row in rows:
+        if of(row) is None:
+            out = add_row(out, row)
+        elif of(row) == order:
+            out = add_row(out, {**row, "k": row["k"].split("@")[0], "g": None})
+    return out
+
+
+def move_rows(steps, moved):
+    """steps with the rows MOVED takes elsewhere: from -> (to, {key: why}) moves the whole
+    row, {key: (qty, why)} only that many (the rest stays). A moved row adds up with the
+    same item of its new step. Stops the build if the row is not there, or has less."""
+    steps = {n: [dict(r) for r in rows] for n, rows in steps.items()}
+    for n, (to, move) in moved.items():
+        missing = set(move) - {r["k"] for r in steps[n]}
+        if missing:
+            raise SystemExit(f"paso {n}: no tiene {', '.join(sorted(missing))} que llevar al paso {to}")
+        # In the step's order, as the page lists them
+        for row in [r for r in steps[n] if r["k"] in move]:
+            what = move[row["k"]]
+            qty = what[0] if isinstance(what, tuple) else None
+            if qty and (len(row["a"]) != 1 or row["a"][0][1] <= qty):
+                raise SystemExit(f"paso {n}: no hay más de {qty} de {row['k']} que llevar al paso {to}")
+            if qty:
+                row["a"] = [[row["a"][0][0], row["a"][0][1] - qty]]
+                part = {**row, "a": [[row["a"][0][0], qty]]}
+            else:
+                steps[n].remove(row)
+                part = row
+            steps[to] = add_row(steps.get(to, []), part)
+    return steps
 
 
 def parse_entry(text):
@@ -310,19 +355,18 @@ def main():
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
 
     check_against_compiled(steps, items)
+    # After the check: the page's compiled list counts every order
+    for n, order in CHOSEN_ORDER.items():
+        steps[n] = keep_order(steps[n], order)
+        print(f"paso {n}: solo los recursos de la orden {order}, sin grupo")
+    steps = move_rows(steps, MOVED)
     for n, (to, move) in MOVED.items():
-        steps.setdefault(to, []).extend(row for row in steps[n] if row["k"] in move)
-        steps[n] = [row for row in steps[n] if row["k"] not in move]
         # A row with alternatives ("13423|6812") is named by its first item
         print(f"paso {n} → {to}: {', '.join(items[k.split('|')[0]]['name'] for k in move)}")
     steps = {n: rows for n, rows in steps.items() if rows}
     for n, drop in DUPLICATES.items():
         steps[n] = [row for row in steps[n] if row["k"] not in drop]
         print(f"paso {n}: sin {', '.join(f'{items[k]["name"]} ({why})' for k, why in drop.items())}")
-    # After the check: the page's compiled list counts every order
-    for n, order in CHOSEN_ORDER.items():
-        steps[n] = keep_order(steps[n], order)
-        print(f"paso {n}: solo los recursos de la orden {order}")
     for rows in steps.values():
         for row in rows:
             del row["src"], row["names"]

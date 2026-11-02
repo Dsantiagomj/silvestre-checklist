@@ -372,9 +372,9 @@ test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación
   await expect(app(page).locator("#journal .journal-num")).toHaveText("78");
   const slots = app(page).locator("#journal .journal-needs .slot");
   await expect(slots.first()).toBeVisible({ timeout: 15_000 });
-  for (const id of await slots.evaluateAll(els => els.map(e => e.dataset.id))) {
-    expect(id).toMatch(/@orden espiritu de la salvacion$/);
-  }
+  // Los de «Aprendiz iluminado», como objetos de siempre: sin grupo ni «Orden»
+  expect(await slots.evaluateAll(els => els.map(e => e.dataset.id))).toEqual(["519", "14443"]);
+  await expect(slots.locator(".slot-tag")).toHaveCount(0);
   await expect(app(page).locator("#journal .q-item .obj-stop")).toHaveText("Hasta tener que pasar Roble Blando");
   const note = app(page).locator("#journal .call.note", { hasText: "¿Otra orden?" });
   await expect(note.locator("a.guide-link")).toHaveCount(8);
@@ -382,6 +382,16 @@ test("en el embebido el paso 78 solo pide recursos de Espíritu de la salvación
     .toHaveAttribute("href", "https://www.torrentearcano.com/aprendizaje-escudero");
   await expect(note.locator("a.guide-link", { hasText: "Asesino supremo" }))
     .toHaveAttribute("href", "https://www.torrentearcano.com/aprendizaje-asesino-supremo");
+  expect(errors).toEqual([]);
+});
+
+test("en el embebido el paso 80 lleva la misión de orden 4 y sus objetos", async ({ page }) => {
+  const errors = await openHarness(page);
+  await app(page).locator('.diary-row[data-n="80"] .row-num').click();
+  await expect(app(page).locator("#journal .journal-num")).toHaveText("80");
+  await expect(app(page).locator("#journal .q-item .q-name").last()).toHaveText("Aprendizaje: Maestro de los Pergaminos", { timeout: 15_000 });
+  const ids = await app(page).locator("#journal .journal-needs .slot").evaluateAll(els => els.map(e => e.dataset.id));
+  for (const id of ["17060", "519", "16389", "16456", "16469", "16154", "9935"]) expect(ids).toContain(id);
   expect(errors).toEqual([]);
 });
 
