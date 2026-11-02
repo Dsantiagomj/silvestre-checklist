@@ -14,7 +14,8 @@ test("la documentación no corre nada con navegador", () => {
 });
 
 test("un embebido propio, sus pruebas o sus imágenes: solo el embebido", () => {
-  for (const f of ["src/embeds/hub/hub.js", "src/embeds/inicio/inicio.css", "tests/embed/hub.spec.js", "public/checklists/index.html"]) {
+  for (const f of ["src/embeds/hub/hub.js", "src/embeds/inicio/inicio.css", "tests/embed/hub.spec.js", "public/checklists/index.html",
+    "src/embeds/guias/guias.js", "tests/embed/guias.spec.js", "public/guias-dofus/index.html"]) {
     assert.deepEqual(suites([f]), only("embed"), f);
   }
 });

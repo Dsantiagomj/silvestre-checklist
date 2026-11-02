@@ -68,6 +68,8 @@ jobs:
       # «La eterna cosecha» (dist/embed/cosecha.js), con sus almas dentro y las imágenes de
       # public/img/cosecha/
       - run: npm run build:cosecha
+      # Las guías de los Dofus (dist/embed/guias.js), con los huevos de public/img/items/
+      - run: npm run build:guias
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
