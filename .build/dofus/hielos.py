@@ -219,6 +219,8 @@ ZONE_MAPS = {
 # The 85 rows resolve by their exact name in DofusDB
 CORRECTIONS = {}
 ALIASES = {}
+# No generic rows ("x:<slug>") to give a representative image
+GENERIC_IMG = {}
 
 # The page's compiled list just adds everything up; nothing is listed twice that is kept
 # after use, so nothing counts once.
