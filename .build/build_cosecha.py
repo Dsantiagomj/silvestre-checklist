@@ -4,7 +4,9 @@ Each row is one monster, in the quest's own order: name, level, image, whether i
 dungeon boss (with its dungeon) or an archmonster, the subarea where it lives, the quest
 stage that asks for it (`e`, 1-18: the 1-based index of its step in the API order of
 `quest.steps`; the recommended levels are ignored) and its region (`r`, the area of its
-first subarea). The tool (src/tools/cosecha/) bundles this file into its embed
+first subarea). A boss's level is its highest grade that does not pass its dungeon's
+level: DofusDB gives some bosses extra scaled grades (Wey Wabbit and Coralador Magistral
+go up to 200 in dungeons of level 60 and 50). The tool (src/tools/cosecha/) bundles this file into its embed
 (src/embeds/cosecha/).
 
 The images are copied to public/img/cosecha/<gfx>.png (several monsters share one) and
@@ -54,6 +56,16 @@ def local_image(url):
     return f"cosecha/{url.rsplit('/', 1)[-1]}"
 
 
+def level(monster, dungeon):
+    """The level the soul is fought at: the highest grade that fits the dungeon."""
+    grades = [g["level"] for g in monster.get("grades") or []]
+    if not grades:
+        return None
+    cap = (dungeon or {}).get("optimalPlayerLevel")
+    fit = [lv for lv in grades if cap is None or lv <= cap]
+    return max(fit) if fit else grades[-1]
+
+
 def main():
     quest = get("/quests/439?lang=es")
     rows = []
@@ -80,7 +92,7 @@ def main():
         out.append({
             "id": r["id"],
             "n": m["name"]["es"],
-            "lv": m["grades"][-1]["level"] if m.get("grades") else None,
+            "lv": level(m, d),
             "img": local_image(m["img"]) if m.get("img") else None,
             "t": "boss" if d or m.get("isBoss") else "archi" if m.get("isMiniBoss") else "otro",
             "d": d["name"]["es"] if d else None,
