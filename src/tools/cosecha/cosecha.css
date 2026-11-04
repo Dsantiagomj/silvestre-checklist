@@ -4,8 +4,9 @@
    herramientas, el carril de etapas (o regiones) pegado a la izquierda y los cromos de las
    almas, en gris hasta marcarlas y dorados después. En estrecho (≤700px) el carril es una
    fila de etapas pegada arriba y los cromos van de tres en tres.
-   De borde a borde (src/embeds/cosecha/embed.js) con su alto natural. Lo pegado arriba se queda bajo
-   la cabecera fija de la página (--cosecha-top, src/lib/pageHeader.js).
+   De borde a borde (src/embeds/cosecha/embed.js) con su alto natural, pero nunca menos que la
+   ventana bajo la cabecera: al buscar o filtrar quedan pocas almas y no asoma la página por debajo.
+   Lo pegado arriba se queda bajo la cabecera fija de la página (--cosecha-top, src/lib/pageHeader.js).
    Dos temas: oscuro y claro (data-theme en .cosecha, renderCosecha). Todos los colores van en
    variables de .cosecha y el claro solo las cambia: pergamino, el ocre como tinta y el oro
    solo en los anillos. El huevo de la cabecera se queda oscuro en los dos.
@@ -105,6 +106,8 @@ button { margin: 0; font: inherit; color: inherit; cursor: pointer; text-transfo
   /* Que el margen de abajo de lo último quede dentro del fondo */
   display: flow-root;
   padding-bottom: 40px;
+  /* Con pocas almas (una búsqueda, un filtro) el fondo sigue llenando la ventana */
+  min-height: calc(100vh - var(--top));
   background: radial-gradient(90% 40% at 50% 0%, var(--glow), var(--bg) 70%), var(--bg);
   font-family: var(--fb);
   font-size: 16px;
