@@ -228,6 +228,20 @@ test("buscar «rata» enseña lo de todas las etapas y apaga en el carril las qu
   await expect(cosecha(page).locator(".empty b")).toHaveText("Sin resultados");
 });
 
+test("con pocas almas en pantalla el fondo llega hasta abajo de la ventana", async ({ page }) => {
+  // Con «Jefes» y «coral» queda una sola alma: sin alto mínimo el widget se encogía y asomaba el blanco de la página
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openCosecha(page);
+  await cosecha(page).getByRole("button", { name: "Jefes", exact: true }).click();
+  await cosecha(page).getByRole("textbox", { name: "Buscar" }).fill("coral");
+  await expect(cromos(page)).toHaveCount(1);
+  // Mide al menos lo que deja la cabecera fija de Squarespace (90px): pegado bajo ella, llega al borde de abajo
+  const box = await cosecha(page).boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(900 - 90 - 1);
+  await page.evaluate(() => window.scrollTo(0, document.getElementById("cosecha-root").getBoundingClientRect().top + window.scrollY - 90));
+  await expect.poll(async () => Math.round((await cosecha(page).boundingBox()).y)).toBe(90);
+});
+
 test("«/» lleva a la búsqueda, salvo si se escribe en otro campo de la página", async ({ page }) => {
   await openCosecha(page);
   await page.locator("#page-search").focus();
