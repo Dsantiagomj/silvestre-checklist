@@ -17,6 +17,16 @@ test("por etapa: las 18 de la misión, en su orden, las tres primeras de jefes",
   assert.deepEqual(groups[0].souls.map(s => s.id), SOULS.filter(s => s.e === 1).map(s => s.id));
 });
 
+test("un jefe lleva el nivel de su mazmorra, no el de sus grados escalados", () => {
+  // DofusDB añade a algunos jefes grados 75/130/200; el que se pelea es el de la mazmorra
+  const lv = name => SOULS.find(s => s.n === name).lv;
+  assert.equal(lv("Coralador Magistral"), 50);
+  assert.equal(lv("Wey Wabbit"), 60);
+  // La Guarida de Sfinter Cell es de nivel 150: las Ratas se quedan en su grado alto
+  assert.equal(lv("Rata Negra"), 150);
+  assert.equal(lv("Rata Blanca"), 150);
+});
+
 test("por región: de la que más almas tiene a la que menos", () => {
   const groups = groupsOf(SOULS, "region", "all");
   assert.equal(groups.length, 19);
