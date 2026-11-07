@@ -40,7 +40,7 @@ export const GUIAS = {
     { id: "dofzzbz", name: "Dofzzbz", url: `${T}dofzzbz`, tag: null, level: 170, color: "#e8703a", icon: "items/23039.png" },
     { id: "vulbis", name: "Dofus Vulbis", url: `${T}dofus-vulbis`, tag: null, level: 180, color: "#eb4623", icon: "items/23004.png" },
     { id: "hielos", name: "Dofus de los Hielos", url: `${T}dofus-de-los-hielos`, tag: null, level: 180, color: "#47c4ff", icon: "items/23005.png" },
-    { id: "nebuloso", name: "Dofus Nebuloso", url: `${T}dofus-nebuloso`, tag: null, level: 180, color: "#875cd2", icon: "items/23016.png" },
+    { id: "nebuloso", name: "Dofus Nebuloso", url: `${T}misiones-nebuloso`, tag: null, level: 180, color: "#875cd2", icon: "items/23016.png" },
     { id: "abisal", name: "Dofus Abisal", url: `${T}dofus-abisal`, tag: null, level: 180, color: "#2a5aaa", icon: "items/23023.png" },
     { id: "marfil", name: "Dofus Marfil", url: `${T}dofus-marfil`, tag: "primordial", level: 180, color: "#ebdcb4", icon: "items/23011.png" },
     { id: "forjalava", name: "Dofus Forjalava", url: `${T}dofus-forjalava`, tag: null, level: 180, color: "#ee5a1f", icon: "items/23024.png" },
