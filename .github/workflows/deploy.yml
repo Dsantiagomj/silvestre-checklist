@@ -53,14 +53,20 @@ jobs:
       - run: npm run build:hielos
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      # El Nebuloso en dist/nebuloso/
+      - run: npm run build:nebuloso
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
       # La guía global en dist/global/, sin embebido
       - run: npm run build:global
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      # Los embebidos para Torrente Arcano (dist/embed/silvestre.js y dist/embed/hielos.js),
-      # junto al sitio: cargan sus trozos y las imágenes de este mismo despliegue
+      # Los embebidos para Torrente Arcano (dist/embed/silvestre.js, dist/embed/hielos.js y
+      # dist/embed/nebuloso.js), junto al sitio: cargan sus trozos y las imágenes de este
+      # mismo despliegue
       - run: npm run build:embed
       - run: npm run build:embed:hielos
+      - run: npm run build:embed:nebuloso
       # El hub de los checklists (dist/embed/checklists.js), con las imágenes de public/img/hub/
       - run: npm run build:hub
       # El inicio de torrentearcano.com (dist/embed/inicio.js), con las imágenes de public/img/
