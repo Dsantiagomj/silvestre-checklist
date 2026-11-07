@@ -57,6 +57,17 @@ test("el hero ocupa todo el ancho y deja asomar la ventana de los pasos", async 
   expect(await page.locator(".steps-win").evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(900);
 });
 
+test("el hero se ciñe a su contenido: poco aire arriba y abajo", async ({ page }) => {
+  await openApp(page);
+  const gap = await page.evaluate(() => {
+    const hero = document.querySelector(".hero").getBoundingClientRect();
+    const inner = document.querySelector(".hero-inner").getBoundingClientRect();
+    return { top: inner.top - hero.top, bottom: hero.bottom - inner.bottom };
+  });
+  expect(gap.top).toBeLessThanOrEqual(40);
+  expect(gap.bottom).toBeLessThanOrEqual(44);
+});
+
 test("el anillo marca el progreso y el Dofus sigue apagado hasta el final", async ({ page }) => {
   await openApp(page, SEED);
   const pct = parseFloat(await page.locator("#heroPct").innerText());
