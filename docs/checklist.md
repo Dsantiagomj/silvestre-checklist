@@ -1,6 +1,6 @@
 # The checklist
 
-The checklist app is the same for the Dofus Silvestre and the Dofus de los Hielos, on the site and in the Torrente Arcano embeds. This document describes the Silvestre. What changes for the Hielos comes from its `config.js` and is covered in [development.md](development.md#several-dofus).
+The checklist app is the same for the Dofus Silvestre, the Dofus de los Hielos and the Dofus Nebuloso, on the site and in the Torrente Arcano embeds. This document describes the Silvestre. What changes for the others comes from their `config.js` and is covered in [development.md](development.md#several-dofus).
 
 The Silvestre guide is Sandglass's, version 4. The text of its 100 steps is imported verbatim from torrentearcano.com and never edited. What changes compared with the site's classic checklist is how progress is computed and shown, and the interface.
 

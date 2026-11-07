@@ -11,7 +11,7 @@ Every change: code, data, docs, CI. Read this file before the first edit. For UI
 1. One branch per change, in a worktree under `../silvestre-checklist-worktrees/<name>`.
 2. Check the frozen embed contract below. If the change touches a row, stop and ask.
 3. Strict TDD: write or adjust the test, watch it fail, then implement.
-4. Run all six suites locally (see Testing). Report failures verbatim.
+4. Run all seven suites locally (see Testing). Report failures verbatim.
 5. UI change: screenshots at 1440, 1024 and 390 px in `tmp/shots/`, compared with the approved mockup.
 6. Open the PR (Spanish body, conventional commit title). No auto-merge unless asked.
 
@@ -25,6 +25,7 @@ Torre's live pages must not notice any change. Bundle bytes and chunk hashes may
 |---|---|---|---|---|---|---|
 | Silvestre checklist | `embed/silvestre.js` | `embed/chunks`, `embed/assets` | `#silvestre-root` | `silvestre-fonts` | `--silvestre-top` | prefix `silvestre:`; reads `dofus_silvestre_clean_v4`, `_v3`; shares `dofus-checklists:shared` |
 | Hielos checklist | `embed/hielos.js` | `embed/hielos-chunks`, `embed/hielos-assets` | `#hielos-root` | `hielos-fonts` | `--hielos-top` | prefix `hielos:`; reads `dofus_hielos_clean_v2`; shares `dofus-checklists:shared` |
+| Nebuloso checklist | `embed/nebuloso.js` | `embed/nebuloso-chunks`, `embed/nebuloso-assets` | `#nebuloso-root` | `nebuloso-fonts` | `--nebuloso-top` | prefix `nebuloso:`; reads `dofus_nebuloso_clean_v1`; shares `dofus-checklists:shared` |
 | Checklists hub | `embed/checklists.js` | `embed/hub` | `#checklists-root` | `checklists-fonts` | none (sets the height var `--checklists-h`) | none |
 | Torrente home (inicio) | `embed/inicio.js` | `embed/inicio` | `#inicio-root` | `inicio-fonts` | none | none |
 | La eterna cosecha | `embed/cosecha.js` | `embed/cosecha` | `#cosecha-root` | `cosecha-fonts` | `--cosecha-top` | `cosecha:done`, `cosecha:ui`, `cosecha:theme` |
@@ -32,7 +33,7 @@ Torre's live pages must not notice any change. Bundle bytes and chunk hashes may
 
 The site's theme key `dofus-tools:theme` lives on the GitHub Pages origin and is not part of this contract; it never reaches an embed bundle.
 
-Also frozen: the classic keys are read-only (`src/tools/checklist/lib/classic.js`); `dofus-checklists:shared` is read and written by both checklists (`src/tools/checklist/lib/shared.js`); the stored formats; shadow-root isolation (`mode: "open"`); the preview page `/checklists/` (`noindex, nofollow`), which loads the live bundle from `EMBED_BASE`; `cosecha:done` on the site's `/cosecha/` page, which replaced the old `noindex` preview at the same URL; and the published `/cosecha/cosecha.json`; the guías preview page `/guias-dofus/` (`noindex, nofollow`), which loads the live bundle from `EMBED_BASE`.
+Also frozen: the classic keys are read-only (`src/tools/checklist/lib/classic.js`); `dofus-checklists:shared` is read and written by the three checklists (`src/tools/checklist/lib/shared.js`); the stored formats; shadow-root isolation (`mode: "open"`); the preview page `/checklists/` (`noindex, nofollow`), which loads the live bundle from `EMBED_BASE`; `cosecha:done` on the site's `/cosecha/` page, which replaced the old `noindex` preview at the same URL; and the published `/cosecha/cosecha.json`; the guías preview page `/guias-dofus/` (`noindex, nofollow`), which loads the live bundle from `EMBED_BASE`.
 
 Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `storagePrefix`, `classicKeys`), `vite.config.js` (`EMBEDS`, `EMBED_BASE`), `src/embeds/{hub,inicio,cosecha,guias}/embed.js` (host id and fonts key, hard-coded), `src/tools/cosecha/cosecha.js` (`DONE_KEY`, `UI_KEY`, `THEME_KEY`), `src/embeds/guias/guias.js` (`THEME_KEY`). `tests/embed/contract.spec.js` holds these values as literals and checks them against the configs and the built bundles; keep them literal, a test that reads the configs passes whatever they say.
 
@@ -56,7 +57,7 @@ Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `stor
 | Rule | Detail |
 |---|---|
 | One branch per change | Worktrees under `../silvestre-checklist-worktrees/`, never inside the repo |
-| All six suites before push | `npm run test:unit`, `npm run test:embed`, `npm run test:hielos`, `npm run test:global`, `npm run test:site`, `npm run test:e2e`. Re-run a suspected flake alone (`--retries 0`) before calling it a flake |
+| All seven suites before push | `npm run test:unit`, `npm run test:embed`, `npm run test:hielos`, `npm run test:nebuloso`, `npm run test:global`, `npm run test:site`, `npm run test:e2e`. Re-run a suspected flake alone (`--retries 0`) before calling it a flake |
 | One concern per PR | Chain PRs when a change mixes concerns or passes about 400 changed lines. A pure `git mv` PR is exempt; review it with `git diff -M --stat` and say so in the body |
 | Merge method | Rebase for human PRs. The guide-sync bot squash-merges (`gh pr merge --squash` in `sync-guide-dofus.yml`) and stays that way |
 | Auto-merge | Only when the user asks |
@@ -68,7 +69,7 @@ Where the values live: `src/dofus/<id>/config.js` (`embed`, `build.embed`, `stor
 
 1. Write the test (or change the assertion) first. Run it and watch it fail for the right reason.
 2. Implement the smallest change that passes.
-3. Run the suite the test belongs to, then all five before pushing.
+3. Run the suite the test belongs to, then all seven before pushing.
 4. A refactor PR never edits assertions. If a move needs an import path changed in a test, say so in the PR body.
 
 ## Design process
@@ -127,8 +128,9 @@ API: `https://api.dofusdb.fr`, 50 records per page (`$limit=50`), `lang=es`, sen
 | Unit | `npm run test:unit` | `node --test tests/unit/*.test.js` | nothing | `src/tools/checklist/lib/shared.js`, `src/tools/checklist/lib/stops.js`, `src/tools/cosecha/souls.js`, the CI path map (`.github/ci-paths.mjs`) and the import rules between `src/` folders |
 | Build pipeline | `python3 -I -m unittest discover -s .build/tests` | `.build/tests/` | nothing | the Python scripts; CI runs it in the `unit` job |
 | App e2e | `npm run test:e2e` | `playwright.config.js`, `tests/e2e/` | `SITE_OUT=.e2e-test npm run build:site`, then `npm run build -- --outDir .e2e-test/silvestre`, served by `tests/serve.js` on 127.0.0.1:4317 like Pages (the home and `/cosecha/` at the root with `public/`, the app at `/silvestre/`), never reusing a running server; `APP_URL=…/silvestre/` runs the suite against any deployment | the Silvestre site: diary, detail, quests, filters, prerequisites, items, theme, header, reset and backup, classic import, overlay, mobile, and the site shell above the app (`shell.spec.js`, including the site theme carried from the home to `/silvestre/` and `/cosecha/`). Viewport 1440x900 |
-| Embeds | `npm run test:embed` | `playwright.embed.config.js`, `tests/embed/` | `globalSetup` (`tests/embed/build.js`) builds the six embeds into `.embed-test/` (`EMBED_OUT`); no server | `contract.spec.js` (the frozen contract), `embed.spec.js` (Silvestre), `hielos.spec.js`, `hub.spec.js` (+ `/checklists/` preview), `inicio.spec.js`, `cosecha.spec.js`, `guias.spec.js` (+ `/guias-dofus/` preview) |
+| Embeds | `npm run test:embed` | `playwright.embed.config.js`, `tests/embed/` | `globalSetup` (`tests/embed/build.js`) builds the seven embeds into `.embed-test/` (`EMBED_OUT`); no server | `contract.spec.js` (the frozen contract), `embed.spec.js` (Silvestre), `hielos.spec.js`, `nebuloso.spec.js`, `hub.spec.js` (+ `/checklists/` preview), `inicio.spec.js`, `cosecha.spec.js`, `guias.spec.js` (+ `/guias-dofus/` preview) |
 | Hielos site | `npm run test:hielos` | `playwright.hielos.config.js`, `tests/hielos/` | `build:hielos --outDir .hielos-test/hielos`, served by `tests/serve.js` on 127.0.0.1:4321 like Pages: the app at `/hielos/`, images from `public/` at the root | what differs per Dofus: 70 steps, snow hero, single-Dofus strip, short screen, mobile, the note example, the egg at step 69, the stop in step 12. Viewport 1440x1000 |
+| Nebuloso site | `npm run test:nebuloso` | `playwright.nebuloso.config.js`, `tests/nebuloso/` | `build:nebuloso --outDir .nebuloso-test/nebuloso`, served by `tests/serve.js` on 127.0.0.1:4323 like Pages: the app at `/nebuloso/` | what differs per Dofus: 26 steps, nebula hero, the Dofus de los Vigilantes on the road at step 4, the egg at step 26, the note example (8 and 9), the stops of steps 7 and 8, the god steps, the spell and quest-item rows left out of the totals, the kamas alternative, the lavender palette. Viewport 1440x1000 |
 | Site | `npm run test:site` | `playwright.site.config.js`, `tests/site/` | `SITE_OUT=.site-test npm run build:site`, served by `tests/serve.js` on 127.0.0.1:4325 | `home.spec.js`: title, one card per tool and its link, the shell (brand, nav, `aria-current`), old `?…`/`#…` links redirected to `silvestre/`, no overflow at 1440, 1024 and 390. `cosecha.spec.js`: the page comes from the site build with `cosecha.json` next to it, the tool under the shell, marks kept in `cosecha:done` across reloads and from the old preview, no switch of its own, and the site theme followed when the header switch changes it. `home.spec.js` also covers the light home and the one-time migration from `hielos:theme`. Viewport 1440x900 |
 
 How the embed tests serve Pages from disk (`tests/embed/harness.js`):
@@ -140,9 +142,9 @@ How the embed tests serve Pages from disk (`tests/embed/harness.js`):
 
 CI (`.github/workflows/ci.yml`) aims for speed (the repo is public, minutes are free): `changes` (Qué cambia), `unit`, six e2e shards and `embed` run in parallel, and `Pruebas` aggregates them (it is the check `main` requires; `sync-guide-dofus.yml` polls it by name; skipped jobs count as passed). A draft PR runs only the unit tests; marking it ready runs the rest.
 
-- `changes` (Qué cambia) pipes `git diff --name-only origin/<base>...HEAD` into `node .github/ci-paths.mjs`, which prints `e2e`, `embed`, `hielos` and `site`. Manual dispatch on `main` runs everything; on another branch (the guide sync) it diffs against `main`. `tests/unit/ci-paths.test.js` tests the map, so the map and CI cannot drift.
+- `changes` (Qué cambia) pipes `git diff --name-only origin/<base>...HEAD` into `node .github/ci-paths.mjs`, which prints `e2e`, `embed`, `hielos`, `nebuloso`, `global` and `site`. Manual dispatch on `main` runs everything; on another branch (the guide sync) it diffs against `main`. `tests/unit/ci-paths.test.js` tests the map, so the map and CI cannot drift.
 - `unit` always runs `npm run test:unit`, and the Python `.build/tests` when `.build/` changes.
-- `e2e` runs in six shards; `embed` (Embebido, Hielos, Global y sitio) runs `test:embed`, `test:hielos`, `test:global` and `test:site` as conditional steps of one job. Both use the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it). Each suite retries once.
+- `e2e` runs in six shards; `embed` (Embebido, Hielos, Nebuloso, Global y sitio) runs `test:embed`, `test:hielos`, `test:nebuloso`, `test:global` and `test:site` as conditional steps of one job. Both use the Playwright image, whose version must match `@playwright/test` in `package-lock.json` (a step checks it). Each suite retries once.
 - `deploy.yml` is one job (build and publish) and skips pushes that only touch docs, tests, `.build/` or the CI. The guide sync runs once a day, all on Ubuntu (images through ImageMagick, `.build/imaging.py`).
 
 The path map (`.github/ci-paths.mjs`); the first matching rule wins and a path that matches none runs every suite:
@@ -154,15 +156,19 @@ The path map (`.github/ci-paths.mjs`); the first matching rule wins and a path t
 | `public/img/{hub,inicio,cosecha}/**` | embed, site |
 | `src/embeds/**`, `tests/embed/**`, `public/checklists/**`, `public/guias-dofus/**` | embed |
 | `src/tools/cosecha/**`, `public/cosecha/**` | embed, site |
-| `src/tools/checklist/**` | e2e, hielos, embed |
-| `src/site/shell/**` | e2e, hielos, site |
-| `src/site/checklist/**`, `index.html` | e2e, hielos |
+| `src/tools/checklist/**` | e2e, hielos, nebuloso, global, embed |
+| `src/site/shell/**` | e2e, hielos, nebuloso, global, site |
+| `src/site/checklist/**`, `index.html` | e2e, hielos, nebuloso, global |
 | `src/site/**` (home, cosecha page), `tests/site/**`, `playwright.site.config.js` | site |
 | `tests/e2e/**` | e2e |
 | `tests/hielos/**` | hielos |
+| `tests/nebuloso/**` | nebuloso |
+| `tests/global/**` | global |
 | `src/dofus/silvestre/**` | e2e, embed |
 | `src/dofus/hielos/**` | hielos, embed |
-| anything else (`src/lib/**`, other `public/**`, `vite.config.js`, `package*.json`, `playwright*.config.js`, `tests/serve.js`, `.github/**`) | all four |
+| `src/dofus/nebuloso/**` | nebuloso, embed |
+| `src/dofus/global/**` | global |
+| anything else (`src/lib/**`, other `public/**`, `vite.config.js`, `package*.json`, `playwright*.config.js`, `tests/serve.js`, `.github/**`) | all six |
 
 A new folder needs a rule and a test in `ci-paths.test.js`; without one it runs everything. `deploy.yml` builds every surface into one Pages artifact on push to `main` (order in the repo map). The repo is public, so Actions minutes are free.
 
@@ -173,19 +179,19 @@ One folder per audience, so a path tells you which suites a change can break (CI
 | Path | What | Used by |
 |---|---|---|
 | `src/embeds/<name>/` | One entry per Torrente embed: `checklist/embed.jsx` (the React app in a shadow root), `hub/`, `inicio/`, `guias/` (plain DOM widgets with their manifest and CSS), `cosecha/embed.js` | embeds only |
-| `src/tools/checklist/` | The checklist app: `App.jsx`, `components/`, `overlay/`, `state/store.js`, `styles/global.css`, and `lib/` with its own helpers (assets, classic import, quests, shared storage, stops, palette…) | the Silvestre and Hielos sites and their embeds |
+| `src/tools/checklist/` | The checklist app: `App.jsx`, `components/`, `overlay/`, `state/store.js`, `styles/global.css`, and `lib/` with its own helpers (assets, classic import, quests, shared storage, stops, palette…) | the checklist sites and their embeds |
 | `src/tools/cosecha/` | «La eterna cosecha»: `renderCosecha` (`cosecha.js`), the counts (`souls.js`), `cosecha.css` (written for a shadow root) | the cosecha embed and the site page |
 | `src/site/` | Vite root of the `SITE=1` build. `index.html` is the home | site only |
 | `src/site/shell/` | `mountShell(current)`, the `.dt-shell` header (see `DESIGN.md`); `theme.js`, the site-wide theme (`dofus-tools:theme`, `setSiteTheme`, `onSiteTheme`); `themeBoot.js`, the inline `<head>` script that `vite.config.js` injects into every site page so `data-theme` is set before the first paint | every site page |
 | `src/site/home/` | The home cards: `main.js`, `home.css`, `manifest.js` | `/` |
-| `src/site/checklist/` | `main.jsx`, the entry of the checklist sites (root `index.html`): shell plus app | `/silvestre/`, `/hielos/` |
+| `src/site/checklist/` | `main.jsx`, the entry of the checklist sites (root `index.html`): shell plus app | `/silvestre/`, `/hielos/`, `/nebuloso/`, `/global/` |
 | `src/site/cosecha/` | `index.html` and `main.js`: shell plus the cosecha tool in a shadow root | `/cosecha/` |
 | `src/lib/` | What more than one surface imports: `dom.js`, `fonts.js`, `pageHeader.js`, `tilt.js`, and the egg theme switch (`themeSwitch.js`, `themeSwitch.css`) | embeds, tools, site |
 | `src/dofus/<id>/` | Per-Dofus data: `config.js`, `steps.js`, generated JSON, `icons/`; the app reads it through the `@dofus` alias | the checklist |
-| `index.html` | Vite entry of the checklist sites (`%DOFUS_*%` placeholders) | `npm run build`, `build:hielos` |
+| `index.html` | Vite entry of the checklist sites (`%DOFUS_*%` placeholders) | `npm run build`, `build:hielos`, `build:nebuloso`, `build:global` |
 | `public/` | Favicons, `img/<kind>/` (all game art), `checklists/index.html` (hub preview), `guias-dofus/index.html` (guías preview), `cosecha/cosecha.json` (source data, published). Only the `SITE=1` build copies it | the site; embeds load `img/` from `EMBED_BASE` |
 | `.build/` | Python data pipeline (DofusDB, Torrente) with its tests in `.build/tests/`; `.build/data/` is the git-ignored cache | writes `src/dofus/`, `public/img/`, `public/cosecha/` |
-| `tests/unit`, `tests/e2e`, `tests/embed`, `tests/hielos`, `tests/site` | One dir per suite (Testing above); `tests/serve.js` serves a build like Pages, with `public/` behind it | |
+| `tests/unit`, `tests/e2e`, `tests/embed`, `tests/hielos`, `tests/nebuloso`, `tests/global`, `tests/site` | One dir per suite (Testing above); `tests/serve.js` serves a build like Pages, with `public/` behind it | |
 | `.github/ci-paths.mjs`, `.github/workflows/` | The CI path map; `ci.yml`, `deploy.yml` and the guide sync | |
 
 Import rules (`tests/unit/import-rules.test.js`): `src/embeds/` and `src/tools/` never import `src/site/`; `src/tools/` and `src/site/` never import `src/embeds/`. The site uses tools and `src/lib/`.
@@ -195,15 +201,15 @@ Build switches (`vite.config.js`):
 | Switch | Script | Output |
 |---|---|---|
 | `SITE=1` | `build:site` | `src/site/` as root, inputs `index.html` (home) and `cosecha/index.html`, into `dist/` (or `SITE_OUT`) with `public/`. Empties its outDir. Needs no Dofus |
-| `DOFUS=<id>` (default `silvestre`) | `build`, `build:hielos` | the checklist site in `dist/<build.outDir>/` (`silvestre/`, `hielos/`), base `<BASE_PATH><outDir>/`, without `public/`; empties only its folder |
-| `EMBED=1` (with `DOFUS`) | `build:embed`, `build:embed:hielos` | `embed/silvestre.js` or `embed/hielos.js` and their chunk dirs |
+| `DOFUS=<id>` (default `silvestre`) | `build`, `build:hielos`, `build:nebuloso`, `build:global` | the checklist site in `dist/<build.outDir>/` (`silvestre/`, `hielos/`, `nebuloso/`, `global/`), base `<BASE_PATH><outDir>/`, without `public/`; empties only its folder |
+| `EMBED=1` (with `DOFUS`) | `build:embed`, `build:embed:hielos`, `build:embed:nebuloso` | `embed/silvestre.js`, `embed/hielos.js` or `embed/nebuloso.js` and their chunk dirs |
 | `HUB=1`, `INICIO=1`, `COSECHA=1`, `GUIAS=1` | `build:hub`, `build:inicio`, `build:cosecha`, `build:guias` | `embed/checklists.js`, `embed/inicio.js`, `embed/cosecha.js`, `embed/guias.js` |
 | `BASE_PATH` | | the site root on Pages, `/silvestre-checklist/`; unset means `/` |
 | `EMBED_OUT`, `SITE_OUT` | | where the embed and site builds go instead of `dist/` (the tests use `.embed-test/`, `.site-test/`) |
 
 `SITE` wins over everything; among the embeds `GUIAS` > `COSECHA` > `INICIO` > `HUB` > `EMBED`. Each embed build deletes only its own entry and dirs under `embed/`.
 
-Deploy order (`deploy.yml`, all with `BASE_PATH`): `build:site` first, because it is the only build that empties `dist/` and the one that copies `public/`; then `build` and `build:hielos`; then the six embed builds.
+Deploy order (`deploy.yml`, all with `BASE_PATH`): `build:site` first, because it is the only build that empties `dist/` and the one that copies `public/`; then `build`, `build:hielos`, `build:nebuloso` and `build:global`; then the seven embed builds.
 
 Site map (`https://dsantiagomj.github.io/silvestre-checklist/`):
 
@@ -212,6 +218,7 @@ Site map (`https://dsantiagomj.github.io/silvestre-checklist/`):
 | `/` | Home, one card per tool | brand | `src/site/index.html` |
 | `/silvestre/` | Silvestre checklist | yes | `index.html` + `src/site/checklist/` |
 | `/hielos/` | Hielos checklist | yes | same, `DOFUS=hielos` |
+| `/nebuloso/` | Nebuloso checklist | yes | same, `DOFUS=nebuloso` |
 | `/cosecha/` | La eterna cosecha | yes | `src/site/cosecha/` |
 | `/checklists/` | Hub preview, `noindex, nofollow`, loads the live embed | no | `public/checklists/index.html` |
 | `/guias-dofus/` | Guías preview, `noindex, nofollow`, loads the live embed | no | `public/guias-dofus/index.html` |
