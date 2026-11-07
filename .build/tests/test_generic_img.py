@@ -64,7 +64,7 @@ class GenericImgTableTest(unittest.TestCase):
         self.assertEqual(config("hielos").GENERIC_IMG, {})
 
     def test_every_icon_is_self_hosted(self):
-        for dofus_id in ("silvestre", "hielos"):
+        for dofus_id in ("silvestre", "hielos", "nebuloso"):
             for name, img in config(dofus_id).GENERIC_IMG.items():
                 self.assertTrue((PUBLIC_IMG / img).is_file(), f"{dofus_id}: {name} -> {img}")
 

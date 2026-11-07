@@ -1,0 +1,22 @@
+{
+ "Llanuras de Cania": {
+  "map": 130025985,
+  "img": "zones/llanuras-de-cania.jpg",
+  "thumb": "zones/llanuras-de-cania-s.jpg"
+ },
+ "Anutropía": {
+  "map": 131597312,
+  "img": "zones/anutropia.jpg",
+  "thumb": "zones/anutropia-s.jpg"
+ },
+ "Sramvil": {
+  "map": 137364480,
+  "img": "zones/sramvil.jpg",
+  "thumb": "zones/sramvil-s.jpg"
+ },
+ "Xelorium": {
+  "map": 145229323,
+  "img": "zones/xelorium.jpg",
+  "thumb": "zones/xelorium-s.jpg"
+ }
+}
