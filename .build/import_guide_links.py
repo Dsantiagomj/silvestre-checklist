@@ -33,6 +33,8 @@ import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import dofus  # noqa: E402  (--dofus <id> or DOFUS; silvestre by default)
+# The steps as import_guide.py reads them: template literals or JSON strings
+from import_guide import js_string_array  # noqa: E402
 D = dofus.CONFIG
 
 OUT = dofus.SRC / "guides.json"
@@ -65,10 +67,6 @@ def js_object(html, name):
     return value
 
 
-def js_template_array(html, name):
-    start = html.index(f"const {name} = [")
-    end = html.index("];", start)
-    return re.findall(r"`([^`]*)`", html[start:end])
 
 
 def slug(text):
@@ -150,7 +148,7 @@ def answers(url, tries=4):
 
 def main(page):
     html = pathlib.Path(page).read_text(encoding="utf-8")
-    texts = js_template_array(html, "steps")
+    texts = js_string_array(html, "steps")
     achievements = {**EXTRA_ACHIEVEMENTS, **js_object(html, "achievementLinks")}
     overrides = {**js_object(html, "missionUrlOverrides"), **MISSION_URLS}
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS + TEXT_MISSIONS}

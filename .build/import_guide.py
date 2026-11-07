@@ -68,9 +68,14 @@ def js_value(html, name):
     return value
 
 
-def js_template_array(html, name):
-    """The steps are an array of template literals, not JSON."""
-    start = html.index(f"const {name} = [")
+def js_string_array(html, name):
+    """The steps: an array of template literals (Silvestre, Hielos), which are not JSON, or
+    of JSON strings (Nebuloso). The first quote after the "[" says which."""
+    start = html.index(f"const {name} = [") + len(f"const {name} = ")
+    first = html[start + 1:].lstrip()[:1]
+    if first == '"':
+        value, _ = json.JSONDecoder().raw_decode(html[start:])
+        return value
     end = html.index("];", start)
     return re.findall(r"`([^`]*)`", html[start:end])
 
@@ -234,7 +239,7 @@ def read_page(html):
         raise SystemExit(f"la página no trae los datos del checklist clásico (falta {', '.join(missing)}): "
                          "no se importa nada")
     try:
-        raws = js_template_array(html, "steps")
+        raws = js_string_array(html, "steps")
         resources = js_value(html, "resourcesData")
         previous = (js_value(html, "previousStepsByNewStep") if PAGE_MARKERS["previousStepsByNewStep"] in html
                     else [[n] for n in range(1, len(raws) + 1)])
