@@ -103,7 +103,7 @@ It is a separate widget (`src/embeds/guias/`), without React, at about 24 KB (8 
 - Below it, a bar with the filters (Todos, Primordiales, Eventos, each with its count), the search field and the egg theme switch. It sticks under Squarespace's fixed header and turns opaque once stuck.
 - Then one collectible card per guide, in the order of Torre's page: the egg glowing in the Dofus colour, a pill for Primordial or Evento, the name and the Dofus level. With a mouse the card tilts and the shine follows it; with reduced motion or on a touch screen it stays still. Six cards per row, four below 1180 px of widget width, two below 600 px.
 - Search ignores accents and case and also knows the alternate names Torre had in its own search («zanahoria», «kaliptus»). With no match it shows «No se ha encontrado ningún Dofus.».
-- Kalipto and Piñata de Pino have no guide yet (Torre linked them to `/wip`): they show «Próximamente», grey, without a link and without the tilt.
+- Kalipto has no guide yet (Torre linked it to `/wip`): it shows «Próximamente», grey, without a link and without the tilt. The Piñata de Pino guide lives at `/piata-de-pino` (Squarespace drops the ñ from the slug).
 
 The theme goes in `guias:theme`; nothing else is stored. The 30 guides are kept by hand in `src/embeds/guias/manifest.js`: name, Torre URL (or `null` while there is no guide), tag, level, the card colour from Torre's `--accent` and the Dofus item icon. Every icon is the item icon from DofusDB, self-hosted in `public/img/items/` (icon ids, not item ids). To add a guide, add an entry there with its icon. Build it with `npm run build:guias`.
 

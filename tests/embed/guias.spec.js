@@ -27,7 +27,7 @@ const GUIDES = [
   ["Dofus Vulbis", "dofus-vulbis", null, 180], ["Dofus de los Hielos", "dofus-de-los-hielos", null, 180], ["Dofus Nebuloso", "dofus-nebuloso", null, 180],
   ["Dofus Abisal", "dofus-abisal", null, 180], ["Dofus Marfil", "dofus-marfil", "Primordial", 180], ["Dofus Forjalava", "dofus-forjalava", null, 180],
   ["Dofus Ébano", "dofus-ebano", "Primordial", 180], ["Dofus Centelleante", "dofus-centelleante", null, 180], ["Dofus Moteado", "dofus-moteado", null, 180],
-  ["Piñata de Pino", null, null, 180], ["Dofus Pesadilla", "dofus-pesadilla", null, 180], ["Dofus Silvestre", "dofus-silvestre", null, 180],
+  ["Piñata de Pino", "piata-de-pino", null, 180], ["Dofus Pesadilla", "dofus-pesadilla", null, 180], ["Dofus Silvestre", "dofus-silvestre", null, 180],
 ];
 const names = list => list.map(([n]) => n);
 const shown = page => visible(page).locator(".name").allTextContents();
@@ -72,16 +72,16 @@ test("las cartas siguen el orden de Torre: su nombre, su nivel, su etiqueta y su
       else await expect(card.locator(".kick")).toHaveCount(0);
     }
   }
-  // 28 enlaces; las dos sin guía son role=link desactivados, como la bloqueada del hub
-  await expect(guias(page).locator("a[href]")).toHaveCount(28);
-  await expect(guias(page).getByRole("link", { disabled: true })).toHaveCount(2);
+  // 29 enlaces; la que no tiene guía es role=link desactivado, como la bloqueada del hub
+  await expect(guias(page).locator("a[href]")).toHaveCount(29);
+  await expect(guias(page).getByRole("link", { disabled: true })).toHaveCount(1);
   // Ningún «Ver guía» dentro de la carta: la carta entera es el enlace
   expect(await cards(page).evaluateAll(list => list.filter(c => c.querySelector("a, button")).length)).toBe(0);
 });
 
-test("Kalipto y Piñata de Pino no tienen guía todavía: «Próximamente», sin enlace ni foco", async ({ page }) => {
+test("Kalipto no tiene guía todavía: «Próximamente», sin enlace ni foco", async ({ page }) => {
   await openGuias(page);
-  for (const name of ["Dofus Kalipto", "Piñata de Pino"]) {
+  for (const name of ["Dofus Kalipto"]) {
     const card = cards(page).filter({ hasText: name });
     expect(await card.evaluate(el => el.tagName)).toBe("DIV");
     await expect(card).toHaveAttribute("aria-disabled", "true");

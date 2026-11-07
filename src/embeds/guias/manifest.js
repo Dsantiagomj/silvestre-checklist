@@ -47,7 +47,7 @@ export const GUIAS = {
     { id: "ebano", name: "Dofus Ébano", url: `${T}dofus-ebano`, tag: "primordial", level: 180, color: "#7d6996", icon: "items/23007.png" },
     { id: "centelleante", name: "Dofus Centelleante", url: `${T}dofus-centelleante`, tag: null, level: 180, color: "#dee9f6", icon: "items/23027.png" },
     { id: "moteado", name: "Dofus Moteado", url: `${T}dofus-moteado`, tag: null, level: 180, color: "#ebeef2", icon: "items/23008.png" },
-    { id: "pinata", name: "Piñata de Pino", url: null, tag: null, level: 180, color: "#51b268", icon: "items/23035.png" },
+    { id: "pinata", name: "Piñata de Pino", url: `${T}piata-de-pino`, tag: null, level: 180, color: "#51b268", icon: "items/23035.png" },
     { id: "pesadilla", name: "Dofus Pesadilla", url: `${T}dofus-pesadilla`, tag: null, level: 180, color: "#69379b", icon: "items/23034.png" },
     { id: "silvestre", name: "Dofus Silvestre", url: `${T}dofus-silvestre`, tag: null, level: 180, color: "#b0d62d", icon: "items/23036.png" },
   ],
