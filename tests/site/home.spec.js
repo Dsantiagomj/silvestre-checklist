@@ -5,6 +5,7 @@ import { test, expect } from "@playwright/test";
 const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", path: "silvestre/" },
   { id: "hielos", name: "Dofus de los Hielos", path: "hielos/" },
+  { id: "nebuloso", name: "Dofus Nebuloso", path: "nebuloso/" },
   { id: "cosecha", name: "La eterna cosecha", path: "cosecha/" },
   { id: "global", name: "Guía global", path: "global/" },
 ];
@@ -128,7 +129,7 @@ test("en estrecho el menú va en su propia fila, de lado a lado, con solo el fin
   const brand = await shell.getByRole("link", { name: "Dofus Tools", exact: true }).boundingBox();
   const sw = await shell.getByRole("switch").boundingBox();
   const links = shell.getByRole("navigation").getByRole("link");
-  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "COSECHA", "GLOBAL"]);
+  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "NEBULOSO", "COSECHA", "GLOBAL"]);
   const boxes = await links.evaluateAll(l => l.map(a => a.getBoundingClientRect().toJSON()));
   // La marca y el interruptor en la primera fila; el menú debajo
   expect(Math.abs(sw.y + sw.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(12);

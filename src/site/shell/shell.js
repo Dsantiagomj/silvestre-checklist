@@ -15,11 +15,14 @@ import { onSiteTheme, setSiteTheme, siteTheme } from "./theme.js";
  * Las herramientas del sitio, en el orden del menú y de la home. `path` es relativo a la
  * raíz del sitio; en estrecho el menú muestra solo `short`, el final de `name`. `art`: la
  * zona detrás de la cabecera en su página (relativa a public/img/), la del lugar del que
- * trata como en las cartas (DESIGN.md): Amakna para Silvosse, Frigost, Cania para el Ocre.
+ * trata como en las cartas (DESIGN.md): Amakna para Silvosse, Frigost, Xelorium para el
+ * Nebuloso, Cania para el Ocre.
  */
 export const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", short: "Silvestre", path: "silvestre/", art: "zones/reino-de-amakna.jpg" },
   { id: "hielos", name: "Dofus de los Hielos", short: "Hielos", path: "hielos/", art: "zones/isla-de-frigost.jpg" },
+  // El Nebuloso: Xelorium, donde se lucha contra el pájaro del tiempo (su último paso)
+  { id: "nebuloso", name: "Dofus Nebuloso", short: "Nebuloso", path: "nebuloso/", art: "zones/xelorium.jpg" },
   { id: "cosecha", name: "La eterna cosecha", short: "cosecha", path: "cosecha/", art: "zones/cania.jpg" },
   // La guía global recorre todo el Mundo de los Doce: el Krosmoz, como la home
   { id: "global", name: "Guía global", short: "Global", path: "global/", art: "zones/krosmoz.jpg" },

@@ -170,6 +170,12 @@
   border-radius: 2px;
 }
 
+/* Mediano: con cinco herramientas los nombres enteros ya no caben en la fila (piden unos
+   1030px): como en estrecho, solo el final de cada nombre */
+@container dt-shell (max-width: 1100px) {
+  .dt-pre { display: none; }
+}
+
 /* Estrecho: la marca y el interruptor arriba; el menú debajo, repartido a todo el ancho */
 @container dt-shell (max-width: 600px) {
   .dt-in { width: calc(100% - 28px); flex-wrap: wrap; height: auto; gap: 0 12px; padding-top: 14px; }

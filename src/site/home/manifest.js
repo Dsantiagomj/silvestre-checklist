@@ -25,6 +25,15 @@ export const HOME = {
       npcFit: { h: "70%", r: "-30%", t: "4%" },
       lead: "Descubre los misterios de la isla de Frigost en 70 pasos y enfréntate al temible Conde Kontatrás.",
     },
+    nebuloso: {
+      color: "#c3b1f5",
+      egg: "hub/dofus-nebuloso.png",
+      bg: "zones/xelorium.jpg",
+      // Khelebragón, a quien libera la última misión, la del pájaro del tiempo (renderer de Ankama)
+      npc: "hub/khelebragon.png",
+      npcFit: { h: "72%", r: "-30%", t: "4%" },
+      lead: "Recorre Anutropía, Sramvil y Xelorium en 26 pasos, con el Dofus de los Vigilantes por el camino.",
+    },
     cosecha: {
       color: "#f0a336",
       egg: "hub/dofus-ocre.png",

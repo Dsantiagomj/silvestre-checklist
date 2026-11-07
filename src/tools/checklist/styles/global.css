@@ -1376,6 +1376,17 @@ button.ov-num:hover{ filter:brightness(1.15); }
   100%{ transform:translate(-16px, 92vh); opacity:0; }
 }
 
+/* Nebulosa (hero.fx en config.js: el Nebuloso): motas del color del acento que suben como
+   las luciérnagas, en los dos temas */
+.hero.fx-nebula .hero-fx i, [data-theme="light"] .hero.fx-nebula .hero-fx i{
+  top:auto; bottom:-4%; border-radius:50%;
+  width:var(--s); height:var(--s);
+  background:radial-gradient(circle, #fff 0%, rgba(var(--accent-rgb),.95) 42%, transparent 72%);
+  box-shadow:0 0 calc(var(--s) * 2.2) calc(var(--s) * .4) rgba(var(--accent-rgb),.55);
+  animation:firefly var(--t) ease-in-out var(--d) infinite;
+}
+[data-theme="light"] .hero.fx-nebula .hero-fx i{ box-shadow:0 0 calc(var(--s) * 1.2) rgba(var(--accent-rgb),.9); }
+
 @media (prefers-reduced-motion:reduce){
   .hero-fx{ display:none; }
   .egg-body, .hero-egg.obtained .egg-body{ animation:none; }
