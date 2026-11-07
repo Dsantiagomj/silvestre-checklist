@@ -98,6 +98,7 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 |---|---|---|---|---|
 | Silvestre | `#b7dc69` | `#b7dc69`, titles `#cbee8f` (`src/tools/checklist/styles/global.css`) | `#0d0e0c` | `#3b6512` |
 | Hielos | `#9fd8f0` | `#9fd8f0`, titles `#c8ecfa` (`palette` in `hielos/config.js`) | `#0b0e12` | `#1b5c7d` |
+| Nebuloso | `#c3b1f5` | `#c3b1f5`, titles `#ddd2fb` (`palette` in `nebuloso/config.js`), from the egg's lavender halo | `#0d0b13` | `#4f3a9c` |
 | Próximamente | `#e3c565` | | | |
 
 ### Spacing and shape
@@ -139,6 +140,7 @@ Always container queries on the widget root, never media queries: the Squarespac
 | Cosecha | `@container cosecha (max-width: 700px)` | rail becomes a sticky top row; cromos three per row |
 | Guías | `@container guias (max-width: 1180px)` | cards four per row instead of six |
 | Guías | `(max-width: 600px)` | cards two per row at 4/5; filters on their own row above search and the switch; title 40px |
+| Site shell | `@container dt-shell (max-width: 1100px)` | the nav stays in the row but shows only the end of each name (`.dt-pre` hidden): with five tools the full names need about 1030px |
 | Site shell | `@container dt-shell (max-width: 600px)` | the nav moves to its own row under the brand and the switch, spread edge to edge, showing only the end of each name (`.dt-pre` hidden); it scrolls sideways if it still does not fit |
 | Site home | `@container home (max-width: 700px)` | cards stack, landscape |
 
@@ -203,7 +205,7 @@ The "Dofus Tools" header on every site page, from `mountShell(current)` in `src/
 | Rule | Recipe |
 |---|---|
 | Zone strip | 84px high, `#0b0c0a`, with the page's zone art behind at opacity .6 and `object-position: center 38%`. Two gradients darken it: toward both sides (.96 at the left, .5 in the middle, .94 at the right) and slightly toward the bottom. Content is 1240px wide like the home |
-| Zone per page | `art` in `TOOLS` (`shell.js`), picked like a card background: Krosmoz on the home, Amakna on `/silvestre/`, Frigost on `/hielos/`, Cania on `/cosecha/` |
+| Zone per page | `art` in `TOOLS` (`shell.js`), picked like a card background: Krosmoz on the home, Amakna on `/silvestre/`, Frigost on `/hielos/`, Xelorium on `/nebuloso/`, Cania on `/cosecha/` |
 | Gold rule | 1px at the bottom, `rgba(216,178,90,.75)` between 18 and 82 percent, fading to transparent at both ends |
 | Not sticky | `position: relative`. The app's own sticky bar and the cosecha rail stay at the top of the window; `--cosecha-top` stays 0 |
 | Brand | "Dofus Tools", display 800 30px (24px narrow), under a gold eyebrow «Checklists y herramientas» (display 700 12px, tracking .3em, `aria-hidden`); links to the home |
@@ -249,7 +251,7 @@ Where it lives: the site header (one theme for the whole site, `dofus-tools:them
 
 ### Picking a zone background for a character
 
-1. Start from the place the section is about: Frigost for the Hielos, Amakna for Silvosse, Selocalipsis for Meriana, Cania for the Ocre.
+1. Start from the place the section is about: Frigost for the Hielos, Xelorium for the Nebuloso, Amakna for Silvosse, Selocalipsis for Meriana, Cania for the Ocre.
 2. The character must read against the top-right of the image, where `.npc` sits. Its outline is `--c` and its halo is near-black, so a background in the same hue as the character or as `--c` makes it vanish. Pick a zone whose dominant color differs from both.
 3. Text never competes with the art: `.shade` keeps the bottom (wide cards) or the left half (mid cards) dark. If the chosen zone is bright at the top, the `.kick` pill keeps the label legible.
 4. Check at 1440, 1024 and 390 px: the NPC fade (`transparent 4%` to `#000 40%`) must not cut a face, and `npcFit` is the knob for that.

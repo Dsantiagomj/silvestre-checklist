@@ -1,11 +1,12 @@
 # Mounting on Torrente Arcano
 
-Torrente Arcano (torrentearcano.com, built on Squarespace) uses six embeds from this repo. Each one is a code block with a `<div>` and a script loaded from GitHub Pages. The first five are live; «Guías de Dofus» is waiting to be pasted:
+Torrente Arcano (torrentearcano.com, built on Squarespace) uses seven embeds from this repo. Each one is a code block with a `<div>` and a script loaded from GitHub Pages. The Nebuloso checklist and «Guías de Dofus» are waiting to be pasted; the rest are live:
 
 | Embed | Page | Code |
 |---|---|---|
 | Silvestre checklist | https://www.torrentearcano.com/checklist-silvestre | `src/embeds/checklist/` and `src/tools/checklist/` |
 | Hielos checklist | https://www.torrentearcano.com/checklist-dofus-de-los-hielos | the same, with `DOFUS=hielos` |
+| Nebuloso checklist | https://www.torrentearcano.com/checklist-nebuloso | the same, with `DOFUS=nebuloso` |
 | Checklists hub | https://www.torrentearcano.com/checklists | `src/embeds/hub/` |
 | Site home (inicio) | https://www.torrentearcano.com/ | `src/embeds/inicio/` |
 | La eterna cosecha | https://www.torrentearcano.com/lista-ocre | `src/embeds/cosecha/` and `src/tools/cosecha/` |
@@ -42,6 +43,15 @@ It replaces the classic checklist. `src/embeds/checklist/embed.jsx` mounts it. T
 
 The same app with the Hielos data. It stores progress under the `hielos:` prefix and reads its classic checklist's progress from `dofus_hielos_clean_v2`.
 
+## Nebuloso checklist
+
+```html
+<div id="nebuloso-root"></div>
+<script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/nebuloso.js"></script>
+```
+
+The same app with the Nebuloso data. It stores progress under the `nebuloso:` prefix and reads its classic checklist's progress from `dofus_nebuloso_clean_v1`. Torre's page for it is `checklist-nebuloso`; like the other checklists it needs a full-width section.
+
 ## The checklists hub
 
 ```html
@@ -51,7 +61,7 @@ The same app with the Hielos data. It stores progress under the `hielos:` prefix
 
 The cards that lead to each checklist. It is a separate widget (`src/embeds/hub/`), with neither React nor the app's data, at about 9 KB.
 
-Each Dofus is a collectible card with the zone in the background, the NPC peeking out, the egg glowing in its colour and the name at the bottom. Today they are the Silvestre, the Hielos and the Ocre, which leads to «La eterna cosecha». With a mouse the card tilts and a holographic shine follows it; with reduced motion or on a touch screen it stays still. `showSoon` adds the locked Próximamente card at the end, grey and without a link. The hub lays cards out two by two based on the block width (a container query), not the window width.
+Each Dofus is a collectible card with the zone in the background, the NPC peeking out, the egg glowing in its colour and the name at the bottom. Today they are the Silvestre, the Hielos, the Nebuloso and the Ocre, which leads to «La eterna cosecha». With a mouse the card tilts and a holographic shine follows it; with reduced motion or on a touch screen it stays still. `showSoon` adds the locked Próximamente card at the end, grey and without a link. The hub lays cards out two by two based on the block width (a container query), not the window width.
 
 The Dofus come from `src/embeds/hub/manifest.js`. To add one, add an entry with its colour, its checklist URL, its tagline and its images: the egg and the NPC in `public/img/hub/`, the background in `public/img/zones/`.
 
