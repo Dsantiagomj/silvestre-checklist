@@ -1107,14 +1107,13 @@ button.ov-num:hover{ filter:brightness(1.15); }
    donde empieza, que ocupa todo el ancho en su propia capa para el parallax
    (.hero-bg, con un .hero-bg-img por mapa para el fundido). Encima van los velos
    (.hero-veil), el ambiente (.hero-fx: luciérnagas de noche, hojas de día) y el
-   contenido. A la derecha, el anillo de progreso con el Dofus Silvestre. No llega
-   a llenar la pantalla: debajo ya asoma la ventana de los pasos. Solo en pantallas
+   contenido. A la derecha, el anillo de progreso con el Dofus Silvestre. Se ciñe a su
+   contenido, con poco aire arriba y abajo: debajo ya asoma la ventana de los pasos. Solo en pantallas
    altas de escritorio (Hero.jsx, HERO_QUERY); ya no hay cabecera de la app encima. */
 .hero{
   position:relative; isolation:isolate; overflow:hidden;
-  min-height:min(70vh, 620px);
   margin:0 0 14px;
-  padding:26px 0 34px;
+  padding:32px 0 38px;
   display:flex; align-items:center;
   background:var(--bg);
   border-bottom:1px solid var(--line);
