@@ -25,7 +25,8 @@ resources.json:
     n  a note: the page's own ("(amayiro)"), or what crafts it ("Para fabricar con
        manitas nivel 100") when the row comes from a crafted quest item
     x  listed in its step but left out of the totals: the Elixir de los barquerontes
-       (Silvestre) and the page's "Opcional" group (Hielos, step 65)
+       (Silvestre), the page's "Opcional" group (Hielos, step 65) and its "Hechizos" and
+       "Objeto de misión" groups (Nebuloso, steps 5 and 26)
 """
 import json
 import pathlib
@@ -50,7 +51,11 @@ OUT = dofus.SRC / "resources.json"
 API = "https://api.dofusdb.fr/"
 
 CATEGORY = {"Recursos": "recursos", "Consumibles": "consumibles", "Equipables": "equipables",
-            "Almas": "almas", "Criaturas": "criaturas", "Cosméticos": "cosmeticos"}
+            "Almas": "almas", "Criaturas": "criaturas", "Cosméticos": "cosmeticos",
+            # The Nebuloso's groups (see NOT_COUNTED and page_entry): the keys are resources
+            # like the Hielos ones, which its page lists under "Recursos"
+            "Llaves": "recursos", "Alternativas": "recursos", "Hechizos": "recursos",
+            "Objeto de misión": "recursos"}
 CORRECTIONS = D.CORRECTIONS  # per Dofus, in .build/dofus/<id>.py
 ALIASES = D.ALIASES  # per Dofus, in .build/dofus/<id>.py
 GENERIC_IMG = D.GENERIC_IMG  # per Dofus, in .build/dofus/<id>.py
@@ -71,6 +76,15 @@ OPTIONAL_GROUP = "Opcional"
 QUEST_ITEM = "Recurso de misión"
 # The page's group of one order's resources ("Ojo atento - Recursos")
 ORDER_GROUP = re.compile(r"^(.+) - Recursos$")
+# Groups the page shows in their step and leaves out of its compiled list (Nebuloso): the
+# spell the guide needs, which is not spent, and the quest item of the last step, the Dofus
+# de los Vigilantes, which the guide itself hands out. Group -> what the row's note says it is
+NOT_COUNTED = {"Hechizos": "Hechizo", "Objeto de misión": "Objeto de misión"}
+# A row's choice paid in kamas: "1 x Insignia de maligilante o 30 000 kamas" (Nebuloso,
+# "Alternativas"). The item is the row and the kamas its note: DofusDB has no kamas item
+KAMAS = re.compile(r" o (\d[\d ]*) kamas$")
+# The compiled list's section for a group, where it has a name of its own
+COMPILED_SECTIONS = {"Alternativas (elige una opción por línea)": "Alternativas"}
 
 
 def slug(name):
@@ -163,6 +177,34 @@ def parse_entry(text):
     return alts
 
 
+def page_entry(group, text):
+    """parse_entry for a line of any group, and the note it carries: a spell has no
+    quantity ("Captura de almas (requisito, no consumible)", one) and a choice in kamas
+    ("… o 30 000 kamas") is the note, not an item."""
+    note = None
+    kamas = KAMAS.search(text)
+    if kamas:
+        text, note = text[:kamas.start()], kamas.group(0).strip()
+    if group in NOT_COUNTED and not LINE.match(text.strip()):
+        text = "1 x " + text
+    return parse_entry(text), note
+
+
+def row_note(group, notes):
+    """The row's note: the page's own ones ("amayiro") and, in a group left out of the
+    totals, what the row is ("Hechizo: requisito, no consumible"). None without either."""
+    text = "; ".join(notes)
+    what = NOT_COUNTED.get(group)
+    if what:
+        return f"{what}: {text}" if text else what
+    return text or None
+
+
+def compiled_section(line):
+    """The page group a section of the compiled list adds up."""
+    return COMPILED_SECTIONS.get(line, line)
+
+
 def split_note(name):
     """"Carne rancia (amayiro)" -> ("Carne rancia", "amayiro")."""
     notes = NOTE.findall(name)
@@ -194,6 +236,13 @@ def lookup(name, cache):
                  "lvl": i.get("level")}
     cache[key] = found
     return found
+
+
+def find_item(name, cache, generic=GENERIC_IMG, find=lookup):
+    """The DofusDB item of a row's name, or None. A generic row (GENERIC_IMG) is never
+    looked up: it names no item, and a prefix search would answer one that only starts
+    the same ("Kama" -> "Kama enigmático", Nebuloso)."""
+    return None if slug(name) in generic else find(name, cache)
 
 
 def unknown_item(name, generic=GENERIC_IMG):
@@ -299,14 +348,16 @@ def check_against_compiled(steps, items):
         if not line:
             continue
         if not LINE.match(line):
-            section = line
+            section = compiled_section(line)
             continue
-        want_key = (section, " o ".join(n for _, n in parse_entry(line)))
-        want[want_key] = want.get(want_key, 0) + parse_entry(line)[0][0]
+        alts, _ = page_entry(section, line)
+        want_key = (section, " o ".join(n for _, n in alts))
+        want[want_key] = want.get(want_key, 0) + alts[0][0]
     got = {}
     for rows in steps.values():
         for row in rows:
-            # The elixir is out of the page's compiled list; the "Opcional" group is in it
+            # The elixir, the spell and the quest item are out of the page's compiled list;
+            # the "Opcional" group is in it
             if row.get("x") and row["src"] != OPTIONAL_GROUP:
                 continue
             # The page counts the alternative underwear as the first option only
@@ -346,11 +397,12 @@ def listed():
             cat, label = category(group["category"])
             for text in group["items"]:
                 alts, names, notes = [], [], []
-                for q, raw in parse_entry(text):
+                entry, kamas = page_entry(group["category"], text)
+                for q, raw in entry:
                     name, note = split_note(raw)
                     if note:
                         notes.append(note)
-                    hit = lookup(name, cache)
+                    hit = find_item(name, cache)
                     if hit:
                         key = str(hit["id"])
                         items[key] = item_info(hit)
@@ -360,14 +412,16 @@ def listed():
                             missing.add(name)
                     alts.append([key, q])
                     names.append(name)
+                if kamas:
+                    notes.append(kamas)
                 row_key = "|".join(k for k, _ in alts) + (f"@{slug(label)}" if label else "")
                 row = {"k": row_key, "c": cat, "g": label, "a": alts,
                        "src": group["category"], "names": names}
-                if notes:
-                    row["n"] = "; ".join(notes)
+                if row_note(group["category"], notes):
+                    row["n"] = row_note(group["category"], notes)
                 if slug(names[0]) in REUSABLE:
                     row["r"] = 1
-                if OPTIONAL.search(text) or group["category"] == OPTIONAL_GROUP:
+                if OPTIONAL.search(text) or group["category"] in (OPTIONAL_GROUP, *NOT_COUNTED):
                     row["x"] = 1
                 if n == "0":
                     row["p"] = PREREQ_OF.get(alts[0][0])

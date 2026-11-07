@@ -38,6 +38,16 @@ class UnknownItemTest(unittest.TestCase):
         self.assertEqual(key, "x:recursos recolectables de los reinos de tinta y papel")
         self.assertEqual(item, {"name": TINTA_Y_PAPEL, "img": "items/164832.png", "type": "", "lvl": 0})
 
+    def test_a_generic_name_is_never_looked_up(self):
+        """Nebuloso: DofusDB has no "Kama" item and a prefix search would answer "Kama
+        enigmático"; a name GENERIC_IMG lists stays generic, whatever DofusDB says."""
+        def find(name, cache):
+            raise AssertionError(f"looked up {name}")
+        self.assertIsNone(build_resources.find_item("Kama", {}, {"kama": "items/24243.png"}, find))
+
+    def test_any_other_name_is_looked_up(self):
+        self.assertEqual(build_resources.find_item("Patata", {}, {}, lambda name, cache: {"id": 537}), {"id": 537})
+
     def test_any_other_unknown_name_stays_without_image(self):
         key, item = unknown_item("Objeto inventado", {})
         self.assertEqual(key, "x:objeto inventado")
