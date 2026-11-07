@@ -45,3 +45,18 @@ jobs:
       sync_branch: sync/guia-hielos
       pr_title: "chore(guia): sincroniza el Hielos con Torrente Arcano"
       issue_title: La sincronización del Hielos con Torrente Arcano falló
+
+  # Después del Hielos, aunque falle, por lo mismo. Su página, con la variable GUIDE_URL_NEBULOSO
+  nebuloso:
+    needs: hielos
+    if: ${{ !cancelled() }}
+    concurrency:
+      group: sync-guide-nebuloso
+      cancel-in-progress: false
+    uses: ./.github/workflows/sync-guide-dofus.yml
+    with:
+      dofus: nebuloso
+      guide_url: ${{ vars.GUIDE_URL_NEBULOSO || 'https://www.torrentearcano.com/checklist-nebuloso-datos' }}
+      sync_branch: sync/guia-nebuloso
+      pr_title: "chore(guia): sincroniza el Nebuloso con Torrente Arcano"
+      issue_title: La sincronización del Nebuloso con Torrente Arcano falló

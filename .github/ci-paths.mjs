@@ -5,7 +5,7 @@
 // siempre, así que no salen aquí.
 //
 // En la CI (job "Qué cambia"): git diff --name-only … | node .github/ci-paths.mjs
-// escribe e2e=…, embed=…, hielos=…, global=… y site=… para $GITHUB_OUTPUT. Sus pruebas: tests/unit/ci-paths.test.js
+// escribe e2e=…, embed=…, hielos=…, nebuloso=…, global=… y site=… para $GITHUB_OUTPUT. Sus pruebas: tests/unit/ci-paths.test.js
 
 import { pathToFileURL } from "node:url";
 
@@ -22,27 +22,30 @@ const RULES = [
   // La cosecha y sus almas (cosecha.json, publicado junto a su página): el embebido y su
   // página del sitio
   { match: /^src\/tools\/cosecha\/|^public\/cosecha\//, run: ["embed", "site"] },
-  // La app del checklist: el sitio del Silvestre, el del Hielos, la guía global y su embebido
-  { match: /^src\/tools\/checklist\//, run: ["e2e", "hielos", "global", "embed"] },
-  // La cabecera del sitio: la home y, encima de la app, los tres checklists
-  { match: /^src\/site\/shell\//, run: ["e2e", "hielos", "global", "site"] },
-  // La entrada del checklist en el sitio (la de los tres checklists)
-  { match: /^src\/site\/checklist\/|^index\.html$/, run: ["e2e", "hielos", "global"] },
+  // La app del checklist: el sitio del Silvestre, el del Hielos, el del Nebuloso, la guía
+  // global y su embebido
+  { match: /^src\/tools\/checklist\//, run: ["e2e", "hielos", "nebuloso", "global", "embed"] },
+  // La cabecera del sitio: la home y, encima de la app, los cuatro checklists
+  { match: /^src\/site\/shell\//, run: ["e2e", "hielos", "nebuloso", "global", "site"] },
+  // La entrada del checklist en el sitio (la de los cuatro checklists)
+  { match: /^src\/site\/checklist\/|^index\.html$/, run: ["e2e", "hielos", "nebuloso", "global"] },
   // El resto del sitio «Dofus Tools»: la home, la página de la cosecha y sus pruebas
   { match: /^src\/site\/|^tests\/site\/|^playwright\.site\.config\.js$/, run: ["site"] },
   { match: /^tests\/e2e\//, run: ["e2e"] },
   { match: /^tests\/hielos\//, run: ["hielos"] },
+  { match: /^tests\/nebuloso\//, run: ["nebuloso"] },
   { match: /^tests\/global\//, run: ["global"] },
-  // Los datos de cada Dofus: su sitio y el embebido (que monta los dos)
+  // Los datos de cada Dofus: su sitio y el embebido (que los monta todos)
   { match: /^src\/dofus\/silvestre\//, run: ["e2e", "embed"] },
   { match: /^src\/dofus\/hielos\//, run: ["hielos", "embed"] },
+  { match: /^src\/dofus\/nebuloso\//, run: ["nebuloso", "embed"] },
   // La guía global no tiene embebido publicado: solo su suite
   { match: /^src\/dofus\/global\//, run: ["global"] },
 ];
 
-export const SUITES = ["e2e", "embed", "hielos", "global", "site"];
+export const SUITES = ["e2e", "embed", "hielos", "nebuloso", "global", "site"];
 
-/** Las suites que corren para estos archivos: { e2e, embed, hielos, global, site }. */
+/** Las suites que corren para estos archivos: { e2e, embed, hielos, nebuloso, global, site }. */
 export function suites(files) {
   const on = new Set();
   for (const file of files) {
