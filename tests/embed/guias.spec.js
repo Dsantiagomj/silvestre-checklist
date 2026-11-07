@@ -24,7 +24,7 @@ const GUIDES = [
   ["Dolmanax", "dolmanax", null, 100], ["Dofus Esmeralda", "dofus-esmeralda", "Primordial", 100], ["Dofus Púrpura", "dofus-purpura", "Primordial", 110],
   ["Dotruz", "dotruz", null, 110], ["Domakuro", "domakuro", null, 120], ["Dorigami", "dorigami", null, 150],
   ["Dofus Ocre", "dofus-ocre", "Primordial", 160], ["Dofus Turquesa", "dofus-turquesa", "Primordial", 160], ["Dofzzbz", "dofzzbz", null, 170],
-  ["Dofus Vulbis", "dofus-vulbis", null, 180], ["Dofus de los Hielos", "dofus-de-los-hielos", null, 180], ["Dofus Nebuloso", "dofus-nebuloso", null, 180],
+  ["Dofus Vulbis", "dofus-vulbis", null, 180], ["Dofus de los Hielos", "dofus-de-los-hielos", null, 180], ["Dofus Nebuloso", "misiones-nebuloso", null, 180],
   ["Dofus Abisal", "dofus-abisal", null, 180], ["Dofus Marfil", "dofus-marfil", "Primordial", 180], ["Dofus Forjalava", "dofus-forjalava", null, 180],
   ["Dofus Ébano", "dofus-ebano", "Primordial", 180], ["Dofus Centelleante", "dofus-centelleante", null, 180], ["Dofus Moteado", "dofus-moteado", null, 180],
   ["Piñata de Pino", "piata-de-pino", null, 180], ["Dofus Pesadilla", "dofus-pesadilla", null, 180], ["Dofus Silvestre", "dofus-silvestre", null, 180],
