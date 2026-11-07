@@ -69,5 +69,19 @@ class ItemQuestsTest(unittest.TestCase):
             self.assertEqual(audit.page(), (PAGE, items))
 
 
+
+class PrereqQuestsTest(unittest.TestCase):
+    def test_a_prerequisite_that_names_no_quest_has_none(self):
+        """Nebuloso: "Más de 3 000 puntos de logro en el personaje (obligatorio)" asks for
+        points, not for an achievement or a quest: nothing to consume."""
+        self.assertEqual(audit.prereq_quests("Más de 3 000 puntos de logro en el personaje (obligatorio)",
+                                             {}, {}, {}), [])
+
+    def test_a_single_quest_is_that_quest(self):
+        quests = {audit.norm("El despertar de Pandala"): {"id": 1186}}
+        self.assertEqual(audit.prereq_quests('Isla de Pandala: misión "El despertar de Pandala".', {}, quests, {}),
+                         [1186])
+
+
 if __name__ == "__main__":
     unittest.main()

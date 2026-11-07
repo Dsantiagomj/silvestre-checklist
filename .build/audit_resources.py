@@ -156,10 +156,14 @@ def api_one(collection, name, cache):
 
 def prereq_quests(text, achievements, quests, cache):
     """Quest ids a prerequisite asks for: 'Logro "X", misión 1: …' takes those missions
-    of X (all of them without numbers); 'misión "X"' is that quest."""
+    of X (all of them without numbers); 'misión "X"' is that quest. One that names
+    neither ("Más de 3 000 puntos de logro", Nebuloso) asks for no quest."""
     m = re.search(r'Logro "([^"]+)"', text)
     if not m:
-        name = re.search(r'misión "([^"]+)"', text)[1]
+        quest = re.search(r'misión "([^"]+)"', text)
+        if not quest:
+            return []
+        name = quest[1]
         q = quests.get(norm(name)) or api_one("quests", name, cache)
         return [q["id"]] if q else []
     wanted = [int(n) for n in re.findall(r"misi[oó]n (\d+)", text)]
