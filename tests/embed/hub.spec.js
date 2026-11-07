@@ -18,6 +18,7 @@ test("el hub se monta en una shadow root con una carta por Dofus y la de Próxim
   // Cada carta es un enlace con el nombre del Dofus
   await expect(hub(page).getByRole("link", { name: "Dofus Silvestre · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus de los Hielos · Ver checklist" })).toHaveCount(1);
+  await expect(hub(page).getByRole("link", { name: "Dofus Nebuloso · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus Ocre · Ver checklist" })).toHaveCount(1);
   // Las fuentes van en la página: @font-face no funciona dentro de una shadow root
   await expect(page.locator('head link[rel="stylesheet"][href*="fonts.googleapis.com"]')).toHaveCount(1);
@@ -50,6 +51,8 @@ test("las cartas siguen el orden del manifiesto y cada una lleva a su checklist"
   expect(HUB.dofus[0].url).toBe("https://www.torrentearcano.com/checklist-silvestre");
   // La eterna cosecha va en su propia página de Torrente
   expect(HUB.dofus.find(d => d.id === "ocre")?.url).toBe("https://www.torrentearcano.com/lista-ocre");
+  // El Nebuloso, en la página que creó Torre para su embebido
+  expect(HUB.dofus.find(d => d.id === "nebuloso")?.url).toBe("https://www.torrentearcano.com/checklist-nebuloso");
 });
 
 test("la carta de Próximamente no es un enlace: gris, su huevo en silueta y «???»", async ({ page }) => {
@@ -173,7 +176,11 @@ test("en un móvil el pie no cabe: el hub llena la pantalla bajo la cabecera y e
   const box = await stage(page).boundingBox();
   expect(Math.abs(box.x)).toBeLessThan(1);
   expect(Math.abs(box.y - 84)).toBeLessThan(2);
-  expect(Math.abs(box.height - (844 - 84))).toBeLessThan(2);
+  // Como poco la pantalla bajo la cabecera; con tres filas de cartas (cuatro Dofus y la de
+  // Próximamente, de dos en dos) crece con ellas
+  expect(box.height).toBeGreaterThanOrEqual(844 - 84 - 2);
+  const last = await cards(page).last().boundingBox();
+  expect(last.y + last.height).toBeLessThanOrEqual(box.y + box.height);
 });
 
 test("en móvil las cartas van de dos en dos, legibles y dentro del ancho", async ({ page }) => {

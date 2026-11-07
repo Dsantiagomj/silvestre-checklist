@@ -31,6 +31,19 @@ export const HUB = {
       lead: "Descubre los misterios de la isla de Frigost en 70 pasos y enfréntate al temible Conde Kontatrás.",
     },
     {
+      id: "nebuloso",
+      name: "Dofus Nebuloso",
+      color: "#c3b1f5",
+      url: "https://www.torrentearcano.com/checklist-nebuloso",
+      egg: "hub/dofus-nebuloso.png",
+      bg: "zones/xelorium.jpg",
+      // Khelebragón, a quien libera «En busca del pájaro del tiempo», la misión del último paso
+      npc: "hub/khelebragon.png",
+      // Imagen cuadrada y figura estrecha: más grande y a la derecha, como la del Hielos
+      npcFit: { h: "72%", r: "-30%", t: "4%" },
+      lead: "Recorre Anutropía, Sramvil y Xelorium en 26 pasos, con el Dofus de los Vigilantes por el camino.",
+    },
+    {
       id: "ocre",
       name: "Dofus Ocre",
       color: "#f0a336",
