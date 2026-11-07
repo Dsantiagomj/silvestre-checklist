@@ -84,6 +84,38 @@ class CompleteTest(unittest.TestCase):
         self.assertEqual(import_guide.marks(raw),
                          [["note", "Las primeras 2 misiones se hacen mientras haces la etapa 1."]])
 
+    def test_completo_alone(self):
+        """Nebuloso: «[[BLUE]]Completo.[[/BLUE]]» is the whole mark, so it leaves no note."""
+        raw = "Logro “De un mundo a otro”. [[BLUE]]Completo.[[/BLUE]]"
+        self.assertTrue(import_guide.complete(raw))
+        self.assertEqual(import_guide.marks(raw), [])
+
+
+class StepsArrayTest(unittest.TestCase):
+    """The page's steps: template literals (Silvestre, Hielos) or JSON strings (Nebuloso)."""
+
+    def test_template_literals(self):
+        html = "const steps = [\n    `Logro “A”. [[BLUE]]Completo.[[/BLUE]]`,\n    `Logro “B”, misión: C.`\n];\n"
+        self.assertEqual(import_guide.js_string_array(html, "steps"),
+                         ["Logro “A”. [[BLUE]]Completo.[[/BLUE]]", "Logro “B”, misión: C."])
+
+    def test_json_strings(self):
+        html = ('const steps = [\n    "Logro “A”. [[BLUE]]Completo.[[/BLUE]]",\n'
+                '    "Logro “B”, misión: En busca del \\"pájaro\\"; fin."\n];\n\n  const resourcesData = {};')
+        self.assertEqual(import_guide.js_string_array(html, "steps"),
+                         ["Logro “A”. [[BLUE]]Completo.[[/BLUE]]", 'Logro “B”, misión: En busca del "pájaro"; fin.'])
+
+    def test_an_empty_array(self):
+        self.assertEqual(import_guide.js_string_array("const steps = [];", "steps"), [])
+
+    def test_the_links_read_them_the_same(self):
+        """import_guide_links.py finds the names in the same steps, in either form."""
+        spec = importlib.util.spec_from_file_location("import_guide_links", SCRIPT.parent / "import_guide_links.py")
+        links = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(links)
+        html = 'const steps = [\n    "Logro “El sueño de otro mundo”, misión: En busca del pájaro del tiempo."\n];'
+        self.assertEqual(links.missions(links.js_string_array(html, "steps")), ["En busca del pájaro del tiempo"])
+
 
 if __name__ == "__main__":
     unittest.main()
