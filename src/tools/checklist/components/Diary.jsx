@@ -593,10 +593,16 @@ export default function Diary({ mobile, tall, onOverlay, onReset }) {
   // Lo que aparece después de montarse la página se anima; lo que ya estaba, no
   const mounted = useRef(false);
   useEffect(() => { mounted.current = true; }, []);
-  // Al abrir la página, el paso en el que se dejó, a la vista (ya pintado y medido)
+  // Al abrir la página, el paso en el que se dejó, a la vista (ya pintado y medido). Con la
+  // letra de verdad: la ventana se vuelve a medir entonces (useNeedsHeight) y, medida antes,
+  // el sello del mapa parecía a la vista y acababa bajo el borde de la pantalla
   useEffect(() => {
-    const id = requestAnimationFrame(resumePosition);
-    return () => cancelAnimationFrame(id);
+    let id = 0, gone = false;
+    const fonts = document.fonts?.ready ?? Promise.resolve();
+    fonts.then(() => {
+      if (!gone) id = requestAnimationFrame(() => { id = requestAnimationFrame(resumePosition); });
+    });
+    return () => { gone = true; cancelAnimationFrame(id); };
   }, []);
   const swapInfo = useRef({ current: null, seq: 0, channel: makeChannel() }).current;
   // El zoom es solo entre mapa y diario; a las listas y desde ellas se cambia sin más
