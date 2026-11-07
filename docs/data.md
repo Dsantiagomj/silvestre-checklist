@@ -92,6 +92,19 @@ Two names do not exist in DofusDB and show without an image: Esencia de cil and 
 
 `.build/audit_resources.py` cross-checks what each step asks for against what its quests consume in DofusDB (hand-ins and crafts, with their recipes) and against the "Necesitarás" section of its Torrente Arcano guide. It writes `.build/lists/silvestre/item_quests.json`, and `build_resources.py` reads it to store in `resources.json` which quest each item is for, which the app shows on hover. The audit reads the page's rows the way `build_resources.py` does (`listed()`), before the crafted quest items become their ingredients, so `item_quests.json` keys the same rows `build_resources.py` labels. The prototypes of «La desglaciación» (step 26) get the quest, and their ingredients take it from them. It also prints what does not match: items no quest of the step asks for (and which neighbouring step does), different quantities, and what the quests consume that the list misses. With `0` it checks the prerequisites.
 
+### The Nebuloso's groups
+
+The Nebuloso page groups its items differently, and `build_resources.py` reads its groups the way the page's own compiled list does:
+
+| Page group | In the checklist |
+|---|---|
+| Llaves | Resources, like the Hielos keys, which its page lists under "Recursos" |
+| Alternativas ("1 x Insignia de maligilante o 30 000 kamas", one choice per line) | The item, with the kamas as its note (DofusDB has no kamas item). It counts as one row: getting the item or paying covers it |
+| Hechizos ("Captura de almas (requisito, no consumible)", step 5) | Shown in its step with the spell icon and the note "Hechizo: requisito, no consumible", left out of the totals |
+| Objeto de misión (the Dofus de los Vigilantes, step 26) | Shown in its step, left out of the totals: the guide hands it out at step 4 and the last quest only asks to show it |
+
+The page also lists "1 x Kama" in step 5, which no guide of the step's quests explains. It stays a generic row (`GENERIC_IMG`, never looked up, since a prefix search answers "Kama enigmático") with the Bolsa de kamas icon. The barbero's four items, listed in step 8, belong to step 9 (`MOVED`). The tables are in `.build/dofus/nebuloso.py`.
+
 ## Guide links
 
 The quests and achievements named in a step's text link to their guide on torrentearcano.com, as in the classic checklist. `.build/import_guide_links.py` takes the names from the page, builds the same URLs and keeps only those that answer, in `src/dofus/silvestre/guides.json`: 72 achievements and 111 quests from the text and the hand-written notes. "Draconantopía" is missing.
@@ -113,15 +126,15 @@ python3 -I .build/import_guide.py /tmp/ta/page.html
 
 You rarely need this: the daily sync does it. If the page lacks the checklist data (a 404, a password-protected page or the page with the app snippet), the script fails with a message and touches nothing. The same happens if not all steps arrive.
 
-`import_guide.py` rewrites the steps in `src/dofus/silvestre/steps.js` and saves a copy of the page data in `.build/lists/silvestre/torrentearcano.json`. The page also publishes which steps of the previous version make up each new step (`PREVIOUS_STEPS`). That table migrates saved progress and old backups: a new step is done if all the old steps that form it were. Then regenerate the assets.
+The Silvestre and Hielos pages write their steps as template literals; the Nebuloso page writes them as JSON strings, and the script reads both. `import_guide.py` rewrites the steps in `src/dofus/silvestre/steps.js` and saves a copy of the page data in `.build/lists/silvestre/torrentearcano.json`. The page also publishes which steps of the previous version make up each new step (`PREVIOUS_STEPS`). That table migrates saved progress and old backups: a new step is done if all the old steps that form it were. Then regenerate the assets.
 
 ### The data pages
 
-The classic checklist, with its data, lives at https://www.torrentearcano.com/checklist-silvestre-datos; the Hielos one at https://www.torrentearcano.com/checklist-hielos-datos. They must stay public and without a password. They can be hidden from the menu and from search engines.
+The classic checklist, with its data, lives at https://www.torrentearcano.com/checklist-silvestre-datos; the Hielos one at https://www.torrentearcano.com/checklist-hielos-datos; the Nebuloso one at https://www.torrentearcano.com/checklist-nebuloso-datos. They must stay public and without a password. They can be hidden from the menu and from search engines.
 
 ### Progress from the classic checklist
 
-The classic checklist stores progress in `dofus_silvestre_clean_v4`, and before that in `dofus_silvestre_clean_v3` with the guide's old numbering. The Hielos reads it from `dofus_hielos_clean_v2`. The app only reads those keys and never changes or deletes them (`src/tools/checklist/lib/classic.js`). To read them it must run on the same domain, `www.torrentearcano.com`: on another domain or without `www` it sees nothing.
+The classic checklist stores progress in `dofus_silvestre_clean_v4`, and before that in `dofus_silvestre_clean_v3` with the guide's old numbering. The Hielos reads it from `dofus_hielos_clean_v2` and the Nebuloso from `dofus_nebuloso_clean_v1`. The app only reads those keys and never changes or deletes them (`src/tools/checklist/lib/classic.js`). To read them it must run on the same domain, `www.torrentearcano.com`: on another domain or without `www` it sees nothing.
 
 - On the first visit it checks every step the classic checklist has checked. If no theme was chosen here, it also takes the classic's theme. v3 only counts when there is no v4, and it is mapped to the current numbering with `PREVIOUS_STEPS`.
 - On later visits, if the classic has done steps that are not done here, a notice says "Tienes N pasos más en el checklist clásico" with a "Traerlos" button. The button only adds steps and never unchecks any. The × closes the notice, which does not come back until the steps checked in the classic change.
@@ -136,13 +149,13 @@ The classic checklist stores progress in `dofus_silvestre_clean_v4`, and before 
 3. It pushes the change to its branch and opens a PR to `main`.
 4. It triggers CI on that branch, waits for the `Pruebas` check, squash-merges the PR and requests a deploy. Actions taken with the workflow token (opening and merging the PR) do not trigger other workflows, so CI and deploy are requested separately.
 
-| | Silvestre | Hielos |
-|---|---|---|
-| Data page | `GUIDE_URL` or, without it, https://www.torrentearcano.com/checklist-silvestre-datos | `GUIDE_URL_HIELOS` or https://www.torrentearcano.com/checklist-hielos-datos |
-| Branch | `sync/guia` | `sync/guia-hielos` |
-| PR title | `chore(guia): sincroniza con Torrente Arcano` | `chore(guia): sincroniza el Hielos con Torrente Arcano` |
-| Issue on failure | "La sincronización con Torrente Arcano falló" | "La sincronización del Hielos con Torrente Arcano falló" |
+| | Silvestre | Hielos | Nebuloso |
+|---|---|---|---|
+| Data page | `GUIDE_URL` or, without it, https://www.torrentearcano.com/checklist-silvestre-datos | `GUIDE_URL_HIELOS` or https://www.torrentearcano.com/checklist-hielos-datos | `GUIDE_URL_NEBULOSO` or https://www.torrentearcano.com/checklist-nebuloso-datos |
+| Branch | `sync/guia` | `sync/guia-hielos` | `sync/guia-nebuloso` |
+| PR title | `chore(guia): sincroniza con Torrente Arcano` | `chore(guia): sincroniza el Hielos con Torrente Arcano` | `chore(guia): sincroniza el Nebuloso con Torrente Arcano` |
+| Issue on failure | "La sincronización con Torrente Arcano falló" | "La sincronización del Hielos con Torrente Arcano falló" | "La sincronización del Nebuloso con Torrente Arcano falló" |
 
-`GUIDE_URL` and `GUIDE_URL_HIELOS` are repo variables (Settings → Secrets and variables → Actions → Variables). The Hielos runs after the Silvestre even if the Silvestre fails, so its PR starts from a `main` that already has the Silvestre changes merged.
+`GUIDE_URL`, `GUIDE_URL_HIELOS` and `GUIDE_URL_NEBULOSO` are repo variables (Settings → Secrets and variables → Actions → Variables). The Hielos runs after the Silvestre even if the Silvestre fails, and the Nebuloso after the Hielos, so each PR starts from a `main` that already has the Silvestre changes merged.
 
 If anything fails (the page does not answer, lacks the data, regeneration fails or a test fails), `main` does not change and the Dofus's issue is opened with a link to the run. If an issue with that title is already open, the run comments on it. The schedule only runs from the default branch: the workflow has to be on `main`.

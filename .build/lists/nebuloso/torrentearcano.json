@@ -1,0 +1,304 @@
+{
+ "source": "https://www.torrentearcano.com/checklist-nebuloso-datos",
+ "steps": [
+  "Logro “De un mundo a otro”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “A las puertas de la noche”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “Generaciones futuras”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “Las apariencias engañan”. [[BLUE]]Completo.[[/BLUE]] Dependiendo de tu nivel, la primera misión te pedirá pasar una mazmorra u otra.",
+  "Empezamos Anutropía. Logro “Favores encadenados”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “El perforar se va a acabar”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “El alegre retirado”, misión 2: Muestreo. [[RED]]Avanza hasta que te pida entregar muestras de sangre.[[/RED]] Así podrás avanzar esta misión pasivamente.",
+  "Logro “El rey y yo”, misión 4: Anutrof salve al rey. [[RED]]Avanza hasta tener que pasar la mazmorra del Rey Nidas.[[/RED]]",
+  "Logro “El rey y yo”, misión 6: El barbero de Anutropía. [[RED]]Avanza hasta tener que pasar la mazmorra del Rey Nidas.[[/RED]] [[GREEN]]Pasa la mazmorra y completa las etapas 8 y 9.[[/GREEN]]",
+  "Logro “El rey y yo”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “El alegre retirado”. [[BLUE]]Completo.[[/BLUE]] [[GREEN]]Se termina pasivamente la etapa 7.[[/GREEN]]",
+  "[[BLUE]]Habla con el Dios Anutrof.[[/BLUE]]",
+  "Pasamos a Sramvil. Logro “Salvado por la campana”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “Escupe tu veneno”, misión 2: Ponzoña que ponzoña. [[RED]]Avanza hasta que te pida entregar Jugo tóxico de necrótico.[[/RED]] Así podrás avanzar esta misión pasivamente.",
+  "Logro “Escupe tu veneno”. [[BLUE]]Completo.[[/BLUE]] [[GREEN]]Se termina pasivamente la misión iniciada en la etapa 14.[[/GREEN]]",
+  "Logro “El juego del trono”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “Ladrones de Sramvil”. [[BLUE]]Completo.[[/BLUE]]",
+  "[[BLUE]]Habla con el Dios Sram.[[/BLUE]]",
+  "Vamos a Xelorium. Logro “Los tiempos que corren”. [[BLUE]]Completo.[[/BLUE]]",
+  "Logro “Carpe diem”, misión 1: Los ladrones de colores. [[RED]]Avanza hasta que te pida entregar krosmorbes.[[/RED]] Así podrás avanzar esta misión pasivamente.",
+  "Logro “Carpe diem”. [[BLUE]]Completo.[[/BLUE]] [[GREEN]]Se termina pasivamente la etapa 20.[[/GREEN]]",
+  "Logro “El pozo del loco”, misión 4: La verdad está oculta en un pozo. [[RED]]Avanza hasta tener que pasar la mazmorra de Vórtex.[[/RED]]",
+  "Logro “El pozo del loco”, misión 5: Las arenas del tiempo. [[RED]]Avanza hasta tener que pasar la mazmorra de Vórtex.[[/RED]] [[GREEN]]Pasa la mazmorra y termina las etapas 22 y 23.[[/GREEN]]",
+  "Logro “Idas y venidas”. [[BLUE]]Completo.[[/BLUE]]",
+  "[[BLUE]]Habla con el Dios Xelor.[[/BLUE]]",
+  "Logro “El sueño de otro mundo”, misión: En busca del pájaro del tiempo."
+ ],
+ "resources": {
+  "2": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Ganzúa"
+    ]
+   }
+  ],
+  "3": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Píxel de kaxako",
+     "1 x Píxel de trasgolog",
+     "1 x Píxel de recíxel",
+     "1 x Píxel de cublak"
+    ]
+   }
+  ],
+  "4": [
+   {
+    "category": "Alternativas",
+    "items": [
+     "1 x Insignia de maligilante o 30 000 kamas",
+     "1 x Anillo de bandido o 100 000 kamas"
+    ]
+   },
+   {
+    "category": "Equipables",
+    "items": [
+     "1 x Varita Pitusa"
+    ]
+   },
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Cuero de cerdo serrano",
+     "10 x Oreja de Buldogro",
+     "10 x Oreja de rinoferoz",
+     "10 x Cuerno de jalatranki"
+    ]
+   }
+  ],
+  "5": [
+   {
+    "category": "Almas",
+    "items": [
+     "1 x Piedra de alma mediana"
+    ]
+   },
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Kama"
+    ]
+   },
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave de la Fábrica del Malefíscof"
+    ]
+   },
+   {
+    "category": "Hechizos",
+    "items": [
+     "Captura de almas (requisito, no consumible)"
+    ]
+   }
+  ],
+  "8": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Cuerno de Kamasterix",
+     "1 x Ceja de barbestrella",
+     "1 x Diente de Levitrof",
+     "1 x Trozo de llave de Llavoro"
+    ]
+   }
+  ],
+  "9": [
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Palacio del Rey Nidas"
+    ]
+   }
+  ],
+  "11": [
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave de la Fábrica de Malefíscof"
+    ]
+   }
+  ],
+  "13": [
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Ring del Capitán Eskarlata"
+    ]
+   }
+  ],
+  "15": [
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave de la Cueva de Toxoliat"
+    ]
+   }
+  ],
+  "16": [
+   {
+    "category": "Recursos",
+    "items": [
+     "35 x Patata"
+    ]
+   },
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Trono de la Corte Tenebrosa"
+    ]
+   }
+  ],
+  "17": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Cráneo mágico de magamaño"
+    ]
+   }
+  ],
+  "19": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Pétalo de rosa demoníaca",
+     "1 x Nuez de kokoko",
+     "1 x Aceite de girasol salvaje"
+    ]
+   },
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Megalito de Fraktal"
+    ]
+   }
+  ],
+  "21": [
+   {
+    "category": "Recursos",
+    "items": [
+     "1 x Trama dimensional"
+    ]
+   },
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Relojarium de XLII"
+    ]
+   }
+  ],
+  "23": [
+   {
+    "category": "Llaves",
+    "items": [
+     "1 x Llave del Ojo de Vórtex"
+    ]
+   }
+  ],
+  "24": [
+   {
+    "category": "Recursos",
+    "items": [
+     "3 x Cuerno de arraca",
+     "3 x Garra de ikarisko",
+     "3 x Ojo de arpilla",
+     "3 x Zarpa de bubotente"
+    ]
+   }
+  ],
+  "26": [
+   {
+    "category": "Objeto de misión",
+    "items": [
+     "1 x Dofus de los Vigilantes"
+    ]
+   }
+  ]
+ },
+ "previousStepsByNewStep": [
+  [
+   1
+  ],
+  [
+   2
+  ],
+  [
+   3
+  ],
+  [
+   4
+  ],
+  [
+   5
+  ],
+  [
+   6
+  ],
+  [
+   7
+  ],
+  [
+   8
+  ],
+  [
+   9
+  ],
+  [
+   10
+  ],
+  [
+   11
+  ],
+  [
+   12
+  ],
+  [
+   13
+  ],
+  [
+   14
+  ],
+  [
+   15
+  ],
+  [
+   16
+  ],
+  [
+   17
+  ],
+  [
+   18
+  ],
+  [
+   19
+  ],
+  [
+   20
+  ],
+  [
+   21
+  ],
+  [
+   22
+  ],
+  [
+   23
+  ],
+  [
+   24
+  ],
+  [
+   25
+  ],
+  [
+   26
+  ]
+ ]
+}
