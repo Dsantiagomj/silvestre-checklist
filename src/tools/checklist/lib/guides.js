@@ -23,10 +23,11 @@ export const achievementGuide = name => ACHIEVEMENTS.get(norm(name)) || null;
 /**
  * La guía del paso en Torrente Arcano: la primera que enlaza su texto (el logro que
  * persigue, como en el diario) o, en los pasos de alineamiento, que no nombran ninguna,
- * la de su primera misión con guía. Sin ninguna, null.
+ * la de su primera misión con guía. Sin ninguna, null. Un paso que es todo nota («Habla
+ * con el Dios Anutrof.», en el Nebuloso) no tiene texto fuera de ella: se busca en la nota.
  */
 export const stepGuide = (step, quests = []) =>
-  linkify(step.base).find(p => p.href)?.href ?? quests.map(q => missionGuide(q.n)).find(Boolean) ?? null;
+  linkify(step.base || step.text).find(p => p.href)?.href ?? quests.map(q => missionGuide(q.n)).find(Boolean) ?? null;
 
 /**
  * Parte un texto de la guía en trozos: texto suelto, nombres con guía ({ href })

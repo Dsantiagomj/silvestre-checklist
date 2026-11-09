@@ -64,8 +64,12 @@ TEXT_FIXES = {}
 # ---------------------------------------------------------------------------
 # import_guide_links.py
 # ---------------------------------------------------------------------------
-TEXT_MISSIONS = []
-MISSION_URLS = {}
+# Steps 12, 18 and 25 are only "Habla con el Dios Anutrof/Sram/Xelor.": a talk with the
+# god's herald once the zone's four achievements are done, not a DofusDB quest. Torrente
+# Arcano has a page for each, titled "Hablar con el dios X".
+GODS = {"Anutrof": "anutrof", "Sram": "sram", "Xelor": "xelor"}
+TEXT_MISSIONS = [f"Habla con el Dios {god}" for god in GODS]
+MISSION_URLS = {f"Habla con el Dios {god}": SITE + f"hablar-con-el-dios-{slug}" for god, slug in GODS.items()}
 EXTRA_ACHIEVEMENTS = {}
 
 

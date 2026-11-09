@@ -242,3 +242,20 @@ test("sin misiones de alineamiento no hay selector de bando ni aviso de la orden
   await expect(page.locator("#prereqs .pr-order")).toHaveCount(0);
   await expect(page.locator("#prereqs .pr-card")).toHaveCount(4);
 });
+
+test("los pasos 12, 18 y 25, «Habla con el Dios X», enlazan su guía en el texto y en el overlay", async ({ page, context }) => {
+  await stubGuides(context);
+  await openNebuloso(page);
+  for (const [n, god] of [[12, "anutrof"], [18, "sram"], [25, "xelor"]]) {
+    await openStep(page, n);
+    const name = `Habla con el Dios ${god[0].toUpperCase()}${god.slice(1)}`;
+    await expect(page.locator("#journal").getByRole("link", { name })).toHaveAttribute(
+      "href", `https://www.torrentearcano.com/hablar-con-el-dios-${god}`);
+  }
+  // Sin texto fuera de la nota, la guía del paso sale de la nota
+  await openStep(page, 12);
+  const [ov] = await Promise.all([context.waitForEvent("page"), page.click("#overlayBtn")]);
+  await expect(ov.locator(".ov")).toBeVisible({ timeout: 10_000 });
+  await expect(ov.locator(".ov-head .ov-guide-link")).toHaveAttribute(
+    "href", "https://www.torrentearcano.com/hablar-con-el-dios-anutrof");
+});
