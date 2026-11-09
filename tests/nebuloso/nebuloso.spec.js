@@ -194,6 +194,18 @@ test("los pasos que solo piden hablar con el dios llevan al dios", async ({ page
   expect(errors).toEqual([]);
 });
 
+// "Hablar con el dios X" es el nombre de la misión, tal cual, y su guía en Torrente Arcano
+for (const [n, god] of [[12, "Anutrof"], [18, "Sram"], [25, "Xelor"]]) {
+  test(`el paso ${n} es la misión «Hablar con el dios ${god}» y enlaza su guía`, async ({ page }) => {
+    await openNebuloso(page);
+    await openStep(page, n);
+    const base = page.locator("#journal .goal-guide .journal-base");
+    await expect(base).toHaveText(`Misión: Hablar con el dios ${god}.`);
+    await expect(base.locator("a.guide-link", { hasText: `Hablar con el dios ${god}` }))
+      .toHaveAttribute("href", `https://www.torrentearcano.com/hablar-con-el-dios-${god.toLowerCase()}`);
+  });
+}
+
 test.describe("recursos", () => {
   test("el hechizo y el objeto de misión salen en su paso y no cuentan en el total", async ({ page }) => {
     await openNebuloso(page);

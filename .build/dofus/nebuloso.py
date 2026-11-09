@@ -57,14 +57,24 @@ STEP_ZONE = {n: (_ZONE[n], _TIER.get(n, "medio")) for n in range(1, STEP_COUNT +
 CLOSES = {}
 UPDATES = {}
 
-# Nothing in the page's text to rewrite.
-TEXT_FIXES = {}
+# Steps 12, 18 and 25 are a blue note on the page ("Habla con el Dios Anutrof."), but
+# each one is a mission with that exact name and its own walkthrough on Torrente Arcano
+# ("Hablar con el dios Anutrof", hablar-con-el-dios-anutrof). In the game it is the last
+# objective of an achievement ("El país de los vejestorios", 1077; "El reino de las
+# sombras", 1107; "El tiempo lo puede todo", 1147), and the quest of step 26 asks for all
+# three (OA=1077&OA=1107&OA=1147). Written as "Misión: …", import_guide_links.py links it.
+TEXT_FIXES = {
+    n: [(f"[[BLUE]]Habla con el Dios {god}.[[/BLUE]]", f"Misión: Hablar con el dios {god}.")]
+    for n, god in [(12, "Anutrof"), (18, "Sram"), (25, "Xelor")]
+}
 
 
 # ---------------------------------------------------------------------------
 # import_guide_links.py
 # ---------------------------------------------------------------------------
-TEXT_MISSIONS = []
+# The missions TEXT_FIXES writes into steps 12, 18 and 25: this script reads the page's
+# own text, which only says "Habla con el Dios Anutrof".
+TEXT_MISSIONS = [f"Hablar con el dios {god}" for god in ("Anutrof", "Sram", "Xelor")]
 MISSION_URLS = {}
 EXTRA_ACHIEVEMENTS = {}
 
@@ -143,7 +153,8 @@ DRAGON = None
 CURATED = {}
 
 # Step -> figure for the steps with no quest of their own: 12, 18 and 25 only ask to talk
-# to the god of the dimension ("Habla con el Dios Anutrof"). Looks from DofusDB (npcs),
+# to the god of the dimension ("Misión: Hablar con el dios Anutrof", an achievement
+# objective, not a DofusDB quest; see TEXT_FIXES). Looks from DofusDB (npcs),
 # with a scale: the bare ones do not render.
 STEP_FIGURE = {
     "12": ("dios-anutrof", "Dios Anutrof", "Se habla con", "{2711|||100}"),
