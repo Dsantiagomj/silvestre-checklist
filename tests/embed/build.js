@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 
-// Los mismos builds de los embebidos que se publican (el Silvestre, el Hielos, el Nebuloso, el hub de
+// Los mismos builds de los embebidos que se publican (el Silvestre, el Hielos, el Nebuloso, el rush, el hub de
 // los checklists, el inicio,
 // «La eterna cosecha» y las guías de los Dofus), en una carpeta aparte (EMBED_OUT) para no pisar dist/ si a
 // la vez corre la suite principal
@@ -9,6 +9,7 @@ export default function build() {
   execSync("npm run build:embed", { stdio: "inherit", env });
   execSync("npm run build:embed:hielos", { stdio: "inherit", env });
   execSync("npm run build:embed:nebuloso", { stdio: "inherit", env });
+  execSync("npm run build:embed:todos", { stdio: "inherit", env });
   execSync("npm run build:hub", { stdio: "inherit", env });
   execSync("npm run build:inicio", { stdio: "inherit", env });
   execSync("npm run build:cosecha", { stdio: "inherit", env });

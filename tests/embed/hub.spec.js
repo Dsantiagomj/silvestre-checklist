@@ -19,6 +19,7 @@ test("el hub se monta en una shadow root con una carta por Dofus y la de Próxim
   await expect(hub(page).getByRole("link", { name: "Dofus Silvestre · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus de los Hielos · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus Nebuloso · Ver checklist" })).toHaveCount(1);
+  await expect(hub(page).getByRole("link", { name: "Rush de todos los Dofus · Ver checklist" })).toHaveCount(1);
   await expect(hub(page).getByRole("link", { name: "Dofus Ocre · Ver checklist" })).toHaveCount(1);
   // Las fuentes van en la página: @font-face no funciona dentro de una shadow root
   await expect(page.locator('head link[rel="stylesheet"][href*="fonts.googleapis.com"]')).toHaveCount(1);
@@ -40,8 +41,10 @@ test("las cartas siguen el orden del manifiesto y cada una lleva a su checklist"
     expect(await card.evaluate(el => el.tagName)).toBe("A");
     await expect(card).toHaveAttribute("href", d.url);
     await expect(card).toHaveAttribute("data-id", d.id);
-    // Sin rótulo: el título de la sección ya dice que son checklists
-    await expect(card.locator(".kick")).toHaveCount(0);
+    // Sin rótulo: el título de la sección ya dice que son checklists. El rush lleva cuánto
+    // camino es, porque no da un solo Dofus
+    if (d.id === "todos") await expect(card.locator(".kick")).toHaveText("200 pasos");
+    else await expect(card.locator(".kick")).toHaveCount(0);
     await expect(card.locator(".name")).toHaveText(d.name);
     await expect(card.locator(".lead")).toHaveText(d.lead);
     await expect(card).toHaveAccessibleDescription(d.lead);
@@ -53,6 +56,30 @@ test("las cartas siguen el orden del manifiesto y cada una lleva a su checklist"
   expect(HUB.dofus.find(d => d.id === "ocre")?.url).toBe("https://www.torrentearcano.com/lista-ocre");
   // El Nebuloso, en la página que creó Torre para su embebido
   expect(HUB.dofus.find(d => d.id === "nebuloso")?.url).toBe("https://www.torrentearcano.com/checklist-nebuloso");
+  // El rush, entre el Nebuloso y el Ocre, en la página que tendrá en Torrente
+  expect(HUB.dofus.map(d => d.id)).toEqual(["silvestre", "hielos", "nebuloso", "todos", "ocre"]);
+  expect(HUB.dofus.find(d => d.id === "todos")?.url).toBe("https://www.torrentearcano.com/checklist-todos-dofus");
+});
+
+test("la carta del rush lleva la corona: el Vulbis en grande y los primordiales alrededor, sin PNJ", async ({ page }) => {
+  await openHub(page);
+  const card = cards(page).nth(HUB.dofus.findIndex(d => d.id === "todos"));
+  await expect(card.locator(".npc, .egg")).toHaveCount(0);
+  const eggs = card.locator(".crown img");
+  await expect(eggs).toHaveCount(6);
+  expect(await eggs.evaluateAll(l => l.map(i => new URL(i.src).pathname.split("/").pop())))
+    .toEqual(["dofus-esmeralda.png", "dofus-purpura.png", "dofus-turquesa.png", "dofus-marfil.png", "dofus-ebano.png", "dofus-vulbis.png"]);
+  for (const egg of await eggs.all()) expect(await egg.evaluate(i => i.complete && i.naturalWidth > 0)).toBe(true);
+  // Dentro de la carta, el Vulbis el más grande y arriba, en el centro
+  const [c, ...b] = await Promise.all([card.boundingBox(), ...(await eggs.all()).map(e => e.boundingBox())]);
+  for (const x of b) {
+    expect(x.x).toBeGreaterThanOrEqual(c.x - 1);
+    expect(x.x + x.width).toBeLessThanOrEqual(c.x + c.width + 1);
+  }
+  const vulbis = b.at(-1);
+  expect(Math.max(...b.map(x => x.height))).toBe(vulbis.height);
+  expect(Math.abs(vulbis.x + vulbis.width / 2 - (c.x + c.width / 2))).toBeLessThan(2);
+  expect(await card.locator(".name").evaluate(el => getComputedStyle(el).color)).toBe("rgb(227, 197, 101)");
 });
 
 test("la carta de Próximamente no es un enlace: gris, su huevo en silueta y «???»", async ({ page }) => {
@@ -176,7 +203,7 @@ test("en un móvil el pie no cabe: el hub llena la pantalla bajo la cabecera y e
   const box = await stage(page).boundingBox();
   expect(Math.abs(box.x)).toBeLessThan(1);
   expect(Math.abs(box.y - 84)).toBeLessThan(2);
-  // Como poco la pantalla bajo la cabecera; con tres filas de cartas (cuatro Dofus y la de
+  // Como poco la pantalla bajo la cabecera; con tres filas de cartas (cinco Dofus y la de
   // Próximamente, de dos en dos) crece con ellas
   expect(box.height).toBeGreaterThanOrEqual(844 - 84 - 2);
   const last = await cards(page).last().boundingBox();

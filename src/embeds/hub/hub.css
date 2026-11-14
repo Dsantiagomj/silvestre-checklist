@@ -148,6 +148,26 @@
   filter: drop-shadow(0 0 16px var(--c)) drop-shadow(0 12px 12px rgba(0, 0, 0, .8));
 }
 
+/* La corona del rush (crown en el manifiesto): el Vulbis en grande con los primordiales
+   alrededor, cada huevo en su sitio (--x, --y, --h en % del ancho de la carta) y con su halo */
+.card .crown {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+.card .crown img {
+  position: absolute;
+  left: calc(var(--x) * 1cqw);
+  top: calc(var(--y) * 1cqw);
+  height: calc(var(--h) * 1cqw);
+  width: auto;
+  max-width: none;
+  border: 0;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 10px var(--g)) drop-shadow(0 8px 8px rgba(0, 0, 0, .8));
+}
+
 /* El brillo holográfico: sigue al ratón (--fx, --fy) */
 .card .foil {
   position: absolute;

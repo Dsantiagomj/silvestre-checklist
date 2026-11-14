@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { EMBED_OUT, servePages } from "./harness.js";
 
-// El contrato público de los siete embebidos: lo que ya está pegado en Squarespace y lo que
+// El contrato público de los ocho embebidos: lo que ya está pegado en Squarespace y lo que
 // guardó la gente en localStorage. Mover carpetas de src/ no puede cambiar nada de esto, así
 // que aquí no se importa nada de src/ y lo esperado va escrito a mano, sin leer configs
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -20,6 +20,8 @@ const EMBEDS = [
   { entry: "embed/silvestre.js", host: "silvestre-root", fonts: "silvestre-fonts", top: "--silvestre-top", page: "squarespace.html", prefix: "silvestre:", classic: ["dofus_silvestre_clean_v4", "dofus_silvestre_clean_v3"] },
   { entry: "embed/hielos.js", host: "hielos-root", fonts: "hielos-fonts", top: "--hielos-top", page: "squarespace-hielos.html", prefix: "hielos:", classic: ["dofus_hielos_clean_v2"] },
   { entry: "embed/nebuloso.js", host: "nebuloso-root", fonts: "nebuloso-fonts", top: "--nebuloso-top", page: "squarespace-nebuloso.html", prefix: "nebuloso:", classic: ["dofus_nebuloso_clean_v1"] },
+  // El rush no tiene checklist clásico en Torrente Arcano: nada que leer, solo la entrada compartida
+  { entry: "embed/todos.js", host: "todos-root", fonts: "todos-fonts", top: "--todos-top", page: "squarespace-todos.html", prefix: "todos:", classic: [] },
   { entry: "embed/checklists.js", host: "checklists-root", fonts: "checklists-fonts", top: "--checklists-h", page: "checklists.html" },
   { entry: "embed/inicio.js", host: "inicio-root", fonts: "inicio-fonts", top: null, page: "inicio.html" },
   { entry: "embed/cosecha.js", host: "cosecha-root", fonts: "cosecha-fonts", top: "--cosecha-top", page: "cosecha.html" },
@@ -38,7 +40,7 @@ test("el build deja cada entrada con su nombre fijo y los trozos de la app en su
   for (const { entry } of EMBEDS) expect(fs.statSync(path.join(EMBED_OUT, entry)).isFile(), entry).toBe(true);
   // Solo la app parte su código (quests.json va aparte); el hub, el inicio, la cosecha y las guías van
   // en un solo archivo y ninguno saca assets: el CSS va dentro y las imágenes son las de public/
-  for (const dir of ["embed/chunks", "embed/hielos-chunks", "embed/nebuloso-chunks"]) {
+  for (const dir of ["embed/chunks", "embed/hielos-chunks", "embed/nebuloso-chunks", "embed/todos-chunks"]) {
     expect(fs.readdirSync(path.join(EMBED_OUT, dir)).filter(f => f.endsWith(".js")).length, dir).toBeGreaterThan(0);
   }
 });
@@ -48,7 +50,7 @@ test("cada bundle lleva su anfitrión y su marca de fuentes", () => {
 });
 
 test("las claves de localStorage que ya tiene la gente siguen en los bundles", () => {
-  // El clásico solo se lee; la entrada compartida es la misma en los tres checklists
+  // El clásico solo se lee; la entrada compartida es la misma en los cuatro checklists
   for (const { entry, classic } of EMBEDS.filter(e => e.classic)) expect(missing(entry, [...classic, SHARED]), entry).toEqual([]);
   expect(missing("embed/cosecha.js", ["cosecha:done", "cosecha:ui", "cosecha:theme"])).toEqual([]);
   expect(missing("embed/guias.js", ["guias:theme"])).toEqual([]);
@@ -86,7 +88,7 @@ for (const embed of EMBEDS) {
     // Las variables que pone el embebido en su anfitrión; el inicio no pone ninguna
     const vars = await host.evaluate(el => [...el.style].filter(p => p.startsWith("--")));
     expect(vars).toEqual(embed.top ? [embed.top] : []);
-    // localStorage al montar: el Silvestre, el Hielos y el Nebuloso guardan con su prefijo y escriben la
+    // localStorage al montar: los cuatro checklists guardan con su prefijo y escriben la
     // entrada compartida cuando llegan sus misiones (van en su propio trozo, después de
     // pintar), así que se espera a que esté. Los demás no guardan nada hasta que se toca algo
     // (las claves de la cosecha van arriba, en su bundle)

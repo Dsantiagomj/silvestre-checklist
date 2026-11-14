@@ -3,6 +3,8 @@
 // otra entrada aquí con sus imágenes en public/img/.
 // Las rutas de imagen son relativas a public/img/ (el embebido las pide a GitHub Pages).
 // npcFit (opcional) encuadra el PNJ: h alto, r derecha, t arriba, en % de la carta.
+// Una carta sin PNJ puede llevar `crown` (varios huevos, cada uno en su sitio) en vez de
+// `egg`, y `kicker`, la píldora de arriba.
 // ============================================================================
 export const HUB = {
   // El título de la sección, sobre las cartas
@@ -42,6 +44,29 @@ export const HUB = {
       // Imagen cuadrada y figura estrecha: más grande y a la derecha, como la del Hielos
       npcFit: { h: "72%", r: "-30%", t: "4%" },
       lead: "Recorre Anutropía, Sramvil y Xelorium en 26 pasos, con el Dofus de los Vigilantes por el camino.",
+    },
+    {
+      id: "todos",
+      name: "Rush de todos los Dofus",
+      // La guía no da un Dofus, da 25: la píldora dice cuánto camino es
+      kicker: "200 pasos",
+      color: "#e3c565",
+      // La página que tendrá en Torrente Arcano (SOURCE_URL en .build/dofus/todos.py)
+      url: "https://www.torrentearcano.com/checklist-todos-dofus",
+      bg: "zones/misiones-de-mundo.jpg",
+      // Sin PNJ ni un solo huevo: la corona, el Vulbis del paso 200 en grande con los cinco
+      // Dofus primordiales alrededor (el Ébano, debajo). x, y y h en % del ancho de la carta;
+      // glow, el halo de cada huevo. Los huevos, copias de los de items/ en hub/ como los de
+      // las otras cartas. La misma corona va en la home del sitio (src/site/home/manifest.js)
+      crown: [
+        { img: "hub/dofus-esmeralda.png", glow: "#2ecd68", x: 14, y: 24, h: 22 },
+        { img: "hub/dofus-purpura.png", glow: "#ba374b", x: 28, y: 10.5, h: 22 },
+        { img: "hub/dofus-turquesa.png", glow: "#1fd5d5", x: 72, y: 10.5, h: 22 },
+        { img: "hub/dofus-marfil.png", glow: "#ebdcb4", x: 86, y: 24, h: 22 },
+        { img: "hub/dofus-ebano.png", glow: "#7d6996", x: 50, y: 51, h: 18 },
+        { img: "hub/dofus-vulbis.png", glow: "#eb4623", x: 50, y: 4.5, h: 40 },
+      ],
+      lead: "Del Dofawa al Vulbis: 25 Dofus en una sola ruta por todo el Mundo de los Doce.",
     },
     {
       id: "ocre",

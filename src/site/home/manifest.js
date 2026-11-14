@@ -42,15 +42,15 @@ export const HOME = {
       kicker: "200 pasos",
       bg: "zones/misiones-de-mundo.jpg",
       // Sin PNJ ni un solo huevo: la corona, el Vulbis del paso 200 en grande con los cinco
-      // Dofus primordiales alrededor y el Ébano debajo. x, y y h en % del ancho de la carta;
+      // Dofus primordiales alrededor (el Ébano, debajo). x, y y h en % del ancho de la carta;
       // glow, el halo de cada huevo
       crown: [
-        { img: "items/23002.png", glow: "#2ecd68", x: 14, y: 24, h: 22 },
-        { img: "items/23001.png", glow: "#ba374b", x: 28, y: 10.5, h: 22 },
-        { img: "items/23003.png", glow: "#1fd5d5", x: 72, y: 10.5, h: 22 },
-        { img: "items/23011.png", glow: "#ebdcb4", x: 86, y: 24, h: 22 },
-        { img: "items/23007.png", glow: "#7d6996", x: 50, y: 51, h: 18 },
-        { img: "items/23004.png", glow: "#eb4623", x: 50, y: 4.5, h: 40 },
+        { img: "hub/dofus-esmeralda.png", glow: "#2ecd68", x: 14, y: 24, h: 22 },
+        { img: "hub/dofus-purpura.png", glow: "#ba374b", x: 28, y: 10.5, h: 22 },
+        { img: "hub/dofus-turquesa.png", glow: "#1fd5d5", x: 72, y: 10.5, h: 22 },
+        { img: "hub/dofus-marfil.png", glow: "#ebdcb4", x: 86, y: 24, h: 22 },
+        { img: "hub/dofus-ebano.png", glow: "#7d6996", x: 50, y: 51, h: 18 },
+        { img: "hub/dofus-vulbis.png", glow: "#eb4623", x: 50, y: 4.5, h: 40 },
       ],
       lead: "Del Dofawa al Vulbis: 25 Dofus en una sola ruta por todo el Mundo de los Doce.",
     },
