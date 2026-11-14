@@ -90,8 +90,8 @@ export default {
   // global.css, por tema; -light solo cuenta en el tema claro.
   // Contraste (WCAG): texto de los botones sobre el acento 11,5:1 en oscuro y 10,6:1 en claro;
   // el acento como texto, 16,7:1 sobre el fondo oscuro; el texto apagado, 5,9:1 sobre el fondo
-  // oscuro. En claro la tinta dorada (#9c843a) da 3,6:1 sobre blanco y el texto apagado 4,1:1:
-  // por debajo de 4,5:1, como en la maqueta aprobada
+  // oscuro. En claro, la tinta dorada (#7a672d) y el texto apagado (#6c6758) van más oscuros que
+  // en la maqueta para pasar 4,5:1 sobre el fondo, los paneles y los huecos (4,7:1 o más)
   palette: {
     dark: {
       "--bg": "#13110b", "--bg-2": "#1b1810", "--panel": "#232015", "--panel-2": "#2c281b", "--inset": "#16140d",
@@ -114,11 +114,11 @@ export default {
     },
     light: {
       "--bg": "#f6f4ef", "--bg-2": "#faf9f5", "--panel": "#ffffff", "--panel-2": "#f7f5ef", "--inset": "#efece1",
-      "--txt": "#1c1a12", "--txt-soft": "#585343", "--txt-mute": "#847e6b",
+      "--txt": "#1c1a12", "--txt-soft": "#585343", "--txt-mute": "#6c6758",
       "--line": "#e6e2d6", "--line-2": "#d6d1c0", "--line-warm": "#b0a88f",
       "--terracotta": "#1c1a12", "--terracotta-2": "#14120c",
       "--amber": "#f0db9c", "--amber-2": "#e2ca80", "--gold": "#f7eac3", "--gold-2": "#e2ca80",
-      "--accent-ink": "#9c843a", "--gold-ink": "#9c843a",
+      "--accent-ink": "#7a672d", "--gold-ink": "#7a672d",
       "--success": "#f0db9c", "--success-2": "#e2ca80",
       "--walked": "#c8aa50", "--walked-glow": "rgba(200,170,80,.3)",
     },

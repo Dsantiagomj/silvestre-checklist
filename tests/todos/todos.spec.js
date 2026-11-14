@@ -216,6 +216,29 @@ for (const [theme, accent] of [["dark", "rgb(245, 228, 177)"], ["light", "rgb(24
   });
 }
 
+// En claro, la tinta dorada y el texto apagado se leen sobre los fondos del tema: 4,5:1 o más
+// (WCAG AA) sobre el fondo, los paneles y los huecos
+test("en el tema claro, la tinta dorada y el texto apagado pasan el contraste AA", async ({ page }) => {
+  await page.setViewportSize(TALL);
+  await openTodos(page, { "dofus-tools:theme": "light" });
+  const ratios = await page.evaluate(() => {
+    const css = getComputedStyle(document.documentElement);
+    const v = name => css.getPropertyValue(name).trim();
+    const lum = hex => {
+      const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+        .map(x => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    const out = {};
+    for (const fg of ["--gold-ink", "--accent-ink", "--txt-mute"]) {
+      for (const bg of ["--bg", "--panel", "--inset"]) out[`${fg} sobre ${bg}`] = ratio(v(fg), v(bg));
+    }
+    return out;
+  });
+  for (const [pair, r] of Object.entries(ratios)) expect(r, pair).toBeGreaterThanOrEqual(4.5);
+});
+
 // El paso 190 da dos Dofus («El silencio es áureo»: el de los hielos y el plateado
 // centelleante). La app los lleva los dos en cada sitio donde va el Dofus de un paso
 test.describe("dos Dofus en un paso", () => {
