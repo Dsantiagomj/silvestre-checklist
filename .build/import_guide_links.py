@@ -14,6 +14,10 @@ same slug, is in the site's sitemap: most have a guide the step text never names
 Usage:
   curl -sL -A "Mozilla/5.0" -o /tmp/ta/page.html https://www.torrentearcano.com/checklist-silvestre
   python3 -I .build/import_guide_links.py /tmp/ta/page.html
+  python3 -I .build/import_guide_links.py --dofus todos .build/lists/todos/torrentearcano.json
+
+A guide with no data page (a .json transcription) brings no achievementLinks: the
+achievements its steps name get the page the sitemap has for them.
 
 Writes:
   src/dofus/<dofus>/guides.json  { achievements: { name: url }, missions: { title: url },
@@ -65,6 +69,29 @@ def js_object(html, name):
     start = html.index(f"{name} = ") + len(name) + 3
     value, _ = json.JSONDecoder().raw_decode(html[start:])
     return value
+
+
+def read_links_source(path):
+    """(steps, achievementLinks, missionUrlOverrides) from the page. A guide with no data page
+    (a .json transcription, as import_guide.read_source reads it: todos, from Sandglass's PDF)
+    has neither table: None for the achievements, which then come from the steps
+    (achievement_names), and no overrides."""
+    text = pathlib.Path(path).read_text(encoding="utf-8")
+    if str(path).endswith(".json"):
+        return json.loads(text)["steps"], None, {}
+    return js_string_array(text, "steps"), js_object(text, "achievementLinks"), js_object(text, "missionUrlOverrides")
+
+
+# "Logro “A”" or "Logro: “A”, “B”": the achievements a step names, in a row after "Logro"
+LOGRO_NAMES = re.compile(r"\bLogro:?\s*((?:“[^”]+”(?:,\s*(?=“))?)+)")
+
+
+def achievement_names(texts):
+    """The achievements the steps name, sorted: every quoted name right after "Logro" (one or
+    several, "Logro “La gran biblioteca”, “Mercenario de acero”"), not the quoted mission
+    names that follow ("misión 2: “Extinción de los fuegos”")."""
+    return sorted({name for text in texts for run in LOGRO_NAMES.findall(text)
+                   for name in re.findall(r"“([^”]+)”", run)})
 
 
 
@@ -147,12 +174,18 @@ def answers(url, tries=4):
 
 
 def main(page):
-    html = pathlib.Path(page).read_text(encoding="utf-8")
-    texts = js_string_array(html, "steps")
-    achievements = {**EXTRA_ACHIEVEMENTS, **js_object(html, "achievementLinks")}
-    overrides = {**js_object(html, "missionUrlOverrides"), **MISSION_URLS}
+    texts, links, page_overrides = read_links_source(page)
+    achievements = {**EXTRA_ACHIEVEMENTS, **(links or {})}
+    overrides = {**page_overrides, **MISSION_URLS}
     wanted = {t: overrides.get(t, SITE + slug(t)) for t in missions(texts) + EXTRA_MISSIONS + TEXT_MISSIONS}
     pages = site_pages()
+    if links is None:
+        # No page to say which achievements it links: the ones the steps name, by the page's
+        # own slug when the sitemap has it (EXTRA_ACHIEVEMENTS gives the misspelt ones theirs)
+        for name in achievement_names(texts):
+            url = page_for(name, {}, pages)
+            if url and name not in achievements:
+                achievements[name] = url
     for name in prereq_names("Logro"):
         url = page_for(name, {}, pages)
         if url and name not in achievements:
