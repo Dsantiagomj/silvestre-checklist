@@ -158,4 +158,6 @@ The classic checklist stores progress in `dofus_silvestre_clean_v4`, and before 
 
 `GUIDE_URL`, `GUIDE_URL_HIELOS` and `GUIDE_URL_NEBULOSO` are repo variables (Settings → Secrets and variables → Actions → Variables). The Hielos runs after the Silvestre even if the Silvestre fails, and the Nebuloso after the Hielos, so each PR starts from a `main` that already has the Silvestre changes merged.
 
+The Rush de todos los Dofus has no sync: its only source is Sandglass's PDF, transcribed into `.build/lists/todos/torrentearcano.json` and imported by hand (`.build/dofus/todos.py`).
+
 If anything fails (the page does not answer, lacks the data, regeneration fails or a test fails), `main` does not change and the Dofus's issue is opened with a link to the run. If an issue with that title is already open, the run comments on it. The schedule only runs from the default branch: the workflow has to be on `main`.
