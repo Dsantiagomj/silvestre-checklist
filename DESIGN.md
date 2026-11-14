@@ -99,6 +99,7 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 | Silvestre | `#b7dc69` | `#b7dc69`, titles `#cbee8f` (`src/tools/checklist/styles/global.css`) | `#0d0e0c` | `#3b6512` |
 | Hielos | `#9fd8f0` | `#9fd8f0`, titles `#c8ecfa` (`palette` in `hielos/config.js`) | `#0b0e12` | `#1b5c7d` |
 | Nebuloso | `#c3b1f5` | `#c3b1f5`, titles `#ddd2fb` (`palette` in `nebuloso/config.js`), from the egg's lavender halo | `#0d0b13` | `#4f3a9c` |
+| Rush de todos los Dofus | `#e3c565` | `#f5e4b1`, titles `#fbf1d2` (`palette` in `todos/config.js`, «Oro»: the Nebuloso's palette turned to hue 45) | `#13110b` | `#9c843a` (3.6:1 on white, below AA, as in the approved mockup) |
 | Próximamente | `#e3c565` | | | |
 
 ### Spacing and shape
@@ -140,7 +141,7 @@ Always container queries on the widget root, never media queries: the Squarespac
 | Cosecha | `@container cosecha (max-width: 700px)` | rail becomes a sticky top row; cromos three per row |
 | Guías | `@container guias (max-width: 1180px)` | cards four per row instead of six |
 | Guías | `(max-width: 600px)` | cards two per row at 4/5; filters on their own row above search and the switch; title 40px |
-| Site shell | `@container dt-shell (max-width: 1100px)` | the nav stays in the row but shows only the end of each name (`.dt-pre` hidden): with five tools the full names need about 1030px |
+| Site shell | `@container dt-row (max-width: 1230px)`, on `.dt-in` | the nav stays in the row but shows only the short part of each name (`.dt-pre` hidden): with six tools the full names need about 1220px of row, which the home has at 1440 (1240px) and the cosecha page does not (1176px). It measures the row, not the screen, because each page sets its own width |
 | Site shell | `@container dt-shell (max-width: 600px)` | the nav moves to its own row under the brand and the switch, spread edge to edge, showing only the end of each name (`.dt-pre` hidden); it scrolls sideways if it still does not fit |
 | Site home | `@container home (max-width: 700px)` | cards stack, landscape |
 
@@ -186,6 +187,10 @@ Use only on the card that leads to the checklists: the eggs of the published che
 
 Use only for "all the Dofus" (Guías Dofus). 96px circle (80px under 900px) with the tile recipe; six 30px icons placed on a circle of radius 29 percent starting at the top (`icon()` in `src/embeds/inicio/inicio.js`).
 
+### Egg crown (`.crown`)
+
+Use only for the Rush de todos los Dofus card, in the hub and on the site home: a guide that hands out 25 Dofus has no single egg and no character. The Dofus Vulbis (its last egg) large at the top centre, five of the primordial Dofus around it (the Ébano below), each placed by `x`, `y` and `h` in percent of the card width (`crown` in `src/embeds/hub/manifest.js` and `src/site/home/manifest.js`) and glowing in its own colour (`drop-shadow(0 0 10px <glow>)`). The card keeps the `.kick` pill «200 pasos» and has no `.npc`. On the narrow home card the crown is scaled to .66 at the right.
+
 ### «En camino» chips (`.soonB`, `.chip`)
 
 Use for sections that do not exist yet. A dashed gold strip (`1px dashed` at 40 percent gold, background `rgba(216,178,90,.05)`) with a gold 20px title and one chip per section: 66px high, its zone image at `grayscale(1) brightness(.3)`, a 52px icon box with a 1.5px gold ring and the icon at `grayscale(.85)`, name in 800. Chips are plain `div`s with no link; under 1180px they go two per row.
@@ -205,14 +210,14 @@ The "Dofus Tools" header on every site page, from `mountShell(current)` in `src/
 | Rule | Recipe |
 |---|---|
 | Zone strip | 84px high, `#0b0c0a`, with the page's zone art behind at opacity .6 and `object-position: center 38%`. Two gradients darken it: toward both sides (.96 at the left, .5 in the middle, .94 at the right) and slightly toward the bottom. Content is 1240px wide like the home |
-| Zone per page | `art` in `TOOLS` (`shell.js`), picked like a card background: Krosmoz on the home, Amakna on `/silvestre/`, Frigost on `/hielos/`, Xelorium on `/nebuloso/`, Cania on `/cosecha/` |
+| Zone per page | `art` in `TOOLS` (`shell.js`), picked like a card background: Krosmoz on the home, Amakna on `/silvestre/`, Frigost on `/hielos/`, Xelorium on `/nebuloso/`, Misiones de mundo on `/todos/`, Cania on `/cosecha/` |
 | Gold rule | 1px at the bottom, `rgba(216,178,90,.75)` between 18 and 82 percent, fading to transparent at both ends |
 | Not sticky | `position: relative`. The app's own sticky bar and the cosecha rail stay at the top of the window; `--cosecha-top` stays 0 |
 | Brand | "Dofus Tools", display 800 30px (24px narrow), under a gold eyebrow «Checklists y herramientas» (display 700 12px, tracking .3em, `aria-hidden`); links to the home |
-| Nav | one link per tool in `TOOLS` order, display 700 16px, tracking .08em, `#d9d1bf` with a dark text-shadow, 30px apart |
+| Nav | one link per tool in `TOOLS` order, display 700 16px, tracking .08em, `#d9d1bf` with a dark text-shadow, 30px apart. The rush is «Todos los Dofus» (its full name does not fit) and «Todos» when short |
 | Current page | `aria-current="page"`: text `#f6d48a` and a 3px gold bar with a soft glow, flush with the header's bottom edge. No side border, no pill, no fill |
 | Theme switch | the egg switch (below) at the right, vertically centered |
-| Narrow | `@container dt-shell (max-width: 600px)`: margins 14px; brand and switch on the first row, the nav on its own 46px row with `space-between`, showing only the end of each name |
+| Narrow | `@container dt-shell (max-width: 600px)`: margins 14px; brand and switch on the first row, the nav on its own 46px row with `space-between`, at least 8px apart, in 14px with tracking .05em so six short names fit in 362px, showing only the short part of each name |
 | Self-contained | every value set under `.dt-shell`, so the page below (the checklist's light theme, its `img` and `a:hover` rules) cannot change it |
 
 A tool under the shell keeps its own header: the cosecha page shows the shell and then the cosecha `.hd`, whose title is the page's only `h1`. Do not add a page title between the shell and the tool.
@@ -235,6 +240,7 @@ Where it lives: the site header (one theme for the whole site, `dofus-tools:them
 
 | Piece | Recipe | Source |
 |---|---|---|
+| Long road strip (checklist) | more than 12 Dofus on the road (`LONG_ROAD`, the rush's 25): `.win-strip.is-long` keeps the head, the progress (right-aligned, at most 460px) and «Siguiente» in the first row at every width, and puts the eggs in their own row, one column per Dofus after a dashed rule, each with its step number below in 10px tabular text (gold ink when obtained, muted otherwise). The Silvestre's 12 stay in one row | `src/tools/checklist/components/WinStrip.jsx`, `global.css` |
 | Progress bar | 8px track `rgba(255,255,255,.08)`, fill `linear-gradient(90deg, #b86a12, var(--ocre))`, count in 700 16px display | `.bar` |
 | Segmented control | dark `#14160f` strip with a hairline; pressed button `linear-gradient(180deg, #3a2c12, #251b0b)` plus a gold inset ring, text `#f6d48a`. The first and last buttons inherit the strip's outer radii, so the ring follows the rounded corners | `.seg` |
 | Search field | same dark fill, gold 1.5px ring on focus, clear button appears when it has text | `.srch` |
@@ -251,7 +257,7 @@ Where it lives: the site header (one theme for the whole site, `dofus-tools:them
 
 ### Picking a zone background for a character
 
-1. Start from the place the section is about: Frigost for the Hielos, Xelorium for the Nebuloso, Amakna for Silvosse, Selocalipsis for Meriana, Cania for the Ocre.
+1. Start from the place the section is about: Frigost for the Hielos, Xelorium for the Nebuloso, the Misiones de mundo map for the rush (it crosses the whole World of Twelve), Amakna for Silvosse, Selocalipsis for Meriana, Cania for the Ocre.
 2. The character must read against the top-right of the image, where `.npc` sits. Its outline is `--c` and its halo is near-black, so a background in the same hue as the character or as `--c` makes it vanish. Pick a zone whose dominant color differs from both.
 3. Text never competes with the art: `.shade` keeps the bottom (wide cards) or the left half (mid cards) dark. If the chosen zone is bright at the top, the `.kick` pill keeps the label legible.
 4. Check at 1440, 1024 and 390 px: the NPC fade (`transparent 4%` to `#000 40%`) must not cut a face, and `npcFit` is the knob for that.

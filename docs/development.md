@@ -51,14 +51,34 @@ npm run build:embed:nebuloso   # its embed, in dist/embed/nebuloso.js
 | `themeNames` | Dofus de los Vigilantes (light) and Dofus Nebuloso (dark) |
 | `html.icons` | Its favicons, the Nebuloso egg |
 
-The fourth checklist is the Guía global (`src/dofus/global/`), a PvE progression guide from level 1 to 200. It follows no Torrente Arcano guide: its steps (one per zone and 20-level band), quests, stops and by-product achievements are generated from DofusDB data by a scheduler that lives outside the repo for now. It has no published embed, no Dofus at the end (`egg.final` is null) and no classic keys to import.
+The fourth one is the Rush de todos los Dofus (`src/dofus/todos/`), Sandglass's 200 steps through 25 Dofus, from the Dofawa at step 5 to the Dofus Vulbis at step 200, transcribed from his PDF (no data page, no classic checklist, no sync):
+
+```bash
+DOFUS=todos npm run dev     # the rush in development
+npm run build:todos         # its site, in dist/todos/
+npm run build:embed:todos   # its embed, in dist/embed/todos.js
+```
+
+| Key | In the rush |
+|---|---|
+| `name`, `short` | «Rush de todos los Dofus», with «todos los Dofus» highlighted in the hero. In the site header it is «Todos los Dofus» (`TOOLS` in `src/site/shell/shell.js`) |
+| `palette` | «Oro»: the Nebuloso's palette turned to hue 45, a warm dark grey with a pale gold accent (`#f5e4b1`). Contrast is noted next to it in `config.js` |
+| `hero.fx` | `nebula`, the Nebuloso's rising motes, here in gold |
+| `egg.final` | The Dofus Vulbis, at step 200. It is also the last of the 25 Dofus del camino, so the strip is long (`LONG_ROAD`, more than 12): the eggs get their own row with the step under each one. Step 190 gives two Dofus, and every place that shows a step's Dofus shows both (`roadAt` in `src/tools/checklist/lib/assets.js`) |
+| `journal` | The Silvestre's stops and notes moved to the steps the rush repeats (`SAME_AS` in `.build/dofus/todos.py`), with the numbers of the rush |
+| `nota` | The Silvestre's example in the rush's numbers: steps 69 and 70 paused before Kodámade, 71 closes them |
+| `classicKeys` | None: there is no classic checklist to read |
+| `themeNames` | Dofus Marfil (light) and Dofus Ébano (dark) |
+| `html.icons` | Its favicons, the Vulbis egg |
+
+The fifth checklist is the Guía global (`src/dofus/global/`), a PvE progression guide from level 1 to 200. It follows no Torrente Arcano guide: its steps (one per zone and 20-level band), quests, stops and by-product achievements are generated from DofusDB data by a scheduler that lives outside the repo for now. It has no published embed, no Dofus at the end (`egg.final` is null) and no classic keys to import.
 
 ```bash
 DOFUS=global npm run dev     # the Guía global in development
 npm run build:global         # its site, in dist/global/
 ```
 
-Each checklist lives in its own folder, `silvestre/`, `hielos/`, `nebuloso/` or `global/`, and none carries a copy of `public/`: their images are the ones at the root (`__SITE_ROOT__` in `src/tools/checklist/lib/assets.js`).
+Each checklist lives in its own folder, `silvestre/`, `hielos/`, `nebuloso/`, `todos/` or `global/`, and none carries a copy of `public/`: their images are the ones at the root (`__SITE_ROOT__` in `src/tools/checklist/lib/assets.js`).
 
 Progress is stored in `localStorage` under the same keys as the previous version of the app, so anyone who already had progress keeps it. When the build changes an item's key, `ownedMoves` in `config.js` maps the old key to the new one and the steps where it now sits. On load, `store.js` moves what was marked under the old key to those per-step parts, once (`<prefix>ownedModel`, `OWNED_MODEL`). Restoring a backup does the same.
 
@@ -79,15 +99,16 @@ The build variables (`SITE`, `DOFUS`, `EMBED`, `HUB`, `INICIO`, `COSECHA`, `BASE
 
 ## Tests
 
-Run all seven suites before pushing a branch. The browser suites build into their own folder, so they never overwrite `dist/`.
+Run all eight suites before pushing a branch. The browser suites build into their own folder, so they never overwrite `dist/`.
 
 | Suite | Builds and serves | Viewport |
 |---|---|---|
 | `npm run test:unit` | Nothing: `node --test tests/unit/*.test.js` | |
 | `npm run test:e2e` | The Silvestre in `.e2e-test/silvestre/`, served by `tests/serve.js` on port 4317 like Pages: the app at `/silvestre/`, images at the root | 1440×900 |
-| `npm run test:embed` | The seven embeds in `.embed-test/`, no server | 1440×900 |
+| `npm run test:embed` | The eight embeds in `.embed-test/`, no server | 1440×900 |
 | `npm run test:hielos` | The Hielos in `.hielos-test/`, on port 4321, with the app at `/hielos/` | 1440×1000 |
 | `npm run test:nebuloso` | The Nebuloso in `.nebuloso-test/`, on port 4323, with the app at `/nebuloso/` | 1440×1000 |
+| `npm run test:todos` | The rush in `.todos-test/`, on port 4327, with the app at `/todos/` | 1440×1000 |
 | `npm run test:global` | The Guía global in `.global-test/`, on port 4322, with the app at `/global/` | 1440×1000 |
 | `npm run test:site` | The site (`SITE=1`) in `.site-test/`, on port 4325 | 1440×900 |
 
@@ -113,6 +134,7 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 | `embed.spec.js` | The Silvestre: CSS does not cross either way, checking steps, theme, diary scrolling, the header under the page's header, the classic import, the overlay and the bottom sheet on mobile |
 | `hielos.spec.js` | The Hielos on a page like `/checklist-dofus-de-los-hielos` |
 | `nebuloso.spec.js` | The Nebuloso on a page like `/checklist-nebuloso`: 26 steps, its palette inside the shadow root, its prefix, the classic import from `dofus_nebuloso_clean_v1` and its theme icons |
+| `todos.spec.js` | The rush on a page like `/checklist-todos-dofus`: 200 steps, the long strip with the Vulbis, its gold palette inside the shadow root, its prefix and its theme icons |
 | `hub.spec.js` | One card per Dofus in the manifest, in order and with its link, the Próximamente card without a link, keyboard navigation, the mouse tilt (and none with reduced motion), isolated CSS, two cards per row on mobile and the `/checklists/` preview |
 | `inicio.spec.js`, `cosecha.spec.js` | The other two widgets on their pages |
 | `guias.spec.js` | «Guías de Dofus» on a page like `/guias-dofus` (fixed header of 102, 92 and 84 px, only the snippet in the block): the `h1`, the 30 guides in Torre's order with their links, the filters and their counts, accent-insensitive search with Torre's alternate names, the empty state, the «Próximamente» cards without links, the filter bar under the page header, the mouse-only tilt, reduced motion, the theme in `guias:theme` and the `/guias-dofus/` preview |
@@ -124,6 +146,10 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 ### The Nebuloso
 
 `tests/nebuloso/` checks the same kind of things for the Nebuloso: the 26 steps without errors, its place in the site header, the nebula hero, the Dofus de los Vigilantes lighting up at step 4 and the Nebuloso at step 26, the note with steps 8 and 9, the stop of step 7, the earlier missions step 8 needs, the god steps, the spell and quest-item rows that do not count, the kamas alternative and the palette in both themes.
+
+### The rush
+
+`tests/todos/` checks what the rush adds: the 200 steps without errors, its place in the site header, the gold hero, the 25 Dofus on their own strip row with their step numbers, the two Dofus of step 190 in the diary, the detail, the map and the celebration, the Vulbis at step 200, step 200 closing the dream stops of 158, 159 and 160, the Piñata in the feminine, the stop of step 18, the note with steps 69 to 71, the Ocre note, its prefix, the palette in both themes and no horizontal overflow at 1440, 1024 and 390.
 
 ### The Guía global
 
@@ -140,8 +166,8 @@ Every push to `main` is deployed by `.github/workflows/deploy.yml`: one job that
 Order matters:
 
 1. `npm run build:site`: the home page in `dist/index.html` with `public/` (images in `dist/img/`, the `/checklists/` and `/guias-dofus/` previews) and the «La eterna cosecha» page in `dist/cosecha/`. It is the only build that empties `dist/`, so it goes first.
-2. `npm run build`, `npm run build:hielos`, `npm run build:nebuloso` and `npm run build:global`: the Silvestre in `dist/silvestre/`, the Hielos in `dist/hielos/`, the Nebuloso in `dist/nebuloso/` and the Guía global in `dist/global/`. Each empties only its own folder and none copies `public/`.
-3. The embeds: `build:embed` (`dist/embed/silvestre.js`, chunks in `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, chunks in `dist/embed/hielos-chunks/`), `build:embed:nebuloso` (`dist/embed/nebuloso.js`, chunks in `dist/embed/nebuloso-chunks/`), `build:hub`, `build:inicio`, `build:cosecha` and `build:guias`. They load their chunks and images from the absolute Pages address. Each deletes only its own files inside `dist/embed/`, so their order does not matter.
+2. `npm run build`, `npm run build:hielos`, `npm run build:nebuloso`, `npm run build:todos` and `npm run build:global`: the Silvestre in `dist/silvestre/`, the Hielos in `dist/hielos/`, the Nebuloso in `dist/nebuloso/`, the rush in `dist/todos/` and the Guía global in `dist/global/`. Each empties only its own folder and none copies `public/`.
+3. The embeds: `build:embed` (`dist/embed/silvestre.js`, chunks in `dist/embed/chunks/`), `build:embed:hielos` (`dist/embed/hielos.js`, chunks in `dist/embed/hielos-chunks/`), `build:embed:nebuloso` (`dist/embed/nebuloso.js`, chunks in `dist/embed/nebuloso-chunks/`), `build:embed:todos` (`dist/embed/todos.js`, chunks in `dist/embed/todos-chunks/`), `build:hub`, `build:inicio`, `build:cosecha` and `build:guias`. They load their chunks and images from the absolute Pages address. Each deletes only its own files inside `dist/embed/`, so their order does not matter.
 
 To check a build the way Pages serves it:
 
@@ -165,7 +191,7 @@ APP_URL=http://127.0.0.1:4318/silvestre-checklist/silvestre/ npm run test:e2e
 | `changes` | Qué cambia | Diffs the PR against its base and asks `.github/ci-paths.mjs` which suites to run |
 | `unit` | Unitarias | Always runs `npm run test:unit`; the Python `.build/tests` only when `.build/` changed |
 | `e2e` | App (1/6) to App (6/6) | The e2e suite in six shards that run at once, each with its own build |
-| `embed` | Embebido, Hielos, Nebuloso, Global y sitio | `test:embed`, `test:hielos`, `test:nebuloso`, `test:global` and `test:site` as conditional steps of one job |
+| `embed` | Embebido, Hielos, Nebuloso, Todos, Global y sitio | `test:embed`, `test:hielos`, `test:nebuloso`, `test:todos`, `test:global` and `test:site` as conditional steps of one job |
 | `tests` | Pruebas | Passes when every other job passed or was skipped. This is the check `main` requires |
 
 - The browser jobs run only when the PR touches something they cover, each suite with one retry. The folder-to-suite map is in `.github/ci-paths.mjs`, tested by `tests/unit/ci-paths.test.js`; its table is in `AGENTS.md`. A docs-only PR runs no browser suite.
