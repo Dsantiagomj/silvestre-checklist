@@ -3424,6 +3424,9 @@ a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
 .row-art.is-pair img{ grid-area:1 / 1; width:22px; height:22px; }
 .row-art.is-pair img:first-child{ transform:translate(-5px, -4px); }
 .row-art.is-pair img:last-child{ transform:translate(5px, 4px); }
+.journal-badge.is-pair img{ grid-area:1 / 1; width:30px; height:30px; }
+.journal-badge.is-pair img:first-child{ transform:translate(-7px, -5px); }
+.journal-badge.is-pair img:last-child{ transform:translate(7px, 5px); }
 .map-node.is-pair .node-egg{ grid-area:1 / 1; width:40px; height:40px; }
 .map-node.is-pair .node-egg:first-child{ transform:translateX(-12px); }
 .map-node.is-pair .node-egg:nth-child(2){ transform:translateX(12px); }

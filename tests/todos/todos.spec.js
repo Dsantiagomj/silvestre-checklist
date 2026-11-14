@@ -261,6 +261,24 @@ test.describe("dos Dofus en un paso", () => {
     expect(await srcs(page.locator("#journal .journal-banner .journal-show img"))).toEqual(["items/23004.png"]);
   });
 
+  test("en pantalla baja, el distintivo del detalle del 190 lleva los dos huevos", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await openTodos(page, { "todos:done": upTo(189) });
+    await openStep(page, 190);
+    const badge = page.locator("#journal .journal-badge");
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveClass(/\bis-pair\b/);
+    expect(await srcs(badge.locator("img"))).toEqual(PAIR);
+    const b = await badge.boundingBox();
+    expect(Math.round(b.width)).toBe(48);
+    // Los dos se ven: no quedan uno encima del otro
+    const [i1, i2] = await Promise.all((await badge.locator("img").all()).map(i => i.boundingBox()));
+    expect(Math.abs(i1.x - i2.x)).toBeGreaterThan(4);
+    await openStep(page, 200);
+    await expect(badge).not.toHaveClass(/\bis-pair\b/);
+    await expect(badge.locator("img")).toHaveCount(1);
+  });
+
   test("en el mapa, el sello y la ficha del 190 llevan los dos", async ({ page }) => {
     await openTodos(page, { "todos:done": upTo(189) }, { view: "map" });
     const node = page.locator('.map-node[data-n="190"]');
