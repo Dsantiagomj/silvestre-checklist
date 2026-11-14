@@ -169,6 +169,39 @@ html[data-theme="light"], html[data-theme="light"] body { background: #f4ecdc; }
   filter: drop-shadow(0 0 16px var(--c)) drop-shadow(0 12px 12px rgba(0, 0, 0, .8));
 }
 
+/* La corona del rush (crown en el manifiesto): el Vulbis en grande con los primordiales
+   alrededor, cada huevo en su sitio (--x, --y, --h en % del ancho de la carta) y con su halo */
+.card .crown {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+.card .crown img {
+  position: absolute;
+  left: calc(var(--x) * 1cqw);
+  top: calc(var(--y) * 1cqw);
+  height: calc(var(--h) * 1cqw);
+  width: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 10px var(--g)) drop-shadow(0 8px 8px rgba(0, 0, 0, .8));
+}
+
+/* El rótulo, sobre una píldora oscura: el fondo de arriba puede ser claro */
+.card .kick {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px 3px;
+  border-radius: 999px;
+  background: rgba(5, 6, 5, .72);
+  font: 700 clamp(11px, 4.6cqw, 14px)/1 var(--fd);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--c);
+}
+
 /* El brillo holográfico: sigue al ratón (--fx, --fy) */
 .card .foil {
   position: absolute;
@@ -225,6 +258,8 @@ html[data-theme="light"], html[data-theme="light"] body { background: #f4ecdc; }
   /* A lo ancho, el mismo encuadre la sacaría de la carta: más alta y menos a la derecha */
   .card .npc { right: calc(var(--npc-r, -14%) / 2); height: calc(var(--npc-h, 52%) * 1.4); }
   .card .egg { left: 6cqw; top: 6cqw; height: 28cqw; transform: none; }
+  /* La corona, a la mitad y a la derecha, donde iría el PNJ: el texto va abajo a la izquierda */
+  .card .crown { transform: translate(32cqw, 1cqw) scale(.66); transform-origin: 0 0; }
   .card .shade {
     background: linear-gradient(180deg, rgba(5, 6, 5, .1) 0%, rgba(5, 6, 5, 0) 30%, rgba(5, 6, 5, .75) 58%, rgba(5, 6, 5, .96) 80%);
   }

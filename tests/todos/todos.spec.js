@@ -1,0 +1,217 @@
+import { test, expect } from "@playwright/test";
+
+// Prueba de humo del Rush de todos los Dofus: lo que cambia de un checklist a otro (200 pasos,
+// sus textos, el hero dorado, los 25 Dofus del camino, el Vulbis del paso 200, las paradas de
+// los sueños que cierra ese paso, la paleta «Oro», las imágenes de la raíz). La app es la misma
+// que la del Silvestre: el resto lo prueba tests/e2e
+
+const STEPS = 200;
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+const doneOf = ns => Object.fromEntries(ns.map(n => [n, true]));
+const upTo = n => doneOf(range(1, n));
+const TALL = { width: 1440, height: 1000 };
+const LOW = { width: 1280, height: 720 };
+const MOBILE = { width: 390, height: 844 };
+
+/** Abre la app con un progreso opcional, en el diario, y recoge los errores de la página. */
+async function openTodos(page, seed = {}, { view = "diary" } = {}) {
+  const errors = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+  await page.addInitScript(([s, v]) => {
+    if (localStorage.getItem("todos:stepsView") == null) localStorage.setItem("todos:stepsView", v);
+    for (const [k, val] of Object.entries(s)) {
+      if (localStorage.getItem(k) == null) localStorage.setItem(k, typeof val === "string" ? val : JSON.stringify(val));
+    }
+  }, [seed, view]);
+  await page.goto("");
+  await expect(page.locator(view === "map" ? ".map-node" : ".diary-row")).toHaveCount(STEPS);
+  return errors;
+}
+
+const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
+
+async function openStep(page, n) {
+  await row(page, n).locator(".row-num").click();
+  await expect(page.locator("#journal .journal-num")).toHaveText(String(n));
+}
+
+/** Que la imagen se haya cargado de verdad (no un 404 con su hueco). */
+const loaded = loc => loc.evaluate(img => img.complete && img.naturalWidth > 0);
+
+test("los 200 pasos cargan sin errores, en el diario y en el mapa, con sus textos", async ({ page }) => {
+  const errors = await openTodos(page);
+  await expect(page).toHaveTitle("Rush de todos los Dofus · Checklist");
+  await expect(page.locator("#diaryTitle")).toHaveText("Los 200 pasos");
+  await expect(page.locator("footer")).toContainText("Guía original de los 200 pasos por Sandglass");
+  await page.click("#stepsViewMap");
+  await expect(page.locator(".map-node")).toHaveCount(STEPS);
+  await expect(page.locator(".map-end-name")).toHaveText("Rush de todos los Dofus");
+  await expect(page.locator(".map-end img")).toHaveAttribute("src", /\/img\/items\/23004\.png$/);
+  expect(errors).toEqual([]);
+});
+
+test("el sitio vive en todos/ y sus imágenes y favicons salen de la raíz y de su build", async ({ page, request }) => {
+  await openTodos(page);
+  // El huevo de la marca, el Vulbis, de public/img/ en la raíz: no hay otra copia en todos/
+  const egg = page.locator(".hero-egg .egg-off, #winProgress img").first();
+  await expect(egg).toHaveAttribute("src", "http://127.0.0.1:4327/img/items/23004.png");
+  expect(await loaded(egg)).toBe(true);
+  expect((await request.get("/todos/img/items/23004.png")).status()).toBe(404);
+  // Sus favicons, el huevo del Vulbis, junto a su JS
+  for (const rel of ["icon", "apple-touch-icon"]) {
+    const href = await page.locator(`link[rel="${rel}"]`).first().getAttribute("href");
+    expect(href).toMatch(/^\/todos\/assets\//);
+    expect((await request.get(href)).ok()).toBe(true);
+  }
+});
+
+test("lleva encima la cabecera del sitio, con el rush como página actual", async ({ page }) => {
+  await openTodos(page);
+  const shell = page.locator("header.dt-shell");
+  await expect(shell).toHaveCount(1);
+  expect(await shell.evaluate(el => el.nextElementSibling?.id)).toBe("root");
+  expect(await shell.getByRole("link", { name: "Dofus Tools" }).getAttribute("href")).toBe("/");
+  const nav = shell.getByRole("navigation").getByRole("link");
+  await expect(nav).toHaveCount(6);
+  await expect(nav.nth(3)).toHaveAccessibleName("Todos los Dofus");
+  await expect(nav.nth(3)).toHaveAttribute("aria-current", "page");
+  expect(await nav.nth(3).getAttribute("href")).toBe("/todos/");
+  for (const i of [0, 1, 2, 4, 5]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
+  // Detrás de la cabecera, las misiones de mundo: la ruta va por todo el Mundo de los Doce
+  await expect(shell.locator("img.dt-art")).toHaveAttribute("src", /\/img\/zones\/misiones-de-mundo\.jpg$/);
+});
+
+test.describe("pantalla alta", () => {
+  test.use({ viewport: TALL });
+
+  test("el hero lleva el huevo del Vulbis y sus motas doradas", async ({ page }) => {
+    const errors = await openTodos(page);
+    const hero = page.locator(".hero");
+    await expect(hero).toBeVisible();
+    await expect(hero).toHaveClass(/\bfx-nebula\b/);
+    const egg = hero.locator(".egg-off");
+    await expect(egg).toHaveAttribute("src", /\/img\/items\/23004\.png$/);
+    expect(await loaded(egg)).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test("con la guía terminada, el hero dice la frase del hub", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(STEPS) });
+    await expect(page.locator(".hero-title")).toHaveText("Rush de todos los Dofus");
+    await expect(page.locator(".hero-title .hl")).toHaveText("todos los Dofus");
+    await expect(page.locator(".hero-sub")).toHaveText("Del Dofawa al Vulbis: 25 Dofus en 200 pasos por todo el Mundo de los Doce.");
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "silvestre");
+  });
+
+  test("la franja lleva los 25 Dofus del camino, del Dofawa del 5 al Vulbis del 200", async ({ page }) => {
+    await openTodos(page);
+    const strip = page.locator("#winRoad");
+    await expect(strip.locator(".road-title")).toHaveText("Dofus del camino");
+    await expect(strip.locator(".road-count")).toHaveText("0/25");
+    await expect(strip.locator(".road-dofus")).toHaveCount(25);
+    await expect(strip.locator(".road-dofus").first()).toHaveAttribute("title", "Dofawa · paso 5");
+    await expect(strip.locator(".road-dofus").last()).toHaveAttribute("title", "Dofus vulbis · paso 200");
+  });
+
+  test("marcar el paso 200 da el Dofus Vulbis: en el hero, al final del mapa y en la franja", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(199) });
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "off");
+    await page.click('.diary-row[data-n="200"] .row-check');
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "silvestre");
+    await expect(page.locator(".hero-egg")).toHaveClass(/morphing/);
+    await expect(page.locator('#winRoad .road-dofus[data-step="200"]')).toHaveClass(/obtained/);
+    await expect(page.locator("#winRoad .road-count")).toHaveText("25/25");
+    await expect(page.locator("#toastTxt")).toHaveText("¡Dofus vulbis obtenido!");
+    await page.click("#stepsViewMap");
+    await expect(page.locator(".map-end")).toHaveClass(/\bdone\b/);
+  });
+
+  test("la Piñata de pino del 194 se anuncia en femenino", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(193) });
+    await page.click('.diary-row[data-n="194"] .row-check');
+    await expect(page.locator("#toastTxt")).toHaveText("¡Piñata de pino obtenida!");
+  });
+});
+
+test("el paso 200 cierra las paradas de los sueños de 158, 159 y 160", async ({ page }) => {
+  const rest = range(1, 199).filter(n => ![158, 159, 160].includes(n));
+  await openTodos(page, { "todos:done": doneOf(rest) });
+  for (const n of [158, 159, 160]) await expect(row(page, n).locator(".row-closed")).toHaveText("se cierra en el 200");
+  await expect(row(page, 200).locator(".row-closes")).toHaveText("cierra el 158, 159, 160");
+  await openStep(page, 200);
+  await expect(page.locator("#toggleBtn")).toHaveText("✓ Completar paso 200", { timeout: 15_000 });
+  await page.click("#toggleBtn");
+  for (const n of [158, 159, 160, 200]) await expect(row(page, n)).toHaveClass(/done/);
+});
+
+test("guarda con su prefijo todos:, sin tocar los de los otros checklists", async ({ page }) => {
+  await openTodos(page);
+  await page.click('.diary-row[data-n="1"] .row-check');
+  await expect(row(page, 1)).toHaveClass(/done/);
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem("todos:done")))).toEqual({ 1: true });
+  for (const key of ["silvestre:done", "hielos:done", "nebuloso:done"]) {
+    expect(await page.evaluate(k => localStorage.getItem(k), key)).toBeNull();
+  }
+});
+
+test.describe("pantalla baja", () => {
+  test.use({ viewport: LOW });
+
+  test("la nota de las pausas cuenta el ejemplo del Silvestre con sus pasos de aquí: el 69 y el 70, el 71 los cierra", async ({ page }) => {
+    await openTodos(page);
+    await page.click("#moreBtn");
+    await page.click("#notaOpen");
+    const nota = page.locator("#notaDialog");
+    await expect(nota).toBeVisible();
+    await expect(nota.locator(".nota-step")).toHaveText(["69", "70", "71"]);
+    await expect(nota.locator("figcaption")).toHaveText(
+      "Los pasos 69 y 70 se detienen ante Kodámade. En el 71 se pasa la mazmorra y se terminan los tres.");
+  });
+});
+
+test.describe("móvil", () => {
+  test.use({ viewport: MOBILE, isMobile: true, hasTouch: true });
+
+  test("el paso se abre en la hoja, sin errores", async ({ page }) => {
+    const errors = await openTodos(page);
+    await expect(page.locator(".hero")).toHaveCount(0);
+    await row(page, 190).locator(".row-num").click();
+    await expect(page.locator("#sheet")).toHaveClass(/open/);
+    await expect(page.locator("#sheetContent .journal-num")).toHaveText("190");
+    expect(errors).toEqual([]);
+  });
+});
+
+test("una parada que el texto no sitúa sale en su misión: el 18 para en «Arma letal», como el 7 del Silvestre", async ({ page }) => {
+  await page.route("https://www.torrentearcano.com/**", r => r.fulfill({ contentType: "text/html", body: "<title>guía</title>" }));
+  await openTodos(page, { "todos:done": upTo(17) });
+  await openStep(page, 18);
+  const quest = page.locator("#journal .q-item").filter({ has: page.locator(".q-name").getByText("Arma letal", { exact: true }) });
+  await expect(quest).toBeVisible({ timeout: 15_000 });
+  await expect(quest.locator(".obj-stop")).toBeVisible();
+});
+
+test("el Dofus Ocre: el aviso de los prerrequisitos lleva al paso 127", async ({ page }) => {
+  await openTodos(page);
+  await page.click("#tabPrereqs");
+  const note = page.locator("#prereqs .pr-ocre");
+  await expect(note.locator("b")).toHaveText("Ten el Dofus Ocre antes del paso 127");
+  await expect(note.locator(".step-ref")).toHaveText("paso 127");
+  await expect(page.locator("#prereqs .pr-order")).toHaveCount(0);
+});
+
+// La paleta «Oro» (palette en su config.js, lib/palette.js): el acento dorado en los botones,
+// con texto oscuro encima, en los dos temas
+for (const [theme, accent] of [["dark", "rgb(245, 228, 177)"], ["light", "rgb(240, 219, 156)"]]) {
+  test(`el acento del rush es dorado en el tema ${theme === "dark" ? "oscuro" : "claro"}`, async ({ page }) => {
+    await page.setViewportSize(TALL);
+    await openTodos(page, { "dofus-tools:theme": theme });
+    for (const sel of ["#diaryNext", "#heroNextGo", "#overlayBtn"]) {
+      expect(await page.locator(sel).evaluate(el => getComputedStyle(el).backgroundColor)).toBe(accent);
+    }
+    expect(await page.locator("#diaryNext").evaluate(el => getComputedStyle(el).color)).toBe("rgb(48, 41, 18)");
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim()))
+      .toBe("245,228,177");
+  });
+}

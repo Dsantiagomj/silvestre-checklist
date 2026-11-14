@@ -11,27 +11,43 @@ import { tilt } from "../../lib/tilt.js";
 
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;
 
-/** Una carta: la zona de fondo, el PNJ asomando, el huevo y abajo el nombre y una línea. */
+/** La corona del rush: varios huevos, cada uno en su sitio (x, y, h en % del ancho) y con su halo. */
+function crown(eggs) {
+  const box = el("div", "crown");
+  for (const e of eggs) {
+    const egg = el("img", "", { src: img(e.img), alt: "", draggable: "false" });
+    for (const [k, v] of Object.entries({ x: e.x, y: e.y, h: e.h })) egg.style.setProperty(`--${k}`, v);
+    egg.style.setProperty("--g", e.glow);
+    box.append(egg);
+  }
+  return box;
+}
+
+/** Una carta: la zona de fondo, el PNJ asomando, el huevo (o la corona) y abajo el nombre y una línea. */
 function card(tool) {
   const d = HOME.cards[tool.id];
+  const name = d.name || tool.name;
   const leadId = `home-lead-${tool.id}`;
-  const root = el("a", "card", { href: siteUrl(tool.path), "data-id": tool.id, "aria-label": tool.name, "aria-describedby": leadId });
+  const root = el("a", "card", { href: siteUrl(tool.path), "data-id": tool.id, "aria-label": name, "aria-describedby": leadId });
   root.style.setProperty("--c", d.color);
-  // El PNJ va dentro de un marco: la imagen se funde y el marco le pone el contorno y el halo
-  // después, así el halo sigue a la figura y no queda cortado en un rectángulo
-  const npc = el("div", "npc");
-  npc.append(el("img", "", { src: img(d.npc), alt: "", draggable: "false" }));
-  for (const [k, v] of Object.entries(d.npcFit || {})) npc.style.setProperty(`--npc-${k}`, v);
+  root.append(el("img", "art", { src: img(d.bg), alt: "", draggable: "false" }));
+  if (d.npc) {
+    // El PNJ va dentro de un marco: la imagen se funde y el marco le pone el contorno y el halo
+    // después, así el halo sigue a la figura y no queda cortado en un rectángulo
+    const npc = el("div", "npc");
+    npc.append(el("img", "", { src: img(d.npc), alt: "", draggable: "false" }));
+    for (const [k, v] of Object.entries(d.npcFit || {})) npc.style.setProperty(`--npc-${k}`, v);
+    root.append(npc);
+  }
   const meta = el("div", "meta");
-  meta.append(text("div", "name", tool.name), Object.assign(text("p", "lead", d.lead), { id: leadId }));
+  meta.append(text("div", "name", name), Object.assign(text("p", "lead", d.lead), { id: leadId }));
   root.append(
-    el("img", "art", { src: img(d.bg), alt: "", draggable: "false" }),
-    npc,
     el("div", "shade"),
-    el("img", "egg", { src: img(d.egg), alt: "", draggable: "false" }),
+    d.crown ? crown(d.crown) : el("img", "egg", { src: img(d.egg), alt: "", draggable: "false" }),
     el("div", "foil"),
-    meta,
   );
+  if (d.kicker) root.append(text("div", "kick", d.kicker));
+  root.append(meta);
   tilt(root);
   return root;
 }

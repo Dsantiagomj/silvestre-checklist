@@ -37,6 +37,9 @@ playwright-report/
 # Build del Nebuloso para sus pruebas (playwright.nebuloso.config.js)
 .nebuloso-test/
 
+# Build del Rush de todos los Dofus para sus pruebas (playwright.todos.config.js)
+.todos-test/
+
 # Build de la guía global para sus pruebas (playwright.global.config.js)
 .global-test/
 

@@ -3,7 +3,8 @@
 // src/site/shell/shell.js, da el nombre, el orden y el enlace). Las de los Dofus son las del
 // hub de Torrente Arcano (src/embeds/hub/manifest.js), copiadas: el sitio no carga embebidos.
 // Las rutas de imagen son relativas a public/img/. npcFit (opcional) encuadra el PNJ: h alto,
-// r derecha, t arriba, en % de la carta.
+// r derecha, t arriba, en % de la carta. Una carta sin PNJ puede llevar `crown` (varios
+// huevos) en vez de `egg`, `kicker` (la píldora de arriba) y `name` (si no, el de TOOLS).
 // ============================================================================
 export const HOME = {
   // La imagen detrás del título, fundida hacia abajo
@@ -33,6 +34,25 @@ export const HOME = {
       npc: "hub/khelebragon.png",
       npcFit: { h: "72%", r: "-30%", t: "4%" },
       lead: "Recorre Anutropía, Sramvil y Xelorium en 26 pasos, con el Dofus de los Vigilantes por el camino.",
+    },
+    todos: {
+      // Su carta lleva el nombre entero, como en el hub; el menú, «Todos los Dofus» (TOOLS)
+      name: "Rush de todos los Dofus",
+      color: "#e3c565",
+      kicker: "200 pasos",
+      bg: "zones/misiones-de-mundo.jpg",
+      // Sin PNJ ni un solo huevo: la corona, el Vulbis del paso 200 en grande con los cinco
+      // Dofus primordiales alrededor y el Ébano debajo. x, y y h en % del ancho de la carta;
+      // glow, el halo de cada huevo
+      crown: [
+        { img: "items/23002.png", glow: "#2ecd68", x: 14, y: 24, h: 22 },
+        { img: "items/23001.png", glow: "#ba374b", x: 28, y: 10.5, h: 22 },
+        { img: "items/23003.png", glow: "#1fd5d5", x: 72, y: 10.5, h: 22 },
+        { img: "items/23011.png", glow: "#ebdcb4", x: 86, y: 24, h: 22 },
+        { img: "items/23007.png", glow: "#7d6996", x: 50, y: 51, h: 18 },
+        { img: "items/23004.png", glow: "#eb4623", x: 50, y: 4.5, h: 40 },
+      ],
+      lead: "Del Dofawa al Vulbis: 25 Dofus en una sola ruta por todo el Mundo de los Doce.",
     },
     cosecha: {
       color: "#f0a336",

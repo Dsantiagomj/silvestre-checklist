@@ -79,11 +79,11 @@ test("lleva encima la cabecera del sitio, con el Nebuloso como página actual", 
   expect(await shell.evaluate(el => el.nextElementSibling?.id)).toBe("root");
   expect(await shell.getByRole("link", { name: "Dofus Tools" }).getAttribute("href")).toBe("/");
   const nav = shell.getByRole("navigation").getByRole("link");
-  await expect(nav).toHaveCount(5);
+  await expect(nav).toHaveCount(6);
   await expect(nav.nth(2)).toHaveAccessibleName("Dofus Nebuloso");
   await expect(nav.nth(2)).toHaveAttribute("aria-current", "page");
   expect(await nav.nth(2).getAttribute("href")).toBe("/nebuloso/");
-  for (const i of [0, 1, 3, 4]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
+  for (const i of [0, 1, 3, 4, 5]) await expect(nav.nth(i)).not.toHaveAttribute("aria-current");
   // Detrás de la cabecera, Xelorium, donde se lucha contra el pájaro del tiempo
   await expect(shell.locator("img.dt-art")).toHaveAttribute("src", /\/img\/zones\/xelorium\.jpg$/);
 });
