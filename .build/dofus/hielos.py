@@ -113,6 +113,9 @@ MISSING_DOFUS = {920: (7043, "items/23005.png", "Dofus de los hielos")}
 # No prerequisites note (the Silvestre's is the Dofus Ocre): no icon.
 OCRE_ICON = None
 
+# The guide says no step for a Dofus that DofusDB cannot tell: none
+ROAD_STEPS = {}
+
 
 # ---------------------------------------------------------------------------
 # build_quests_js.py
