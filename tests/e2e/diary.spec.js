@@ -1308,6 +1308,10 @@ test("la ventana de pasos abre con los Dofus del camino, conseguidos o apagados"
   expect(await filter(3)).toContain("grayscale");
   expect(await filter(1)).not.toContain("grayscale");
   await expect(road.locator(".road-step, .road-dofus.next")).toHaveCount(0);
+  // Doce caben en la fila, junto al progreso: ni la fila propia de los caminos largos (el
+  // rush) ni el número del paso bajo cada huevo
+  await expect(road).not.toHaveClass(/\bis-long\b/);
+  await expect(dofus.locator("small")).toHaveCount(0);
   // Pulsar uno abre su paso
   await dofus.nth(3).click();
   await expect(page.locator("#journal .journal-num")).toHaveText("49");

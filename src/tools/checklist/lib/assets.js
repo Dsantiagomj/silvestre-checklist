@@ -36,6 +36,11 @@ export const SOLO_ROAD = !DOFUS_ROAD.length && !!BRAND_ICON && DOFUS.egg.final !
 export const STRIP_ROAD = SOLO_ROAD ? [{ name: DOFUS.name, img: BRAND_ICON, step: DOFUS.egg.final }] : DOFUS_ROAD;
 /** Sin Dofus del camino ni Dofus propio (la guía global): ni franja ni menú de huevos. */
 export const NO_ROAD = !STRIP_ROAD.length;
+/**
+ * Un camino que no cabe en la fila de la franja junto al progreso: más de los 12 del
+ * Silvestre (los 25 del rush). Sus huevos van en su propia fila, con el paso debajo.
+ */
+export const LONG_ROAD = STRIP_ROAD.length > 12;
 
 // Las imágenes están en public/ de la raíz del sitio (__SITE_ROOT__, vite.config.js): la
 // base de la app, salvo en un Dofus que vive debajo (el Hielos, en hielos/)

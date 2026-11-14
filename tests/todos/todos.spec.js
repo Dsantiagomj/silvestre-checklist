@@ -269,3 +269,51 @@ test.describe("dos Dofus en un paso", () => {
       .toEqual(["Dofus de los hielos · paso 190", "Dofus plateado centelleante · paso 190"]);
   });
 });
+
+// Con 25 Dofus la franja no cabe en una fila junto al progreso: va en la suya, debajo, con
+// el número del paso bajo cada huevo (is-long). El Silvestre, con 12, sigue en una fila
+for (const width of [1440, 1024]) {
+  test(`a ${width}px los 25 Dofus van en su propia fila, bajo el progreso, con su paso debajo`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await openTodos(page, { "todos:done": upTo(40) });
+    const strip = page.locator("#winRoad");
+    await expect(strip).toHaveClass(/\bis-long\b/);
+    const eggs = strip.locator(".road-dofus");
+    await expect(eggs).toHaveCount(25);
+    expect(await eggs.locator("small").allTextContents()).toEqual(
+      ["5", "10", "16", "22", "28", "37", "38", "44", "75", "86", "91", "100", "116", "168", "169", "178", "181",
+        "189", "190", "190", "193", "194", "196", "199", "200"]);
+    const box = sel => strip.locator(sel).first().boundingBox();
+    const [list, prog, next, head, s] = await Promise.all(
+      [".road-list", ".win-progress", ".diary-next", ".road-head", ":scope"].map(box));
+    // Debajo de la cabecera, el progreso y «Siguiente», sin pisarlos, y dentro de la franja
+    for (const above of [prog, next, head]) expect(list.y).toBeGreaterThanOrEqual(above.y + above.height);
+    expect(list.x).toBeGreaterThanOrEqual(s.x);
+    expect(list.x + list.width).toBeLessThanOrEqual(s.x + s.width + 0.5);
+    // Una sola fila de 25, cada huevo entero en su sitio
+    const boxes = await eggs.evaluateAll(l => l.map(e => e.getBoundingClientRect().toJSON()));
+    for (const b of boxes) expect(Math.abs(b.y - boxes[0].y)).toBeLessThan(1);
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5);
+    // El progreso, a la derecha y no más ancho de 460px
+    expect(prog.width).toBeLessThanOrEqual(460);
+    expect(Math.abs(prog.x + prog.width - next.x)).toBeLessThan(40);
+    // El número, en tinta dorada si se tiene; apagado si no
+    const color = i => eggs.nth(i).locator("small").evaluate(el => getComputedStyle(el).color);
+    expect(await color(0)).not.toBe(await color(24));
+  });
+}
+
+// Nada se sale de lado: ni la cabecera, ni la barra de la ventana, ni la franja de los Dofus
+for (const viewport of [TALL, { width: 1024, height: 900 }, MOBILE]) {
+  test(`a ${viewport.width}px nada se sale de lado`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const errors = await openTodos(page, { "todos:done": upTo(40) });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    for (const el of await page.locator("header.dt-shell a, #winBar button:visible, #winRoad .road-dofus:visible").all()) {
+      const b = await el.boundingBox();
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width).toBeLessThanOrEqual(viewport.width);
+    }
+    expect(errors).toEqual([]);
+  });
+}
