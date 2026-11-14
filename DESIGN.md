@@ -99,7 +99,7 @@ Each card sets `--c`; the CSS uses it for the border ring, the name, the hover g
 | Silvestre | `#b7dc69` | `#b7dc69`, titles `#cbee8f` (`src/tools/checklist/styles/global.css`) | `#0d0e0c` | `#3b6512` |
 | Hielos | `#9fd8f0` | `#9fd8f0`, titles `#c8ecfa` (`palette` in `hielos/config.js`) | `#0b0e12` | `#1b5c7d` |
 | Nebuloso | `#c3b1f5` | `#c3b1f5`, titles `#ddd2fb` (`palette` in `nebuloso/config.js`), from the egg's lavender halo | `#0d0b13` | `#4f3a9c` |
-| Rush de todos los Dofus | `#e3c565` | `#f5e4b1`, titles `#fbf1d2` (`palette` in `todos/config.js`, «Oro»: the Nebuloso's palette turned to hue 45) | `#13110b` | `#9c843a` (3.6:1 on white, below AA, as in the approved mockup) |
+| Rush de todos los Dofus | `#e3c565` | `#f5e4b1`, titles `#fbf1d2` (`palette` in `todos/config.js`, «Oro»: the Nebuloso's palette turned to hue 45) | `#13110b` | `#7a672d` (5.5:1 on white; darker than the approved mockup so it passes AA) |
 | Próximamente | `#e3c565` | | | |
 
 ### Spacing and shape
