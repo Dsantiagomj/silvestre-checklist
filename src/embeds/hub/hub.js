@@ -9,7 +9,18 @@ import { tilt } from "../../lib/tilt.js";
 // Las imágenes salen de GitHub Pages: en el embebido la base es la dirección del sitio
 const img = rel => `${import.meta.env.BASE_URL}img/${rel}`;
 
-/** Una carta: la zona de fondo, el PNJ asomando, el huevo y el texto abajo. La bloqueada no enlaza. */
+/** La corona del rush: varios huevos, cada uno en su sitio (x, y, h en % del ancho) y con su halo. */
+function crown(eggs) {
+  const box = el("div", "crown");
+  for (const e of eggs) {
+    const egg = el("img", "", { src: img(e.img), alt: "", draggable: "false" });
+    for (const [k, v] of Object.entries({ x: e.x, y: e.y, h: e.h, g: e.glow })) egg.style.setProperty(`--${k}`, v);
+    box.append(egg);
+  }
+  return box;
+}
+
+/** Una carta: la zona de fondo, el PNJ asomando, el huevo (o la corona) y el texto abajo. La bloqueada no enlaza. */
 function card(d) {
   const leadId = `hub-lead-${d.id}`;
   const root = d.locked
@@ -27,7 +38,7 @@ function card(d) {
     for (const [k, v] of Object.entries(d.npcFit || {})) npc.style.setProperty(`--npc-${k}`, v);
     root.append(npc);
   }
-  root.append(el("div", "shade"), el("img", "egg", { src: img(d.egg), alt: "", draggable: "false" }), el("div", "foil"));
+  root.append(el("div", "shade"), d.crown ? crown(d.crown) : el("img", "egg", { src: img(d.egg), alt: "", draggable: "false" }), el("div", "foil"));
   if (d.kicker) root.append(text("div", "kick", d.kicker));
   const meta = el("div", "meta");
   meta.append(text("div", "name", d.title || d.name), Object.assign(text("p", "lead", d.lead), { id: leadId }));
