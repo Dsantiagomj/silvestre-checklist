@@ -112,8 +112,12 @@ STEP_ZONE = {n: (_zone(raw), _TIER[n]) for n, raw in enumerate(_STEPS, 1)}
 # "completando las misiones de los incisos 170, 171 y 178" or ", y se terminan las misiones
 # de los incisos 173, 175 y 178". 151 finishes "Las cuatro voluntades", which 121 leaves at
 # its 2nd objective (the Silvestre's 87 and 73). 168's "Misión 7: Una voz de cristal" ends
-# with "se termina con el logro “El mar por legado”", the achievement of step 166.
-CLOSES = {49: [48], 103: [102], 144: [143], 151: [121], 168: [166], 178: [170, 171, 173, 175]}
+# with "se termina con el logro “El mar por legado”", the achievement of step 166. 158, 159
+# and 160 stop "hasta tener que dropear en sueños": only the optional incisos I and II (a note
+# on 160) would finish them there, so without that branch nothing closed them; 200, «Sueños
+# de dragón» complete, goes through the dreams and finishes them.
+CLOSES = {49: [48], 103: [102], 144: [143], 151: [121], 168: [166], 178: [170, 171, 173, 175],
+          200: [158, 159, 160]}
 
 # Earlier steps a step updates that its text does not let import_guide.py read ("para
 # actualizar la misión del inciso 62": the infinitive), and 136, which finishes only mission
