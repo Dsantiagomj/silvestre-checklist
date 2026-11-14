@@ -1,6 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { STEPS, ZONE_COLOR } from "@dofus/steps.js";
-import { BRAND_ICON, DOFUS_ROAD, imgUrl } from "../lib/assets.js";
+import { BRAND_ICON, imgUrl, roadAt } from "../lib/assets.js";
 import { CLOSED_BY, bannerFigure, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { prefersReducedMotion } from "../lib/motion.js";
 import {
@@ -11,8 +11,6 @@ import MapCard from "./MapCard.jsx";
 import { activeElement, eventTarget } from "../lib/root.js";
 import DOFUS from "@dofus/config.js";
 
-const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
-
 /**
  * Las figuras del mapa (jefes y huevos de los sellos), pedidas cuando la página queda
  * libre: así el primer cambio del diario al mapa ya las tiene y no espera a la red.
@@ -22,7 +20,7 @@ function prefetchMapFigures() {
   for (const st of STEPS) {
     const boss = resolvedBoss(st.n);
     if (boss) urls.add(imgUrl(boss.img));
-    if (ROAD_AT[st.n]) urls.add(imgUrl(ROAD_AT[st.n].img));
+    for (const d of roadAt(st.n)) urls.add(imgUrl(d.img));
   }
   for (const url of urls) {
     const img = new Image();
@@ -297,17 +295,17 @@ const Nodes = memo(function Nodes({ pos, done, filters, here, selected, linked, 
   const links = new Set(linked ? linked.split(",").map(Number) : []);
   return STEPS.map((st, i) => {
     const n = st.n;
-    const road = ROAD_AT[n];
+    const road = roadAt(n);
     const boss = resolvedBoss(n);
     const cls = "map-node" + (done[n] ? " done" : "") + (n === here ? " current" : "") + (n === selected ? " selected" : "") + (links.has(n) ? " linked" : "") +
-      (road ? " dofus" : "") + (stepMatchesFilters({ filters }, st) ? "" : " dimmed");
+      (road.length ? " dofus" : "") + (road.length > 1 ? " is-pair" : "") + (stepMatchesFilters({ filters }, st) ? "" : " dimmed");
     return (
       <button key={n} type="button" className={cls} data-n={n}
         style={{ left: pos[i].x, top: pos[i].y, "--zone-color": ZONE_COLOR[st.zone] }}
         aria-label={`Paso ${n}: ${stepTitle(st)}${done[n] ? " (hecho)" : ""}`}
         aria-current={n === here ? "step" : undefined}
         onClick={onPick}>
-        {road && <img className="node-egg" src={imgUrl(road.img)} alt="" decoding="async" />}
+        {road.map(d => <img key={d.img} className="node-egg" src={imgUrl(d.img)} alt="" decoding="async" />)}
         <span className="node-num">{n}</span>
         {boss && <img className="node-boss" src={imgUrl(boss.img)} alt="" loading="lazy" decoding="async" />}
         {n === here && <span className="map-here" aria-hidden="true">Estás aquí</span>}

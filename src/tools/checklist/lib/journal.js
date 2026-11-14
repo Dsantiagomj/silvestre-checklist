@@ -2,7 +2,7 @@
 // Diario de pasos: lo que la lista y el detalle derivan de la guía
 // ---------------------------------------------------------------------------
 import { STEPS } from "@dofus/steps.js";
-import { DOFUS_ROAD, OBJ_ICONS, assetsFor } from "./assets.js";
+import { OBJ_ICONS, assetsFor, namesList, roadAt } from "./assets.js";
 import FIGURES from "@dofus/figures.json";
 import PLANS from "@dofus/plans.json";
 import DOFUS from "@dofus/config.js";
@@ -142,16 +142,18 @@ export function bossesIn(n, text) {
     .sort((x, y) => x.at - y.at)
     .map(x => x.b);
 }
-const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 
 /**
- * La figura del estandarte del paso: el Dofus que da; si no, la elegida para su logro
- * (el dragón primordial, el jinete, Draconiros, Silvosse) o el PNJ que lo empieza
- * (build_figures.py); y, si no hay nada, el jefe que resuelve.
+ * La figura del estandarte del paso: el Dofus que da (con varios, `imgs` los lleva todos y
+ * `name` los nombra juntos); si no, la elegida para su logro (el dragón primordial, el
+ * jinete, Draconiros, Silvosse) o el PNJ que lo empieza (build_figures.py); y, si no hay
+ * nada, el jefe que resuelve.
  */
 export function bannerFigure(n) {
-  const egg = ROAD_AT[n];
-  if (egg) return { img: egg.img, name: egg.name, as: "Se gana", kind: "egg" };
+  const eggs = roadAt(n);
+  if (eggs.length) {
+    return { img: eggs[0].img, imgs: eggs.map(d => d.img), name: namesList(eggs.map(d => d.name)), as: "Se gana", kind: "egg" };
+  }
   const f = FIGURES[n]?.f;
   if (f) return { ...f, kind: "figure" };
   const boss = resolvedBoss(n);
