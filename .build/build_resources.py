@@ -7,7 +7,7 @@ Where it lists a crafted quest item instead (the prototypes of Â«La desglaciaciÃ
 Silvestre step 26), the step gets its ingredients: see expand_crafted.
 
 Reads  : .build/lists/<dofus>/torrentearcano.json (written by import_guide.py)
-Checks : .build/lists/<dofus>/compilado.txt, the page's own compiled list
+Checks : .build/lists/<dofus>/compilado.txt, the page's own compiled list (if the guide has one)
 Caches : .build/data/item_lookup_cache.json (items by name), .build/data/crafts.json
          (the recipes of crafted quest items and their ingredients, by id)
 Writes : src/dofus/<dofus>/resources.json and the item images in public/img/items/
@@ -340,7 +340,11 @@ def expand_crafted(rows, recipe, kind, name):
 
 
 def check_against_compiled(steps, items):
-    """The page's compiled list must equal the sum of every step (prerequisites included)."""
+    """The page's compiled list must equal the sum of every step (prerequisites included). A
+    guide with no list (todos: Sandglass's PDF lists no items) has nothing to check."""
+    if not COMPILED.exists():
+        print(f"sin compilado en {COMPILED.parent.name}/: no se compara")
+        return
     want = {}
     section = None
     for raw in COMPILED.read_text(encoding="utf-8").splitlines():
