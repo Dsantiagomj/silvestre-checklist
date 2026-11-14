@@ -186,7 +186,17 @@ def achievement_quests(ach):
     return out
 
 
-UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
+UNTIL = re.compile(r"hasta\s+(?:llegar\s+a\s+|completar\s+)?la\s+misi[oó]n\s+(\d+)", re.I)
+# "dejando pendiente únicamente la misión 7" (todos): the whole achievement, with that one
+# left at the step's stop
+PENDING_ONLY = re.compile(r"(?:dejando|dejar)\s+pendiente\s+únicamente\s+la\s+misi[oó]n\s+\d+", re.I)
+# "hasta la misión adjunta: Cómo perder la pluma" (todos): a quest attached to the
+# achievement and none of its missions; the step adds it by hand (STEP_EXTRA)
+ATTACHED = re.compile(r"\bmisi[oó]n\s+adjunta\b", re.I)
+# A green that says which other missions of the achievement the step does: "Se realizan
+# las misiones 1, 3, 4, 5, 6, 8, 9 y 10 del logro "Escupe tu veneno"" (todos)
+REALIZED = re.compile(r"\bse\s+realizan\s+las\s+misiones\s+(\d+(?:\s*(?:,|y)\s*\d+)*)\s+del\s+logro\s+\"([^\"]+)\"",
+                      re.I)
 # "misión 4", "misión 4: Nombre" or, with no number, "misión: Birk, hija de Bork." (step 83)
 MENTION = re.compile(r"misi[oó]n(?:es)?(?:\s+(\d+))?(\s*:\s*\"?)?", re.I)
 # Names the guide misspells, as DofusDB writes them (per Dofus, in .build/dofus/<id>.py)
@@ -263,9 +273,11 @@ def missions_for(text, start, names=(), in_text_order=False):
     segment = text[start:nxt.start() if nxt else len(text)]
     for wrong, right in MISSION_TYPOS.items():
         segment = segment.replace(wrong, right)
+    if PENDING_ONLY.search(segment):
+        return None
+    if ATTACHED.search(segment):
+        return []
     until = UNTIL.search(segment)
-    if until:
-        return list(range(1, int(until[1]) + 1))
     nums, named = [], []
     for m in MENTION.finditer(segment):
         by_name = named_mission(segment[m.end():], names) if m[2] else None
@@ -273,12 +285,33 @@ def missions_for(text, start, names=(), in_text_order=False):
             nums.append(by_name or int(m[1]))
         elif by_name:
             named.append(by_name)
+    if until:
+        # 1 to N, and any later mission it names too ("hasta la misión 4 …, misión 6")
+        last = int(until[1])
+        return list(range(1, last + 1)) + sorted({k for k in nums if k > last})
     # Mentions by name alone count only where the guide numbers none (step 1 of Hielos
     # numbers its mission and then names the three it may be)
     nums = nums or named
     if in_text_order:
         return list(dict.fromkeys(nums)) or None
     return sorted(set(nums)) or None
+
+
+def realized(marks):
+    """{achievement name: [mission numbers]} the step's greens say it does besides its own
+    ("Se realizan las misiones 2, 3 y 10 del logro "Carpe Diem""), from its marks."""
+    out = {}
+    for kind, text in marks:
+        if kind == "done":
+            for nums, name in REALIZED.findall(text):
+                out.setdefault(name, []).extend(int(k) for k in re.findall(r"\d+", nums))
+    return out
+
+
+def with_realized(wanted, more):
+    """The step's missions of an achievement plus the ones a green adds, in order. None (the
+    whole achievement) stays None."""
+    return wanted if wanted is None or not more else sorted(set(wanted) | set(more))
 
 
 ALIGN_STEP = re.compile(r"Alineamiento\s+Bontariano:\s*Misi[oó]n\s+(\d+)", re.I)
@@ -319,6 +352,7 @@ def step_quest_ids(step, achievements, marks, quests):
     misión 2"), then quests matched by name, then the ones the step only has taken."""
     base, notes = marks.get(step["n"], (None, []))
     base = base or step["text"]
+    done_too = realized(notes)
     included, main, extra, named = [], [], [], []
     for a in step["assets"]:
         if a["kind"] == "quest":
@@ -327,10 +361,16 @@ def step_quest_ids(step, achievements, marks, quests):
             ordered = achievement_quests(achievements[a["id"]])
             pick = lambda wanted: [ordered[n - 1] for n in wanted if 0 < n <= len(ordered)]
             pos = base.find(a["matched_on"])
+            more = done_too.get(a["matched_on"].rstrip(". "), [])
             if pos >= 0:
                 names = [quests[q]["name"]["es"] if q in quests else None for q in ordered]
-                wanted = missions_for(base, pos, names, step["n"] in IN_TEXT_ORDER)
+                wanted = with_realized(missions_for(base, pos, names, step["n"] in IN_TEXT_ORDER), more)
                 main.append((pos, ordered if wanted is None else pick(wanted)))
+                continue
+            # Only in a green that says the step does them ("Se realizan las misiones 2, 3…
+            # del logro "Carpe Diem"", in an alignment step)
+            if more:
+                extra += pick(more)
                 continue
             # Only in a note: the missions it names, or the whole achievement when the
             # note says the step includes it ("Este paso incluye también el logro X").
@@ -363,11 +403,12 @@ def step_plan(step, achievements, marks, quests, images):
     the step asks for: "all", "upto" (missions 1..N) or "some" (the numbered ones).
     An alignment step ("Alineamiento Bontariano: Misión 29") is {"t": "align", "n": 29}.
     """
-    base, _ = marks.get(step["n"], (None, []))
+    base, notes = marks.get(step["n"], (None, []))
     base = base or step["text"]
     align = ALIGN_STEP.search(base)
     if align:
         return [{"t": "align", "n": int(align[1])}]
+    done_too = realized(notes)
     found = []
     for a in step["assets"]:
         if a["kind"] != "achievement" or a["id"] not in achievements:
@@ -382,8 +423,13 @@ def step_plan(step, achievements, marks, quests, images):
                  if q in quests or isinstance(q, str) else None for q in ordered]
         nxt = LOGRO.search(base, pos + 1)
         segment = base[pos:nxt.start() if nxt else len(base)]
-        wanted = missions_for(base, pos, names)
-        mode = "all" if wanted is None else "upto" if UNTIL.search(segment) else "some"
+        wanted = with_realized(missions_for(base, pos, names), done_too.get(a["matched_on"].rstrip(". "), []))
+        # "hasta la misión adjunta: X": none of its missions, so no card for it
+        if wanted == []:
+            continue
+        # "upto" only when it is exactly 1 to N: a later mission or a green's make it "some"
+        upto = UNTIL.search(segment) and wanted == list(range(1, len(wanted or []) + 1))
+        mode = "all" if wanted is None else "upto" if upto else "some"
         entry = {"t": "a", "id": a["id"], "name": ach["name"]["es"], "img": images.get(a["id"]),
                  "m": names, "mode": mode, "on": wanted or []}
         # Las opcionales: el diario las nombra en la nota y quests.json les da su tipo
