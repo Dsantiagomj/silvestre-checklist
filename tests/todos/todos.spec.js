@@ -216,6 +216,27 @@ for (const [theme, accent] of [["dark", "rgb(245, 228, 177)"], ["light", "rgb(24
   });
 }
 
+// Los cuatro checklists comparten origen y clave (lib/shared.js): lo terminado en el Silvestre,
+// el Hielos o el Nebuloso sale hecho en el rush, y el rush publica lo suyo para los tres
+test("lo terminado en los otros tres checklists sale hecho aquí, y el rush publica lo suyo", async ({ page }) => {
+  const others = {
+    silvestre: { name: "Dofus Silvestre", quests: ["657"], owned: [] },
+    hielos: { name: "Dofus de los Hielos", quests: ["577"], owned: [] },
+    nebuloso: { name: "Dofus Nebuloso", quests: ["1608"], owned: [] },
+  };
+  const errors = await openTodos(page, { "dofus-checklists:shared": others });
+  // Cada uno de esos pasos lleva solo esa misión («Barnabé en el espacio», «Pesca en aguas
+  // congeladas», «El desaparecido de Sufokia»): se marcan solos. El 1 no tiene nada de eso
+  for (const n of [12, 50, 90]) await expect(row(page, n)).toHaveClass(/\bdone\b/);
+  await expect(row(page, 1)).not.toHaveClass(/\bdone\b/);
+  // El rush publica su entrada al lado, sin tocar las de los demás
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("dofus-checklists:shared")).todos?.name))
+    .toBe("Rush de todos los Dofus");
+  const shared = await page.evaluate(() => JSON.parse(localStorage.getItem("dofus-checklists:shared")));
+  for (const [id, e] of Object.entries(others)) expect(shared[id]).toEqual(e);
+  expect(errors).toEqual([]);
+});
+
 // En claro, la tinta dorada y el texto apagado se leen sobre los fondos del tema: 4,5:1 o más
 // (WCAG AA) sobre el fondo, los paneles y los huecos
 test("en el tema claro, la tinta dorada y el texto apagado pasan el contraste AA", async ({ page }) => {
