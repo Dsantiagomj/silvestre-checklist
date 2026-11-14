@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // Prueba de humo del Rush de todos los Dofus: lo que cambia de un checklist a otro (200 pasos,
-// sus textos, el hero dorado, los 25 Dofus del camino, el Vulbis del paso 200, las paradas de
+// sus textos, el hero dorado, los 26 Dofus del camino, el Vulbis del paso 200, las paradas de
 // los sueños que cierra ese paso, la paleta «Oro», las imágenes de la raíz). La app es la misma
 // que la del Silvestre: el resto lo prueba tests/e2e
 
@@ -100,16 +100,18 @@ test.describe("pantalla alta", () => {
     await openTodos(page, { "todos:done": upTo(STEPS) });
     await expect(page.locator(".hero-title")).toHaveText("Rush de todos los Dofus");
     await expect(page.locator(".hero-title .hl")).toHaveText("todos los Dofus");
-    await expect(page.locator(".hero-sub")).toHaveText("Del Dofawa al Vulbis: 25 Dofus en 200 pasos por todo el Mundo de los Doce.");
+    await expect(page.locator(".hero-sub")).toHaveText("Del Dofawa al Vulbis: 26 Dofus en 200 pasos por todo el Mundo de los Doce.");
     await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "silvestre");
   });
 
-  test("la franja lleva los 25 Dofus del camino, del Dofawa del 5 al Vulbis del 200", async ({ page }) => {
+  test("la franja lleva los 26 Dofus del camino, del Dofawa del 5 al Vulbis del 200, con el Ocre en el 127", async ({ page }) => {
     await openTodos(page);
     const strip = page.locator("#winRoad");
     await expect(strip.locator(".road-title")).toHaveText("Dofus del camino");
-    await expect(strip.locator(".road-count")).toHaveText("0/25");
-    await expect(strip.locator(".road-dofus")).toHaveCount(25);
+    await expect(strip.locator(".road-count")).toHaveText("0/26");
+    await expect(strip.locator(".road-dofus")).toHaveCount(26);
+    await expect(strip.locator('.road-dofus[data-step="127"]')).toHaveAttribute("title", "Dofus Ocre · paso 127");
+    await expect(strip.locator('.road-dofus[data-step="127"] img')).toHaveAttribute("src", /items\/23012\.png$/);
     await expect(strip.locator(".road-dofus").first()).toHaveAttribute("title", "Dofawa · paso 5");
     await expect(strip.locator(".road-dofus").last()).toHaveAttribute("title", "Dofus vulbis · paso 200");
   });
@@ -121,7 +123,7 @@ test.describe("pantalla alta", () => {
     await expect(page.locator(".hero-egg")).toHaveAttribute("data-stage", "silvestre");
     await expect(page.locator(".hero-egg")).toHaveClass(/morphing/);
     await expect(page.locator('#winRoad .road-dofus[data-step="200"]')).toHaveClass(/obtained/);
-    await expect(page.locator("#winRoad .road-count")).toHaveText("25/25");
+    await expect(page.locator("#winRoad .road-count")).toHaveText("26/26");
     await expect(page.locator("#toastTxt")).toHaveText("¡Dofus vulbis obtenido!");
     await page.click("#stepsViewMap");
     await expect(page.locator(".map-end")).toHaveClass(/\bdone\b/);
@@ -237,6 +239,15 @@ test("lo terminado en los otros tres checklists sale hecho aquí, y el rush publ
   expect(errors).toEqual([]);
 });
 
+// El PDF deja dos «xxx» en el 199: el Parangón de potencia se dropea en el 111 y, si no
+// salió ahí, en la ronda de sueños del 160
+test("el paso 199 dice dónde se dropea el Parangón de potencia: el 111 o, si no, el 160", async ({ page }) => {
+  await openTodos(page);
+  await openStep(page, 199);
+  await expect(page.locator("#journal")).toContainText(
+    "parangón de potencia del inciso 111 para poder continuar, en caso tal de que en el inciso 160 no se haya dropeado aún");
+});
+
 // En claro, la tinta dorada y el texto apagado se leen sobre los fondos del tema: 4,5:1 o más
 // (WCAG AA) sobre el fondo, los paneles y los huecos
 test("en el tema claro, la tinta dorada y el texto apagado pasan el contraste AA", async ({ page }) => {
@@ -313,7 +324,7 @@ test.describe("dos Dofus en un paso", () => {
   test("marcar el 190 enciende y celebra los dos, y el aviso los nombra", async ({ page }) => {
     await openTodos(page, { "todos:done": upTo(189) });
     const strip = page.locator("#winRoad");
-    await expect(strip.locator(".road-count")).toHaveText("18/25");
+    await expect(strip.locator(".road-count")).toHaveText("19/26");
     // Quién se lleva la celebración («won»): se apunta al ponerla, que dura menos de un segundo
     await page.evaluate(() => {
       window.__won = [];
@@ -325,25 +336,25 @@ test.describe("dos Dofus en un paso", () => {
     const eggs = strip.locator('.road-dofus[data-step="190"]');
     await expect(eggs).toHaveCount(2);
     for (const egg of await eggs.all()) await expect(egg).toHaveClass(/obtained/);
-    await expect(strip.locator(".road-count")).toHaveText("20/25");
+    await expect(strip.locator(".road-count")).toHaveText("21/26");
     await expect(page.locator("#toastTxt")).toHaveText(`¡${NAMES} obtenidos!`);
     await expect.poll(() => page.evaluate(() => window.__won.slice().sort()))
       .toEqual(["Dofus de los hielos · paso 190", "Dofus plateado centelleante · paso 190"]);
   });
 });
 
-// Con 25 Dofus la franja no cabe en una fila junto al progreso: va en la suya, debajo, con
+// Con 26 Dofus la franja no cabe en una fila junto al progreso: va en la suya, debajo, con
 // el número del paso bajo cada huevo (is-long). El Silvestre, con 12, sigue en una fila
 for (const width of [1440, 1024]) {
-  test(`a ${width}px los 25 Dofus van en su propia fila, bajo el progreso, con su paso debajo`, async ({ page }) => {
+  test(`a ${width}px los 26 Dofus van en su propia fila, bajo el progreso, con su paso debajo`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await openTodos(page, { "todos:done": upTo(40) });
     const strip = page.locator("#winRoad");
     await expect(strip).toHaveClass(/\bis-long\b/);
     const eggs = strip.locator(".road-dofus");
-    await expect(eggs).toHaveCount(25);
+    await expect(eggs).toHaveCount(26);
     expect(await eggs.locator("small").allTextContents()).toEqual(
-      ["5", "10", "16", "22", "28", "37", "38", "44", "75", "86", "91", "100", "116", "168", "169", "178", "181",
+      ["5", "10", "16", "22", "28", "37", "38", "44", "75", "86", "91", "100", "116", "127", "168", "169", "178", "181",
         "189", "190", "190", "193", "194", "196", "199", "200"]);
     const box = sel => strip.locator(sel).first().boundingBox();
     const [list, prog, next, head, s] = await Promise.all(
@@ -352,7 +363,7 @@ for (const width of [1440, 1024]) {
     for (const above of [prog, next, head]) expect(list.y).toBeGreaterThanOrEqual(above.y + above.height);
     expect(list.x).toBeGreaterThanOrEqual(s.x);
     expect(list.x + list.width).toBeLessThanOrEqual(s.x + s.width + 0.5);
-    // Una sola fila de 25, cada huevo entero en su sitio
+    // Una sola fila de 26, cada huevo entero en su sitio
     const boxes = await eggs.evaluateAll(l => l.map(e => e.getBoundingClientRect().toJSON()));
     for (const b of boxes) expect(Math.abs(b.y - boxes[0].y)).toBeLessThan(1);
     for (let i = 1; i < boxes.length; i++) expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5);

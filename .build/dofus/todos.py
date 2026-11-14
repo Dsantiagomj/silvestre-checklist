@@ -1,6 +1,6 @@
 """El Rush de todos los Dofus: what the pipeline needs to know about its guide.
 
-Sandglass's 200-step rush through about 25 Dofus, made for Torrente Arcano, whose page will
+Sandglass's 200-step rush through 26 Dofus, made for Torrente Arcano, whose page will
 be checklist-todos-dofus. There is no data page and no classic checklist: the only source is
 his PDF (titled «Rush del Dofus Silvestre»), transcribed with its colours into
 .build/lists/todos/torrentearcano.json, the snapshot's own form (import_guide.read_source).
@@ -146,8 +146,9 @@ UPDATES = {49: [47], 63: [62], 103: [101], 136: [134], 142: [141]}
 #     Parangón de potencia of step 111: a note on 160, quoting them, and no steps of their
 #     own (they would renumber the rest). The names go without quotes so no quest of "Sueños
 #     de dragón" joins step 160.
-#   199: the PDF leaves the step of the Parangón de potencia as "xxx" (and writes "inicio"
-#     once): it is 111, "Hasta tener que dropear el Parangón de potencia".
+#   199: the PDF leaves two steps as "xxx" (and writes "inicio" once): the Parangón de
+#     potencia drops in 111 ("Hasta tener que dropear el Parangón de potencia") or, if not
+#     there, in the dream round of 160 (Torre's correction).
 _ESPIRITU = "con el ídolo del dios Sadida"
 TEXT_FIXES = {
     45: [("Misión 29. (Hasta tener que pasar Nelwynn)",
@@ -183,7 +184,7 @@ TEXT_FIXES = {
            " Logro Sueños de dragón completo: «Se obtiene el Dofus Vulbis», y el inciso 200 queda hecho aquí. Si"
            " no es así, se sigue con el inciso 161.[[/BLUE]]")],
     199: [("parangón de potencia del inciso xxx", "parangón de potencia del inciso 111"),
-          ("en el inicio xxx no se haya dropeado", "en el inciso 111 no se haya dropeado")],
+          ("en el inicio xxx no se haya dropeado", "en el inciso 160 no se haya dropeado")],
 }
 
 
@@ -259,11 +260,15 @@ PREREQ_SPELLS = {
 
 # Dofus DofusDB lists as no reward: achievement id -> (item id, icon, name). "Una odisea en
 # tres dimensiones" gives the Dofus de los Vigilantes for its four achievements; the last of
-# them, "Las apariencias engañan", is step 91 ("Se obtiene el Dofus Vigilantes"). No Dofus
-# Ocre: the PDF asks for it from step 127 and its "El fin de la eternidad" says no "Se
-# obtiene". No Piñata de pino on "El secreto de los dofus: Prólogo" either, as in the
-# Silvestre: the PDF gives it at 194, after Grunob (ROAD_STEPS).
-MISSING_DOFUS = {1186: (16061, "items/23020.png", "Dofus de los vigilantes")}
+# them, "Las apariencias engañan", is step 91 ("Se obtiene el Dofus Vigilantes"). "El fin de
+# la eternidad" (step 127) finishes "La eterna cosecha", which gives the Dofus Ocre, as in the
+# Silvestre's 79: the PDF writes no "Se obtiene" there, but Torre counts it among the rush's 26
+# Dofus. No Piñata de pino on "El secreto de los dofus: Prólogo", as in the Silvestre: the PDF
+# gives it at 194, after Grunob (ROAD_STEPS).
+MISSING_DOFUS = {
+    1186: (16061, "items/23020.png", "Dofus de los vigilantes"),
+    565: (7754, "items/23012.png", "Dofus Ocre"),
+}
 
 # Where the PDF says each Dofus is obtained (its purple «Se obtiene…») and DofusDB's road does
 # not: item id -> step. The ones a quest gives and no achievement rewards: the Dofus

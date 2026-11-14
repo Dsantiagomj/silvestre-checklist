@@ -1,6 +1,6 @@
 // ============================================================================
 // EL DOFUS DE ESTE CHECKLIST — todo lo que la app dice o guarda propio del Rush de todos los
-// Dofus (DOFUS=todos), la guía de Sandglass para Torrente Arcano: 200 pasos y 25 Dofus por el
+// Dofus (DOFUS=todos), la guía de Sandglass para Torrente Arcano: 200 pasos y 26 Dofus por el
 // camino, hasta el Dofus Vulbis del paso 200. Los datos generados por .build/ con --dofus todos
 // están junto a este archivo. Sin imports: vite.config.js también lo lee.
 // ============================================================================
@@ -15,7 +15,7 @@ export default {
   // index.html: el título de la pestaña, la descripción y el comentario sobre el favicon
   html: {
     title: "Rush de todos los Dofus · Checklist",
-    description: "Checklist del Rush de todos los Dofus — guía de Sandglass para Torrente Arcano: 25 Dofus en 200 pasos, con sistema de progreso ponderado por esfuerzo.",
+    description: "Checklist del Rush de todos los Dofus — guía de Sandglass para Torrente Arcano: 26 Dofus en 200 pasos, con sistema de progreso ponderado por esfuerzo.",
     iconNote: "El huevo del Dofus Vulbis (DofusDB, objeto 6980, icono 23004), el último del camino y el mismo de la marca",
     // Sus favicons (vite.config.js), en vez de los del Silvestre de public/: el mismo huevo,
     // y el de Apple sobre fondo oscuro con un halo dorado
@@ -32,7 +32,7 @@ export default {
     titleLead: "Rush de",
     // El hero con la guía terminada
     heroEyebrow: "Guía de Sandglass",
-    heroSub: "Del Dofawa al Vulbis: 25 Dofus en 200 pasos por todo el Mundo de los Doce.",
+    heroSub: "Del Dofawa al Vulbis: 26 Dofus en 200 pasos por todo el Mundo de los Doce.",
     // El título (para lectores de pantalla) de la ventana de pasos
     stepsTitle: "Los 200 pasos",
     // El pie: quién escribió la guía

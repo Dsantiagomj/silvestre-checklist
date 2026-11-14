@@ -51,7 +51,7 @@ npm run build:embed:nebuloso   # its embed, in dist/embed/nebuloso.js
 | `themeNames` | Dofus de los Vigilantes (light) and Dofus Nebuloso (dark) |
 | `html.icons` | Its favicons, the Nebuloso egg |
 
-The fourth one is the Rush de todos los Dofus (`src/dofus/todos/`), Sandglass's 200 steps through 25 Dofus, from the Dofawa at step 5 to the Dofus Vulbis at step 200, transcribed from his PDF (no data page, no classic checklist, no sync):
+The fourth one is the Rush de todos los Dofus (`src/dofus/todos/`), Sandglass's 200 steps through 26 Dofus, from the Dofawa at step 5 to the Dofus Vulbis at step 200, transcribed from his PDF (no data page, no classic checklist, no sync):
 
 ```bash
 DOFUS=todos npm run dev     # the rush in development
@@ -64,7 +64,7 @@ npm run build:embed:todos   # its embed, in dist/embed/todos.js
 | `name`, `short` | «Rush de todos los Dofus», with «todos los Dofus» highlighted in the hero. In the site header it is «Todos los Dofus» (`TOOLS` in `src/site/shell/shell.js`) |
 | `palette` | «Oro»: the Nebuloso's palette turned to hue 45, a warm dark grey with a pale gold accent (`#f5e4b1`). Contrast is noted next to it in `config.js` |
 | `hero.fx` | `nebula`, the Nebuloso's rising motes, here in gold |
-| `egg.final` | The Dofus Vulbis, at step 200. It is also the last of the 25 Dofus del camino, so the strip is long (`LONG_ROAD`, more than 12): the eggs get their own row with the step under each one. Step 190 gives two Dofus, and every place that shows a step's Dofus shows both (`roadAt` in `src/tools/checklist/lib/assets.js`) |
+| `egg.final` | The Dofus Vulbis, at step 200. It is also the last of the 26 Dofus del camino, so the strip is long (`LONG_ROAD`, more than 12): the eggs get their own row with the step under each one. Step 190 gives two Dofus, and every place that shows a step's Dofus shows both (`roadAt` in `src/tools/checklist/lib/assets.js`) |
 | `journal` | The Silvestre's stops and notes moved to the steps the rush repeats (`SAME_AS` in `.build/dofus/todos.py`), with the numbers of the rush |
 | `nota` | The Silvestre's example in the rush's numbers: steps 69 and 70 paused before Kodámade, 71 closes them |
 | `classicKeys` | None: there is no classic checklist to read |
@@ -149,7 +149,7 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 
 ### The rush
 
-`tests/todos/` checks what the rush adds: the 200 steps without errors, its place in the site header, the gold hero, the 25 Dofus on their own strip row with their step numbers, the two Dofus of step 190 in the diary, the detail, the map and the celebration, the Vulbis at step 200, step 200 closing the dream stops of 158, 159 and 160, the Piñata in the feminine, the stop of step 18, the note with steps 69 to 71, the Ocre note, its prefix, the palette in both themes and no horizontal overflow at 1440, 1024 and 390.
+`tests/todos/` checks what the rush adds: the 200 steps without errors, its place in the site header, the gold hero, the 26 Dofus on their own strip row with their step numbers, the two Dofus of step 190 in the diary, the detail, the map and the celebration, the Vulbis at step 200, step 200 closing the dream stops of 158, 159 and 160, the Piñata in the feminine, the stop of step 18, the note with steps 69 to 71, the Ocre note, its prefix, the palette in both themes and no horizontal overflow at 1440, 1024 and 390.
 
 ### The Guía global
 

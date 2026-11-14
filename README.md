@@ -12,7 +12,7 @@ Checklists and tools for Dofus, in Spanish. One codebase publishes them two ways
 | `/silvestre/` | The Dofus Silvestre checklist, 100 steps | `index.html` and `src/site/checklist/` |
 | `/hielos/` | The Dofus de los Hielos checklist, 70 steps | the same, with `DOFUS=hielos` |
 | `/nebuloso/` | The Dofus Nebuloso checklist, 26 steps, with the Dofus de los Vigilantes on the way | the same, with `DOFUS=nebuloso` |
-| `/todos/` | The Rush de todos los Dofus, Sandglass's 200 steps through 25 Dofus up to the Dofus Vulbis | the same, with `DOFUS=todos` |
+| `/todos/` | The Rush de todos los Dofus, Sandglass's 200 steps through 26 Dofus up to the Dofus Vulbis | the same, with `DOFUS=todos` |
 | `/global/` | The Guía global: all permanent PvE content, level 1 to 200, generated from DofusDB | the same, with `DOFUS=global` |
 | `/cosecha/` | «La eterna cosecha»: the 337 souls for the Dofus Ocre | `src/site/cosecha/` |
 | `/checklists/` | Preview of the Torrente Arcano hub, `noindex`, not in the nav | `public/checklists/index.html` |
@@ -71,7 +71,7 @@ All of them write to `dist/`.
 | `npm run test:embed` | The eight embeds inside pages that mimic Squarespace, plus the frozen contract (`contract.spec.js`) |
 | `npm run test:hielos` | What differs on the Hielos site: its 70 steps, the snowy hero, its single Dofus |
 | `npm run test:nebuloso` | What differs on the Nebuloso site: its 26 steps, the nebula hero, the Dofus de los Vigilantes on the road, its resource groups and palette |
-| `npm run test:todos` | What differs on the rush: its 200 steps, the 25 Dofus on their own strip row, the two Dofus of step 190, the Vulbis at step 200 and its gold palette |
+| `npm run test:todos` | What differs on the rush: its 200 steps, the 26 Dofus on their own strip row, the two Dofus of step 190, the Vulbis at step 200 and its gold palette |
 | `npm run test:global` | What differs on the Guía global: its 219 steps, its texts, its place in the site header |
 | `npm run test:site` | The home page and the cosecha page: cards, links, header, no horizontal overflow |
 
