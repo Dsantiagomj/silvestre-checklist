@@ -52,7 +52,7 @@ export const HOME = {
         { img: "hub/dofus-ebano.png", glow: "#7d6996", x: 50, y: 51, h: 18 },
         { img: "hub/dofus-vulbis.png", glow: "#eb4623", x: 50, y: 4.5, h: 40 },
       ],
-      lead: "Del Dofawa al Vulbis: 25 Dofus en una sola ruta por todo el Mundo de los Doce.",
+      lead: "Del Dofawa al Vulbis: 26 Dofus en una sola ruta por todo el Mundo de los Doce.",
     },
     cosecha: {
       color: "#f0a336",

@@ -1858,7 +1858,7 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .win-strip.is-solo .road-name{ font:400 22px/1.05 'Lilita One', var(--font-body); letter-spacing:.3px; color:var(--txt); }
 .win-strip.is-solo .road-count{ font-size:14px; }
 .win-strip.is-solo .win-progress{ justify-self:end; width:min(100%, 440px); }
-/* Un camino largo (LONG_ROAD, WinStrip.jsx: los 25 Dofus del rush) no cabe junto al
+/* Un camino largo (LONG_ROAD, WinStrip.jsx: los 26 Dofus del rush) no cabe junto al
    progreso: a cualquier ancho, la cabecera, el progreso a la derecha y «Siguiente» arriba,
    y los huevos en su propia fila, una columna por Dofus tras una raya, con su paso debajo
    (en tinta dorada si se tiene) */

@@ -189,7 +189,7 @@ Use only for "all the Dofus" (Guías Dofus). 96px circle (80px under 900px) with
 
 ### Egg crown (`.crown`)
 
-Use only for the Rush de todos los Dofus card, in the hub and on the site home: a guide that hands out 25 Dofus has no single egg and no character. The Dofus Vulbis (its last egg) large at the top centre, five of the primordial Dofus around it (the Ébano below), each placed by `x`, `y` and `h` in percent of the card width (`crown` in `src/embeds/hub/manifest.js` and `src/site/home/manifest.js`) and glowing in its own colour (`drop-shadow(0 0 10px <glow>)`). The card keeps the `.kick` pill «200 pasos» and has no `.npc`. On the narrow home card the crown is scaled to .66 at the right.
+Use only for the Rush de todos los Dofus card, in the hub and on the site home: a guide that hands out 26 Dofus has no single egg and no character. The Dofus Vulbis (its last egg) large at the top centre, five of the primordial Dofus around it (the Ébano below), each placed by `x`, `y` and `h` in percent of the card width (`crown` in `src/embeds/hub/manifest.js` and `src/site/home/manifest.js`) and glowing in its own colour (`drop-shadow(0 0 10px <glow>)`). The card keeps the `.kick` pill «200 pasos» and has no `.npc`. On the narrow home card the crown is scaled to .66 at the right.
 
 ### «En camino» chips (`.soonB`, `.chip`)
 
@@ -240,7 +240,7 @@ Where it lives: the site header (one theme for the whole site, `dofus-tools:them
 
 | Piece | Recipe | Source |
 |---|---|---|
-| Long road strip (checklist) | more than 12 Dofus on the road (`LONG_ROAD`, the rush's 25): `.win-strip.is-long` keeps the head, the progress (right-aligned, at most 460px) and «Siguiente» in the first row at every width, and puts the eggs in their own row, one column per Dofus after a dashed rule, each with its step number below in 10px tabular text (gold ink when obtained, muted otherwise). The Silvestre's 12 stay in one row | `src/tools/checklist/components/WinStrip.jsx`, `global.css` |
+| Long road strip (checklist) | more than 12 Dofus on the road (`LONG_ROAD`, the rush's 26): `.win-strip.is-long` keeps the head, the progress (right-aligned, at most 460px) and «Siguiente» in the first row at every width, and puts the eggs in their own row, one column per Dofus after a dashed rule, each with its step number below in 10px tabular text (gold ink when obtained, muted otherwise). The Silvestre's 12 stay in one row | `src/tools/checklist/components/WinStrip.jsx`, `global.css` |
 | Progress bar | 8px track `rgba(255,255,255,.08)`, fill `linear-gradient(90deg, #b86a12, var(--ocre))`, count in 700 16px display | `.bar` |
 | Segmented control | dark `#14160f` strip with a hairline; pressed button `linear-gradient(180deg, #3a2c12, #251b0b)` plus a gold inset ring, text `#f6d48a`. The first and last buttons inherit the strip's outer radii, so the ring follows the rounded corners | `.seg` |
 | Search field | same dark fill, gold 1.5px ring on focus, clear button appears when it has text | `.srch` |

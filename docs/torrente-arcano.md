@@ -60,7 +60,7 @@ The same app with the Nebuloso data. It stores progress under the `nebuloso:` pr
 <script type="module" src="https://dsantiagomj.github.io/silvestre-checklist/embed/todos.js"></script>
 ```
 
-The same app with the data of Sandglass's PDF (200 steps, 25 Dofus). It stores progress under the `todos:` prefix. There is no classic checklist for it, so it reads no classic keys, and no data page, so no daily sync. The page it is meant for is `checklist-todos-dofus` (the hub card links there); like the other checklists it needs a full-width section.
+The same app with the data of Sandglass's PDF (200 steps, 26 Dofus). It stores progress under the `todos:` prefix. There is no classic checklist for it, so it reads no classic keys, and no data page, so no daily sync. The page it is meant for is `checklist-todos-dofus` (the hub card links there); like the other checklists it needs a full-width section.
 
 ## The checklists hub
 

@@ -32,10 +32,10 @@ test("el rush se monta en #todos-root con sus 200 pasos, sin errores", async ({ 
   const errors = await openTodos(page);
   expect(await app(page).evaluate(el => el.shadowRoot?.mode)).toBe("open");
   expect(await page.evaluate(() => document.querySelectorAll(".diary-row, .hero").length)).toBe(0);
-  // Pantalla alta: el hero con sus motas y los 25 Dofus en su propia fila, con el Vulbis al final
+  // Pantalla alta: el hero con sus motas y los 26 Dofus en su propia fila, con el Vulbis al final
   await expect(app(page).locator(".hero")).toHaveClass(/\bfx-nebula\b/);
   await expect(app(page).locator("#winRoad")).toHaveClass(/\bis-long\b/);
-  await expect(app(page).locator("#winRoad .road-dofus")).toHaveCount(25);
+  await expect(app(page).locator("#winRoad .road-dofus")).toHaveCount(26);
   const egg = app(page).locator('#winRoad .road-dofus[data-step="200"] img');
   await expect(egg).toHaveAttribute("src", `${SITE}img/items/23004.png`);
   expect(await egg.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
