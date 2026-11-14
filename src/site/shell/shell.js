@@ -13,16 +13,19 @@ import { onSiteTheme, setSiteTheme, siteTheme } from "./theme.js";
 
 /**
  * Las herramientas del sitio, en el orden del menú y de la home. `path` es relativo a la
- * raíz del sitio; en estrecho el menú muestra solo `short`, el final de `name`. `art`: la
- * zona detrás de la cabecera en su página (relativa a public/img/), la del lugar del que
- * trata como en las cartas (DESIGN.md): Amakna para Silvosse, Frigost, Xelorium para el
- * Nebuloso, Cania para el Ocre.
+ * raíz del sitio; en estrecho el menú muestra solo `short`, la parte de `name` que se queda
+ * (su final o, en «Todos los Dofus», su principio). `art`: la zona detrás de la cabecera en
+ * su página (relativa a public/img/), la del lugar del que trata como en las cartas
+ * (DESIGN.md): Amakna para Silvosse, Frigost, Xelorium para el Nebuloso, Cania para el Ocre.
  */
 export const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", short: "Silvestre", path: "silvestre/", art: "zones/reino-de-amakna.jpg" },
   { id: "hielos", name: "Dofus de los Hielos", short: "Hielos", path: "hielos/", art: "zones/isla-de-frigost.jpg" },
   // El Nebuloso: Xelorium, donde se lucha contra el pájaro del tiempo (su último paso)
   { id: "nebuloso", name: "Dofus Nebuloso", short: "Nebuloso", path: "nebuloso/", art: "zones/xelorium.jpg" },
+  // El rush: las misiones de mundo, como su carta del hub (recorre todo el Mundo de los Doce).
+  // Su nombre entero no cabe en la fila: el menú dice «Todos los Dofus» y su carta, el entero
+  { id: "todos", name: "Todos los Dofus", short: "Todos", path: "todos/", art: "zones/misiones-de-mundo.jpg" },
   { id: "cosecha", name: "La eterna cosecha", short: "cosecha", path: "cosecha/", art: "zones/cania.jpg" },
   // La guía global recorre todo el Mundo de los Doce: el Krosmoz, como la home
   { id: "global", name: "Guía global", short: "Global", path: "global/", art: "zones/krosmoz.jpg" },
@@ -55,12 +58,21 @@ function themeToggle() {
   return btn;
 }
 
-/** Un enlace del menú: entero en ancho y solo el final en estrecho; el nombre accesible es siempre el entero. */
+/**
+ * Un enlace del menú: entero en ancho y solo `short` en estrecho; lo que lo rodea en el
+ * nombre va en .dt-pre, que se oculta. El nombre accesible es siempre el entero.
+ */
 function navLink(tool, current) {
   const a = el("a", "dt-link", { href: siteUrl(tool.path), "aria-label": tool.name });
   if (tool.id === current) a.setAttribute("aria-current", "page");
   const label = el("span", "dt-lbl");
-  label.append(text("span", "dt-pre", tool.name.slice(0, -tool.short.length)), tool.short);
+  // Casi siempre el final del nombre («Guía global», «Global»); si no, donde esté
+  const atEnd = tool.name.toLowerCase().endsWith(tool.short.toLowerCase());
+  const at = atEnd ? tool.name.length - tool.short.length : tool.name.indexOf(tool.short);
+  const before = tool.name.slice(0, at), after = tool.name.slice(at + tool.short.length);
+  if (before) label.append(text("span", "dt-pre", before));
+  label.append(tool.short);
+  if (after) label.append(text("span", "dt-pre", after));
   a.append(label);
   return a;
 }

@@ -6,6 +6,8 @@ const TOOLS = [
   { id: "silvestre", name: "Dofus Silvestre", path: "silvestre/" },
   { id: "hielos", name: "Dofus de los Hielos", path: "hielos/" },
   { id: "nebuloso", name: "Dofus Nebuloso", path: "nebuloso/" },
+  // En el menú, «Todos los Dofus»; su carta lleva el nombre entero de la guía, como en el hub
+  { id: "todos", name: "Todos los Dofus", card: "Rush de todos los Dofus", path: "todos/" },
   { id: "cosecha", name: "La eterna cosecha", path: "cosecha/" },
   { id: "global", name: "Guía global", path: "global/" },
 ];
@@ -35,7 +37,7 @@ test("la home: el título, una línea y una carta por herramienta, cada una con 
   for (const [i, t] of TOOLS.entries()) {
     const card = cards.nth(i);
     await expect(card).toHaveAttribute("data-id", t.id);
-    await expect(card).toHaveAccessibleName(t.name);
+    await expect(card).toHaveAccessibleName(t.card || t.name);
     expect(await card.evaluate(a => a.href)).toBe(new URL(t.path, baseURL).href);
     // La carta entera es el enlace: dentro no hay nada más que se pueda pulsar
     await expect(card.locator("a, button, input")).toHaveCount(0);
@@ -129,7 +131,7 @@ test("en estrecho el menú va en su propia fila, de lado a lado, con solo el fin
   const brand = await shell.getByRole("link", { name: "Dofus Tools", exact: true }).boundingBox();
   const sw = await shell.getByRole("switch").boundingBox();
   const links = shell.getByRole("navigation").getByRole("link");
-  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "NEBULOSO", "COSECHA", "GLOBAL"]);
+  expect(await links.evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(["SILVESTRE", "HIELOS", "NEBULOSO", "TODOS", "COSECHA", "GLOBAL"]);
   const boxes = await links.evaluateAll(l => l.map(a => a.getBoundingClientRect().toJSON()));
   // La marca y el interruptor en la primera fila; el menú debajo
   expect(Math.abs(sw.y + sw.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(12);
@@ -138,6 +140,22 @@ test("en estrecho el menú va en su propia fila, de lado a lado, con solo el fin
   expect(Math.abs(boxes[0].x - brand.x)).toBeLessThanOrEqual(1);
   expect(Math.abs(boxes.at(-1).right - (sw.x + sw.width))).toBeLessThanOrEqual(1);
 });
+
+// Con seis herramientas los nombres enteros piden unos 1220px de fila: caben en la home a
+// 1440 (1240px de contenido); más estrecho, y en la cosecha (1176px), solo el final de cada nombre
+for (const [path, width, names] of [
+  ["./", 1440, ["DOFUS SILVESTRE", "DOFUS DE LOS HIELOS", "DOFUS NEBULOSO", "TODOS LOS DOFUS", "LA ETERNA COSECHA", "GUÍA GLOBAL"]],
+  ["./", 1024, ["SILVESTRE", "HIELOS", "NEBULOSO", "TODOS", "COSECHA", "GLOBAL"]],
+  ["cosecha/", 1440, ["SILVESTRE", "HIELOS", "NEBULOSO", "TODOS", "COSECHA", "GLOBAL"]],
+]) {
+  test(`el menú cabe en su fila en ${path === "./" ? "la home" : "la cosecha"} a ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(path);
+    const nav = page.locator("header.dt-shell").getByRole("navigation");
+    expect(await nav.getByRole("link").evaluateAll(l => l.map(a => a.innerText.trim()))).toEqual(names);
+    expect(await nav.evaluate(n => n.scrollWidth - n.clientWidth)).toBeLessThanOrEqual(0);
+  });
+}
 
 test("la cabecera se queda oscura en el tema claro", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("dofus-tools:theme", "light"));
