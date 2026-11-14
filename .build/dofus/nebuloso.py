@@ -114,6 +114,9 @@ MISSING_DOFUS = {1186: (16061, "items/23020.png", "Dofus de los vigilantes")}
 # No prerequisites note (the Silvestre's is the Dofus Ocre): no icon.
 OCRE_ICON = None
 
+# The guide says no step for a Dofus that DofusDB cannot tell: none
+ROAD_STEPS = {}
+
 
 # ---------------------------------------------------------------------------
 # build_quests_js.py

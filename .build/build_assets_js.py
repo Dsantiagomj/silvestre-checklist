@@ -65,6 +65,9 @@ def short(url):
 
 DOFUS_TYPE = 23  # DofusDB item type "Dofus": catches Domakuro, Dorigami, Dofawa...
 MISSING_DOFUS = D.MISSING_DOFUS  # per Dofus, in .build/dofus/<id>.py
+# The step each Dofus is obtained on, where the guide says so and DofusDB cannot tell
+# (item id -> step): one a quest gives, or one obtained on a later step (per Dofus)
+ROAD_STEPS = D.ROAD_STEPS
 OCRE_ICON = D.OCRE_ICON  # per Dofus, in .build/dofus/<id>.py
 # Icons of the guide's marks in the step detail: a dungeon key for where to stop,
 # the trophy book for what gets done, a list for what the step includes, a legend
@@ -113,7 +116,8 @@ def dofus_road(achievements, quests, steps, report):
     (the Dofawa of step 1), so the filter is the item type, not the name.
     A Dofus counts on the step that completes its achievement: the one marked
     "(Completo)", or the last step that mentions it. The step icon is not enough:
-    step 17 shows the Dofus Esmeralda but only goes "hasta la misión 7".
+    step 17 shows the Dofus Esmeralda but only goes "hasta la misión 7". ROAD_STEPS puts
+    a Dofus where the guide says it is obtained.
     """
     text = {s["n"]: s["text"] for s in report}
     by_ach = {}
@@ -135,6 +139,12 @@ def dofus_road(achievements, quests, steps, report):
         done = [n for n in ns if re.search(r"\(Completos?\)", text[n])]
         for i in ids:
             found.setdefault(i, ((done or ns)[-1], a["name"]["es"]))
+    # Where the guide says it (ROAD_STEPS): a Dofus no achievement rewards takes the name of
+    # the step's achievement, or of its first quest
+    for i, step in ROAD_STEPS.items():
+        entry = steps.get(str(step), {})
+        named = (entry.get("achievements") or entry.get("quests") or [{}])[0].get("name", "")
+        found[i] = (step, found[i][1] if i in found else named)
     types = item_types(found)
     road = []
     for i, (step, ach) in found.items():

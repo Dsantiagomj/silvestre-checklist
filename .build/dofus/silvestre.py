@@ -143,6 +143,9 @@ MISSING_DOFUS = {
 # The prerequisites note recommends starting it early: it shows the egg.
 OCRE_ICON = "items/23012.png"
 
+# The guide says no step for a Dofus that DofusDB cannot tell: none
+ROAD_STEPS = {}
+
 
 # ---------------------------------------------------------------------------
 # build_quests_js.py
