@@ -9,6 +9,10 @@ version of the guide.
 Usage:
   curl -sL -A "Mozilla/5.0" -o /tmp/ta/page.html https://www.torrentearcano.com/checklist-silvestre
   python3 -I .build/import_guide.py /tmp/ta/page.html
+  python3 -I .build/import_guide.py --dofus todos .build/lists/todos/torrentearcano.json
+
+A guide with no data page (todos, transcribed from Sandglass's PDF) is read from a .json in
+the snapshot's own form (read_source).
 
 Writes:
   .build/lists/<dofus>/torrentearcano.json  snapshot of the three structures, versioned
@@ -245,16 +249,40 @@ def read_page(html):
                     else [[n] for n in range(1, len(raws) + 1)])
     except ValueError as e:
         raise SystemExit(f"los datos del checklist clásico no se pueden leer ({e}): no se importa nada")
+    check_count(raws, previous)
+    return raws, resources, previous
+
+
+def check_count(raws, previous):
+    """Every step, with its text and its row of previousStepsByNewStep, or nothing is imported."""
     count = D.STEP_COUNT
     if len(raws) != count or len(previous) != count or not all(t.strip() for t in raws):
         raise SystemExit(f"se esperaban {count} pasos con texto y llegaron {len(raws)} pasos "
                          f"y {len(previous)} filas de previousStepsByNewStep: no se importa nada")
-    return raws, resources, previous
+
+
+SNAPSHOT_KEYS = ("source", "steps", "resources", "previousStepsByNewStep")
+
+
+def read_source(path):
+    """(steps, resources, previous, extra): the page's data, from its HTML (read_page), or from
+    a transcription in the snapshot's own form (.json) for a guide that has no data page: the
+    todos guide comes from Sandglass's PDF. A transcription may leave out the resources and
+    the previous version (each step maps to itself), and keeps its other keys (extra: what the
+    PDF says besides the steps), which the snapshot writes back as they are."""
+    text = pathlib.Path(path).read_text(encoding="utf-8")
+    if str(path).endswith(".json"):
+        data = json.loads(text)
+        raws = data.get("steps") or []
+        previous = data.get("previousStepsByNewStep") or [[n] for n in range(1, len(raws) + 1)]
+        check_count(raws, previous)
+        extra = {k: v for k, v in data.items() if k not in SNAPSHOT_KEYS}
+        return raws, data.get("resources") or {}, previous, extra
+    return (*read_page(text), {})
 
 
 def main(page):
-    html = pathlib.Path(page).read_text(encoding="utf-8")
-    page_raws, resources, previous = read_page(html)
+    page_raws, resources, previous, extra = read_source(page)
     # The snapshot keeps the page as it is; the steps get the fixes
     raws = fix_texts(page_raws, TEXT_FIXES)
     texts = [clean(t) for t in raws]
@@ -264,6 +292,7 @@ def main(page):
         "steps": page_raws,
         "resources": resources,
         "previousStepsByNewStep": previous,
+        **extra,
     }, ensure_ascii=False, indent=1) + "\n")
 
     old = read_old_steps()

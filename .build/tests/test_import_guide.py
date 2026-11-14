@@ -117,5 +117,88 @@ class StepsArrayTest(unittest.TestCase):
         self.assertEqual(links.missions(links.js_string_array(html, "steps")), ["En busca del pájaro del tiempo"])
 
 
+class TranscriptionTest(unittest.TestCase):
+    """A guide with no data page (todos, from Sandglass's PDF) comes as a transcription in
+    the snapshot's own form: a .json with the steps, the same colour markers and no
+    previous version. read_source reads it like a page and keeps its other keys."""
+
+    def write(self, data):
+        import json
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+        json.dump(data, tmp, ensure_ascii=False)
+        tmp.close()
+        self.addCleanup(pathlib.Path(tmp.name).unlink)
+        return tmp.name
+
+    def steps(self, count):
+        return [f"Logro “L{n}”. [[BLUE]](Completo)[[/BLUE]]" for n in range(1, count + 1)]
+
+    def test_reads_the_steps_of_a_json_transcription(self):
+        steps = self.steps(import_guide.D.STEP_COUNT)
+        raws, resources, previous, extra = import_guide.read_source(
+            self.write({"steps": steps, "aparte": {"160": "I. …"}}))
+        self.assertEqual(raws, steps)
+        self.assertEqual(resources, {})
+        self.assertEqual(previous, [[n] for n in range(1, len(steps) + 1)])
+        self.assertEqual(extra, {"aparte": {"160": "I. …"}})
+
+    def test_a_transcription_short_of_steps_stops(self):
+        with self.assertRaises(SystemExit):
+            import_guide.read_source(self.write({"steps": self.steps(3)}))
+
+    def test_a_page_has_nothing_extra(self):
+        steps = self.steps(import_guide.D.STEP_COUNT)
+        html = ("const steps = [\n" + ",\n".join(f"`{t}`" for t in steps) + "\n];\n"
+                "const resourcesData = {};\nconst previousStepsByNewStep = "
+                + str([[n] for n in range(1, len(steps) + 1)]) + ";\n")
+        tmp = self.write({})
+        pathlib.Path(tmp).with_suffix(".html").write_text(html, encoding="utf-8")
+        self.addCleanup(pathlib.Path(tmp).with_suffix(".html").unlink)
+        raws, resources, previous, extra = import_guide.read_source(pathlib.Path(tmp).with_suffix(".html"))
+        self.assertEqual((raws, resources, extra), (steps, {}, {}))
+
+
+class LinksWithoutPageTest(unittest.TestCase):
+    """With no data page there are no achievementLinks: import_guide_links.py takes the
+    achievements the steps name ("Logro “A”, “B”") and looks their pages up in the sitemap."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location("import_guide_links", SCRIPT.parent / "import_guide_links.py")
+        cls.links = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.links)
+
+    def test_the_achievements_the_steps_name(self):
+        texts = ["Astrub: Logro “La gran biblioteca”, “Mercenario de acero”. [[BLUE]](Completo)[[/BLUE]]",
+                 "Isla de Frigost: Logro: “Jugar a los médicos”, misión 1: Los monólogos de la vacuna.",
+                 "Misiones de mundo: Logro “Azul turquesa”, misión 2: “Extinción de los fuegos”, misión 3: X.",
+                 "Logro “Cuestión de equilibrio”, misión 4: “Tres corazones, un rey”. [[BLUE]](Esta misión incluye"
+                 " hacer las misiones de Dimensiones divinas: Logro “La tajada Rhoarim”, misión 1: Y)[[/BLUE]]"]
+        self.assertEqual(self.links.achievement_names(texts),
+                         ["Azul turquesa", "Cuestión de equilibrio", "Jugar a los médicos", "La gran biblioteca",
+                          "La tajada Rhoarim", "Mercenario de acero"])
+
+    def test_a_transcription_brings_no_links(self):
+        import json
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+        json.dump({"steps": ["Logro “A”, misión: B."]}, tmp, ensure_ascii=False)
+        tmp.close()
+        self.addCleanup(pathlib.Path(tmp.name).unlink)
+        self.assertEqual(self.links.read_links_source(tmp.name), (["Logro “A”, misión: B."], None, {}))
+
+    def test_a_page_brings_its_links(self):
+        import tempfile
+        html = ('const steps = [\n    "Logro “A”."\n];\nconst achievementLinks = {"A": "https://x/a"};\n'
+                'const missionUrlOverrides = {"B": "https://x/b"};\n')
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8")
+        tmp.write(html)
+        tmp.close()
+        self.addCleanup(pathlib.Path(tmp.name).unlink)
+        self.assertEqual(self.links.read_links_source(tmp.name),
+                         (["Logro “A”."], {"A": "https://x/a"}, {"B": "https://x/b"}))
+
+
 if __name__ == "__main__":
     unittest.main()
