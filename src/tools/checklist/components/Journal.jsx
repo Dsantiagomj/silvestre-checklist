@@ -86,9 +86,11 @@ function stepFacts(s, step, fig) {
  */
 function Badge({ step }) {
   const fig = bannerFigure(step.n);
+  // Un paso que da dos Dofus (el 190 del rush) lleva los dos huevos, desplazados
+  const imgs = fig ? (fig.imgs?.length > 1 ? fig.imgs : [fig.img]) : [];
   return (
-    <span className="journal-badge" style={{ "--zone-color": ZONE_COLOR[step.zone] }} aria-hidden="true">
-      {fig && <img src={imgUrl(fig.img)} alt="" decoding="async" />}
+    <span className={"journal-badge" + (imgs.length > 1 ? " is-pair" : "")} style={{ "--zone-color": ZONE_COLOR[step.zone] }} aria-hidden="true">
+      {imgs.map(src => <img key={src} src={imgUrl(src)} alt="" decoding="async" />)}
       <span className="journal-badge-num">{step.n}</span>
     </span>
   );
