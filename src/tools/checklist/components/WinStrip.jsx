@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import { STEPS } from "@dofus/steps.js";
-import { NO_ROAD, SOLO_ROAD, STRIP_ROAD, imgUrl } from "../lib/assets.js";
+import { LONG_ROAD, NO_ROAD, SOLO_ROAD, STRIP_ROAD, imgUrl } from "../lib/assets.js";
 import { prefersReducedMotion, restartClass } from "../lib/motion.js";
 import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from "../state/store.js";
 
@@ -52,8 +52,9 @@ function RoadHead({ s, countRef }) {
  * Franja de arriba de la ventana de pasos en pantalla alta (la primera fila de WinBar):
  * los Dofus que da la guía antes del Silvestre (cada uno se consigue en el paso que
  * completa su logro), el progreso global y el acceso al siguiente pendiente. Sin Dofus
- * del camino, el huevo del del checklist en grande (is-solo). En pantalla baja la barra
- * lo resume en una fila (WinProgress, RoadMenu).
+ * del camino, el huevo del del checklist en grande (is-solo). Con muchos (LONG_ROAD, los 25
+ * del rush), los huevos bajan a su propia fila con el número de su paso debajo (is-long).
+ * En pantalla baja la barra lo resume en una fila (WinProgress, RoadMenu).
  */
 export default function WinStrip({ s }) {
   if (NO_ROAD) return <WinStripBare s={s} />;
@@ -63,9 +64,9 @@ export default function WinStrip({ s }) {
   const countRef = useRef(null);
   useDofusWon(listRef, countRef, s.dofusWon);
   return (
-    <div className={"win-strip" + (SOLO_ROAD ? " is-solo" : "")} id="winRoad">
+    <div className={"win-strip" + (SOLO_ROAD ? " is-solo" : "") + (LONG_ROAD ? " is-long" : "")} id="winRoad">
       <RoadHead s={s} countRef={countRef} />
-      <ul className="road-list" ref={listRef}>
+      <ul className="road-list" ref={listRef} style={LONG_ROAD ? { "--n": STRIP_ROAD.length } : undefined}>
         {STRIP_ROAD.map(d => {
           const ok = !!s.done[d.step];
           // Pulsar uno abre su paso: es donde se consigue. "won" solo dura la celebración
@@ -76,6 +77,7 @@ export default function WinStrip({ s }) {
                 aria-label={`${d.name}, paso ${d.step}${ok ? ", conseguido" : ""}`} onClick={() => selectStep(d.step)}
                 onAnimationEnd={e => { if (e.animationName === "egg-won") e.currentTarget.classList.remove("won"); }}>
                 <img src={imgUrl(d.img)} alt="" />
+                {LONG_ROAD && <small aria-hidden="true">{d.step}</small>}
               </button>
             </li>
           );
