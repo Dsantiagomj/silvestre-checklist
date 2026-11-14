@@ -85,8 +85,10 @@ export default function Banner({ step, className = "" }) {
       <span className="journal-num">{step.n}</span>
       <span className="banner-zone">{step.zone}</span>
       {fig && (
-        <figure className="journal-show" data-kind={fig.kind}>
-          <img src={imgUrl(fig.img)} alt="" decoding="async" />
+        <figure className={"journal-show" + (fig.imgs?.length > 1 ? " is-pair" : "")} data-kind={fig.kind}>
+          {fig.imgs?.length > 1
+            ? <span className="journal-show-eggs">{fig.imgs.map(src => <img key={src} src={imgUrl(src)} alt="" decoding="async" />)}</span>
+            : <img src={imgUrl(fig.img)} alt="" decoding="async" />}
           <figcaption>
             <small className="journal-show-label">{fig.as}</small>
             <b className="journal-show-name">{fig.name}</b>

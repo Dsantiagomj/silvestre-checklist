@@ -5,7 +5,7 @@ import { makeChannel, whenReady } from "../lib/viewSwap.js";
 import { EASE, morphHeight, prefersReducedMotion, restartClass, useHeightMorph } from "../lib/motion.js";
 import { LeavingContext, useLiveId } from "../lib/leaving.js";
 import { STEPS } from "@dofus/steps.js";
-import { DOFUS_ROAD, imgUrl } from "../lib/assets.js";
+import { imgUrl, roadAt } from "../lib/assets.js";
 import { CLOSED_BY, resolvedBoss, stepTitle } from "../lib/journal.js";
 import { ALL_ROWS } from "../lib/resources.js";
 import {
@@ -28,16 +28,16 @@ const TABS = [
   ["done", "Hechos", "diaryTabDone"],
   ["all", "Todos", "diaryTabAll"],
 ];
-const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 
 /**
- * Lo que se gana en el paso: el Dofus que da o, si no, el jefe que resuelve. Si no hay
- * ninguno, nada: un icono de relleno no diría nada del paso.
+ * Lo que se gana en el paso: los Dofus que da (casi siempre uno) o, si no, el jefe que
+ * resuelve. Si no hay ninguno, nada: un icono de relleno no diría nada del paso.
  */
 function rowArt(n) {
-  if (ROAD_AT[n]) return { img: ROAD_AT[n].img, name: ROAD_AT[n].name };
+  const road = roadAt(n);
+  if (road.length) return road.map(d => ({ img: d.img, name: d.name }));
   const boss = resolvedBoss(n);
-  return boss ? { img: boss.img, name: boss.name } : null;
+  return boss ? [{ img: boss.img, name: boss.name }] : [];
 }
 
 const Row = memo(function Row({ step, done, current, instant }) {
@@ -82,8 +82,8 @@ const Row = memo(function Row({ step, done, current, instant }) {
             </span>
           )}
         </span>
-        <span className="row-art" aria-hidden="true">
-          {art && <img src={imgUrl(art.img)} alt={art.name} title={art.name} loading="lazy" decoding="async" />}
+        <span className={"row-art" + (art.length > 1 ? " is-pair" : "")} aria-hidden="true">
+          {art.map(a => <img key={a.img} src={imgUrl(a.img)} alt={a.name} title={a.name} loading="lazy" decoding="async" />)}
         </span>
       </button>
     </li>

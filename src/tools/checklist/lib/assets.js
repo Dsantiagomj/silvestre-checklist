@@ -21,6 +21,12 @@ export const CALL_ICONS = DATA.CALL_ICONS || {};
 export const OBJ_ICONS = DATA.OBJ_ICONS || {};
 /** Los Dofus que da la guía antes del Silvestre: { name, img, step, achievement }. */
 export const DOFUS_ROAD = DATA.DOFUS_ROAD || [];
+// Paso -> los Dofus del camino que da, en el orden de la guía
+const ROAD_BY_STEP = DOFUS_ROAD.reduce((out, d) => ((out[d.step] ??= []).push(d), out), {});
+/** Los Dofus que da el paso n: casi siempre uno o ninguno; el 190 del rush da dos. */
+export const roadAt = n => ROAD_BY_STEP[n] || [];
+/** "A", "A y B", "A, B y C". */
+export const namesList = names => (names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0] ?? "");
 /**
  * Los Dofus de la franja de la ventana (WinStrip) y de su aviso al conseguirlos: los del
  * camino o, si la guía no da ninguno antes (el Hielos), solo el del checklist, que se

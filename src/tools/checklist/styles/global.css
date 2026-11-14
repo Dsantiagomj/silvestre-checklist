@@ -3403,3 +3403,21 @@ a.q-name:hover::after, a.q-name:focus-visible::after{ opacity:.7; }
 .journal.is-compact .journal-cta{ padding:7px 22px 8px; }
 .journal.is-compact .journal-cta .gbtn{ padding:6px 12px; }
 .journal.is-compact .journal-cta .gbtn.go{ padding:7px 16px; }
+
+/* VARIOS DOFUS EN UN PASO (el 190 del rush: roadAt en lib/assets.js). Donde va el huevo de
+   un paso van todos, algo más pequeños y montados uno sobre otro: la fila del diario, el
+   sello del mapa y el estandarte (el del detalle, el de la ficha del mapa y el del hero) */
+.row-art.is-pair img{ grid-area:1 / 1; width:22px; height:22px; }
+.row-art.is-pair img:first-child{ transform:translate(-5px, -4px); }
+.row-art.is-pair img:last-child{ transform:translate(5px, 4px); }
+.map-node.is-pair .node-egg{ grid-area:1 / 1; width:40px; height:40px; }
+.map-node.is-pair .node-egg:first-child{ transform:translateX(-12px); }
+.map-node.is-pair .node-egg:nth-child(2){ transform:translateX(12px); }
+.journal-show-eggs{ position:relative; display:flex; justify-content:center; }
+.journal-show.is-pair[data-kind="egg"] img{ width:72px; height:72px; margin:12px -8px; }
+.journal-show.is-pair img:nth-child(2){ animation-delay:-1.6s; }
+.hero .journal-show.is-pair[data-kind="egg"] img{ width:80px; height:80px; margin:14px -8px; }
+.map-card-banner .journal-show.is-pair[data-kind="egg"] img{ width:44px; height:44px; margin:6px -5px; }
+@media (min-width:901px){
+  .diary-detail .journal-show.is-pair[data-kind="egg"] img{ width:56px; height:56px; margin:8px -6px; }
+}

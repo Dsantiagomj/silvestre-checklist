@@ -6,7 +6,8 @@ import { doneCount, goToNextPending, nextPending, progressPct, selectStep } from
 
 /**
  * Al conseguir un Dofus del camino (al marcar su paso, nunca al cargar), su huevo se
- * enciende con un destello y un rebote y la cuenta sube de un salto. Desmarcarlo solo
+ * enciende con un destello y un rebote y la cuenta sube de un salto; si el paso da
+ * varios (el 190 del rush), todos. Desmarcarlo solo
  * lo apaga. Con movimiento reducido cambia sin más (el aviso lo da el store).
  */
 function useDofusWon(listRef, countRef, won) {
@@ -15,9 +16,8 @@ function useDofusWon(listRef, countRef, won) {
     if (seen.current === won.seq) return;
     seen.current = won.seq;
     if (prefersReducedMotion()) return;
-    for (const n of won.steps) {
-      const egg = listRef.current.querySelector(`.road-dofus[data-step="${n}"]`);
-      if (egg) restartClass(egg, "won");
+    for (const n of new Set(won.steps)) {
+      for (const egg of listRef.current.querySelectorAll(`.road-dofus[data-step="${n}"]`)) restartClass(egg, "won");
     }
     restartClass(countRef.current, "tick");
   }, [won.seq]); // eslint-disable-line react-hooks/exhaustive-deps

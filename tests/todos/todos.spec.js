@@ -215,3 +215,57 @@ for (const [theme, accent] of [["dark", "rgb(245, 228, 177)"], ["light", "rgb(24
       .toBe("245,228,177");
   });
 }
+
+// El paso 190 da dos Dofus («El silencio es áureo»: el de los hielos y el plateado
+// centelleante). La app los lleva los dos en cada sitio donde va el Dofus de un paso
+test.describe("dos Dofus en un paso", () => {
+  test.use({ viewport: TALL });
+  const PAIR = ["items/23005.png", "items/23027.png"];
+  const NAMES = "Dofus de los hielos y Dofus plateado centelleante";
+  const srcs = loc => loc.evaluateAll(imgs => imgs.map(i => new URL(i.src).pathname.replace(/^\/img\//, "")));
+
+  test("el diario, el detalle y su estandarte llevan los dos huevos del paso 190", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(189) });
+    expect(await srcs(row(page, 190).locator(".row-art img"))).toEqual(PAIR);
+    await openStep(page, 190);
+    const show = page.locator("#journal .journal-banner .journal-show");
+    await expect(show).toHaveAttribute("data-kind", "egg");
+    expect(await srcs(show.locator("img"))).toEqual(PAIR);
+    await expect(show.locator(".journal-show-name")).toHaveText(NAMES);
+    for (const img of await show.locator("img").all()) expect(await loaded(img)).toBe(true);
+    // Uno solo, como siempre: el Vulbis del 200
+    await openStep(page, 200);
+    expect(await srcs(page.locator("#journal .journal-banner .journal-show img"))).toEqual(["items/23004.png"]);
+  });
+
+  test("en el mapa, el sello y la ficha del 190 llevan los dos", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(189) }, { view: "map" });
+    const node = page.locator('.map-node[data-n="190"]');
+    await expect(node).toHaveClass(/\bdofus\b/);
+    expect(await srcs(node.locator(".node-egg"))).toEqual(PAIR);
+    await node.click();
+    await expect(page.locator(".map-card .map-card-reward .egg")).toHaveText(
+      ["Se gana Dofus de los hielos", "Se gana Dofus plateado centelleante"]);
+  });
+
+  test("marcar el 190 enciende y celebra los dos, y el aviso los nombra", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(189) });
+    const strip = page.locator("#winRoad");
+    await expect(strip.locator(".road-count")).toHaveText("18/25");
+    // Quién se lleva la celebración («won»): se apunta al ponerla, que dura menos de un segundo
+    await page.evaluate(() => {
+      window.__won = [];
+      new MutationObserver(ms => ms.forEach(m => {
+        if (m.target.classList.contains("won") && !window.__won.includes(m.target.title)) window.__won.push(m.target.title);
+      })).observe(document.getElementById("winRoad"), { subtree: true, attributes: true, attributeFilter: ["class"] });
+    });
+    await page.click('.diary-row[data-n="190"] .row-check');
+    const eggs = strip.locator('.road-dofus[data-step="190"]');
+    await expect(eggs).toHaveCount(2);
+    for (const egg of await eggs.all()) await expect(egg).toHaveClass(/obtained/);
+    await expect(strip.locator(".road-count")).toHaveText("20/25");
+    await expect(page.locator("#toastTxt")).toHaveText(`¡${NAMES} obtenidos!`);
+    await expect.poll(() => page.evaluate(() => window.__won.slice().sort()))
+      .toEqual(["Dofus de los hielos · paso 190", "Dofus plateado centelleante · paso 190"]);
+  });
+});

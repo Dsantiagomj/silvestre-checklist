@@ -1,6 +1,6 @@
 import { useEffect, useId } from "react";
 import { ZONE_COLOR } from "@dofus/steps.js";
-import { CALL_ICONS, DOFUS_ROAD, OBJ_ICONS, imgUrl } from "../lib/assets.js";
+import { CALL_ICONS, OBJ_ICONS, imgUrl, roadAt } from "../lib/assets.js";
 import { CLOSED_BY, RESUMED_IN, doneIcon, resolvedBoss, stepCalls, stepTitle } from "../lib/journal.js";
 import { questsOf } from "../lib/quests.js";
 import { rowsOf } from "../lib/resources.js";
@@ -8,7 +8,6 @@ import { closeSteps, loadQuests, openInDiary, pendingCloses, toggleStep, useAppS
 import Banner from "./Banner.jsx";
 import { AlsoLine, stepLabel } from "./Journal.jsx";
 
-const ROAD_AT = Object.fromEntries(DOFUS_ROAD.map(d => [d.step, d]));
 const count = (k, one, many) => `${k} ${k === 1 ? one : many}`;
 
 /** Fichas de pasos ("33", "5"…): llevan a ese paso sin salir del mapa. */
@@ -42,7 +41,7 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
   const closes = pendingCloses(s, n);
   // Las misiones (para contarlas) llegan en diferido: se piden al abrir la ficha
   useEffect(loadQuests, []);
-  const egg = ROAD_AT[n];
+  const eggs = roadAt(n);
   const boss = resolvedBoss(n);
   // Las mismas paradas que el detalle: si el paso se resuelve solo, solo la que deja el verde
   const stops = stepCalls(step).filter(m => m[0] === "stop");
@@ -60,9 +59,9 @@ export default function MapCard({ step, done, questsLoaded, onGo, onClose, class
       <div className="map-card-bd">
         <span className="map-card-zone" style={{ "--zone-color": ZONE_COLOR[step.zone] }}>{step.zone}</span>
         <h3 className="map-card-title" id={titleId}>{stepTitle(step)}</h3>
-        {(egg || boss) && (
+        {(eggs.length > 0 || boss) && (
           <ul className="map-card-reward">
-            {egg && <li className="egg"><img src={imgUrl(egg.img)} alt="" />Se gana {egg.name}</li>}
+            {eggs.map(egg => <li key={egg.name} className="egg"><img src={imgUrl(egg.img)} alt="" />Se gana {egg.name}</li>)}
             {boss && <li className="boss"><img src={imgUrl(boss.img)} alt="" />Se pasa {boss.name}</li>}
           </ul>
         )}
