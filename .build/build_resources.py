@@ -428,9 +428,9 @@ def from_quests():
                                D.FROM_SILVESTRE, {0, *D.SAME_AS}, silvestre,
                                lambda k: item_by_id(k, crafts)["type"], lambda k: craft_recipe(k, crafts),
                                lambda t: types.get(t, 2))
-    # Resources, consumables, cosmetics and equipment only: souls and creatures by their
-    # DofusDB category, and no quest item, not even one copied from the Silvestre
-    steps = quest_items.four_categories(steps, lambda k: item_by_id(k, crafts)["type"], lambda t: types.get(t, 2))
+    # The Silvestre's categories (souls and creatures included) but no quest item, not even
+    # one copied from the Silvestre; the Jalabolas, no souls, go by their DofusDB category
+    steps = quest_items.rush_categories(steps, lambda k: item_by_id(k, crafts)["type"], lambda t: types.get(t, 2))
     items = {}
     for rows in steps.values():
         for row in rows:

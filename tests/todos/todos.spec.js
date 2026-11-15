@@ -30,7 +30,7 @@ async function openTodos(page, seed = {}, { view = "diary" } = {}) {
 }
 
 // Lo que cuenta cada categoría de la pestaña «Objetos» (resources.json)
-const ITEM_COUNTS = { todo: 504, recursos: 416, consumibles: 63, equipables: 24, cosmeticos: 1 };
+const ITEM_COUNTS = { todo: 504, recursos: 415, consumibles: 56, equipables: 20, almas: 7, criaturas: 5, cosmeticos: 1 };
 
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 
@@ -215,9 +215,9 @@ test.describe("objetos", () => {
     return Object.fromEntries(await slots.evaluateAll(els => els.map(e => [e.dataset.id, e.querySelector(".q").textContent.replace(/\D/g, "")])));
   }
 
-  // Solo recursos, consumibles, equipables y cosméticos: las almas y las criaturas van por su
-  // categoría de DofusDB y los objetos de misión no se listan (quest_items.four_categories)
-  test("la pestaña «Objetos» lleva solo recursos, consumibles, equipables y cosméticos", async ({ page }) => {
+  // Las categorías del Silvestre, almas y criaturas incluidas, sin objetos de misión; las
+  // jalabolas, que no son almas, van con los consumibles (quest_items.rush_categories)
+  test("la pestaña «Objetos» lleva las categorías del Silvestre, sin objetos de misión", async ({ page }) => {
     const errors = await openTodos(page);
     // Las «Cadenas rotas» de alineamiento (9318), objeto de misión que traía el Silvestre, ya no
     // van en el 11; las otras, un recurso (14278), siguen en el 47 para «La desglaciación»
@@ -226,7 +226,7 @@ test.describe("objetos", () => {
     await page.click("#tabItems");
     await expect(page.locator("#items")).toBeVisible();
     expect(await page.locator(".needs-cat").evaluateAll(bs => bs.map(b => b.dataset.cat)))
-      .toEqual(["todo", "recursos", "consumibles", "equipables", "cosmeticos"]);
+      .toEqual(["todo", "recursos", "consumibles", "equipables", "almas", "criaturas", "cosmeticos"]);
     for (const [cat, n] of Object.entries(ITEM_COUNTS)) {
       await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
     }

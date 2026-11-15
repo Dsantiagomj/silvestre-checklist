@@ -3,7 +3,6 @@
 // Generado por .build/build_resources.py. El paso "0" son los prerrequisitos.
 // ============================================================================
 import DATA from "@dofus/resources.json";
-import DOFUS from "@dofus/config.js";
 
 export const RES_ITEMS = DATA.items;
 const RES_STEPS = DATA.steps;
@@ -11,13 +10,11 @@ export const PREREQ_STEP = 0;
 /** Fila de los prerrequisitos -> el prerrequisito en el que se gasta (build_resources.py). */
 export const PREREQ_OF_ROW = Object.fromEntries((DATA.steps[String(PREREQ_STEP)] || []).map(r => [r.k, r.p]));
 
-const ALL_CATEGORIES = [
+export const CATEGORIES = [
   ["recursos", "Recursos"], ["consumibles", "Consumibles"], ["equipables", "Equipables"],
   ["almas", "Almas"], ["criaturas", "Criaturas"], ["cosmeticos", "Cosméticos"],
 ];
-/** Las categorías de la pestaña «Objetos»: todas, o las que dice itemCategories de config.js (el rush). */
-export const CATEGORIES = DOFUS.itemCategories ? ALL_CATEGORIES.filter(([k]) => DOFUS.itemCategories.includes(k)) : ALL_CATEGORIES;
-const CAT_ORDER = Object.fromEntries(ALL_CATEGORIES.map(([k], i) => [k, i]));
+const CAT_ORDER = Object.fromEntries(CATEGORIES.map(([k], i) => [k, i]));
 
 export const rowName = row => row.a.map(([id]) => RES_ITEMS[id].name).join(" o ");
 export const rowQty = row => row.a.map(([, q]) => q).join(" / ");

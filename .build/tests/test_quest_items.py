@@ -213,47 +213,52 @@ class DeriveTest(unittest.TestCase):
         self.assertNotIn(9, self.derive({3: [10], 9: [10]}))
 
 
-class FourCategoriesTest(unittest.TestCase):
-    """The rush lists resources, consumables, cosmetics and equipment only: a soul or a
-    creature (as the Silvestre's page files them) goes by its DofusDB category, and a quest
-    item copied from the Silvestre is not listed."""
+class RushCategoriesTest(unittest.TestCase):
+    """The rush lists what the Silvestre's page lists, souls and creatures included, but no
+    quest item. A row in souls or creatures whose item is neither (the Jalabolas, "Objeto
+    utilizable") goes by its DofusDB category."""
 
     def row(self, c, *keys):
         return {"k": keys[0], "c": c, "g": None, "a": [[k, 1] for k in keys]}
 
-    def four(self, steps):
-        return quest_items.four_categories(steps, kind, cat)
+    def rush(self, steps):
+        return quest_items.rush_categories(steps, kind, cat)
 
-    def test_souls_and_creatures_go_by_their_dofusdb_category(self):
-        got = self.four({"7": [self.row("almas", "11"), self.row("criaturas", "6"), self.row("recursos", "1")]})
-        self.assertEqual([(r["k"], r["c"]) for r in got["7"]], [("11", "consumibles"), ("6", "equipables"), ("1", "recursos")])
+    def test_souls_and_creatures_stay_in_their_tabs(self):
+        got = self.rush({"7": [self.row("almas", "11"), self.row("criaturas", "6"), self.row("recursos", "1")]})
+        self.assertEqual([(r["k"], r["c"]) for r in got["7"]], [("11", "almas"), ("6", "criaturas"), ("1", "recursos")])
 
-    def test_a_row_already_in_one_of_the_four_keeps_its_category(self):
+    def test_a_soul_row_that_is_no_soul_goes_by_its_dofusdb_category(self):
+        # "2" is a Pócima (DofusDB consumables), filed under souls like the Jalabolas
+        got = self.rush({"7": [self.row("almas", "2"), self.row("criaturas", "7")]})
+        self.assertEqual([r["c"] for r in got["7"]], ["consumibles", "consumibles"])
+
+    def test_a_row_already_in_one_of_the_other_four_keeps_its_category(self):
         # Torre files some consumables (DofusDB) under resources: that stays
-        got = self.four({"7": [self.row("recursos", "7")]})
+        got = self.rush({"7": [self.row("recursos", "7")]})
         self.assertEqual(got["7"][0]["c"], "recursos")
 
     def test_quest_items_are_left_out_and_a_step_left_empty_goes(self):
-        got = self.four({"7": [self.row("recursos", "9"), self.row("recursos", "1")], "8": [self.row("recursos", "12")]})
+        got = self.rush({"7": [self.row("recursos", "9"), self.row("recursos", "1")], "8": [self.row("recursos", "12")]})
         self.assertEqual([r["k"] for r in got["7"]], ["1"])
         self.assertNotIn("8", got)
 
     def test_an_alternative_that_is_a_quest_item_is_dropped_from_its_row(self):
-        got = self.four({"7": [self.row("recursos", "9", "8")]})
+        got = self.rush({"7": [self.row("recursos", "9", "8")]})
         self.assertEqual(got["7"][0]["a"], [["8", 1]])
         self.assertEqual(got["7"][0]["k"], "8")
 
     def test_a_row_that_keeps_all_its_alternatives_keeps_its_key(self):
         rows = [{"k": "1|8", "c": "recursos", "g": None, "a": [["1", 2], ["8", 1]]},
                 {"k": "7@mision opcional", "c": "consumibles", "g": "Misión opcional", "a": [["7", 1]]}]
-        self.assertEqual([r["k"] for r in self.four({"7": rows})["7"]], ["1|8", "7@mision opcional"])
+        self.assertEqual([r["k"] for r in self.rush({"7": rows})["7"]], ["1|8", "7@mision opcional"])
 
     def test_a_row_that_loses_an_alternative_is_keyed_by_what_is_left(self):
         rows = [{"k": "9|8@mision opcional", "c": "recursos", "g": "Misión opcional", "a": [["9", 1], ["8", 1]]}]
-        self.assertEqual(self.four({"7": rows})["7"][0]["k"], "8@mision opcional")
+        self.assertEqual(self.rush({"7": rows})["7"][0]["k"], "8@mision opcional")
 
     def test_an_item_with_no_known_type_keeps_its_row(self):
-        got = self.four({"7": [{"k": "x:reinos", "c": "recursos", "g": None, "a": [["x:reinos", 1]]}]})
+        got = self.rush({"7": [{"k": "x:reinos", "c": "recursos", "g": None, "a": [["x:reinos", 1]]}]})
         self.assertEqual(got["7"][0]["c"], "recursos")
 
 
