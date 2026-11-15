@@ -441,6 +441,9 @@ CHOSEN_ORDER = {"78": "Espíritu de la salvación"}
 # Only needed if the alteration is gone: listed in its step, left out of totals.
 OPTIONAL_ITEM = re.compile(r"elixir de los barquerontes.*no es necesario", re.I)
 
+# The page lists the items: none come from the quests (quest_items.py, todos)
+ITEMS_FROM_QUESTS = False
+
 
 # ---------------------------------------------------------------------------
 # audit_resources.py

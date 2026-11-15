@@ -5,11 +5,14 @@ equipment, consumables, souls and creatures. Crafted intermediates and quest
 drops are already left out. Step "0" holds what the prerequisites need.
 Where it lists a crafted quest item instead (the prototypes of «La desglaciación»,
 Silvestre step 26), the step gets its ingredients: see expand_crafted.
+A guide whose page lists no items (todos: ITEMS_FROM_QUESTS) takes them from the
+Silvestre's list and from its quests' objectives in DofusDB instead: see quest_items.py.
 
 Reads  : .build/lists/<dofus>/torrentearcano.json (written by import_guide.py)
 Checks : .build/lists/<dofus>/compilado.txt, the page's own compiled list (if the guide has one)
 Caches : .build/data/item_lookup_cache.json (items by name), .build/data/crafts.json
-         (the recipes of crafted quest items and their ingredients, by id)
+         (the recipes of crafted quest items and their ingredients, by id),
+         .build/data/item_types.json (DofusDB's item types, for ITEMS_FROM_QUESTS)
 Writes : src/dofus/<dofus>/resources.json and the item images in public/img/items/
 Run    : python3 -I .build/build_resources.py   (--dofus <id> or DOFUS; silvestre by default)
 
@@ -47,6 +50,11 @@ COMPILED = dofus.LISTS / "compilado.txt"
 ITEM_QUESTS = dofus.LISTS / "item_quests.json"
 CACHE = ROOT / "data" / "item_lookup_cache.json"
 CRAFTS = ROOT / "data" / "crafts.json"
+# DofusDB's item types: name -> category (0 equipment, 1 consumables, 2 resources, 3 quest
+# items, 4 hidden ones such as followers, 5 cosmetics), for the lists built from the quests
+ITEM_TYPES = ROOT / "data" / "item_types.json"
+# Torre's list for the Silvestre, which a guide without a list of its own reuses (todos)
+SILVESTRE = ROOT.parent / "src" / "dofus" / "silvestre" / "resources.json"
 OUT = dofus.SRC / "resources.json"
 API = "https://api.dofusdb.fr/"
 
@@ -378,13 +386,56 @@ def check_against_compiled(steps, items):
 def with_quests(steps, purpose):
     """steps with each row's "m", the quests item_quests.json gives its key in its step.
     On the page's rows (listed), before expand_crafted passes a crafted item's quests to
-    its ingredients: audit_resources.py labels those same rows."""
+    its ingredients: audit_resources.py labels those same rows. A row that already says its
+    quests keeps them (todos: quest_items.py gives them)."""
     steps = {n: [dict(r) for r in rows] for n, rows in steps.items()}
     for n, rows in steps.items():
         for row in rows:
-            if purpose.get(n, {}).get(row["k"]):
+            if purpose.get(n, {}).get(row["k"]) and not row.get("m"):
                 row["m"] = purpose[n][row["k"]]
     return steps
+
+
+def item_types():
+    """{type name: DofusDB category}, cached in .build/data/item_types.json."""
+    if ITEM_TYPES.exists():
+        return json.loads(ITEM_TYPES.read_text())
+    types, skip = {}, 0
+    while True:
+        page = get("item-types", {"$limit": 50, "$skip": skip})
+        for t in page["data"]:
+            types[t["name"]["es"]] = t["categoryId"]
+        skip += 50
+        if skip >= page["total"]:
+            break
+    ITEM_TYPES.write_text(json.dumps(types, ensure_ascii=False, indent=1, sort_keys=True))
+    return types
+
+
+def from_quests():
+    """(steps, items) of a guide whose page lists no items (todos): each step's rows from the
+    Silvestre step it repeats or from its quests' objectives in DofusDB (quest_items.py),
+    step 0 (the prerequisites, the Silvestre's same ones) from the Silvestre's step 0."""
+    import quest_items
+    quests = json.loads((dofus.SRC / "quests.json").read_text())
+    raw = {q["id"]: q for q in json.loads((ROOT / "data" / "quests.json").read_text())}
+    silvestre = json.loads(SILVESTRE.read_text())
+    crafts = json.loads(CRAFTS.read_text()) if CRAFTS.exists() else {"recipes": {}, "items": {}}
+    types = item_types()
+    taken = {(int(n), int(q)) for n, kinds in quests["STEP_QUEST_KINDS"].items()
+             for q, k in kinds.items() if k == "take"}
+    steps = quest_items.derive({"0": [], **quests["STEP_QUESTS"]}, raw, D.OBJECTIVE_ORDER, D.ITEM_STOPS, taken,
+                               D.FROM_SILVESTRE, {0, *D.SAME_AS}, silvestre,
+                               lambda k: item_by_id(k, crafts)["type"], lambda k: craft_recipe(k, crafts),
+                               lambda t: types.get(t, 2))
+    items = {}
+    for rows in steps.values():
+        for row in rows:
+            for key, _ in row["a"]:
+                items[key] = silvestre["items"].get(key) or item_by_id(key, crafts)
+    CRAFTS.write_text(json.dumps(crafts, ensure_ascii=False, indent=1, sort_keys=True))
+    print(f"de las misiones: {sum(len(r) for r in steps.values())} filas en {len(steps)} pasos")
+    return {str(n): rows for n, rows in steps.items()}, items
 
 
 def listed():
@@ -437,6 +488,8 @@ def listed():
     CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
 
     check_against_compiled(steps, items)
+    if D.ITEMS_FROM_QUESTS:
+        steps, items = from_quests()
     # After the check: the page's compiled list counts every order
     for n, order in CHOSEN_ORDER.items():
         steps[n] = keep_order(steps[n], order)
@@ -451,7 +504,8 @@ def listed():
         print(f"paso {n}: sin {', '.join(f'{items[k]["name"]} ({why})' for k, why in drop.items())}")
     for rows in steps.values():
         for row in rows:
-            del row["src"], row["names"]
+            row.pop("src", None)
+            row.pop("names", None)
     for n, extra in EXTRA.items():
         for group, label, prereq, name, qty in extra:
             hit = lookup(name, cache)

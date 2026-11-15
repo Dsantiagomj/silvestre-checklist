@@ -445,7 +445,83 @@ ZONE_MAPS = {
 # ---------------------------------------------------------------------------
 # build_resources.py and audit_resources.py
 # ---------------------------------------------------------------------------
-# The PDF lists no items: no resources, no compiled list, nothing to fix
+# The PDF lists no items: build_resources.py builds the list from the quests (quest_items.py).
+# There is no page to correct and no compiled list to check against
+ITEMS_FROM_QUESTS = True
+
+# Step -> {Silvestre step: None (all its rows) or [selectors]}: where a step takes Torre's rows
+# from (src/dofus/silvestre/resources.json, fixed by hand in silvestre.py). A selector is a
+# quest name, which takes the rows only for selected quests, or an item key, which takes a row
+# the page ties to no quest. The quests named there are not derived from DofusDB in that step.
+# By default, the steps that repeat a Silvestre step (SAME_AS) take all its rows, and the
+# prerequisites, the same as the Silvestre's, its step 0. Then, by hand:
+#   Steps that repeat one where the two guides split the quests otherwise:
+#   98 (the Silvestre's 61, Bonta's mission 85): the Silvestre's 61 also does the quests of
+#     "Carpe Diem" that here are 96's, and "Canozzirujana", here 99's. 98 keeps the rows of
+#     its own quests (by quest, and the key of the panteón del rey Leorictus of "La meseta de
+#     Leng" and the Máscara de Sag of "El Resplandor del Alba", per its guide). The Maíz goes
+#     to 96: the Silvestre ties it to "La memoria hecha jirones" too, but only "Espíritu,
+#     ¿estás ahí?" asks for it (DofusDB, and the guide of each).
+#   196 (the Silvestre's 100): its rows are all for "¿Quién nos protege del protector?", whose
+#     sigils this guide gets in 193 and 194 (the Silvestre, in its single 100). They go to
+#     193, where the quest starts: the guide does not say which sigil takes what.
+#   Steps that do quests of a Silvestre step without repeating it:
+#   11: "Ver a Dark Vlad y morir... o no" asks to do "Un péndulo para guiar sus pasos" first
+#     (silvestre.py, MANUAL): its three items, in the Silvestre's 1.
+#   29: "Cofrología" (Piedra de alma mediana) and "El maleficio del cofre" (its key), the
+#     Silvestre's 12.
+#   36: "Remordimientos de eternala" and "El anillo de Tot", the Silvestre's 21, and the key of
+#     the Ring del Capitán Eskarlata, which 36 passes.
+#   38: "La espada de la roca", the Silvestre's 41 (what the polvos de Ubn-Ghazu take, a free
+#     objective DofusDB does not count), and the key of the Megalito de Fraktal, which 38 passes.
+#   66: "Calefacción a bajo coste" (the Pandaburg or Pandapils), the Silvestre's 40.
+#   78: "La voz de los muertos", the Silvestre's 13.
+#   82: "El S.L.I.P. está que arde" and its underwear (its guide), the Silvestre's 52.
+#   96: from the Silvestre's 61, the quests of "Carpe Diem" it does, "Robo de Tiempo" (the
+#     souls, captured here), the Maíz (above) and the Tonel de bombú of "Requerimientos del juez"
+#     (its guide).
+#   105: "Un acontecimiento inesperado" and the Cerveza secolocante of "Buscar un Martilloseco
+#     en una galería de Ereboria" (its guide), the Silvestre's 69.
+#   136, 137: "Missicitudes" and "Un remedio draconiano", the Silvestre's 81.
+#   140, 148: Bonta's missions 90 and 97 split the Silvestre's 82 (mission 97): 140 has
+#     "Tranquilidad" (and its book, La Invasión de Uk'Not'Allag', per its guide), "Bien está lo
+#     que mal acaba" and "Un frío que pela"; 148 "Vendados que me han vendido", "Enigma" and the
+#     Brebaje de Nas Orazal of "Un camino bien trazado" (its guide).
+#   144: "Frío... caliente... ¡que te quemas!", the Silvestre's 84: the monsters of 144's zones
+#     drop them (its guide: "Luchas aleatorias contra monstruos").
+_CARPE_DIEM = ["La triquiñuela del cuerno", "Un culpable ideal", "Requerimientos del juez", "Curiosos testigos",
+               "Tras la pista del sram", "Si yo tuviera un martillo", "Espíritu, ¿estás ahí?", "Robo de Tiempo"]
+FROM_SILVESTRE = {
+    0: {0: None}, **{n: {s: None} for n, s in SAME_AS.items()},
+    98: {61: ["La memoria hecha jirones", "Memo", "El Resplandor del Alba", "Injerencia en Amakna",
+              "Pequeños favores entre amigos", "Los guardianes de la galería", "La meseta de Leng",
+              "Un frío que hiela las piedras", "17772", "10272"]},
+    193: {100: None},
+    196: {},
+    11: {1: ["Un péndulo para guiar sus pasos"]},
+    29: {12: ["Cofrología", "El maleficio del cofre"]},
+    36: {21: ["Remordimientos de eternala", "El anillo de Tot", "15477"]},
+    38: {41: ["La espada de la roca", "15806"]},
+    66: {40: ["Calefacción a bajo coste"]},
+    78: {13: ["La voz de los muertos"]},
+    82: {52: ["El S.L.I.P. está que arde", "6812|13423"]},
+    96: {61: [*_CARPE_DIEM, "16454", "10070"]},
+    105: {69: ["Un acontecimiento inesperado", "27643"]},
+    136: {81: ["Missicitudes"]},
+    137: {81: ["Un remedio draconiano"]},
+    140: {82: ["Tranquilidad", "Bien está lo que mal acaba", "Un frío que pela", "12789"]},
+    144: {84: ["Frío... caliente... ¡que te quemas!"]},
+    148: {82: ["Vendados que me han vendido", "Enigma", "18836"]},
+}
+
+# (step, quest) -> where the step leaves the quest: the index of the first objective it does
+# not do, among the quest's objectives as the app shows them (OBJECTIVE_ORDER). The next step
+# that lists the quest goes on from there; without an entry, the step finishes it. Only where a
+# later step goes on with the quest:
+#   128 passes Ugah in "Alma máster" (its stop, journal.stopAt) and leaves the rest of the
+#     quest to 137, «Cuatro de seis» complete (the Silvestre's 80 and 81).
+ITEM_STOPS = {(128, 1784): 4}
+
 CORRECTIONS = {}
 ALIASES = {}
 GENERIC_IMG = {}

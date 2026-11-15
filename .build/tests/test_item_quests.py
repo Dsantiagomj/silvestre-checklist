@@ -59,6 +59,13 @@ class ItemQuestsTest(unittest.TestCase):
         self.assertEqual(quests(rows), {"1": ["Hotel de hielo", "La desglaciación"],
                                         "2": ["La desglaciación"]})
 
+    def test_a_row_that_already_says_its_quests_keeps_them(self):
+        # todos: quest_items.py gives each row the quests it comes from (or the
+        # Silvestre's row, its own)
+        page = {"26": [{"k": "1", "c": "recursos", "g": None, "a": [["1", 3]], "m": ["Salvar la especie"]}]}
+        rows = build_resources.with_quests(page, {"26": {"1": ["Hotel de hielo"]}})["26"]
+        self.assertEqual(rows[0]["m"], ["Salvar la especie"])
+
     def test_a_quest_reviewed_by_hand_wins(self):
         with mock.patch.dict(audit.MANUAL, {"26": {"100": "El recadero"}}):
             self.assertEqual(audit.purpose_of("26", PAGE["26"], WHY)["100"], ["El recadero"])

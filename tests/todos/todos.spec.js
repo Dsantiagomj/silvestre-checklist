@@ -200,7 +200,74 @@ test("el Dofus Ocre: el aviso de los prerrequisitos lleva al paso 127", async ({
   const note = page.locator("#prereqs .pr-ocre");
   await expect(note.locator("b")).toHaveText("Ten el Dofus Ocre antes del paso 127");
   await expect(note.locator(".step-ref")).toHaveText("paso 127");
-  await expect(page.locator("#prereqs .pr-order")).toHaveCount(0);
+});
+
+// Los objetos del rush (.build/quest_items.py): los pasos que repiten uno del Silvestre llevan
+// su lista (la de Torre), los demás lo que piden sus misiones en DofusDB
+test.describe("objetos", () => {
+  /** Las casillas del paso n en el diario: id del objeto -> cantidad. */
+  async function needsOf(page, n) {
+    await openStep(page, n);
+    const slots = page.locator("#journal .journal-needs .slot");
+    return Object.fromEntries(await slots.evaluateAll(els => els.map(e => [e.dataset.id, e.querySelector(".q").textContent.replace(/\D/g, "")])));
+  }
+
+  test("la pestaña «Objetos» ya no está vacía: 505 objetos distintos, con sus categorías", async ({ page }) => {
+    const errors = await openTodos(page);
+    await page.click("#tabItems");
+    await expect(page.locator("#items")).toBeVisible();
+    for (const [cat, n] of Object.entries({ todo: 505, recursos: 416, consumibles: 54, equipables: 20, almas: 9, criaturas: 5, cosmeticos: 1 })) {
+      await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test("el 13 repite el 5 del Silvestre y lleva sus objetos: la lana de jalató y la llave del laboratorio", async ({ page }) => {
+    await openTodos(page);
+    expect(await needsOf(page, 13)).toEqual({ 384: "5", 12073: "1" });
+  });
+
+  test("el 10 sale de sus misiones en DofusDB: «Eterno descanso» entrega tres de cada y el vermicida se fabrica", async ({ page }) => {
+    await openTodos(page);
+    expect(await needsOf(page, 10)).toEqual({
+      306: "1", 309: "1", 2659: "1", 374: "1", 19656: "1",
+      519: "3", 421: "3", 428: "3", 395: "3", 311: "3",
+    });
+    const vermicida = page.locator('#journal .journal-needs .slot[data-id="306"] .slot-tip');
+    await expect(vermicida).toContainText("Quien siembra vientos recoge Artempestad");
+    await expect(vermicida).toContainText("Para fabricar con alquimista nivel 1");
+  });
+
+  test("lo que una misión pide antes de la parada va en su paso, una sola vez: la ganzúa en el 140, no en el 148", async ({ page }) => {
+    await openTodos(page);
+    // «Un frío que pela» se lista en el 140 (hasta Smigol, que el propio 140 pasa) y otra vez
+    // en el 148, la misión 97 de Bonta, que va desde la 90
+    const p140 = await needsOf(page, 140);
+    expect(p140[15533]).toBe("1");
+    expect(Object.keys(p140)).toHaveLength(13);
+    const p148 = await needsOf(page, 148);
+    expect(p148[15533]).toBeUndefined();
+    expect(p148[18836]).toBe("1");
+    expect(Object.keys(p148)).toHaveLength(10);
+  });
+
+  test("los totales suman los pasos: la ortiga, 50 de los prerrequisitos, 8 del 3, 5 del 4 y 3 del 10", async ({ page }) => {
+    await openTodos(page);
+    await page.click("#tabItems");
+    await page.click('.needs-sort [data-sort="qty"]');
+    await expect(page.locator('#items .slot[data-id="421"] .q')).toHaveText(/66/);
+    await expect(page.locator('#items .slot[data-id="9935"] .q')).toHaveText(/\b6\b/);
+    await expect(page.locator("#items .slot").first()).toHaveAttribute("data-id", "14635");
+  });
+
+  test("los prerrequisitos piden los objetos del Silvestre y explican la orden de Bonta del 126", async ({ page }) => {
+    await openTodos(page);
+    await page.click("#tabPrereqs");
+    await expect(page.locator('#prereqs .slot[data-id="421"]')).toHaveCount(1);
+    const note = page.locator("#prereqs .pr-order");
+    await expect(note.locator("b")).toHaveText("La guía sigue la orden Espíritu de la salvación");
+    await expect(note.locator(".step-ref")).toHaveText(["126", "128"]);
+  });
 });
 
 // La paleta «Oro» (palette en su config.js, lib/palette.js): el acento dorado en los botones,
