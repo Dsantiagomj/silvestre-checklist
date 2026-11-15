@@ -17,7 +17,9 @@ export { followUpStop, stopPoint };
 export function stepTitle(step) {
   const ach = assetsFor(step.n)?.achievements?.[0]?.name;
   if (ach) return ach;
-  return step.base.replace(/["«»]/g, "").replace(/\.$/, "");
+  // Lo que da el paso («Se obtiene el Dofus…») no va en el título: lo dice el estandarte
+  // (el 190 del rush, «El silencio es áureo», sin logro)
+  return step.base.replace(/\s*Se obtienen? [^.]*\./g, "").replace(/["«»]/g, "").replace(/\.$/, "");
 }
 
 /**

@@ -161,6 +161,16 @@ test.describe("pantalla alta", () => {
     await expect(page.locator(".hero-egg")).not.toHaveClass(/morphing/);
   });
 
+  // El 190 no tiene logro: su título es el texto del paso, sin los «Se obtiene…» (ya van en
+  // el estandarte)
+  test("el título del 190 llega hasta «El silencio es áureo», sin los Dofus que da", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(189) });
+    await expect(page.locator(".hero-step-title")).toHaveText("Misiones de mundo: Misión: El silencio es áureo");
+    await expect(row(page, 190).locator(".row-title")).toHaveText("Misiones de mundo: Misión: El silencio es áureo");
+    await openStep(page, 190);
+    await expect(page.locator("#journal .journal-title")).toHaveText("Misiones de mundo: Misión: El silencio es áureo");
+  });
+
   test("el 190 da dos Dofus: el hero espera los dos juntos", async ({ page }) => {
     await openTodos(page, { "todos:done": upTo(189) });
     await expect(page.locator(".hero-egg")).toHaveAttribute("data-egg", "190");
