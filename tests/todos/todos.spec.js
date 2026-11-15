@@ -89,13 +89,13 @@ test("lleva encima la cabecera del sitio, con el rush como página actual", asyn
 test.describe("pantalla alta", () => {
   test.use({ viewport: TALL });
 
-  test("el hero lleva el huevo del Vulbis y sus motas doradas", async ({ page }) => {
+  test("el hero lleva el huevo del Dofawa, el primero del camino, y sus motas doradas", async ({ page }) => {
     const errors = await openTodos(page);
     const hero = page.locator(".hero");
     await expect(hero).toBeVisible();
     await expect(hero).toHaveClass(/\bfx-nebula\b/);
     const egg = hero.locator(".egg-off");
-    await expect(egg).toHaveAttribute("src", /\/img\/items\/23004\.png$/);
+    await expect(egg).toHaveAttribute("src", /\/img\/items\/23009\.png$/);
     expect(await loaded(egg)).toBe(true);
     expect(errors).toEqual([]);
   });
