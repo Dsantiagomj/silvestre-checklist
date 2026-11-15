@@ -124,10 +124,11 @@ export default {
     },
   },
 
-  // El huevo del hero y de la barra: apagado hasta el paso 200, «Sueños de dragón» completo,
-  // que da el Dofus Vulbis. Los otros 24 van en el camino (DOFUS_ROAD), y el Vulbis también:
-  // la guía no lleva a un solo Dofus. Ninguno se convierte en él (pre)
-  egg: { pre: null, final: 200 },
+  // El huevo de la barra: apagado hasta el paso 200, «Sueños de dragón» completo, que da el
+  // Dofus Vulbis. Los otros 25 van en el camino (DOFUS_ROAD), y el Vulbis también: la guía
+  // no lleva a un solo Dofus. Ninguno se convierte en él (pre). El del hero es el siguiente
+  // del camino (road): se enciende al conseguirlo y deja paso al siguiente, hasta el Vulbis
+  egg: { pre: null, final: 200, road: true },
   // Los Dofus del camino cuyo nombre es femenino: «¡Piñata de pino obtenida!» (paso 194)
   feminine: /^Piñata/,
 

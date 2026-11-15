@@ -1269,6 +1269,11 @@ button.ov-num:hover{ filter:brightness(1.15); }
 .egg-on{ filter:drop-shadow(0 0 14px rgba(var(--accent-rgb),.6)); }
 .hero-egg[data-stage="silvestre"] .egg-on{ filter:drop-shadow(0 0 22px rgba(var(--accent-rgb),.95)); }
 .hero-egg.obtained .egg-body{ animation:egg-obtained 1.2s ease-in-out infinite; }
+/* Dos Dofus en un paso (el 190 del rush, RoadEgg en Hero.jsx): los dos, más pequeños y a los
+   lados; translate no pisa el transform de las animaciones */
+.egg-body.is-pair img{ inset:auto; left:12%; top:12%; width:76%; height:76%; }
+.egg-body.is-pair img:nth-of-type(odd){ translate:-30% 0; }
+.egg-body.is-pair img:nth-of-type(even){ translate:30% 0; }
 /* La transformación (MORPH_MS en Hero.jsx): mientras sube al hero la Piñata espera;
    luego tiembla cada vez más, se llena de luz y estalla; el Silvestre sale del destello */
 .hero-egg.morphing .egg-body{ animation:none; }
