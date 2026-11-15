@@ -29,6 +29,9 @@ async function openTodos(page, seed = {}, { view = "diary" } = {}) {
   return errors;
 }
 
+// Lo que cuenta cada categoría de la pestaña «Objetos» (resources.json)
+const ITEM_COUNTS = { todo: 504, recursos: 416, consumibles: 63, equipables: 24, cosmeticos: 1 };
+
 const row = (page, n) => page.locator(`.diary-row[data-n="${n}"]`);
 
 async function openStep(page, n) {
@@ -212,11 +215,19 @@ test.describe("objetos", () => {
     return Object.fromEntries(await slots.evaluateAll(els => els.map(e => [e.dataset.id, e.querySelector(".q").textContent.replace(/\D/g, "")])));
   }
 
-  test("la pestaña «Objetos» ya no está vacía: 505 objetos distintos, con sus categorías", async ({ page }) => {
+  // Solo recursos, consumibles, equipables y cosméticos: las almas y las criaturas van por su
+  // categoría de DofusDB y los objetos de misión no se listan (quest_items.four_categories)
+  test("la pestaña «Objetos» lleva solo recursos, consumibles, equipables y cosméticos", async ({ page }) => {
     const errors = await openTodos(page);
+    // Las «Cadenas rotas» de alineamiento (9318), objeto de misión que traía el Silvestre, ya no
+    // van en el 11; las otras, un recurso (14278), siguen en el 47 para «La desglaciación»
+    expect(await needsOf(page, 11)).not.toHaveProperty("9318");
+    expect(await needsOf(page, 47)).toHaveProperty("14278", "2");
     await page.click("#tabItems");
     await expect(page.locator("#items")).toBeVisible();
-    for (const [cat, n] of Object.entries({ todo: 505, recursos: 416, consumibles: 54, equipables: 20, almas: 9, criaturas: 5, cosmeticos: 1 })) {
+    expect(await page.locator(".needs-cat").evaluateAll(bs => bs.map(b => b.dataset.cat)))
+      .toEqual(["todo", "recursos", "consumibles", "equipables", "cosmeticos"]);
+    for (const [cat, n] of Object.entries(ITEM_COUNTS)) {
       await expect(page.locator(`.needs-cat[data-cat="${cat}"] .n`)).toHaveText(String(n));
     }
     expect(errors).toEqual([]);

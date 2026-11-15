@@ -107,13 +107,15 @@ The page also lists "1 x Kama" in step 5, which no guide of the step's quests ex
 
 ## The rush's items
 
-Sandglass's PDF for the Rush de todos los Dofus lists no items, so `build_resources.py` builds its list from two sources (`.build/quest_items.py`, called when the config sets `ITEMS_FROM_QUESTS`): 668 rows in 86 steps (the prerequisites included), 505 distinct items.
+Sandglass's PDF for the Rush de todos los Dofus lists no items, so `build_resources.py` builds its list from two sources (`.build/quest_items.py`, called when the config sets `ITEMS_FROM_QUESTS`): 667 rows in 86 steps (the prerequisites included), 504 distinct items.
 
 | Source | Steps | How |
 |---|---|---|
 | The Silvestre's list | The 85 steps the rush repeats (`SAME_AS` in `.build/dofus/todos.py`) and the prerequisites, which are the same | They copy Torre's rows for that Silvestre step from `src/dofus/silvestre/resources.json`, with every fix `silvestre.py` already made (`CORRECTIONS`, `MOVED`, `DUPLICATES`, `REUSABLE`, `CHOSEN_ORDER`…) |
 | The Silvestre's list, by quest | 15 steps that do quests of a Silvestre step without repeating it, and steps 98 and 196, which repeat one but split its quests otherwise (`FROM_SILVESTRE`) | Only the rows of the named quests, plus rows the Silvestre ties to no quest, named by item key (a dungeon key, the Cerveza secolocante). A row tied to two quests goes only to a step that does both |
 | DofusDB | Every other step | What its quests hand in (objective type 3) and craft (type 17), with the item ids and quantities of the objective's parameters |
+
+The rush lists resources, consumables, equipment and cosmetics only (`quest_items.four_categories`, and `itemCategories` in `src/dofus/todos/config.js` hides the other tabs). A soul or a creature copied from the Silvestre, which Torre's page files apart, goes by its DofusDB category (soul stones and captured souls are consumables, mounts and pets equipment, the paddock fuel a resource), and a quest item copied from the Silvestre is not listed: the Cadenas rotas of alignment (9318) in step 11. A row already in one of the four keeps Torre's category.
 
 The rules for DofusDB follow the Silvestre's list:
 
