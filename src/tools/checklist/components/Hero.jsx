@@ -47,6 +47,58 @@ const MORPH_MS = 3400;
  */
 const eggStage = s => (s.done[EGG.final] ? "silvestre" : s.done[EGG.pre] && PINATA ? "pinata" : "off");
 
+// El rush (egg.road): el huevo del hero es el siguiente Dofus del camino. Los del mismo paso
+// van juntos (el 190 da dos): [{ step, imgs }] en el orden de la guía
+const ROAD_EGGS = EGG.road
+  ? DOFUS_ROAD.reduce((out, d) => {
+    const last = out[out.length - 1];
+    if (last?.step === d.step) last.imgs.push(d.img);
+    else out.push({ step: d.step, imgs: [d.img] });
+    return out;
+  }, [])
+  : null;
+/** El índice del siguiente Dofus del camino que falta, o -1 si ya están todos. */
+const roadTarget = s => ROAD_EGGS.findIndex(g => !s.done[g.step]);
+
+/**
+ * Al conseguir un Dofus del camino marcando su paso (el siguiente avanza), sube al hero y
+ * lo enciende con la transformación; luego el hero espera el siguiente. Devuelve el que se
+ * enciende mientras dura, o null. Si se marcan varios de golpe, se enciende el último.
+ */
+function useRoadMorph(target) {
+  const [from, setFrom] = useState(null);
+  const prev = useRef(target);
+  useEffect(() => {
+    const was = prev.current;
+    prev.current = target;
+    const ahead = was !== -1 && (target === -1 || target > was);
+    if (!ahead) return;
+    const still = prefersReducedMotion();
+    window.scrollTo({ top: appTopY(), behavior: still ? "auto" : "smooth" });
+    if (still) return;
+    setFrom(ROAD_EGGS[target === -1 ? ROAD_EGGS.length - 1 : target - 1]);
+    const t = setTimeout(() => setFrom(null), MORPH_MS);
+    return () => { clearTimeout(t); setFrom(null); };
+  }, [target]);
+  return from;
+}
+
+/** El huevo del rush: el que se enciende mientras dura, el último encendido o el siguiente apagado. */
+function RoadEgg({ target, lit }) {
+  const group = lit || (target === -1 ? ROAD_EGGS[ROAD_EGGS.length - 1] : ROAD_EGGS[target]);
+  return (
+    <div className={"egg-body" + (group.imgs.length > 1 ? " is-pair" : "")}>
+      {lit
+        ? <>
+          {lit.imgs.map(src => <img key={`from${src}`} className="egg-from is-off" src={imgUrl(src)} alt="" />)}
+          {lit.imgs.map(src => <img key={`on${src}`} className="egg-on" src={imgUrl(src)} alt="" />)}
+          <i className="egg-flash"></i>
+        </>
+        : group.imgs.map(src => <img key={src} className={target === -1 ? "egg-on" : "egg-off"} src={imgUrl(src)} alt="" />)}
+    </div>
+  );
+}
+
 // Las dos transformaciones: al marcar el 99, el Silvestre apagado se vuelve la Piñata de
 // pino; al marcar el 100, la Piñata se vuelve el Silvestre encendido. Sin Piñata, una: al
 // marcar el paso final, el huevo apagado se enciende
@@ -162,7 +214,9 @@ export default function Hero() {
   const nextStep = next ? STEPS[next - 1] : null;
   const obtained = pct >= 100;
   const stage = eggStage(s);
-  const morph = useMorph(stage);
+  const morph = useMorph(ROAD_EGGS ? null : stage);
+  const target = ROAD_EGGS ? roadTarget(s) : null;
+  const lit = useRoadMorph(target);
   const still = useReducedMotion();
   // Fondo: el mapa (grande) donde empieza el siguiente paso; si no carga, el paisaje de su
   // zona y, por debajo, el mapa del tema. Sin siguiente paso, el del tema: el claro es un
@@ -240,11 +294,13 @@ export default function Hero() {
         )}
 
         <div className="hero-visual">
-          <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph ? " morphing" : "")} data-stage={stage}
+          <div className={"hero-egg" + (obtained ? " obtained" : "") + (morph || lit ? " morphing" : "")} data-stage={stage}
+            data-egg={ROAD_EGGS ? (target === -1 ? ROAD_EGGS[ROAD_EGGS.length - 1] : ROAD_EGGS[target]).step : undefined}
             style={{ "--p": pct }} aria-hidden="true">
             <div className="egg-ring"></div>
             <div className="egg-glow"></div>
-            {BRAND_ICON && (
+            {ROAD_EGGS && <RoadEgg target={target} lit={lit} />}
+            {!ROAD_EGGS && BRAND_ICON && (
               <div className="egg-body">
                 {stage === "off" && <img className="egg-off" src={imgUrl(BRAND_ICON)} alt="" />}
                 {morph === "off" && <img className="egg-from is-off" src={imgUrl(BRAND_ICON)} alt="" />}

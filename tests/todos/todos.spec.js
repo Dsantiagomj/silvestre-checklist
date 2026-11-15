@@ -55,7 +55,8 @@ test("los 200 pasos cargan sin errores, en el diario y en el mapa, con sus texto
 });
 
 test("el sitio vive en todos/ y sus imágenes y favicons salen de la raíz y de su build", async ({ page, request }) => {
-  await openTodos(page);
+  // Con el 199 hecho el hero espera el Vulbis, el huevo de la marca
+  await openTodos(page, { "todos:done": upTo(199) });
   // El huevo de la marca, el Vulbis, de public/img/ en la raíz: no hay otra copia en todos/
   const egg = page.locator(".hero-egg .egg-off, #winProgress img").first();
   await expect(egg).toHaveAttribute("src", "http://127.0.0.1:4327/img/items/23004.png");
@@ -117,6 +118,54 @@ test.describe("pantalla alta", () => {
     await expect(strip.locator('.road-dofus[data-step="127"] img')).toHaveAttribute("src", /items\/23012\.png$/);
     await expect(strip.locator(".road-dofus").first()).toHaveAttribute("title", "Dofawa · paso 5");
     await expect(strip.locator(".road-dofus").last()).toHaveAttribute("title", "Dofus vulbis · paso 200");
+  });
+
+  // El huevo del hero es el siguiente Dofus del camino, apagado; al conseguirlo se enciende con
+  // la transformación y luego deja paso al siguiente. El anillo sigue siendo toda la guía
+  const heroEggs = page => page.locator(".hero-egg .egg-body > img").evaluateAll(
+    imgs => imgs.map(i => `${i.className}:${new URL(i.src).pathname.replace(/^\/img\//, "")}`));
+
+  test("el hero espera el siguiente Dofus del camino: el Dofawa al empezar, el Púrpura tras el 40", async ({ page }) => {
+    await openTodos(page);
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-egg", "5");
+    expect(await heroEggs(page)).toEqual(["egg-off:items/23009.png"]);
+    await page.reload();
+    await page.evaluate(() => localStorage.setItem("todos:done", JSON.stringify(Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, true])))));
+    await page.reload();
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-egg", "44");
+    expect(await heroEggs(page)).toEqual(["egg-off:items/23001.png"]);
+    // El anillo, toda la guía: 40 de 200 pasos, no el tramo hasta el Púrpura
+    const p = await page.locator(".hero-egg").evaluate(el => el.style.getPropertyValue("--p"));
+    expect(p).toBe(await page.locator("#heroPct").evaluate(el => String(parseFloat(el.textContent))));
+  });
+
+  test("conseguir el Dofawa lo enciende con la transformación y luego el hero espera el plateado", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(4) });
+    await page.click('.diary-row[data-n="5"] .row-check');
+    const hero = page.locator(".hero-egg");
+    await expect(hero).toHaveClass(/morphing/);
+    // Mientras dura: el Dofawa apagado tiembla y sale encendido del destello
+    expect(await heroEggs(page)).toEqual(["egg-from is-off:items/23009.png", "egg-on:items/23009.png"]);
+    await expect(hero.locator(".egg-flash")).toHaveCount(1);
+    // Luego, el siguiente: el plateado del 10, apagado
+    await expect(hero).not.toHaveClass(/morphing/, { timeout: 8000 });
+    await expect(hero).toHaveAttribute("data-egg", "10");
+    expect(await heroEggs(page)).toEqual(["egg-off:items/23025.png"]);
+  });
+
+  test("con movimiento reducido salta al siguiente sin transformación", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openTodos(page, { "todos:done": upTo(4) });
+    await page.click('.diary-row[data-n="5"] .row-check');
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-egg", "10");
+    await expect(page.locator(".hero-egg")).not.toHaveClass(/morphing/);
+  });
+
+  test("el 190 da dos Dofus: el hero espera los dos juntos", async ({ page }) => {
+    await openTodos(page, { "todos:done": upTo(189) });
+    await expect(page.locator(".hero-egg")).toHaveAttribute("data-egg", "190");
+    await expect(page.locator(".hero-egg .egg-body")).toHaveClass(/\bis-pair\b/);
+    expect(await heroEggs(page)).toEqual(["egg-off:items/23005.png", "egg-off:items/23027.png"]);
   });
 
   test("marcar el paso 200 da el Dofus Vulbis: en el hero, al final del mapa y en la franja", async ({ page }) => {
