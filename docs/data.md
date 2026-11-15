@@ -115,7 +115,7 @@ Sandglass's PDF for the Rush de todos los Dofus lists no items, so `build_resour
 | The Silvestre's list, by quest | 15 steps that do quests of a Silvestre step without repeating it, and steps 98 and 196, which repeat one but split its quests otherwise (`FROM_SILVESTRE`) | Only the rows of the named quests, plus rows the Silvestre ties to no quest, named by item key (a dungeon key, the Cerveza secolocante). A row tied to two quests goes only to a step that does both |
 | DofusDB | Every other step | What its quests hand in (objective type 3) and craft (type 17), with the item ids and quantities of the objective's parameters |
 
-The rush lists resources, consumables, equipment and cosmetics only (`quest_items.four_categories`, and `itemCategories` in `src/dofus/todos/config.js` hides the other tabs). A soul or a creature copied from the Silvestre, which Torre's page files apart, goes by its DofusDB category (soul stones and captured souls are consumables, mounts and pets equipment, the paddock fuel a resource), and a quest item copied from the Silvestre is not listed: the Cadenas rotas of alignment (9318) in step 11. A row already in one of the four keeps Torre's category.
+The rush keeps the Silvestre's categories, souls and creatures included, but lists no quest item (`quest_items.rush_categories`): the Cadenas rotas of alignment (9318) that step 11 copied from the Silvestre are left out. A row Torre files under souls or creatures whose item is neither goes by its DofusDB category: the Jalabolas dedicadas of step 161, an "Objeto utilizable", are consumables, like the Pizwa. Any other row keeps Torre's category.
 
 The rules for DofusDB follow the Silvestre's list:
 
