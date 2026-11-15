@@ -105,6 +105,30 @@ The Nebuloso page groups its items differently, and `build_resources.py` reads i
 
 The page also lists "1 x Kama" in step 5, which no guide of the step's quests explains. It stays a generic row (`GENERIC_IMG`, never looked up, since a prefix search answers "Kama enigmático") with the Bolsa de kamas icon. The barbero's four items, listed in step 8, belong to step 9 (`MOVED`). The tables are in `.build/dofus/nebuloso.py`.
 
+## The rush's items
+
+Sandglass's PDF for the Rush de todos los Dofus lists no items, so `build_resources.py` builds its list from two sources (`.build/quest_items.py`, called when the config sets `ITEMS_FROM_QUESTS`): 668 rows in 86 steps (the prerequisites included), 505 distinct items.
+
+| Source | Steps | How |
+|---|---|---|
+| The Silvestre's list | The 85 steps the rush repeats (`SAME_AS` in `.build/dofus/todos.py`) and the prerequisites, which are the same | They copy Torre's rows for that Silvestre step from `src/dofus/silvestre/resources.json`, with every fix `silvestre.py` already made (`CORRECTIONS`, `MOVED`, `DUPLICATES`, `REUSABLE`, `CHOSEN_ORDER`…) |
+| The Silvestre's list, by quest | 15 steps that do quests of a Silvestre step without repeating it, and steps 98 and 196, which repeat one but split its quests otherwise (`FROM_SILVESTRE`) | Only the rows of the named quests, plus rows the Silvestre ties to no quest, named by item key (a dungeon key, the Cerveza secolocante). A row tied to two quests goes only to a step that does both |
+| DofusDB | Every other step | What its quests hand in (objective type 3) and craft (type 17), with the item ids and quantities of the objective's parameters |
+
+The rules for DofusDB follow the Silvestre's list:
+
+- A quest item (item type category 3, named after its zone, like "Misiones de mundo"; a follower; or a "Recurso de misión") with no recipe drops or is handed out on the way. It is not listed.
+- A quest item with a recipe, and anything a quest asks to craft, is listed by what it is made of, down through the quest items in its recipe. Each row says what crafts it ("Para fabricar con alquimista nivel 1"; "Para fabricar" when DofusDB's job is "Base").
+- What the step crafts and then hands in, or crafts something else with, counts once.
+- The category comes from the item type's DofusDB category (equipment, consumables, resources, cosmetics), with mounts, pets and paddock fuel as creatures and soul stones as souls, as on the Silvestre's page. The type table is cached in `.build/data/item_types.json`.
+- A quest a step only takes (`TAKE_ONLY`) gives nothing there.
+
+A quest the guide splits across steps gives each step only its part. Each step goes on from where the previous step that lists the quest left it. Without an entry in `ITEM_STOPS` (step and quest to the index of the first objective it leaves, as the app numbers them) the step finishes the quest, and later steps that list it get nothing of it. Steps from the Silvestre's list count for this too: step 35 finishes the first four quests of «Púrpura profundo», so 36 and 43, which list them again, add nothing for them.
+
+Each row keeps the quests it is for (`m`). `with_quests` no longer replaces a row's own `m` with `item_quests.json`, so running `audit_resources.py --dofus todos` only labels the rows that have none.
+
+What this misses: dungeon keys and other items only a quest's guide names (DofusDB has no objective for them) in the steps the DofusDB rules build; only the Silvestre's keys made it in. «¿Quién nos protege del protector?» is split over steps 193, 194 and 196, and the Silvestre lists its items in one step: they all go to 193, where the quest starts, since the guide does not say which sigil takes what.
+
 ## Guide links
 
 The quests and achievements named in a step's text link to their guide on torrentearcano.com, as in the classic checklist. `.build/import_guide_links.py` takes the names from the page, builds the same URLs and keeps only those that answer, in `src/dofus/silvestre/guides.json`: 72 achievements and 111 quests from the text and the hand-written notes. "Draconantopía" is missing.
