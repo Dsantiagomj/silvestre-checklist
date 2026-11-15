@@ -71,7 +71,7 @@ All of them write to `dist/`.
 | `npm run test:embed` | The eight embeds inside pages that mimic Squarespace, plus the frozen contract (`contract.spec.js`) |
 | `npm run test:hielos` | What differs on the Hielos site: its 70 steps, the snowy hero, its single Dofus |
 | `npm run test:nebuloso` | What differs on the Nebuloso site: its 26 steps, the nebula hero, the Dofus de los Vigilantes on the road, its resource groups and palette |
-| `npm run test:todos` | What differs on the rush: its 200 steps, the 26 Dofus on their own strip row, the two Dofus of step 190, the Vulbis at step 200 and its gold palette |
+| `npm run test:todos` | What differs on the rush: its 200 steps, the 26 Dofus on their own strip row, the two Dofus of step 190, the Vulbis at step 200, its items and its gold palette |
 | `npm run test:global` | What differs on the Guía global: its 219 steps, its texts, its place in the site header |
 | `npm run test:site` | The home page and the cosecha page: cards, links, header, no horizontal overflow |
 
