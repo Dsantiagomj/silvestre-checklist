@@ -269,6 +269,9 @@ CHOSEN_ORDER = {}
 # Nothing is listed only in case an alteration is gone.
 OPTIONAL_ITEM = re.compile(r"(?!)")
 
+# The page lists the items: none come from the quests (quest_items.py, todos)
+ITEMS_FROM_QUESTS = False
+
 
 # ---------------------------------------------------------------------------
 # audit_resources.py

@@ -138,9 +138,16 @@ export default {
     quest: "La eterna cosecha",
     achievement: "El fin de la eternidad",
   },
-  // La guía sigue Espíritu de la salvación (TEXT_FIXES de 125, 126 y 128), pero no lista
-  // recursos: no hay aviso que dar sobre ellos
-  orderNote: null,
+  // La guía sigue Espíritu de la salvación (TEXT_FIXES de 125, 126 y 128). Sus objetos son los
+  // del Silvestre en esos pasos (FROM_SILVESTRE en .build/dofus/todos.py, sus 78 y 80), que
+  // solo listan los de esa orden: el aviso del Silvestre, con los pasos de aquí. No dice que
+  // el 126 enlace las misiones de las otras órdenes: aquí no las enlaza. img, el PNJ del
+  // estandarte del 126
+  orderNote: {
+    title: "La guía sigue la orden Espíritu de la salvación",
+    text: "Por eso solo se listan los recursos de esa orden, en los pasos 126 y 128.",
+    img: "npcs/npc-6312.png",
+  },
 
   // La nota aclaratoria («Hasta tener que pasar X»), con el ejemplo del Silvestre en sus pasos
   // de aquí (SAME_AS en .build/dofus/todos.py: sus 43, 44 y 45): el 69 y el 70 se detienen ante
