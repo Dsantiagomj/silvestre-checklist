@@ -49,6 +49,9 @@ export default {
   // localStorage: las claves de la app empiezan por aquí. No hay checklist clásico en Torrente
   // Arcano (la guía es un PDF): nada que leer
   storagePrefix: "todos:",
+  // La pestaña «Objetos» solo con estas categorías: el rush no lista almas ni criaturas aparte
+  // (van por su categoría de DofusDB) ni objetos de misión (quest_items.four_categories)
+  itemCategories: ["recursos", "consumibles", "equipables", "cosmeticos"],
   classicKeys: { v4: null, v3: null },
   // Versión de la guía con la que se numeran los pasos guardados
   guideVersion: 1,

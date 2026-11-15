@@ -65,6 +65,7 @@ npm run build:embed:todos   # its embed, in dist/embed/todos.js
 | `palette` | «Oro»: the Nebuloso's palette turned to hue 45, a warm dark grey with a pale gold accent (`#f5e4b1`). Contrast is noted next to it in `config.js` |
 | `hero.fx` | `nebula`, the Nebuloso's rising motes, here in gold |
 | `egg.final` | The Dofus Vulbis, at step 200. It is also the last of the 26 Dofus del camino, so the strip is long (`LONG_ROAD`, more than 12): the eggs get their own row with the step under each one. Step 190 gives two Dofus, and every place that shows a step's Dofus shows both (`roadAt` in `src/tools/checklist/lib/assets.js`) |
+| `itemCategories` | Only for the rush: the «Objetos» tabs it shows (resources, consumables, equipment and cosmetics). Without it, the six (`CATEGORIES` in `src/tools/checklist/lib/resources.js`) |
 | `journal` | The Silvestre's stops and notes moved to the steps the rush repeats (`SAME_AS` in `.build/dofus/todos.py`), with the numbers of the rush |
 | `nota` | The Silvestre's example in the rush's numbers: steps 69 and 70 paused before Kodámade, 71 closes them |
 | `orderNote` | The Silvestre's Bonta order note: steps 126 and 128 take the Silvestre's rows for its steps 78 and 80, so they list only the resources of Espíritu de la salvación. The rush does not link the other orders' quests, so the note does not say it does |
@@ -150,7 +151,7 @@ APP_URL=https://mi-despliegue.example/silvestre/ npm run test:e2e
 
 ### The rush
 
-`tests/todos/` checks what the rush adds: the 200 steps without errors, its place in the site header, the gold hero, the 26 Dofus on their own strip row with their step numbers, the two Dofus of step 190 in the diary, the detail, the map and the celebration, the Vulbis at step 200, step 200 closing the dream stops of 158, 159 and 160, the Piñata in the feminine, the stop of step 18, the note with steps 69 to 71, the Ocre note, the items (505 distinct ones in «Objetos», step 13 with the Silvestre's rows, step 10 from its quests in DofusDB, the Ganzúa of «Un frío que pela» in step 140 and not again in 148, the Ortiga total across step 0, 3, 4 and 10, and the Bonta order note), its prefix, the palette in both themes and no horizontal overflow at 1440, 1024 and 390.
+`tests/todos/` checks what the rush adds: the 200 steps without errors, its place in the site header, the gold hero, the 26 Dofus on their own strip row with their step numbers, the two Dofus of step 190 in the diary, the detail, the map and the celebration, the Vulbis at step 200, step 200 closing the dream stops of 158, 159 and 160, the Piñata in the feminine, the stop of step 18, the note with steps 69 to 71, the Ocre note, the items (504 distinct ones in «Objetos», only in resources, consumables, equipment and cosmetics, without the quest item of step 11, step 13 with the Silvestre's rows, step 10 from its quests in DofusDB, the Ganzúa of «Un frío que pela» in step 140 and not again in 148, the Ortiga total across step 0, 3, 4 and 10, and the Bonta order note), its prefix, the palette in both themes and no horizontal overflow at 1440, 1024 and 390.
 
 ### The Guía global
 

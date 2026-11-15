@@ -33,6 +33,8 @@ EQUIPMENT, CONSUMABLE, RESOURCE, QUEST, HIDDEN, COSMETIC = 0, 1, 2, 3, 4, 5
 # Types the Silvestre's page files apart from their category (src/dofus/silvestre/resources.json):
 # mounts and pets are creatures, like the paddock fuel; soul stones and souls are souls
 CREATURES = {"Dragopavo", "Mulagua", "Vueloceronte", "Mascota", "Mascotura", "Carburante de cercados"}
+# What the rush lists (four_categories): each DofusDB category but quest items and hidden ones
+FOUR = {EQUIPMENT: "equipables", CONSUMABLE: "consumibles", RESOURCE: "recursos", COSMETIC: "cosmeticos"}
 SOULS = {"Piedra de alma", "Piedra de alma llena", "Alma de guardián de mazmorra", "Alma de archimonstruo"}
 
 
@@ -49,6 +51,35 @@ def category(type_name, type_cat):
     if type_name in SOULS:
         return "almas"
     return {EQUIPMENT: "equipables", CONSUMABLE: "consumibles", COSMETIC: "cosmeticos"}.get(type_cat, "recursos")
+
+
+def four_categories(steps, kind, cat):
+    """The rows with what the rush lists only: resources, consumables, cosmetics and
+    equipment. A soul or a creature (the Silvestre's page files them apart) goes by its
+    DofusDB category, and a quest item copied from the Silvestre (quest_only) is not listed:
+    an alternative that is one leaves its row, and a row or a step left empty goes. An item
+    with no DofusDB id (a generic "x:" row) keeps its row as it is."""
+    out = {}
+    for n, rows in steps.items():
+        kept = []
+        for row in rows:
+            alts = [[k, q] for k, q in row["a"]
+                    if k.startswith("x:") or not quest_only(kind(k), cat(kind(k)))]
+            if not alts:
+                continue
+            first = alts[0][0]
+            # One of the four stays as it is (Torre's word); a soul or a creature goes by DofusDB
+            c = row["c"] if row["c"] in FOUR.values() or first.startswith("x:") else FOUR.get(cat(kind(first)), "recursos")
+            # The key says which alternatives the row holds (and its group after "@"): it only
+            # changes when one goes, or the app would add up rows that do not match
+            key = row["k"]
+            if len(alts) < len(row["a"]):
+                group = key.partition("@")[2]
+                key = "|".join(k for k, _ in alts) + (f"@{group}" if group else "")
+            kept.append({**row, "k": key, "a": alts, "c": c})
+        if kept:
+            out[n] = kept
+    return out
 
 
 def flat_objectives(quest, order):
