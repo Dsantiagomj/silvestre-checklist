@@ -3,7 +3,7 @@
 // Run: npm run test:unit
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { NO_SHARED, completedBy, entryOf, othersOf, ownedKeys, parseShared, withEntry, withPrereqs } from "../../src/tools/checklist/lib/shared.js";
+import { NO_SHARED, completedBy, entryOf, othersOf, ownedKeys, parseShared, withEntry, withPrereqs, withoutOff } from "../../src/tools/checklist/lib/shared.js";
 
 const HIELOS = { name: "Dofus de los Hielos", quests: ["612", "581"], owned: ["391"] };
 const SILVESTRE = { name: "Dofus Silvestre", quests: ["612", "1958"], owned: ["421"] };
@@ -44,6 +44,14 @@ test("las que necesitaban terminadas para empezar también lo están, con el mis
   assert.deepEqual(withPrereqs(quests, null), quests);
 });
 
+test("las desmarcadas aquí (sharedOff) dejan de contar, vengan de donde vengan", () => {
+  const quests = { 583: "Dofus de los Hielos", 581: "Dofus de los Hielos", 614: "Dofus Silvestre" };
+  assert.deepEqual(withoutOff(quests, new Set(["581", "614"])), { 583: "Dofus de los Hielos" });
+  // Sin ninguna desmarcada, las mismas
+  const none = new Set();
+  assert.equal(withoutOff(quests, none), quests);
+});
+
 // COMPLETED_BY: «Bienvenido a Frigost» (649) se termina sola con 612 a 615; «Lo esencial está
 // en el lago helado» (650), con 577 y 578. 650 pide terminada 649 (PREREQS)
 const TABLE = { 649: [612, 613, 614, 615], 650: [577, 578] };
@@ -79,6 +87,18 @@ test("una terminada sola cuenta para las demás, y las que pide también quedan 
     1: { by: "613", there: null },
     2: { by: "1", there: null },
   });
+});
+
+test("una desmarcada aquí (off) no se termina sola si es por otro checklist; por lo de aquí, sí", () => {
+  const marks = { 612: true, 613: "Dofus Silvestre", 614: true, 615: "Dofus Silvestre" };
+  assert.deepEqual(completedBy(TABLE, PREREQS, doneIn(marks), new Set(["649"])), {});
+  // Ni las que pide una terminada sola por otro checklist
+  assert.deepEqual(completedBy(TABLE, PREREQS, doneIn({ 577: true, 578: "Dofus Silvestre", 613: true }), new Set(["649"])), {
+    650: { by: "578", there: "Dofus Silvestre" },
+  });
+  // Con todas las suyas hechas aquí, la desmarcada no cuenta: aquí no se deshace sola
+  const own = { 612: true, 613: true, 614: true, 615: true };
+  assert.deepEqual(completedBy(TABLE, PREREQS, doneIn(own), new Set(["649"])), { 649: { by: "615", there: null } });
 });
 
 test("se publican los objetos enteros: ni partes de un paso ni claves compuestas", () => {
