@@ -268,7 +268,8 @@ test("una misión terminada en el Silvestre sale hecha aquí, y el paso con todo
   await openStep(page, 9);
   const check = quest(page, "Hotel de hielo").locator(".q-check");
   await expect(check).toHaveAttribute("aria-pressed", "true");
-  await expect(check).toBeDisabled();
+  // Hecha allí, aquí se puede dejar sin hacer
+  await expect(check).toBeEnabled();
   await expect(quest(page, "Hotel de hielo").locator(".q-shared")).toHaveText("Hecha en el Dofus Silvestre");
   await expect(quest(page, "La desglaciación").locator(".q-check")).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator('.diary-row[data-n="9"]')).not.toHaveClass(/\bdone\b/);
@@ -342,9 +343,15 @@ test("con unas misiones aquí y otras en el Silvestre, también, con el nombre d
   await expect(page.locator('.diary-row[data-n="5"]')).not.toHaveClass(/\bdone\b/);
   await openStep(page, 5);
   await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "true");
-  // La del 4 se hizo allí: se deshace allí
-  await expect(bienvenido(page)).toBeDisabled();
   await expect(quest(page, "Bienvenido a Frigost").locator(".q-shared")).toHaveText("Hecha en el Dofus Silvestre");
+  // La del 4 se hizo allí: aquí se puede dejar sin hacer, y no vuelve a terminarse sola
+  await expect(bienvenido(page)).toBeEnabled();
+  await bienvenido(page).click();
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(quest(page, "Bienvenido a Frigost").locator(".q-shared")).toHaveCount(0);
+  await page.reload();
+  await openStep(page, 5);
+  await expect(bienvenido(page)).toHaveAttribute("aria-pressed", "false");
   expect(errors).toEqual([]);
 });
 

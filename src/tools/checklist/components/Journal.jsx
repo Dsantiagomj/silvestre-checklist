@@ -462,19 +462,23 @@ function QuestStart({ q }) {
 }
 
 /** Por qué no se pulsa una misión hecha fuera de ella, o null: se deshace allí. */
-const lockedWhy = (elsewhere, by, there, alone) => (elsewhere ? `Completada en el paso ${elsewhere}`
-  : by ? `Completada: la pide terminada «${by}»` : alone ? `Completada sola al terminar «${alone}»`
-  : there ? `Hecha en el ${there}` : null);
+const lockedWhy = (elsewhere, by, alone) => (elsewhere ? `Completada en el paso ${elsewhere}`
+  : by ? `Completada: la pide terminada «${by}»` : alone ? `Completada sola al terminar «${alone}»` : null);
+
+// Hecha en otro checklist: aquí se puede dejar sin hacer (dropShared en el store)
+const sharedTip = there => `Hecha en el ${there}: aquí puedes dejarla sin hacer`;
 
 /**
  * «Completar» / «✓ Completada» de la misión en curso del overlay; terminada en otro paso,
- * o porque otra terminada la pide (`by`, su nombre), no se pulsa: se deshace allí.
+ * o porque otra terminada la pide (`by`, su nombre), no se pulsa: se deshace allí. Hecha
+ * en otro checklist (`there`), sí: aquí se deja sin hacer.
  */
 function QuestDone({ finished, elsewhere, by, there, alone, onClick }) {
+  const why = lockedWhy(elsewhere, by, alone);
   return (
     <button type="button" className={"q-done-btn" + (finished ? " is-done" : "")} aria-pressed={finished}
-      disabled={!!elsewhere || !!by || !!there || !!alone}
-      title={lockedWhy(elsewhere, by, there, alone) || (finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada")}
+      disabled={!!why}
+      title={why || (there ? sharedTip(there) : finished ? "Vuelve al inicio de la misión" : "Da la misión por terminada")}
       aria-label={finished ? "Misión completada" : "Completar misión"} onClick={onClick}>
       {finished && "✓"}<span className="q-done-txt">{finished ? " Completada" : "Completar"}</span></button>
   );
@@ -483,15 +487,15 @@ function QuestDone({ finished, elsewhere, by, there, alone, onClick }) {
 /**
  * La ✓ de una misión del diario: dice si está hecha y es el interruptor de toda su fila
  * (su ::after la cubre entera, salvo el título, que va encima y abre la guía). Hecha
- * fuera de ella (en otro paso, porque otra terminada la pide o en otro checklist,
- * `there`), no se pulsa.
+ * fuera de ella (en otro paso o porque otra terminada la pide), no se pulsa. Hecha en
+ * otro checklist (`there`), sí: aquí se deja sin hacer.
  */
 function QuestCheck({ name, finished, elsewhere, by, there, alone, onClick }) {
-  const why = lockedWhy(elsewhere, by, there, alone);
+  const why = lockedWhy(elsewhere, by, alone);
   return (
     <button type="button" className={"q-check" + (finished ? " is-done" : "")} aria-pressed={finished} disabled={!!why}
       aria-label={finished ? `Marcar «${name}» sin hacer` : `Marcar «${name}» como hecha`}
-      title={why || (finished ? "Vuelve a dejarla sin hacer" : "Márcala como hecha")} onClick={onClick}>
+      title={why || (there ? sharedTip(there) : finished ? "Vuelve a dejarla sin hacer" : "Márcala como hecha")} onClick={onClick}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>
     </button>
   );
@@ -574,7 +578,7 @@ export function Quests({ step, quests, loaded, s }) {
     const mine = !elsewhere && (s.questObj[q.id] || 0) < total;
     const by = mine ? impliedBy(s.questObj, q.id) ?? requiredBy(s, q.id) : null;
     const alone = mine ? finishedBy(s, q.id) : null;
-    // Terminada en el otro checklist (y aquí no): lo dice y se deshace allí
+    // Terminada en el otro checklist (y aquí no): lo dice, y aquí se puede dejar sin hacer
     const there = sharedBy(s, step.n, q);
     // Pulsar un objetivo lo da por hecho; uno hecho, vuelve a él. Con el paso hecho,
     // solo en las opcionales, que no se marcan con él
@@ -606,7 +610,7 @@ export function Quests({ step, quests, loaded, s }) {
           return (
             <Fragment key={j}>
               {q.s.length > 1 && <p className="q-stage">Etapa {j + 1}{stg.n && stg.n !== q.n ? ` · ${stg.n}` : ""}</p>}
-              <Objectives route objs={stg.o} at={at - from} onPick={elsewhere || by || there ? undefined : k => pick(from + k)}
+              <Objectives route objs={stg.o} at={at - from} onPick={elsewhere || by ? undefined : k => pick(from + k)}
                 stops={here.map(p => ({ index: p.index - from, text: p.text, resume: p.resume }))}
                 kids={kids.filter(c => c.index >= from && c.index < offset).map(c => ({ ...c, index: c.index - from }))} onKid={toKid} />
             </Fragment>

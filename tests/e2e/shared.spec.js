@@ -29,11 +29,11 @@ async function openStep(page, n) {
   await expect(page.locator("#journal .q-item").first()).toBeVisible({ timeout: 15_000 });
 }
 
-/** Hecha en el Hielos: sale hecha, con su etiqueta, y aquí no se deshace. */
+/** Hecha en el Hielos: sale hecha, con su etiqueta, y aquí se puede dejar sin hacer. */
 async function doneThere(page, name) {
   await expect(check(page, name)).toHaveAttribute("aria-pressed", "true");
-  await expect(check(page, name)).toBeDisabled();
-  await expect(check(page, name)).toHaveAttribute("title", `Hecha en el ${HIELOS}`);
+  await expect(check(page, name)).toBeEnabled();
+  await expect(check(page, name)).toHaveAttribute("title", `Hecha en el ${HIELOS}: aquí puedes dejarla sin hacer`);
   await expect(quest(page, name).locator(".q-shared")).toHaveText(`Hecha en el ${HIELOS}`);
 }
 async function pending(page, name) {
@@ -72,6 +72,45 @@ test("las misiones y los objetos del Hielos salen hechos, y el paso con todo hec
   // Lo que solo está hecho por el Hielos no se publica como propio
   expect(all.silvestre.quests).not.toContain("581");
   expect(all.hielos).toEqual(hielos([...STEP_23, "581"], ["391"]).hielos);
+  expect(errors).toEqual([]);
+});
+
+test("una misión hecha en el Hielos se deja sin hacer aquí, solo aquí, también al recargar", async ({ page }) => {
+  const errors = await openApp(page, { [KEY]: hielos(["581"]) });
+  await openStep(page, 26);
+  await doneThere(page, "Hotel de hielo");
+  await check(page, "Hotel de hielo").click();
+  await pending(page, "Hotel de hielo");
+  await expect(page.locator("#winPct")).toHaveText("0%");
+  await expect.poll(() => readLS(page, "silvestre:sharedOff")).toEqual(["581"]);
+  // La entrada del Hielos no se toca: allí sigue hecha
+  expect((await readLS(page, KEY)).hielos).toEqual(hielos(["581"]).hielos);
+  await page.reload();
+  await openStep(page, 26);
+  await pending(page, "Hotel de hielo");
+  // Hecha aquí, es propia; deshecha otra vez, lo del Hielos sigue sin contar
+  await check(page, "Hotel de hielo").click();
+  await expect(check(page, "Hotel de hielo")).toHaveAttribute("aria-pressed", "true");
+  await expect(quest(page, "Hotel de hielo").locator(".q-shared")).toHaveCount(0);
+  await check(page, "Hotel de hielo").click();
+  await pending(page, "Hotel de hielo");
+  // Deshecha y rehecha en el Hielos, vuelve a contar: es nueva
+  await fromOtherTab(page, hielos([]));
+  await expect.poll(() => readLS(page, "silvestre:sharedOff")).toEqual([]);
+  await fromOtherTab(page, hielos(["581"]));
+  await doneThere(page, "Hotel de hielo");
+  expect(errors).toEqual([]);
+});
+
+test("en un paso marcado por lo del Hielos, desmarcar su misión lo desmarca de un clic", async ({ page }) => {
+  const errors = await openApp(page, { [KEY]: hielos(["615"]) });
+  await expect(row(page, 24)).toHaveClass(/\bdone\b/);
+  await openStep(page, 24);
+  await check(page, "Los monólogos de la vacuna").click();
+  await pending(page, "Los monólogos de la vacuna");
+  await expect(row(page, 24)).not.toHaveClass(/\bdone\b/);
+  await page.reload();
+  await expect(row(page, 24)).not.toHaveClass(/\bdone\b/);
   expect(errors).toEqual([]);
 });
 

@@ -13,7 +13,7 @@ import { STRIP_ROAD } from "../lib/assets.js";
 import { OPTIONAL_DONE_BY, list, resolvesHere, stopPoints } from "../lib/journal.js";
 import { classicKey, readClassic } from "../lib/classic.js";
 import { appRoot, themeTarget } from "../lib/root.js";
-import { NO_SHARED, SHARED_KEY, completedBy, entryOf, othersOf, parseShared, withEntry, withPrereqs } from "../lib/shared.js";
+import { NO_SHARED, SHARED_KEY, completedBy, entryOf, othersOf, parseShared, withEntry, withPrereqs, withoutOff } from "../lib/shared.js";
 import { migrateOwned } from "../lib/owned.js";
 import DOFUS from "@dofus/config.js";
 
@@ -46,6 +46,8 @@ export const LS = {
   overlayMode: key("overlayMode"),
   // Las misiones de los otros checklists ya aplicadas a los pasos (completeFromShared)
   sharedSeen: key("sharedSeen"),
+  // Las misiones hechas en otro checklist que aquí se dejaron sin hacer (dropShared)
+  sharedOff: key("sharedOff"),
 };
 
 // Tamaños de página de la lista de objetos; "all" = sin paginar
@@ -262,6 +264,8 @@ function initialState() {
     // Lo terminado y conseguido en los otros checklists: { quests, owned } (lib/shared.js).
     // No se guarda con lo propio: cada uno publica lo suyo (publishShared)
     shared: readShared(),
+    // Las de esas que aquí se dejaron sin hacer: un Set de ids (dropShared)
+    sharedOff: new Set(readList(LS.sharedOff)),
   };
 }
 
@@ -287,6 +291,7 @@ function setState(patch) {
     if (next[k] !== prev[k]) localStorage.setItem(LS[k], JSON.stringify(next[k]));
   }
   persistSelected(prev, next);
+  if (next.sharedOff !== prev.sharedOff) localStorage.setItem(LS.sharedOff, JSON.stringify([...next.sharedOff].sort()));
   if (next.done !== prev.done || next.questObj !== prev.questObj || next.owned !== prev.owned
     || next.questsLoaded !== prev.questsLoaded) publishShared(next);
   listeners.forEach(l => l());
@@ -394,15 +399,36 @@ export function questDoneElsewhere(s, qid, except) {
 
 /**
  * Las misiones terminadas en otro checklist ({ id: nombre de su Dofus }), con las que
- * estas necesitaban terminadas para empezar (PREREQS, como impliedDone). Una vez por
- * cada `shared` y por la llegada de las misiones.
+ * estas necesitaban terminadas para empezar (PREREQS, como impliedDone). Sin las que aquí
+ * se dejaron sin hacer (sharedOff). Una vez por cada `shared`, `sharedOff` y llegada de
+ * las misiones.
  */
 const sharedMemo = new WeakMap();
 function sharedDone(s) {
   const data = questsData();
+  const off = s.sharedOff;
   let memo = sharedMemo.get(s.shared);
-  if (!memo || memo.data !== data) sharedMemo.set(s.shared, (memo = { data, out: withPrereqs(s.shared.quests, data?.PREREQS) }));
+  if (!memo || memo.data !== data || memo.off !== off) {
+    const out = withoutOff(withPrereqs(withoutOff(s.shared.quests, off), data?.PREREQS), off);
+    sharedMemo.set(s.shared, (memo = { data, off, out }));
+  }
   return memo.out;
+}
+
+/**
+ * Si la misión `id` cuenta hecha por otro checklist: terminada allí (sharedDone) o
+ * terminada sola con alguna de las suyas hecha allí (doneAlone).
+ */
+const fromShared = (s, id) => String(id) in sharedDone(s) || !!doneAlone(s)[id]?.there;
+
+/**
+ * La misión `qid`, dejada sin hacer aquí: si contaba hecha por otro checklist, eso deja
+ * de contar en este (sharedOff), también al recargar. La entrada del otro no se toca.
+ */
+function dropShared(qid) {
+  const id = String(qid);
+  if (state.sharedOff.has(id) || !fromShared(state, id)) return;
+  setState(s => ({ sharedOff: new Set([...s.sharedOff, id]) }));
 }
 
 /** El estado sin lo de los otros checklists: lo que es solo de este. */
@@ -425,14 +451,14 @@ function doneAlone(s) {
   const level = (map, k) => map.get(k) ?? (map.set(k, new WeakMap()), map.get(k));
   const memo = level(level(aloneMemo, s.questObj), s.done);
   const hit = memo.get(s.shared);
-  if (hit && hit.data === data && hit.side === questSide()) return hit.out;
+  if (hit && hit.data === data && hit.side === questSide() && hit.off === s.sharedOff) return hit.out;
   const own = new Set(impliedDone(s.questObj));
   for (const st of STEPS) {
     for (const q of questsOf(st.n)) if (q.kind !== "take" && doneHere(s, st.n, q)) own.add(String(q.id));
   }
   const shared = sharedDone(s);
-  const out = completedBy(data.COMPLETED_BY, data.PREREQS, id => own.has(id) || shared[id]);
-  memo.set(s.shared, { data, side: questSide(), out });
+  const out = completedBy(data.COMPLETED_BY, data.PREREQS, id => own.has(id) || shared[id], s.sharedOff);
+  memo.set(s.shared, { data, side: questSide(), off: s.sharedOff, out });
   return out;
 }
 
@@ -459,8 +485,9 @@ export function requiredBy(s, id) {
 
 /**
  * El nombre del Dofus de otro checklist si la misión `q` del paso `n` está hecha solo por
- * él (aquí no lo estaría), o null: el diario lo dice y aquí no se deshace. También una
- * que se termina sola con alguna de las suyas hecha allí (doneAlone).
+ * él (aquí no lo estaría), o null: el diario lo dice, y aquí se puede dejar sin hacer
+ * (dropShared). También una que se termina sola con alguna de las suyas hecha allí
+ * (doneAlone).
  */
 export function sharedBy(s, n, q) {
   const there = sharedDone(s)[q.id] ?? doneAlone(s)[q.id]?.there;
@@ -1109,6 +1136,8 @@ export function goQuest(at) {
  * opcional guarda solo su objetivo: no mueve la misión en curso.
  */
 export function setObjective(n, qi, qid, k, total) {
+  // Sin terminar aquí: lo que la daba por hecha en otro checklist deja de contar
+  if (k < total) dropShared(qid);
   const list = questsOf(n);
   const next = nextWalked(list, qi);
   // En un paso hecho todas sus obligatorias cuentan como completadas. Deshacer una lo
@@ -1213,6 +1242,11 @@ function publishShared(s) {
 let quiet = false;
 function completeFromShared() {
   if (!questsData()) return;
+  // Las dejadas sin hacer aquí que el otro checklist ya no da por hechas salen de
+  // sharedOff: si allí se vuelven a hacer, cuentan como nuevas
+  const free = { ...state, sharedOff: new Set() };
+  const off = [...state.sharedOff].filter(id => fromShared(free, id));
+  if (off.length !== state.sharedOff.size) setState({ sharedOff: new Set(off) });
   const seen = new Set(readList(LS.sharedSeen));
   const quests = Object.fromEntries(Object.entries(state.shared.quests).filter(([id]) => seen.has(id)));
   quiet = true;

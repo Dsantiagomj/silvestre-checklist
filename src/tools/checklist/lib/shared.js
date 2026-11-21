@@ -65,6 +65,15 @@ export function withPrereqs(quests, prereqs) {
 }
 
 /**
+ * Las de `quests` ({ id: nombre }) sin las desmarcadas en este checklist (`off`, un Set de
+ * ids): hechas en otro, aquí se dejaron sin hacer. Sin ninguna, el mismo objeto.
+ */
+export function withoutOff(quests, off) {
+  if (!off?.size) return quests;
+  return Object.fromEntries(Object.entries(quests).filter(([id]) => !off.has(id)));
+}
+
+/**
  * Las misiones que el juego termina solas al terminar otras (`table`, COMPLETED_BY de las
  * misiones: { id: [las que la terminan] }) con todas esas hechas, y las que ellas
  * necesitaban terminadas para empezar (`prereqs`, PREREQS). `done(id)` dice si una está
@@ -72,8 +81,9 @@ export function withPrereqs(quests, prereqs) {
  * sola cuenta para las demás, hasta que no sale ninguna más. Devuelve { id: { by, there } }:
  * `by`, la que la termina (la última de su lista; de las que pide, ella misma) y `there`,
  * el otro checklist si alguna de las suyas se hizo allí (o null). Las ya hechas no salen.
+ * Las desmarcadas en este checklist (`off`) no salen si sería por otro checklist.
  */
-export function completedBy(table, prereqs, done) {
+export function completedBy(table, prereqs, done, off = null) {
   const out = {};
   const mark = id => (id in out ? out[id].there ?? true : done(id));
   for (let more = true; more;) {
@@ -83,8 +93,11 @@ export function completedBy(table, prereqs, done) {
       const marks = by.map(x => mark(String(x)));
       if (!marks.every(Boolean)) continue;
       const there = marks.find(m => typeof m === "string") ?? null;
+      if (there && off?.has(id)) continue;
       out[id] = { by: String(by.at(-1)), there };
-      for (const x of prereqs?.[id] || []) if (!(x in out) && !done(String(x))) out[x] = { by: id, there };
+      for (const x of prereqs?.[id] || []) {
+        if (!(x in out) && !done(String(x)) && !(there && off?.has(String(x)))) out[x] = { by: id, there };
+      }
       more = true;
     }
   }
